@@ -1,0 +1,152 @@
+---------------------------------------------------------------------------------------
+-      Kosinski Location File
+-      Made by Hivebrain
+-      Locations: 127
+-         - Sonic 1 US: 7
+-         - Sonic 2 Beta: 9
+-         - Sonic 2 Final: 57
+-         - Sonic 3: 52
+-         - Sonic & Knuckles: 2
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+-      Sonic 1 Locations (US)
+---------------------------------------------------------------------------------------
+03F09A - GHZ 256x256 mappings
+04301C - LZ 256x256 mappings
+04885A - MZ 256x256 mappings
+04E352 - SLZ 256x256 mappings
+05481C - SYZ 256x256 mappings
+05A212 - SBZ 256x256 mappings
+06175E - Flower art tiles from ending
+---------------------------------------------------------------------------------------
+-      Sonic 2 Locations (Beta)
+---------------------------------------------------------------------------------------
+08692E - EHZ/HTZ 128x128 mappings
+08E826 - WZ 128x128 mappings
+094C56 - MTZ 128x128 mappings
+09B9F8 - HPZ 128x128 mappings
+0A1A58 - OOZ 128x128 mappings
+0A8B6A - MCZ 128x128 mappings 
+0AF026 - CNZ 128x128 mappings
+0B6058 - CPZ/DEZ 128x128 mappings
+0BF568 - ARZ 128x128 mappings
+---------------------------------------------------------------------------------------
+-      Sonic 2 Locations (Final)
+---------------------------------------------------------------------------------------
+044E50 - EHZ and HTZ primary 16x16 collision index
+044F40 - EHZ and HTZ secondary 16x16 collision index
+045040 - MTZ primary 16x16 collision index
+045100 - OOZ primary 16x16 collision index
+045200 - MCZ primary 16x16 collision index
+0452A0 - CNZ primary 16x16 collision index
+045330 - CNZ secondary 16x16 collision index
+0453C0 - CPZ and DEZ primary 16x16 collision index
+0454E0 - CPZ and DEZ secondary 16x16 collision index
+045610 - ARZ primary 16x16 collision index
+045760 - ARZ secondary 16x16 collision index
+0458C0 - WFZ/SCZ primary 16x16 collision index
+0459A0 - WFZ/SCZ secondary 16x16 collision index
+045AC4 - EHZ act 1 level layout
+045C84 - EHZ act 2 level layout
+045E74 - MTZ act 1 level layout
+0462A4 - MTZ act 2 level layout
+046684 - MTZ act 3 level layout
+046B04 - WFZ level layout
+046DD4 - HTZ act 1 level layout
+047044 - HTZ act 2 level layout
+047404 - OOZ act 1 level layout
+047784 - OOZ act 2 level layout
+047B24 - MCZ act 1 level layout
+047D24 - MCZ act 2 level layout
+047FF4 - CNZ act 1 level layout
+0483C4 - CNZ act 1 level layout
+048774 - CPZ act 1 level layout
+048A84 - CPZ act 2 level layout
+048DE4 - DEZ level layout
+048E94 - ARZ act 1 level layout
+049264 - ARZ act 2 level layout
+049634 - SCZ level layout
+094E74 - EHZ/HTZ 16x16 mappings
+095C24 - EHZ/HTZ main level patterns
+099D34 - EHZ/HTZ 128x128 mappings
+09CFD4 - MTZ 16x16 mappings
+09DB64 - MTZ main level patterns
+0A06C4 - MTZ 128x128 mappings
+0A3364 - OOZ 16x16 mappings
+0A4204 - OOZ main level patterns
+0A6834 - OOZ 128x128 mappings
+0A8D04 - MCZ 16x16 mappings
+0A9D74 - MCZ main level patterns
+0AD454 - MCZ 128x128 mappings
+0AFFC4 - CNZ 16x16 mappings
+0B0894 - CNZ main level patterns
+0B2CF4 - CNZ 128x128 mappings
+0B5234 - CPZ/DEZ 16x16 mappings
+0B6174 - CPZ/DEZ main level patterns
+0B90F4 - CPZ/DEZ 128x128 mappings
+0BB944 - ARZ 16x16 mappings
+0BCC24 - ARZ main level patterns
+0C1434 - ARZ 128x128 mappings
+0C4074 - WFZ/SCZ 16x16 mappings
+0C5004 - WFZ/SCZ main level patterns
+0C85E4 - WFZ/SCZ 128x128 mappings
+---------------------------------------------------------------------------------------
+-      Sonic 3 Locations
+---------------------------------------------------------------------------------------
+199CC6 - FBZ bombing sequence at end of AIZ2 (M)
+19A786 - "Super Sonic" (M)
+19AA18 - "Miles" (M)
+19AB6A - "Tails" (M)
+19ACAC - "Knuckles" (M)
+19AF1E - End of act results screen (M)
+19B240 - "1" from title card (M)
+19B302 - "2" from title card (M)
+19B3E4 - Special stage results screen (M)
+19BBE6 - "Zone" and "Act" (M)
+19BDC8 - AIZ title card letters "ADGILS" (M)
+19BEDA - HCZ title card letters "CDHIRTY" (M)
+19C02C - MGZ title card letters "ABDGLMR" (M)
+19C1EE - CNZ title card letters "ACGHILRTV" (M)
+19C380 - FBZ title card letters "ABFGILRTY" (M)
+19C4E2 - ICZ title card letters "ACIP" (M)
+19C5B4 - LBZ title card letters "ABCHLSU" (M)
+19C706 - AL title card (M)
+19C8B8 - BP title card (M)
+19CADA - CG title card (M)
+19CD1C - DP title card (M)
+19CF1E - EM title card (M)
+19D100 - Unknown "ABGNSTU" (M)
+19F87E - Competition mode stage selection screen (M)
+1A16BE - Competition mode results screen (M)
+1A566A - AIZ act 1 base tiles (M)
+1A647C - AIZ act 1 extended tiles (M)
+1A944E - AIZ act 1 custom tiles (M)
+1B15D2 - AIZ act 2 base tiles (M)
+1B3784 - AIZ act 2 extended tiles (M)
+1B9668 - HCZ base tiles (M)
+1B9B8A - HCZ base module 1 (M)
+1BA13A - HCZ base module 2 (M)
+1BAE7A - HCZ act 1 extended tiles (M)
+1BFA6C - HCZ act 2 extended tiles (M)
+1C3EBE - MGZ base tiles (M)
+1C8A70 - MGZ act 1 extended tiles (M)
+1CA132 - MGZ act 2 extended tiles (M)
+1CDC74 - CNZ tiles (M)
+1D4296 - ICZ base tiles (M)
+1D64C8 - ICZ act 1 extended tiles (M)
+1DAF0A - ICZ act 2 extended tiles (M)
+1DFABC - LBZ base tiles (M)
+1E120E - LBZ act 1 extended tiles (M)
+1E77D0 - LBZ act 2 extended tiles (M)
+1E8F72 - LBZ act 2 custom tiles (M)
+1EEB84 - AL tiles (M)
+1F2896 - BP tiles (M)
+1F5948 - CG tiles (M)
+1F81BA - DP tiles (M)
+1FB6CC - EM tiles (M)
+1FEE2E - Bonus stage tiles (M)
+---------------------------------------------------------------------------------------
+-      Sonic & Knuckles Locations
+---------------------------------------------------------------------------------------
+1FCF2A - SK Special Stages (SK/S3K)
+1FD5CA - S1K Special Stages Patterns

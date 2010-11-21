@@ -1,0 +1,43 @@
+---------------------------------------------------------------------------------------
+-      Saxman Location File
+-      Made by Perfect Chaos
+-      Locations: 32
+-         - Sonic 2 Final: 32
+-      Note: some data use a special format, it can't
+-            be decompressed using that tool.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+-      Sonic 2 Locations (Final)
+---------------------------------------------------------------------------------------
+0EC0E8 - Sound Driver - Specify the following size: 0x0F64
+0FC824 - 01 - 2 Players Result Screen
+0F88C4 - 02 - Emerald Hill Zone
+0F9A3C - 03 - Mystic Cave Zone (2P)
+0FBD8C - 04 - Oil Ocean
+0F8DEE - 05 - Metropolis Zone
+0FCE74 - 06 - Hill Top Zone
+0F9D69 - 07 - Aquatic Ruin Zone
+0F84F6 - 08 - Casion Night Zone (2P)
+0F917B - 09 - Casino Night Zone
+0FA36B - 0A - Death Egg Zone
+0F9664 - 0B - Mystic Cave Zone
+0FC480 - 0C - Emerald Hill Zone (2P)
+0FBA6F - 0D - Sky Chase Zone
+0FB3F7 - 0E - Chemical Plant Zone
+0FC146 - 0F - Wing Fortress
+0FAAC4 - 11 - Option Screens
+0FA6ED - 12 - Special Stage
+0FB81E - 13 - Boss
+0FB124 - 14 - Final Battle
+0FAC3C - 15 - Ending
+0FCBBC - 16 - Super Sonic
+0F8359 - 17 - Invincibility Stars
+0FD48D - 18 - 1-Up (Uses a special format)
+0FD193 - 19 - Title Screen
+0F803C - 10 - Hidden Palace Zone
+0FD35E - 1A - Stage Cleared
+0FD57A - 1B - Game Over (Uses a special format)
+0F0002 - 1C - Continue
+0FD6C9 - 1D - Got an Emerald (Uses a special format)
+0FD797 - 1E - Credits (Uses a special format)
+0F823B - 1F - Underwater Timing

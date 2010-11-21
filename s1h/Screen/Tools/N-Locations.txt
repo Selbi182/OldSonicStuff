@@ -1,0 +1,619 @@
+---------------------------------------------------------------------------------------
+-      Nemesis Location File
+-      All Locations are from Nemesis' hacking guides
+-      Locations: 598
+-         - Sonic 1 US: 153
+-         - Sonic 2 Beta: 128
+-         - Sonic 2 Final: 202
+-         - Sonic 3: 115
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+-      Sonic 1 Locations (US)
+---------------------------------------------------------------------------------------
+01DC00 - "SEGA" Patterns
+01E26E - Patterns for foreground in intro
+01F27A - Patterns for sonic in intro
+020C48 - "TM"
+020D3A - Hidden Japanese writing on "Sonic team presents" screen
+02BC1E - Smoke/dust trail
+02BD22 - Stars
+02BD5C - Bubble
+02BEF2 - Stars from invincibility
+02C03A - Three different sized air bubbles, and a picture of sonic holding his breath.
+02C144 - Projectile that stone head shoots at you in LZ
+02C196 - Original special stage entrance effect
+02C5E4 - Block in special stage from every angle it rotates to
+02D050 - Background of special stage
+02DFE0 - Bubbles/clouds in background of special stage
+02E4D4 - "Goal" block from special stage
+02E5C2 - "R" block from special stage
+02E692 - Sonic life block from special stage
+02E788 - Stars from getting emerald in special stage
+02E7E6 - Closed one way block from special stage
+02E878 - "Zone 1" block from special stage
+02E93A - "Zone 2" block from special stage
+02EA08 - "Zone 3" block from special stage
+02EAD4 - "Zone 4" block from special stage
+02EB9C - "Zone 5" block from special stage
+02EC66 - "Zone 6" block from special stage
+023D36 - "Up/Down" block from special stage
+02EF2A - 4 emeralds present in special stage
+02F092 - One way block from special stage
+02F142 - "W" block from special stage
+02F21C - Desroyable blocks from special stage
+02F2A0 - Different 4 emeralds present in special stage
+02F41E - Stalk of flower
+02F468 - Swinging platform
+02F582 - Rope bridge in EHZ
+02F66E - 2x2 block
+02F6B6 - Ball that is swung by robotnic in GHZ
+02F854 - Vertical and horizontal spike
+02F8D0 - Rotating spike log in GHZ
+02FAE4 - Rotating spikes off log in GHZ
+02FC10 - Rock in EHZ
+02FD3E - Destroyable section of wall in GHZ
+02FDDC - Normal section of wall in GHZ
+02FE3C - Surface of water in LZ
+02FF60 - Waterfall and water
+030754 - Swinging spikeball
+0308D4 - Flat and diagonal blocks from SBZ
+030A3E - Bubbles and numbers for underwater
+031094 - Block from LZ
+03114A - Another block from LZ
+0311EC - Horizontal and vertical spear in LZ that extends and retracts
+031348 - Broken bar from LZ
+0313AC - Block from LZ
+0314FE - Wheel from LZ
+0319E0 - Head that launches projectile in LZ
+031B50 - Level blocks from LZ
+031E08 - More blocks from LZ
+031F40 - Cork block from LZ
+03206A - A block from LZ
+03217A - Metal blocks from MZ
+032408 - Button in LZ and MZ
+0324C6 - Ball that swinging platform attaches to in MZ
+03257E - Unknown. Grass... or something
+0325D2 - Fireballs from MZ
+0328B0 - Lava stuff from MZ
+0331C6 - Moveable block from MZ
+03332A - Block in background frm MZ
+033978 - Metal block from SLZ
+0333B2 - See-saw from SLZ
+0335EE - Spikeballs that flash red and explode that robotnic drops in SLZ
+033734 - Fan from SLZ
+0339DA - Pylon from SLZ
+033ABC - Spikeball from SLZ
+033C9E - Misc blocks for SLZ
+033DAA - Fireball launcher from
+033E4E - Bumper from special stage and SYZ
+033FB8 - Small spikeball
+03401A - Normal button pressed/unpressed, and red button unpressed
+0340FC - Spikeball and chain
+03438A - Indent on spinning wheel in SBZ
+0343DE - Platforms from SBZ
+03467A - Pizza slicer thing from SBZ
+03487E - Stomper from SBZ
+034A1C - Tilting platform from SBZ
+034D4C - Some blocks from SBZ
+034F2A - Metal block from collapsing platform in SBZ
+034F82 - Zapper thing from SPZ
+035102 - Blocks from SBZ
+035200 - Flame pipes from SBZ
+03538C - One way barrier frm SBZ
+0353DC - Red and metal platforms from SBZ
+035434 - Blocks from SBZ
+035530 - Metal blocks from SBZ
+035646 - Pig badnick
+035A06 - Crab badnick
+035EF4 - Buzz bomber
+03629A - Fireball
+036482 - Drill noze badnick from LZ
+036B6C - Fish badnick from GHZ
+036DD4 - Fish badnick from LZ
+03705E - Enemy that can enter a ball from SYZ
+037582 - Driving enemy from GHZ
+03780C - Enemy that appears and jets along the ground
+037E2A - Enemy with spikes on top
+038212 - Bat
+03850E - Splats badnick
+038756 - Walking bomb
+0389EE - Enemy with spikeballs around it
+038BCC - Caterkiller
+038D5A - Level splash screen tiles
+039368 - Rings/Score/Time patterns
+03945E - Sonic life counter patterns
+039564 - Patterns for rings
+039658 - Monitor/contents of monitor patterns
+039AB8 - Explosion
+03A11E - Points popping up onscreen from busting badnick
+03A1CE - "Game over" text
+03A360 - Horizontal Spring
+03A462 - Vertical spring
+03A53E - End of level signpost
+03A9BA - Starpoll
+03AA7A - Flash from entering giant golden ring
+03ABEE - Hidden points at end of levels
+03AEF0 - Sonic lying down anomation in "Continue?" screen
+03B1A0 - "Continue" and mini sonic for it.
+03B3DA - Rabbit
+03B532 - Chicken
+03B68E - Blackbird
+03B80A - Seal
+03B926 - Pig
+03BA5C - Bluebird
+03BB96 - Squirrel
+03C692 - GHZ Primary pattern block
+03DCF2 - GHZ secondary pattern block
+0414D4 - LZ primary pattern block
+046016 - MZ primary pattern block
+04A7FE - SLZ primary pattern block
+0510F0 - SYZ primary pattern block
+057A66 - SBZ primary pattern block 
+05CC62 - Robotnic's main ship
+05D4C6 - GHZ boss
+05D7B0 - Egg prison
+05E034 - Robotnic
+05E860 - Stomper boss from final zone
+05EFC8 - Robotnic's ship at end of final zone
+05F548 - Rocket thrust from robotnic's ship
+05F668 - 7 chaos emeralds
+05F866 - Patterns for Sonic in ending sequence
+060A44 - Robotnic in Try Again screen
+061388 - Robotnic's ship in flames and blowing up in background
+061CEE - Grass and flower against both checkered and non checkered background
+061F76 - Alphabet
+062574 - "Sonic the hedgehog" writing from end of game 
+---------------------------------------------------------------------------------------
+-      Sonic 2 Locations (Beta)
+---------------------------------------------------------------------------------------
+06DF8E - Patterns for bubble
+06E114 - Stars from invincibility 
+070960 - SEGA patterns
+071520 - Title patterns
+072E82 - Sonic patterns in title screen
+0739C6 - Fireballs from HTZ and WZ
+073B3C - Some waterfll tiles form WZ
+073C42 - Another fireball from HTZ
+073D90 - Peices of bridge from EHZ
+073E68 - Flying fox system in HTZ
+07415C - One way barrier from HTZ
+0741D4 - See-saw from HTZ
+07436C - Fireball
+07447A - Rock from HTZ
+0745B0 - badnick from HTZ with balls of flame spinning around him that he shoots at you
+07461C - Spinning grey wheel from MTZ
+074A74 - A ball shaped thing from MTZ patterns
+074B1C - Spear block from MTZ
+074BEA - Steam from MTZ
+074CF4 - Spike from MTZ
+074DB6 - Unknown. Some similar shaded blocks
+074E2C - Lava bubble from MTZ
+074EE2 - Something from MTZ patterns
+074F52 - Unknown. A block of some kind.
+0751FE - Stuff from MTZ
+0752A0 - Mini rotating cog from MTZ
+075382 - Four blocks from MTZ tiles. All of the blocks are just one colour
+07538E - Bridge from HPZ
+075506 - Waterfall tiles for HPZ
+075868 - The master emerald
+075ADA - Platform thing from HPZ
+075B9A - Pulsing light thing from HPZ
+075DD6 - Another platform thing from HPZ and those green blocks
+075F70 - Patterns from raising platform in OOZ
+076060 - Spikeball thing from OOZ
+076258 - Patterns for stuff in OOZ
+0762EE - Some striped patterns from OOZ
+07635A - Oil patterns from OOZ
+0764D6 - Some blocks of oil and stuff from OOZ
+076602 - Unknown. Damn I wish I could make this out, because it looks quite interesting.
+076722 - Unknown. Ditto.
+076A12 - Unknown. Whatever they are, they look OOZ style.
+076CA6 - Unknown. Also look OOZ in style.
+076E68 - Swinging platform from OOZ
+07708A - Wooden box from MCZ
+0772C8 - Collapsing platform from MCZ
+077472 - Vines around switch you pull on from MCZ
+07756A - Vines from MCZ
+077614 - A side on view of a log from WZ I suspect.
+077684 - Big moving platform in CPZ
+0777D2 - Surface of water from HPZ and CPZ
+077942 - Unknown. It looks like a small cylinder kinda.
+0779AA - Blue ball for enemy in CPZ
+077A1C - CPZ metal stuff
+077C26 - Some blocks from CPZ
+077C66 - Some diagnally striped blocks from CPZ
+077CD2 - Little yellow moving platform from CPZ
+077EB4 - Block from CPZ, but with something else as well.
+078074 - Spring on top of pipe from CPZ, and something else further down.
+078270 - Top of water from ARZ
+078356 - Leaves from ARZ
+0783E2 - Arrow and arrow shooter from ARZ
+078540 - Splash from ARZ
+078580 - Button
+078658 - Vertical red spring
+078774 - Horizontal red spring
+07883E - Diagonal spring
+078A12 - Score, rings, time patterns
+078B1A - Sonic lives counter
+078C30 - Ring patterns
+078D24 - Monitor patterns
+07914E - Spikes
+07919E - Numbers
+079278 - Beta starpoll
+07931E - Signpost for end of level
+0798F4 - Weird spring from CPZ and ARZ
+079A44 - Long horizontal spike
+079AC0 - Bubbles and numbers that count down when underwater
+07A11A - Crocodile
+07A4BC - Buzz bomber
+07A6A2 - Bat from HPZ
+07A9F8 - Octopus from OOZ
+07AD18 - Rhinobot
+07B114 - Dinobot 
+07B4EA - Pirhana 
+07B9E2 - Seahorse from OOZ
+07BE30 - Spinning ball thingy
+07C0C6 - Blinky
+07C2F2 - Bubble monster
+07C514 - Ground based badnick from EHZ
+07C710 - Bouncer badnick from CNZ
+07CA92 - Fish badnick from EHZ
+07CC9E - Robotnic and his main ship
+07D3DA - CPZ boss
+07D938 - Some kind of large explosion
+07DFC0 - A small explosion
+07E03E - Some kind of trailing smoke
+07E124 - EHZ boss
+07E910 - Chopper blades for EHZ boss
+07EA04 - Title card patterns for levels
+07F012 - Regular in level explosion
+07F678 - Game/time over tiles
+07F80A - Vertical spring from S1
+07F90C - Horizontal spring from S1
+07F9E8 - Flash from entering giant ring
+07FB5C - Hidden end of level bonus points
+07FE5E - Patterns for continue screen from S1
+08010E - Patterns for recieveing continue at end of special stage from S1
+080348 - Rabbit
+0804A0 - White bird
+0805FC - Black bird
+080778 - Seal
+080894 - Pig
+0809CA - Blue bird
+080B04 - Bear
+081C00 - EHZ/HTZ main level patterns
+085200 - HTZ pattern suppliment to EHZ level patterns
+086626 - Initial blocks for dynamically reloaded and animated patterns in HTZ
+08AB2E - WZ main level patterns
+091716 - MTZ main level patterns
+098B76 - HPZ main level patterns
+09ED58 - OOZ main level patterns
+0A5248 - MCZ main level patterns
+0ABF2A - CNZ main level patterns
+0AEF3C - Some blocks from CNZ
+0B2506 - CPZ/DEZ main level patterns
+0B9E58 - ARZ main level patterns
+0BF408 - Waterfall patterns
+---------------------------------------------------------------------------------------
+-      Sonic 2 Locations (Final)
+---------------------------------------------------------------------------------------
+049A14 - Dynamically reloaded cliffs in background from HTZ
+071D8E - Bubble
+071F14 - Invincibility stars
+07393C - Supersonic stars
+074876 - SEGA patterns
+074F6C - Main patterns from title screen
+07667A - Sonic and tails from title screen
+078CBC - A few menu patterns
+078DAC - Button
+078E84 - Vertical spring
+078FA0 - Horizontal spring
+07906A - Diagonal spring
+07923E - Score, Rings, Time patterns
+079346 - Sonic lives counter
+07945C - Ring
+079550 - Monitors and contents
+07995C - Spikes
+0799AC - Numbers
+079A86 - Starpoll
+079BDE - Signpost
+07AB4A - Strange spring from CPZ and ARZ
+07AC9A - Long horizontal spike
+07AD16 - Bubble man, and bubbles from bubble man
+07AEE2 - Bubbles from character
+07B400 - Game/Time over text
+07B592 - Explosion
+07B946 - Miles life counter
+07BA32 - Egg prison
+07BDBE - Image of tails in plane when sonic is on final frame at end of game
+07C0AA - Sonic continue
+07C20C - Tails life counter
+07C2F2 - Tails continue
+07C43E - ASCII characters used in game
+07C9AE - 1P/2P wins text from 2P mode
+07D22C - Title card patterns
+07D58A - Alphabet for font using large broken letters
+07D990 - A menu box with a shadow
+07DA10 - Pictures in level preview box in level select
+07E86A - Unknown. More text I haven't figured out
+07EB58 - Text for end of special stage, along with patterns for 3 emeralds.
+07EEBE - "Perfect" text
+07EF60 - Bluebird
+07F0A2 - Squirrel
+07F206 - Mouse
+07F340 - Chicken
+07F4A2 - Beaver
+07F5E2 - Penguin
+07F710 - Pig
+07F846 - Seal
+07F962 - Penguin
+07FADE - Turtle
+07FC90 - Bears
+07FDD2 - Rabbit
+07FF2A - Rivet thing that you bust to get inside ship at the end of WFZ
+07FF98 - Breakaway panels in WFZ
+08007C - Spiked ball from OOZ
+080274 - Unknown. HPZ style shaded blocks
+08030A - Striped blocks from CPZ
+080376 - Oil falling into oil in OOZ
+0804F2 - Cascading oil from OOZ
+0805C0 - Ball on spring from OOZ
+0806E0 - Spinball from OOZ
+0809D0 - Collapsing platform form OOZ
+080C64 - Diagonal and vertical weird spring from OOZ
+080E26 - Swinging platform from OOZ
+081048 - 4 stripy blocks from OOZ
+0810B8 - Raising platform in OOZ
+081254 - Fan in OOZ
+081514 - Green flame from thingy that shots platform up in OOZ
+081600 - Patterns for appearing and disappearing string of platforms in CNZ
+081668 - Spiky ball from poky in CNZ
+0816C8 - Moving cube from either CNZ and CPZ
+0817B4 - Elevator in CNZ
+081826 - Bars from pokies in CNZ
+081894 - Hexagonal bumper in CNZ
+08191E - Normal round bumper from CNZ
+081AB0 - Diagonal spring from CNZ that you pull back on
+081C96 - Vertical red spring
+081DCC - Weird blocks in CNZ that you hit 3 times to get rid of them
+081EF2 - Flippers from CNZ
+082216 - Large moving platform from CPZ
+082364 - Top of water in HPZ and CPZ
+0824D4 - Booster things in CPZ
+08253C - CPZ enemy made up of a string of balls
+0825AE - CPZ metal things
+0827B8 - CPZ large moving platform blocks
+0827F8 - Stripy blocks from CPZ
+082864 - Small yellow moving platform from CPZ
+082A46 - Moving block from CPZ
+082C06 - Spring that covers tube in CPZ
+082E02 - Top of water in ARZ
+082EE8 - Leaves from ARZ
+082F74 - Arrow shooter and arrow from ARZ
+0830D2 - One way barrier from ARZ
+08316A - Buzz bomber
+08336A - Octopus badnick from OOZ
+08368A - Flying badnick from OOZ
+0839EA - Fish badnick from EHZ
+083BF6 - Robotnic's main ship
+084332 - Robotnic enemy from CPZ
+084890 - Large explosion
+084F18 - Mini explosion
+084F96 - Unknown. Trail of smoke of some kind.
+08507C - EHZ boss
+085868 - Chopper blades for EHZ boss
+08595C - HTZ boss
+086128 - ARZ boss
+086B6E - MCZ boss
+087AAC - CNZ boss
+0882D6 - OOZ boss
+088DA6 - MTZ boss
+089534 - Blowfly from ARZ
+08970E - Grounder from ARZ
+089B9A - Fish from ARZ
+089DEC - Lava snake from HTZ
+089FAA - Enemy with spike cone on top form HTZ
+08A142 - Circular badnick from SCZ
+08A362 - Turtle badnick from SCZ
+08A87A - Coconuts from EHZ
+08AB36 - Snake like badnick from MCZ
+08AC5E - Firefly from MCZ
+08AD80 - Praying mantis badnick from MTZ
+08B058 - Crab badnick from MCZ
+08B300 - Exploding star badnick from MTZ
+08B430 - Weird crawling badnick from CPZ
+08B6B4 - Spider badnick in CPZ
+08B9DC - Scratch from WFZ
+08BC16 - Jet like badnick from SCZ
+08BE12 - Robotic sonic
+08CC44 - The tornado
+08D1A0 - Wall turret from WFZ
+08D388 - Hook on chain in WFZ
+08D540 - Retracting platform from WFZ
+08D7D8 - Wheel for belt in WFZ
+08D96E - Moving platform in WFZ
+08DA6E - Giant unused vertical red laser in WFZ
+08DAFC - Clouds
+08DC42 - Red horizontal laser in WFZ
+08DCA2 - Platform that shoots sonic across from WFZ
+08DD0C - Rising platforms on belt from WFZ
+08DDF6 - Unused badnick in WFZ
+08DEB8 - Vertical spinning blades from WFZ
+08DEE8 - Horizontal spinning blades from WFZ
+08E010 - Platforms that tilt in WFZ
+08E0C4 - Thrust from Robotnic's getaway ship in WFZ
+08E138 - Laser boss from WFZ
+08E886 - Robotnic's head
+08EA5A - Robotnic
+08EE52 - Robotnic's lower half
+08EF96 - Window in back that Robotnic looks through in DEZ
+08F024 - Death egg
+0901A4 - Bouncer badnik from CPZ
+090520 - Rocket thruster for tornado
+090992 - Movie sequence at end of game
+091F3C - Final image of tornado with it and sonic facing screen
+0927E0 - Mini pictures of tornado in final ending sequence
+092F0A - Mini pictures of sonic and final image of sonic
+093848 - Mini pictures of sonic and final image of sonic in supersonic mode
+093F3C - Final image of Tails
+094B28 - Sonic the hedgehog 2 image at end of credits
+0DCD68 - Background patterns for special stage
+0DD48A - Sonic/Miles and number text from special stage
+0DD790 - "Start" patterns in special stage
+0DD8CE - Stars in special stage
+0DD9C8 - Unknown. Text in special stage.
+0DDA7E - Ring patterns in special stage
+0DDFA4 - Horizontal shadow patterns in special stage
+0DE05A - Diagonal shadow patterns from special stage
+0DE120 - Vertical shadow patterns in special stage
+0DE188 - Explosion patterns in special stage
+0DE4BC - Bomb patterns in special stage
+0DE8AC - Emerald patterns in special stage
+0DEAF4 - Unknown. Text in special stage.
+0DEEAE - Sonic and tails' animation frames from special stage
+0E247E - "Tails" Patterns from special stage  
+0E34EE - Unknown. looks like a really crap falling water thing.
+0F0160 - Fireball from EHZ
+0F02D6 - Waterfall tiles
+0F03DC - Another fireball
+0F052A - Bridge in EHZ
+0F0602 - Diagonally moving lift in HTZ
+0F08F6 - One way barrier from HTZ
+0F096E - See-saw in HTZ
+0F0B06 - Fireball from HTZ
+0F0C14 - Rock from HTZ
+0F0D4A - Badnick from HTZ with 4 balls of fire spinning around him
+0F0DB6 - Large spinning wheel from MTZ
+0F120E - Indent in large spinning wheel from MTZ
+0F12B6 - Unknown. MTZ block.
+0F1384 - Steam from MTZ
+0F148E - Spike from MTZ
+0F1550 - Similarly shaded blocks from MTZ
+0F15C6 - Lava bubble from MTZ
+0F167C - Unknown. A steam vent?
+0F16EC - Things from MTZ
+0F178E - Small cog from MTZ
+0F1870 - Unknown. Four blocks that are all the same colour from MTZ.
+0F187E - Large wooden box from MCZ
+0F1ABA - Collapsing platform from MCZ
+0F1C64 - Switch that you pull on from MCZ
+0F1D5C - Vine that lowers in MCZ
+0F1E06 - Unknown. A log viewed from the end
+---------------------------------------------------------------------------------------
+-      Sonic 3 Locations
+---------------------------------------------------------------------------------------
+038FFE - Unknown. A bubble bursting ?
+0911CE - Sphere from special stage
+091B2E - Shadow in special stage
+091B70 - Text in special stage
+091CF2 - Tick in special stage
+091D4E - Numbers for HUD in special stage
+091EBA - Picture of shere and ring for HUD
+092002 - Bouncer from special stage
+09265E - Ring from special stage
+0C3200 - Level select patterns
+0C3774 - Unknown. Blocky letters
+0C3AF2 - Borders in level select
+0C3B72 - Pictures in preview box in level select
+0C49CC - Patterns for Sonic and plane in background at title screen
+1481A0 - Waves of water from sonic AIZ intro
+1486E0 - Secondary splash from surfboarding intro
+148978 - Surfboard without sonic
+14F5E2 - Unknown. Splash.
+15026C - Title sceen patterns
+15C900 - Button
+15C988 - Horizontal spring
+15CACE - Vertical spring
+15CBD2 - Diagonal spring
+15CDBA - Score/time/rings patterns
+15CEE6 - Sonic lives counter
+15CFFE - Tails lives counter
+15D0E8 - Knuckles lives counter
+15D1E6 - Ring patterns
+15D2DE - Monitor patterns
+15D738 - Unknown. Two different middle sections of spikes.
+15D794 - Long horizontal spike
+15D7FC - Patterns for points that appear from busting things
+15D8A2 - Starpoll
+15DA5A - End of level signpost
+15E1FC - Bubbles from underwater
+15E49A - "Game over" text
+15E6C0 - Explosion
+15EA66 - Unknown. Badnick in robotnic's ship.
+15ED52 - Sonic's continue animation
+15EEB4 - Tails' continue animation
+15EFFC - Horizontal springs and vertical spikes
+15F2EC - Ring and score/time/rings patterns
+15F528 - Points and starpoll patterns
+15F76C - Seal
+15F888 - Pig
+15F9D4 - Bluebird
+15FB06 - Chicken
+15FC54 - Penguin
+15FDA6 - Squirrel
+15FF04 - Rabbit
+164BF2 - Firebomber in AIZ
+1671A2 - Bombs launched by firebomber
+168400 - Unknown. Circles and an explosion.
+16929E - Water spiral jets made by boss in HCZ
+16A3E0 - Blowfly in HCZ
+16B2CE - Unknown
+16E548 - Unknown. Rotating spikes on a wheel is one of them.
+16EA04 - Unknown
+1706B0 - Unknown
+170C76 - Lazer boss in FBZ
+171178 - Main boss from FBZ 
+171B0E - Ice blocks from ICZ
+172732 - Unknown
+172BB4 - Unknown
+172F1E - Unknown. Clouds and metal.
+173CCC - Unknown
+17599C - Unknown. Has a big thruster in it.
+1791DE - Unknown. A round ball.
+17F800 - Small explosion
+17FB50 - Explosion
+1800A2 - Another explosion
+18041E - Robotnic in his main ship
+18097A - Robotnic's head
+180BEC - Robotnic
+181002 - More robotnic
+182166 - Unknown. A pole or beam or something.
+182180 - Egg prison
+18AE2A - Bonus stage patterns for dispenser stage
+18CF6E - Large thin alphabet
+18D3E0 - Normal Alphabet and first two numbers
+18D586 - Grass blocks from AIZ
+18D72A - Unknown. On AIZ load cue.
+18D8BC - Rope on flying fox
+18DA22 - Unknown
+18DB46 - Unknown. On AIZ load cue.
+18DC90 - Unknown
+18E4D8 - Impact splash on water
+18E760 - Misc blocks from AIZ
+18FAEC - Metal spikeball
+18FBB4 - Unknown. Rippling water ?
+18FCD4 - Unknown. Rocket thruster with blue flame.
+18FD88 - Misc objects from HCZ
+190348 - More misc patterns from HCZ
+191B36 - Patterns for sliding tube in HCZ
+19204C - Bridge and misc block from HCZ
+193714 - Unknown. Was in MZ load cue.
+19382E - Unknown. The drill? No idea really.
+19426C - Unknown. MGZ stuff
+19487C - Signs in MGZ
+194AB6 - Tiles from CNZ
+195874 - CNZ lightbulb and a few other blocks
+1959DE - Unknown. Looked like LBZ blocks in there.
+1964FC - Unknown. A mini rocket thrust looks like one of them.
+196760 - Unknown. Patterns for metal type competition level ?
+196B9C - Mini spring and button from competition mode
+196D10 - Mini spring and spikes for competition mode
+196F02 - Powerups from competition mode
+1973F8 - Unknown. Looks like more competition mode stuff
+197570 - Unknown. Text from competition mode ?
+197BCA - Unknown. Numbers and explosions from competition mode ?
+1980C4 - Unknown. Mini spike and something else.
+19815E - Unknown. Blocks from special stage ?
+1989A8 - Unknown. Water water eveywhere.
+1996BE - Unknown
+199A32 - Rock and dripper paterns from EM competition level

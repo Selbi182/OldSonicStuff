@@ -1,0 +1,32 @@
+Included in this package are premade "Project Files" for the filesets created
+by the Nemesis Sonic 2 and Hivebrain Sonic 1 data splitting files. Each set
+needs slight adjustments to work properly with SonED2:
+
+Sonic 1 - Green Hill's tiles were split into two sets when the game was
+          created. They must be merged into one set for use with SonED2. This
+          involves decompressing both files ("Nemesis" compression, it is
+          suggested that this be done with "The Sonic Data Compressor"),
+          copying the data from the second file onto the end of the first
+          file, then recompressing the single file. Also, to use this new
+          file in Sonic 1, the "Pattern Load Cue" for Green Hill must be
+          altered so that it only loads the one tile set instead of looking
+          for two. The filename expected by the project file is
+          "GHZ Merged Patterns.bin", in the "artnem" folder.
+
+Sonic 2 - The original data split file copied both normal and rotated
+          collision maps to the same file, when they should be managed
+          separately. A modified version of this file is included with
+          SonED2 to correct this. The file also contains information to
+          split the data for Casino Night Zone's bumpers, which wasn't
+          previously included. These two modifications are NOT directly
+          supported by Nemesis' modified game file, so the game file must
+          be modified to accept this data, and the Merge file must also
+          be modified to insert the data properly.
+
+To use these files to extract the data from a ROM, place a Sonic 1 (USA) ROM
+named "S1.bin" into the Sonic1 Folder, or a Sonic 2 ROM named "S2.bin" into
+the Sonic2 Folder, and run "split.bat". Data will then be extracted from the
+ROMs into individual files, ready to be edited. After editing, the data may
+be placed back into a ROM by hand or by other means. Those who are not
+familiar with using extracted data in this manner would benefit from
+searching the internet for more information.

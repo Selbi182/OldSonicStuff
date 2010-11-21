@@ -1,0 +1,111 @@
+                          SonED2 Level Editor
+
+The Level Editor is used for editing the layout of normal gameplay levels.
+Levels are built by placing "Chunks" onto the level grid with the cursor.
+"Chunks" are either 256x256 pixels or 128x128 pixels wide and tall depending
+on the game they came from, and are built from 16x16 "Blocks", which are
+built from 8x8 Tiles. They are built through use of the Tile Editor.
+
+The status display in the Level editor shows the following information:
+
+Screen Position - The X and Y position of the top-left corner of the screen,
+                  shown in hex as with the in-game debug.
+
+Plane Size - The Width and Height of the current plane, measured in chunks,
+             shown in hex.
+
+Current Chunk - The currently-selected chunk. This chunk is displayed as the
+                cursor, and will be inserted into the level when "drawing"
+
+Chunk at Cursor - The ID of the Chunk that is currently placed at the level
+                  position under the cursor
+
+Solid ??? - This entry describes which of the two solidity paths is being
+            drawn over the level, and whether or not the corresponding angle
+            values are shown
+
+Objects ??? - This entry describes how the objects are currently being
+              displayed relative to the high/low planes of the level
+
+Scroll Speed - The number of pixels that the screen will move when the arrow
+               keys are used
+
+
+
+Listed below are the Level Editor functions:
+
+Drawing to the level - To draw the currently selected chunk into the level,
+                       click the left mouse button after moving the cursor
+                       to the desired position.
+
+Toggling "Loop" tile - In Sonic 1 type games, "loops" are kept track of by
+                       an array stored in the program that holds two Chunk
+                       IDs per level, specifying which two Chunks can act
+                       as "loops". "Loop" Chunks in this game type should
+                       be stored once with solidity traveling up the right
+                       side, and then visually identical copy stored in the
+                       immediately following Chunk with solidity traveling
+                       down the left side. The Chunk must also be "flagged"
+                       within the level layout. To do this, hover over the
+                       Chunk and press Spacebar. A Chunk who's ID reads
+                       greater than 0x80 (in "Chunk at Cursor) is "flagged",
+                       and one that reads less is not flagged. The ID that
+                       should be entered into the array (manually) is the
+                       Chunk's real ID plus 0x80 (128). This does not apply
+                       to Sonic 2 type games, as they use a dual-path method
+                       rather than swapping Chunks
+
+Selecting A Chunk - To select a chunk for drawing, use the A and Z keys to
+                    cycle through the list, right-click the map to "pick up"
+                    the chunk that is under the cursor's current position, or
+                    use the "Chunk Selector" in the Tile Editor.
+
+Moving around the level - To scroll around the level area, use the arrow
+                          keys to scroll by the "scroll value", or use the
+                          scrollbars surrounding the window. In full-screen
+                          mode, moving the mouse pointer to the edges of the
+                          screen will also scroll. When used in conjunction
+                          with the arrow keys, the speed will double.
+
+Resizing the level - Holding CTRL while pressing the arrow keys will change
+                     the level size. Left and Down increase Width and Height,
+                     Right and Up decrease Width and Height. (This is level
+                     data size, not gameplay boundary size)
+
+Other modes - The "Editors" menu has options to switch to any of other
+              editing modes available to a project using this Level Editor.
+              The following keys also have the same effect:
+
+              L - Level Editor Plane A (foreground)
+              P - Level Editor Plane B (background)
+              O - Object Editor
+              I - Tile Editor
+
+Altering scroll speed - The H and N keys increase and decrease the number of
+                        pixels that the screen will scroll when using the
+                        arrow keys or moving the mouse to the screen edges
+                        in full-screen mode.
+
+Viewing Controls - The following keys affect other viewing options:
+
+                   Q - Disable Solidity viewing
+                   W - Display Solidity Path 0 Over Level
+                   E - Display Solidity Path 1 Over Level (Sonic 2 and above)
+                   R - Toggle angle view when viewing solidity path
+                   T - Change object viewing status:
+                       -Disabled
+                       -Below High Plane (Game View, some objects "hidden")
+                       -Above High Plane (Objects on top, total visibility)
+                   Y - Toggles the "Low" plane on or off
+                   U - Toggles the "High" plane on or off
+
+Translucent Cursor - The chunk cursor can be made translucent by selecting the
+                     "Translucent Cursor" option in the "Editor" menu, so that
+                     the tile currently placed at the cursor's position shows
+                     through the tile that is currently selected for drawing.
+                     This option may only be toggled in Windowed mode because
+                     it determines whether or not full-screen mode uses a high
+                     color setting. Turning on this option and then switching
+                     to full-screen will allow translucency in full-screen mode,
+                     however, leaving this option off will cause full-screen
+                     mode to use 8-bit color, which is faster.

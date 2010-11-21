@@ -1,0 +1,1635 @@
+****************************************************************
+* ROM offsets listing file for SonMapEd's ROM extracter
+*
+* important:
+* items without a dash are assumed to end at the offset of
+* the following item (if greater), so order does matter
+*
+* the checksum is the one in the ROM header, not calculated
+* the "name" field is currently ignored
+* the mode (s1/s2/s3/sc) determines mapping/cue format
+* animations are currently ignored
+* start a description with ? if you want its address to show
+*
+* in the tiles sections, the following hints are accepted
+* in the description, used on Load(guess) or double click:
+* (unc) - load uncompressed
+* (nem) - load nemesis-compressed
+* (kos) - load kosinski-compressed
+* (mod) - load kosinski-compressed moduled tiles
+*
+* most of the data in this file comes from Nemesis' guides
+* or his Kosinski searcher tool, and has not been completely
+* checked over or properly organized/named, nor is it complete
+****************************************************************
+
+****************************************************************
+name Sonic1rev00
+checksum 264A
+mode s1
+
+tiles
+21AFE-2BC1E Sonic (unc)
+5F0-B10 Small font (unc)
+5F866 Ending Sonic (nem)
+6A324-6AF64 Giant ring (unc)
+1DC00 SEGA (nem)
+1E26E Title Screen (nem)
+1F27A Title Sonic (nem)
+20C48 TM (nem)
+20D3A-211E2 Japanese text (nem)
+2BC1E Smoke/dust trail (nem)
+2BD22 Stars (nem)
+2BD5C Bubble (nem)
+2BEF2 Stars from invincibility (nem)
+2C03A Three different sized air bubbles, and a picture of Sonic holding his breath. (nem)
+2C144 Projectile that stone head shoots at you in LZ (nem)
+2C196 Original special stage entrance effect (nem)
+2C5E4 Block in special stage from every angle it rotates to (nem)
+2D050 Background of special stage (nem)
+2DFE0 Bubbles/clouds in background of special stage (nem)
+2E4D4 "Goal" block from special stage (nem)
+2E5C2 "R" block from special stage (nem)
+2E692 Sonic life block from special stage (nem)
+2E788 Stars from getting emerald in special stage (nem)
+2E7E6 Closed one way block from special stage (nem)
+2E878 "Zone 1" block from special stage (nem)
+2E93A "Zone 2" block from special stage (nem)
+2EA08 "Zone 3" block from special stage (nem)
+2EAD4 "Zone 4" block from special stage (nem)
+2EB9C "Zone 5" block from special stage (nem)
+2EC66 "Zone 6" block from special stage (nem)
+23D36 "Up/Down" block from special stage (nem)
+2EF2A 4 emeralds present in special stage (nem)
+2F092 One way block from special stage (nem)
+2F142 "W" block from special stage (nem)
+2F21C Desroyable blocks from special stage (nem)
+2F2A0 Different 4 emeralds present in special stage (nem)
+2F41E Stalk of flower (nem)
+2F468 Swinging platform (nem)
+2F582 Rope bridge in EHZ (nem)
+2F66E 2x2 block (nem)
+2F6B6 Ball that is swung by robotnic in GHZ (nem)
+2F854 Vertical and horizontal spike (nem)
+2F8D0 Rotating spike log in GHZ (nem)
+2FAE4 Rotating spikes off log in GHZ (nem)
+2FC10 Rock in EHZ (nem)
+2FD3E Destroyable section of wall in GHZ (nem)
+2FDDC Normal section of wall in GHZ (nem)
+2FE3C Surface of water in LZ (nem)
+2FF60 Waterfall and water (nem)
+30754 Swinging spikeball (nem)
+308D4 Flat and diagonal blocks from SBZ (nem)
+30A3E Bubbles and numbers for underwater (nem)
+31094 Block from LZ (nem)
+3114A Another block from LZ (nem)
+311EC Horizontal and vertical spear in LZ that extends and retracts (nem)
+31348 Broken bar from LZ (nem)
+313AC Block from LZ (nem)
+314FE Wheel from LZ (nem)
+319E0 Head that launches projectile in LZ (nem)
+31B50 Level blocks from LZ (nem)
+31E08 More blocks from LZ (nem)
+31F40 Cork block from LZ (nem)
+3206A A block from LZ (nem)
+3217A Metal blocks from MZ (nem)
+32408 Button in LZ and MZ (nem)
+324C6 Ball that swinging platform attaches to in MZ (nem)
+3257E Unknown. Grass... or something (nem)
+325D2 Fireballs from MZ (nem)
+328B0 Lava stuff from MZ (nem)
+331C6 Moveable block from MZ (nem)
+3332A Block in background frm MZ (nem)
+33978 Metal block from SLZ (nem)
+333B2 See-saw from SLZ (nem)
+335EE Spikeballs that flash red and explode that robotnic drops in SLZ (nem)
+33734 Fan from SLZ (nem)
+339DA Pylon from SLZ (nem)
+33ABC Spikeball from SLZ (nem)
+33C9E Misc blocks for SLZ (nem)
+33DAA Fireball launcher from SLZ (nem)
+33E4E Bumper from special stage and SYZ (nem)
+33FB8 Small spikeball (nem)
+3401A Normal button pressed/unpressed, and red button unpressed (nem)
+340FC Spikeball and chain (nem)
+3438A Indent on spinning wheel in SBZ (nem)
+343DE Platforms from SBZ (nem)
+3467A Pizza slicer thing from SBZ (nem)
+3487E Stomper from SBZ (nem)
+34A1C Tilting platform from SBZ (nem)
+34D4C Some blocks from SBZ (nem)
+34F2A Metal block from collapsing platform in SBZ (nem)
+34F82 Zapper thing from SPZ (nem)
+35102 Blocks from SBZ (nem)
+35200 Flame pipes from SBZ (nem)
+3538C One way barrier frm SBZ (nem)
+353DC Red and metal platforms from SBZ (nem)
+35434 Blocks from SBZ (nem)
+35530 Metal blocks from SBZ (nem)
+35646 Pig badnick (nem)
+35A06 Crab badnick (nem)
+35EF4 Buzz bomber (nem)
+3629A Fireball (nem)
+36482 Drill noze badnick from LZ (nem)
+36B6C Fish badnick from GHZ (nem)
+36DD4 Fish badnick from LZ (nem)
+3705E Enemy that can enter a ball from SYZ (nem)
+37582 Driving enemy from GHZ (nem)
+3780C Enemy that appears and jets along the ground (nem)
+37E2A Enemy with spikes on top (nem)
+38212 Bat (nem)
+3850E Splats badnick (nem)
+38756 Walking bomb (nem)
+389EE Enemy with spikeballs around it (nem)
+38BCC Caterkiller (nem)
+38D5A Level splash screen tiles (nem)
+39368 Rings/Score/Time (nem)
+3945E Sonic life counter (nem)
+39564 for rings (nem)
+39658 Monitors (nem)
+39AB8 Explosion (nem)
+3A11E Points popping up onscreen from busting badnick (nem)
+3A1CE "Game over" text (nem)
+3A360 Horizontal Spring (nem)
+3A462 Vertical spring (nem)
+3A53E End of level signpost (nem)
+3A9BA Starpoll (nem)
+3AA7A Flash from entering giant golden ring (nem)
+3ABEE Hidden points at end of levels (nem)
+3AEF0 Sonic lying down anomation in "Continue?" screen (nem)
+3B1A0 "Continue" and mini sonic for it. (nem)
+3B3DA Rabbit (nem)
+3B532 Chicken (nem)
+3B68E Blackbird (nem)
+3B80A Seal (nem)
+3B926 Pig (nem)
+3BA5C Bluebird (nem)
+3BB96 Squirrel (nem)
+3C692 GHZ Primary pattern block (nem)
+3DCF2 GHZ secondary pattern block (nem)
+414D4 LZ primary pattern block (nem)
+46016 MZ primary pattern block (nem)
+4A7FE SLZ primary pattern block (nem)
+510F0 SYZ primary pattern block (nem)
+57A66 SBZ primary pattern block (nem)
+5CC62 Robotnic's main ship (nem)
+5D4C6 GHZ boss (nem)
+5D7B0 Egg prison (nem)
+5E034 Robotnic (nem)
+5E860 Stomper boss from final zone (nem)
+5EFC8 Robotnic's ship at end of final zone (nem)
+5F548 Rocket thrust from robotnic's ship (nem)
+5F668 7 chaos emeralds (nem)
+5F866 for Sonic in ending sequence (nem)
+60A44 Robotnic in Try Again screen (nem)
+61388 Robotnic's ship in flames and blowing up in background (nem)
+61CEE Grass and flower against both checkered and non checkered background
+61F76 Alphabet (nem)
+62574 "Sonic the hedgehog" writing from end of game (nem)
+66AD6 Waterfall tiles from GHZ (unc)
+66CD6 Flower with pointy petals in GHZ (unc)
+670D6 Flower with curved petals in GHZ (unc)
+6755A Lava surface (unc)
+67836 Lava (unc)
+67E56-68156 Flames against stone from MZ (unc)
+6175E Ending flowers (kos)
+
+
+
+animations
+
+mappings
+211E2-217FE Sonic
+5056 Continue screen?
+5680 Ending Sonic
+577A ???
+5BBC ???
+7934 ???
+7C48 ???
+7DF8 ???
+813C ???
+8188 ???
+819A ???
+81AA ???
+8746 ???
+8856 ???
+891C ???
+89EC ???
+8E62 Big Explosion
+8EA6 Explosion 2
+8EC6 Explosion
+8F0C Large Explosion
+9466 ???
+947E ???
+9466 ???
+947E ???
+9496 ???
+947E ???
+9496 ???
+9750 Crabmeat (GHZ)
+9A36 Buzz bomber 
+9B06 Buzz ball 
+9F92 Rings
+9FD2 Giant Ring
+A074 Ring Flash
+A58A Monitors
+A7C4 ???
+A888 ???
+ABCA ???
+AC70 ???
+AE5C LZ Burrobot
+B2D4 ???
+B36E ???
+B5FA ???
+BB4E ???
+BC5A MZ Sideways Spikes
+BEA4 MZ Button
+C2E6 ???
+C9E6 Title Cards
+CBA4 Game Over
+CBD8 Results
+CC9A SS Results
+CDF4 ???
+CFE8 Spikes
+D10E GHZ Rock
+D2B6 ???
+DD1A Spring
+DF42 ???
+E1A2 ???
+E250 ???
+E5F4 ???
+E904 ???
+E982 ???
+EB00 Bumper
+ED38 ???
+F210 ???
+F24A ???
+F52E ???
+
+cues
+217FE-21AFE Sonic
+
+palettes
+2388 Primary
+2208 SEGA screen
+2288 Title screen
+2308 Level select
+23A8 GHZ level
+2408 LZ level
+2468 LZ underwater level
+24E8 MZ level
+2548 SLZ level
+25A8 SYZ level
+2608 SBZ level
+2668 FZ level
+26C8 Special stage
+2748 SBZ act 3 level
+27A8 SBZ act 3 underwater level
+2828 SBZ act 3 primary palette line
+2868 Special stage results
+28E8 Unknown
+2928 Ending sequence level
+end Sonic1
+****************************************************************
+
+****************************************************************
+name Sonic2rev01
+checksum D951
+mode s2
+
+tiles
+
+50000-64320 Sonic (unc) 
+64320-894E4 Tails (unc) 
+49714 Animated flowers (unc) 
+49914 Pulsing orb on walls (unc) 
+4FAFE Part of background (unc) 
+4FCFE Waterfall (unc) 
+4D4FE Flipping square in foreground (unc) 
+49714 Animated flowers (unc) 
+4A33E Clouds from background (unc) 
+4B73E Lava (unc) 
+4EEFE Slot machine pictures (unc) 
+49914 Pulsing orb on walls (unc) 
+4A73E Rotating net (unc) 
+4BF7E Pulsing ball (unc) 
+4C0FE Square rotating around ball (Unknown) (unc) 
+4C4FE Oil (unc) 
+4B73E Lava (unc) 
+4BD3E Parts of background (unc) 
+4FAFE Part of background (unc) 
+71FFC Splash (unc) 
+7287C Spindash smoke (unc) 
+7A1A0 Signpost (unc) 
+7AF82 Drowning countdown (unc) 
+7CD30 Option and level select menu background (unc) 
+894E4 Rocks that fall from ceiling during boss fight (unc) 
+71D8E Bubble (don't know if this contains the large air-breather bubble) 32 (nem)
+71F14 Invincibility stars 34 (nem)
+7393C Super Sonic's trail stars 14 (nem)
+74876 SEGA intro art 127 (nem)
+74F6C Title screen art 336 (nem)
+7667A Sonic and Tails title screen art 674 (nem)
+78CBC Menu art 10 (nem)
+78DAC Button 16 (nem)
+78E84 Vertical spring 20 (nem)
+78FA0 Horizonatal spring 12 (nem)
+7906A Diagonal spring 32 (nem)
+7923E HUD art 24 (nem)
+79346 Sonic's life counter 12 (nem)
+7945C Ring 14 (nem)
+79550 Monitors and their contents 60 (nem)
+7995C Spikes 8 (nem)
+799AC Numbers 18 (nem)
+79A86 Star pole 16 (nem)
+79BDE Signpost 78 (nem)
+7AB4A "Diving board" spring (appears in CPZ and ARZ) 28 (nem)
+7AC9A Long horizontal spike (Unknown) 8 (nem)
+7AD16 Bubble generator 37 (nem)
+7AEE2 Character's bubbles 10 (nem)
+7B400 Game Over/Time Over text 34 (nem)
+7B592 Explosion 68 (nem)
+7B946 Miles's life counter 12 (nem)
+7BA32 Egg prison 49 (nem)
+7BDBE Final end-game art of Tails 36 (nem)
+7C0AA Sonic's continue icon 12 (nem)
+7C20C Tails's life counter 12 (nem)
+7C2F2 Tails's continue icon 12 (nem)
+7C43E Various ASCII characters 88 (nem)
+7C9AE Win text from 2P mode 38 (nem)
+7D22C Title card art 94 (nem)
+7D58A More title card art 92 (nem)
+7D990 Menu box and shadow 21 (nem)
+7DA10 Level preview art (from level select) 170 (nem)
+7E86A End of stage text 68 (nem)
+7EEBE "Perfect" text 14 (nem)
+7EF60 Bird 16 (nem)
+7F0A2 Squirrel 20 (nem)
+7F206 Mouse 20 (nem)
+7F340 Chicken 16 (nem)
+7F4A2 Beaver 20 (nem)
+7F5E2 Penguin 16 (nem)
+7F710 Pig 18 (nem)
+7F846 Seal 14 (nem)
+7F962 Penguin 18 (nem)
+7FADE Turtle 20 (nem)
+7FC90 Bear 20 (nem)
+7FDD2 Rabbit 18 (nem)
+81C96 Vertical red spring 18 (nem)
+83BF6 Robotnik's ship 96 (nem)
+84890 Large explosion 100 (nem)
+84F18 Small explosion 8 (nem)
+84F96 Trail of smoke used for Chemical Plant Zone and Hill Top Zone bosses 16 (nem)
+8CC44 The Tornado 79 (nem)
+8DAFC Clouds 18 (nem)
+8E886 Robotniks's head 24 (nem)
+8EA5A Robotnik 76 (nem)
+8EE52 Robotnik's bottom half 28 (nem)
+8F024 Death Egg 327 (nem)
+90520 Tornado's rocket booster 26 (nem)
+90974 End of game movie sequence 193 (nem)
+91F3C Final image of Tornado facing screen 127 (nem)
+927E0 Images of Tornado approaching screen 109 (nem)
+92F0A Images of Sonic approaching screen and final image of Sonic facing screen 137 (nem)
+93848 As above but Super Sonic 117 (nem)
+93F3C Final Tails image 181 (nem)
+94B28 Sonic the Hedgehog 2 logo at end of credits (if you collected all Chaos Emeralds) 72 (nem)
+8316A Buzz Bomber 28 (nem)
+839EA Masher (pirahna badnick) 22 (nem)
+8507C Boss 128 (nem)
+85868 Chopper blades 20 (nem)
+8A87A Coconuts (monkey badnik) 38 (nem)
+F0160 Fireball 20 (nem)
+F02D6 Waterfall tiles 24 (nem)
+F052A Wooden bridge 8 (nem)
+8030A Striped blocks (Unknown) 4 (nem)
+816C8 Moving cube (also appears in CNZ) 16 (nem)
+82216 Large moving platform (but which one?) 10 (nem)
+82364 Water line 24 (nem)
+824D4 Speed booster 4 (nem)
+8253C Mega Mack worm 4 (nem)
+825AE Metal things (Unknown) 33 (nem)
+827B8 Large moving platform (which one?) 4 (nem)
+827F8 Striped blocks (Unknown) 8 (nem)
+82864 Small yellow moving platform (carries Sonic over water) 48 (nem)
+82A46 Moving block (Unknown) 24 (nem)
+82C06 One-way tube exit spring 32 (nem)
+84332 Robotnick (boss) 111 (nem)
+8B430 Spiny (crawling badnik; shoots energy balls at Sonic) 32 (nem)
+8B6B4 Grabber (spider badnik) 45 (nem)
+82E02 Water line 16 (nem)
+82EE8 Leaves 7 (nem)
+82F74 Arrow launcher and arrow 17 (nem)
+830D2 One-way barrier 8 (nem)
+86128 Boss 166 (nem)
+895E4 Whisp (blowfly badnik) 9 (nem)
+8970E Grounder (badnik) 50 (nem)
+89B9A Chop Chop (pirahna badnik) 24 (nem)
+81600 "Caterpiller" platform block 4 (nem)
+81668 Spiky ball from slot machine 4 (nem)
+816C8 Moving cube (also appears in CPZ) 16 (nem)
+817B4 Elevator 4 (nem)
+81826 Slot machine cage 12 (nem)
+81894 Hexagonal bumper 6 (nem)
+8191E Round bumper 24 (nem)
+81AB0 Diagonal impulse spring 32 (nem)
+81DCC Scoring blocks (hit them thrice and they disappear) 28 (nem)
+81EF2 Flippers 52 (nem)
+87AAC Boss 133 (nem)
+901A4 Crawl (bouncer badnik) 42 (nem)
+49A14 Background cliffs (dynamically reloaded) 192 (nem)
+8595C Boss 107 (nem)
+89DEC Rexon (lava snake badnick) 19 (nem)
+89FAA Spiker (drill badnick, launches its drill bit at Sonic when he passes over/under it) 20 (nem)
+F0602 Zip line platform (and possibly the line itself) 48 (nem)
+F08F6 One-way door 4 (nem)
+F096E See-saw 24 (nem)
+F0160 Fireball 20 (nem)
+F0C14 Rock (I think it's the rock that breaks when you jump on it) 20 (nem)
+F0D4A Sol (Fireball-throwing badnick) 4 (nem)
+86B6E Boss 204 (nem)
+8AB36 Crawlton (snake badnick) 10 (nem)
+8AC5E Flasher (firefly badnick) 20 (nem)
+F187E Large wooden box 32 (nem)
+F1ABA Collapsing platform 26 (nem)
+F1C64 Vine switch (hang on it to trigger) 16 (nem)
+F1D5C Elevator vine (slowly raises or lowers Sonic) 10 (nem)
+F1E06 Bridge that is opened by a vine 4 (nem)
+8007C Spiked ball (Unknown) 32 (nem)
+80274 Green platform (above green flames) 6 (nem)
+80376 Oil falling into oil (suppose the bottom of an oilfall?) 16 (nem)
+804F2 Cascading oil (the body of the oilfall?) 13 (nem)
+805C0 Ball container and ball (weird things left over from the beta) 20 (nem)
+806E0 Transporter ball 53 (nem)
+809D0 Collapsing platform 40 (nem)
+809D0 Pressure springs OOZ unknown. 30 (nem)
+80C64 Pressure springs ?? (nem)
+80E26 Swinging platform 28 (nem)
+81048 Stripey blocks (Unknown) 4 (nem)
+810B8 Moving platform (moves up when Sonic steps on it) 24 (nem)
+81254 Fan (blocks Sonic's passage until it turns off, or makes him float) 30 (nem)
+81514 Green flames 18 (nem)
+8336A Octus (octopus badbnick) 58 (nem)
+8368A Aquis (seahorse badnick) 56 (nem)
+882D6 Boss 181 (nem)
+88DA6 Boss 124 (nem)
+8AD80 Slicer (praying mantis badnick) 32 (nem)
+8B058 Shellcraker (crab badnick) 36 (nem)
+8B300 Asteron (exploding star badnick) 15 (nem)
+F0DB6 Large, slowly spinning wheel 120 (nem)
+F120E Indent in said wheel 9 (nem)
+F12B6 Unknown art 8 (nem)
+F1384 Steam 15 (nem)
+F148E Spike 8 (nem)
+F1550 "Similarly shaded blocks" (Unknown) 54 (nem)
+F15C6 Lava bubble 9 (nem)
+F167C Possibly a steam vent (Unknown) 4 (nem)
+F16EC "Things" (Unknown) 8 (nem)
+F178E Small cog (moves platforms sideways) 12 (nem)
+F1870 Four identical-looking blocks (Unknown) 4 (nem)
+8A142 Bomber badnick (drops bombs on Sonic) 28 (nem)
+8A362 Turtle badnick 57 (nem)
+8BC16 Jet badnick 25 (nem)
+7FF2A Boss room entry switch 4 (nem)
+7FF98 Breakaway panels (Sonic hangs onto these; when he "jumps" off, they break away) 15 (nem)
+8B9DC Scratch badnick (the chicken badnik) 26 (nem)
+8D1A0 Wall turret 24 (nem)
+8D388 Chain hook 20 (nem)
+8D540 Retracting platform 54 (nem)
+8D7D8 Belt wheel 16 (nem)
+8D96E Large vertical laser (unused) 12 (nem)
+8DC42 Boss's laser 10 (nem)
+8DCA2 Catapult (throws Sonic at high speed) 5 (nem)
+8DD0C Rising conveyor belt platform 12 (nem)
+8DDF6 Unused badnick 12 (nem)
+8DEB8 Vertical blades 4 (nem)
+8DEE8 Horizontal blades 29 (nem)
+8E010 Tilting platform 12 (nem)
+8E0C4 Getaway ship thrust 8 (nem)
+8E138 Boss 117 (nem)
+8BE12 Silver Sonic 217 (nem)
+8EF96 Silver Sonic fight chamber viewing window 8 (nem)
+7EB58 End of stage art, art for three emeralds ? (nem)
+DCD68 Background art 127 (nem)
+DD48A HUD art 62 (nem)
+DD790 "Get Ready" text 48 (nem)
+DD8CE Stars from background 37 (nem)
+DD9C8 Text (use unknown) 13 (nem)
+DDA7E Ring art 104 (nem)
+DDFA4 Horizontal shadow (when character is level) 38 (nem)
+DE05A Diagonal shadow (when character is at a mild angle) 58 (nem)
+DE120 Vertical shadow (when character is running on the side of the chute) 25 (nem)
+DE188 Explosion 48 (nem)
+DE4BC Bomb art 80 (nem)
+DE8AC Emerald art 46 (nem)
+DEAF4 Text (use unknown) 99 (nem)
+DEEAE Character art 851 (nem)
+E247E "Tails" (Unknown) 5 (nem)
+E34EE Looks like a waterfall (unused, no pointer) 12 (nem)
+F0B06 Burning Log? (unused) 24 (nem)
+95C24 EHZ/HTZ main level (kos) 
+9DB64 MTZ main level (kos) 
+A4204 OOZ main level (kos) 
+A9D74 MCZ main level (kos) 
+B0894 CNZ main level (kos) 
+B6174 CPZ/DEZ main level (kos) 
+BCC24 ARZ main level (kos) 
+C5004 SCZ/WFZ main level (kos) 
+DCA38 Special stage floor (kos) 
+
+animations
+1B618 Sonic's animations
+1D038 Tails' animations
+12CCE monitor animations
+1958E signpost animations
+1736A ?unknown animations
+
+mappings
+6FBE0 Sonic
+739E2 Tails
+7070
+7240
+72D2
+7CB6
+8146
+ADA2
+FC28
+FC70
+101E8
+10256
+102DE
+10452
+107F6
+1084E
+10F0C
+1101C
+110C6
+11106
+11396
+113D6
+113EE
+11406
+114AE
+11552
+11576
+11666
+11822
+11E1C
+11E40
+11E64
+11E88
+11EAC
+11ED0
+12382
+123E6
+124E6
+12D36
+136A8
+13B70
+147BA
+14C6C
+14CBC
+14ED0
+15B68
+15D2E
+15ECC
+1901C
+19032
+195BE
+19656
+1DBE4
+14ED0 
+
+cues
+714E0 Sonic
+7446C Tails
+
+palettes
+29E2-2A02 Sonic and Tails 
+1E5A Title Screen Water 
+1E7A Emerald Hill/Aquatic Ruin Rotating Water 
+1E9A Hill Top Lava 
+1F1A Wood Conveyor Belts 
+1F2A Metropolis Cycle #1 
+1F36 Metropolis Cycle #2 
+1F42 Metropolis Cycle #3 
+1F56 Hidden Palace Water Cycle 
+1F66 Hidden Palace Underwater Cycle 
+1F76 Oil Ocean Oil 
+1F86 Mystic Cave Lanterns 
+1F8E Casino Night Cycle 1 
+1FA0 Casino Night Cycle 2 
+1FB2 Casino Night Cycle 3 
+1FC4 Casino Night Cycle 4 
+2022 Chemical Plant Cycle 1 
+2058 Chemical Plant Cycle 2 
+2082 Chemical Plant Cycle 3 
+20A2 Wing Fortress Fire Cycle 
+20E2 Chemical Plant Cycle 4 
+2246 Sonic to Super Sonic 
+2276 Super Sonic 
+22C6 Chemical Plant Underwater Sonic to Super Sonic 
+22F6 Chemical Plant Underwater Super Sonic 
+2346 Sonic to Super Sonic Underwater (Aquatic Ruin) 
+2376 Aquatic Ruin Underwater Super Sonic 
+2902 Sega Sonic 
+2942-29E2 Title Screen (Tails) 
+2A02 Title Cards 
+2A22 Emerald Hill 
+2A82 Wood 
+2AE2 Metropolis 
+2B42 Wing Fortress 
+2BA2 Hill Top 
+2C02 Hidden Palace 
+2C62 Hidden Palace (Sonic & Tails Under Water) 
+2C82 Hidden Palace Underwater Tiles Pallete 
+2CE2 Oil Ocean (Do not edit or you'll get a huge mess unless you know how to fix it!) 
+2D42 Mystic Cave 
+2DA2 Casino Night 
+2E02 Chemical Plant 
+2E62 Chemical Plant Sonic & Tails Underwater 
+2E82 Chemical Plant Underwater 
+2EE2 Death Egg 
+2F42 Aquatic Ruin 
+2FA2 Sonic & Tails Underwater (Aquatic Ruin) 
+2FC2 Aquatic Ruin Underwater 
+3022 Sky Chase 
+3082 Unknown 1 
+30A2 Unknown 2 
+30C2 Oil Ocean Zone Boss (Pallete line 1) 
+30E2 Menus 
+3162 Special Stage Main 
+3182 Special Stage Sonic 
+31A2 Special Stage Tails 
+31C2 Special Stage 1 
+31E2 Special Stage 2 
+3202 Special Stage 3 
+3222 Special Stage 4 
+3242 Special Stage 5 
+3262 Special Stage 6 
+3282 Special Stage 7 
+32A2 Special Stag 1 2p 
+32C2 Special Stage 2 2p 
+32E2 Special Stage 3 2p 
+3302 Special Stage Results Screen 
+9880 Emerald Hill Icon 
+98A0 Metropolis Icon 
+98C0 Hill Top Icon 
+98E0 Hidden Palace Icon 
+9900 Oil Ocean Icon 
+9920 Mystic Cave Icon 
+9940 Casino Night Icon 
+9960 Chemical Plant Icon 
+9980 Aquatic Ruin Icon 
+99A0 Sky Chase Icon 
+99C0 Wing Fortress Icon 
+99E0 Death Egg Icon 
+9A00 Special Stage Icon 
+9A20 X 2 Player Versus Icon 
+9A40 Sound Test Icon 
+ACBE Ending Main 
+AC7E Ending Sonic 
+AC9E Ending Tails 
+AD1E Ending Grey Cutscenes 
+AD3E Ending Super Sonic 
+133EC Title Screen (Sonic) 
+1340C Title Screen (Main) 
+35F92 Special Stage Chaos Emerald 
+
+end Sonic2
+****************************************************************
+
+****************************************************************
+name Sonic3
+checksum A8F2
+mode s3
+tiles
+
+100000-1200E0 Sonic (unc)
+1200E0-137780 Tails (unc)
+182DC6-187CAA Knuckles (partial)
+137780-145010 Minis
+145010-147E00 Snowboarding Sonic
+
+38FFE-39318 Unknown. A bubble bursting? (unc)
+8CE74 Cannon from CNZ (unc)
+8D834 Numbers underwater (unc)
+8DFB8 Sonic/Miles background (unc)
+8E4B4 characters from special stage and mappings for them (unc)
+911CE Sphere from special stage 
+91B2E Shadow in special stage 
+91B70 Text in special stage 
+91CF2 Tick in special stage 
+91D4E Numbers for HUD in special stage 
+91EBA Picture of shere and ring for HUD 
+92002 Bouncer from special stage 
+9265E Ring from special stage 
+A05C2 Patters for Sonic on surfboard (unc)
+A2A00 Moving vine from AIZ act 1 (unc)
+A3240 Weird bell flower thing from AIZ (unc)
+A3600 Moving vine from AIZ act 2 (unc)
+A3F00 Large burning leaves from AIZ act 2 (unc)
+A4A80 Burning scrub in background (unc)
+A5680 Burning leaves in background (unc)
+A5880 Plant in AIZ act 2 (unc)
+A5CE0 Conveyor belt in HCZ (unc)
+A6A60 used by dynamic water surface effect (unc)
+A7660 Swinging pall in pillar from HCZ (unc)
+A7D20 Flowing water from HCZ (unc)
+A87A0 Dynamically reloaded HCZ act 2 background with alcoves. (unc)
+AD3A0 Mud from MGZ (unc)
+AF7A0 Fruit on tree from MGZ (unc)
+AF800 Rotating diagonal cylinder from CNZ (unc)
+B0A00 Base of rotating diagonal cylinder (unc)
+B2A00 Vertical gravity tube from CNZ (unc)
+B4A00 Rotating cylindrical mesh that sonic runs up from CNZ (unc)
+B5A00 Flashing effect above fans in CNZ (unc)
+B5B80 dynamically reloaded background in CNZ (unc)
+B7B80 Giant rotating wheel in CNZ (unc)
+B8580 Dynamically reloaded ice in background of underground ICZ (unc)
+B9580 Dynamically reloaded vertical chasm in background of underground ICZ (unc)
+B9940 Rotating spikeball made out of ice from ICZ (unc)
+B9D40 Rotating sirens from LBZ (unc)
+BA240 Sandy hills in background of LBZ (unc)
+BB640 Unknown (unc)
+BB740 Dynamically reloaded bricks from LBZ (unc)
+BBB40 Dynamically reloaded surface of water from LBZ (unc)
+BC340 Spinning horizontal cylinder from LBZ (unc)
+BE340 Metal thing in LBZ tiles that has red crap at top (unc)
+BE5C0 Moving purple metal thing in LBZ tiles (unc)
+BE8C0 Mud in Azure lake (unc)
+BEEC0 Flag in Baloon park (unc)
+BF400 Rotating cylinder in Baloon park (unc)
+BF900 Flashing yellow amoung white in Baloon park background (unc)
+BF9C0 Tiny waving flag on top of tent in background of Baloon park (unc)
+BFA00 Sand from Desert palace (unc)
+C0180 Dynamically reloaded hills in background of Desert palace (unc)
+C2280 Unknown. A splash? (unc)
+C3200 Level select 
+C3774 Unknown. Blocky letters 
+C3AF2 Borders in level select 
+C3B72 Pictures in preview box in level select 
+C49CC Sonic and plane in background at title screen 
+100000 Sonic (unc)
+1200E0 Tails (unc)
+137780 mini Sonic (unc)
+13A840 mini Tails (unc)
+13DB58 mini Knuckles (unc)
+145010 Sonic snowboarding (unc)
+1481A0 Waves of water from sonic AIZ intro 
+1486E0 Secondary splash from surfboarding intro 
+148978 Surfboard without sonic 
+148D22 invincibility (unc)
+149142 Impact splash on water (unc)
+149B22 Smoke from dashing (unc)
+14A662 Smoke from sliding (unc)
+14A862 Stars from supersonic (unc)
+14ABA2 Insta shield (unc)
+14B222 Fire shield (unc)
+14D3C2 Electro magnet (that's lightning shield to you :D) (unc)
+14E4A2 Water bubble (unc)
+14F5E2 Unknown. splash. 
+15026C Title sceen 
+15C900 Button 
+15C988 Horizontal spring 
+15CACE Vertical spring 
+15CBD2 Diagonal spring 
+15CDBA Score/time/rings 
+15CEE6 Sonic lives counter 
+15CFFE Tails lives counter 
+15D0E8 Knuckles lives counter 
+15D1E6 Ring 
+15D2DE Monitor 
+15D738 Unknown. Two different middle sections of spikes. 
+15D794 Long horizontal spike 
+15D7FC points that appear from busting things 
+15D8A2 Starpoll 
+15DA5A End of level signpost 
+15E1FC Bubbles from underwater 
+15E49A "Game over" text 
+15E6C0 Explosion 
+15EA66 Unknown. Badnick in robotnic's ship. 
+15ED52 Sonic's continue animation 
+15EEB4 Tails' continue animation 
+15EFFC Horizontal springs and vertical spikes 
+15F2EC Ring and score/time/rings 
+15F528 Points and starpoll 
+15F76C Seal 
+15F888 Pig 
+15F9D4 Bluebird 
+15FB06 Chicken 
+15FC54 Penguin 
+15FDA6 Squirrel 
+15FF04 Rabbit 
+164BF2 Firebomber in AIZ 
+1671A2 Bombs launched by firebomber 
+16732A Unknown (unc)
+167DCA Unknown. bombs? (mod)
+16800C Unknown. Coconuts badnick? (mod)
+1681FE Weird flying badnick made out of blue balls in AIZ (mod)
+168400 Unknown. Circles and an explosion. 
+16929E Water spiral jets made by boss in HCZ 
+16A3E0 Blowfly in HCZ 
+16A552 Jet badnick from HCZ (mod)
+16A6C4 Small red fish from HCZ (mod)
+16A7C6 Cannon badnick from HCZ (mod)
+16A968 Badnick that launches rocket from HCZ (mod)
+16AD8A Puffer fish from HCZ (mod)
+16B02C Drill from MGZ (mod)
+16B2CE Unknown 
+16B340 MGZ boss (mod)
+16BAD2 MGZ boss module 1 (mod)
+16C392 MGZ boss module 2 (mod)
+16C570 MGZ boss resizable tiles (unc)
+16D572 Unknown (mod)
+16D69E Unknown. Spike dude in MGZ (unc)
+16E0C4 Spike badnick from MGZ (mod)
+16E2D6 Unknown (mod)
+16E548 Unknown. Rotating spikes on a wheel is one of them. 
+16EA04 Unknown 
+16EF18 Unknown (unc)
+170058 Unknown. A spikey mine thingy (mod)
+1700CA Electro zapper guy from CNZ (mod)
+1703EC Bat from CNZ (mod)
+17060E Baloon in CNZ (mod)
+1706B0 Unknown 
+170C76 Lazer boss in FBZ 
+171178 Main boss from FBZ 
+17155A Cannon badnick from FBZ 05(mod)
+17185C Mouse badnick from FBZ (mod)
+171B0E from ICZ 
+172732 Unknown 
+172BB4 Unknown 
+172F1E Unknown. Clouds and metal. 
+173CCC Unknown 
+174154 Penguin from ICZ (unc)
+175134 Unknown. Water. (mod)
+1751C6 ICZ orbit badnick 02(mod)
+175358 Unknown. Techno stuff and spikeball. (mod)
+17567A Unknown. Box in LBZ? (mod)
+17599C Unknown. Has a big thruster in it. 
+176542 LBZ act 2 mini boss before knux sequence (mod)
+176874 LBZ act 2 final boss (mod)
+1770B6 LBZ act 2 final boss module 1 (mod)
+177746 LBZ act 2 final boss module 2 (mod)
+177996 LBZ badnick that hides in shell on wall (mod)
+177BE8 LBZ badnick that swings ball around (mod)
+177D1A LBZ orbit badnick 01(mod)
+177DFC LBZ laser shooting badnick (mod)
+177EB8 Unknown (unc)
+1791DE Unknown. A round ball. 
+17921C Scrap and death egg falling into background in ending sequence (mod)
+1796EA Robotnic flying off into background (unc)
+17F6EE Scaffolding block from LBZ 02(mod)
+17F800 Small explosion 
+17FB50 Explosion 
+1800A2 Another explosion 
+18041E Robotnic in his main ship 
+18097A Robotnic's head 
+180BEC Robotnic 
+181002 More robotnic 
+181466 Signpost (unc)
+182166 Unknown. A pole or beam or something. 
+182180 Egg prison 
+182624 Tornado 11(mod)
+182D96 Tornado module 1 (mod)
+182DC2 Knuckles (unc)
+187D78 Giant golden ring (unc)
+18AA18 Normal explosion (mod)
+18AE2A Bonus stage dispenser stage 
+18B958 Sonic in ending sequence (mod)
+18C19A Tails in ending sequence (mod)
+18CABC Supersonic in ending sequence (mod)
+18CF6E Large thin alphabet 
+18D3E0 Normal Alphabet and first two numbers 
+18D586 G from AIZ 
+18D72A Unknown. On AIZ load cue. 
+18D8BC Rope on flying fox 
+18DA22 Unknown 
+18DB46 Unknown. On AIZ load cue. 
+18DC90 Unknown 
+18E4D8 Impact splash on water 
+18E760 Misc blocks from AIZ 
+18FAEC Metal spikeball 
+18FBB4 HCZ water surface
+18FCD4 Unknown. Rocket thruster with blue flame. 
+18FD88 Misc objects from HCZ 
+190348 More misc from HCZ 
+191B36 sliding tube in HCZ 
+19204C Bridge and misc block from HCZ 
+192394 Splash from sonic gliding along water in HCZ (unc)
+192B18 Splash from entering water in HCZ (unc)
+193714 Unknown. Was in MZ load cue. 
+19382E MGZ top, wheel, etc.
+19426C MGZ face, arrows, etc.
+19487C Signs in MGZ 
+194AB6 Tiles from CNZ 
+195874 CNZ lightbulb and a few o 
+1959DE Unknown. Looked like in there. 
+1964FC Unknown. A mini rocket thrust looks like one of them. 
+196760 Unknown. metal type competition level? 
+196B9C Mini spring and button from competition mode 
+196D10 Mini spring and spikes for competition mode 
+196F02 Powerups from competition mode 
+1973F8 Unknown. Looks like more competition mode stuff 
+197570 Unknown. Text from competition mode? 
+197BCA Unknown. Numbers and explosions from competition mode? 
+1980C4 Unknown. Mini spike and something else. 
+19815E Unkn from special stage? 
+1989A8 Unknown. Water water everywhere. 
+1996BE Unknown 
+199A32 Rock and dripper paterns from EM competition level 
+199CC6 FBZ bombing sequence at end of AIZ2 16(mod)
+19A3E6 FBZ bombing sequence module 1 (mod)
+19A786 "Super Sonic" (mod)
+19AA18 "Miles" (mod)
+19AB6A "Tails" 02(mod)
+19ACAC "Knuckles" (mod)
+19AF1E End of act results screen 09(mod)
+19B240 "1" from title card 02(mod)
+19B302 "2" from title card 02(mod)
+19B3E4 Special stage results screen (mod)
+19BA66 Special stage results screen module 1 (mod)
+19BBE6 "Zone" and "Act" (mod)
+19BDC8 AIZ title card letters "ADGILS" (mod)
+19BEDA HCZ title card letters "CDHIRTY" (mod)
+19C02C MGZ title card letters "ABDGLMR" (mod)
+19C1EE CNZ title card letters "ACGHILRTV" 06(mod)
+19C380 FBZ title card letters "ABFGILRTY" 06(mod)
+19C4E2 ICZ title card letters "ACIP" (mod)
+19C5B4 LBZ title card letters "ABCHLSU" (mod)
+19C706 AL title card 08(mod)
+19C8B8 BP title card 08(mod)
+19CADA CG title card 08(mod)
+19CD1C DP title card 08(mod)
+19CF1E EM title card 08(mod)
+19D100 Unknown "ABGNSTU" (mod)
+19F87E Competition mode stage selection screen (kos)
+1A16BE Competition mode results screen (kos)
+
+04360-400000 ? $38 tiles (nem)
+04362-400000 ? $2F tiles (nem)
+38FFE-400000 ? $4 tiles (nem)
+3F840-400000 ? $804 tiles (nem)
+3F842-400000 ? $506 tiles (nem)
+3F846-400000 ? $4D tiles (nem)
+3FEA6-400000 ? $2E tiles (nem)
+40268-400000 ? $14 tiles (nem)
+41960-400000 ? $183 tiles (nem)
+6381E-400000 ? $270 tiles (nem)
+6A09E-400000 ? $80 tiles (nem)
+6A0BC-400000 ? $80 tiles (nem)
+911CE-400000 ? $A0 tiles (nem)
+91B24-400000 ? $FC4 tiles (nem)
+91B2A-400000 ? $36 tiles (nem)
+91B2E-400000 ? $10 tiles (nem)
+91B6E-400000 ? $180 tiles (nem)
+91B70-400000 ? $2A tiles (nem)
+91CF2-400000 ? $4 tiles (nem)
+91D4E-400000 ? $1F tiles (nem)
+91EBA-400000 ? $12 tiles (nem)
+92002-400000 ? $78 tiles (nem)
+92656-400000 ? $18F tiles (nem)
+9265E-400000 ? $59 tiles (nem)
+931B6-400000 ? $6F tiles (nem)
+931BC-400000 ? $A tiles (nem)
+98100-400000 ? $55F tiles (nem)
+A976A-400000 ? $8AA tiles (nem)
+A9770-400000 ? $89A tiles (nem)
+A977C-400000 ? $899 tiles (nem)
+A97B2-400000 ? $A8A tiles (nem)
+A97B8-400000 ? $888 tiles (nem)
+A97BE-400000 ? $778 tiles (nem)
+AA7C6-400000 ? $887 tiles (nem)
+AA7CC-400000 ? $AAA tiles (nem)
+AA7DE-400000 ? $A8A tiles (nem)
+AAD68-400000 ? $888 tiles (nem)
+AAD6A-400000 ? $888 tiles (nem)
+AAD6E-400000 ? $888 tiles (nem)
+AAD96-400000 ? $888 tiles (nem)
+AADBA-400000 ? $888 tiles (nem)
+AB148-400000 ? $FFF tiles (nem)
+AB964-400000 ? $999 tiles (nem)
+AB96A-400000 ? $888 tiles (nem)
+AB970-400000 ? $967 tiles (nem)
+AB98A-400000 ? $8A8 tiles (nem)
+AC588-400000 ? $8A9 tiles (nem)
+AC756-400000 ? $A88 tiles (nem)
+ACD5C-400000 ? $A8A tiles (nem)
+AD298-400000 ? $888 tiles (nem)
+C3200-400000 ? $58 tiles (nem)
+C3774-400000 ? $26 tiles (nem)
+C3AF2-400000 ? $15 tiles (nem)
+C3B6A-400000 ? $457 tiles (nem)
+C3B72-400000 ? $AA tiles (nem)
+C49CC-400000 ? $AE tiles (nem)
+C6C78-400000 ? $808 tiles (nem)
+C6C7A-400000 ? $808 tiles (nem)
+CFF6E-400000 ? $604 tiles (nem)
+CFFD0-400000 ? $A87 tiles (nem)
+CFFD2-400000 ? $5FF tiles (nem)
+E5AE6-400000 ? $110 tiles (nem)
+127320-400000 ? $FFF tiles (nem)
+1275FC-400000 ? $88F tiles (nem)
+127600-400000 ? $8BB tiles (nem)
+127608-400000 ? $BBB tiles (nem)
+12761A-400000 ? $888 tiles (nem)
+12761E-400000 ? $888 tiles (nem)
+127626-400000 ? $888 tiles (nem)
+12762A-400000 ? $888 tiles (nem)
+1481A0-400000 ? $158 tiles (nem)
+1486E0-400000 ? $5C tiles (nem)
+148978-400000 ? $3E tiles (nem)
+14F5E2-400000 ? $15 tiles (nem)
+15026C-400000 ? $D6 tiles (nem)
+15C900-400000 ? $6 tiles (nem)
+15C982-400000 ? $E72 tiles (nem)
+15C988-400000 ? $10 tiles (nem)
+15CACA-400000 ? $FB2 tiles (nem)
+15CACE-400000 ? $10 tiles (nem)
+15CBD2-400000 ? $1C tiles (nem)
+15CDBA-400000 ? $18 tiles (nem)
+15CEE6-400000 ? $C tiles (nem)
+15CEF6-400000 ? $281 tiles (nem)
+15CFFE-400000 ? $C tiles (nem)
+15D00E-400000 ? $181 tiles (nem)
+15D0E8-400000 ? $C tiles (nem)
+15D0FA-400000 ? $181 tiles (nem)
+15D1E6-400000 ? $E tiles (nem)
+15D2DE-400000 ? $3C tiles (nem)
+15D738-400000 ? $8 tiles (nem)
+15D794-400000 ? $8 tiles (nem)
+15D7F8-400000 ? $3FA tiles (nem)
+15D7FC-400000 ? $8 tiles (nem)
+15D8A2-400000 ? $14 tiles (nem)
+15DA5A-400000 ? $6A tiles (nem)
+15E1FC-400000 ? $38 tiles (nem)
+15E49A-400000 ? $22 tiles (nem)
+15E6C0-400000 ? $44 tiles (nem)
+15EA66-400000 ? $24 tiles (nem)
+15ED52-400000 ? $C tiles (nem)
+15EEB4-400000 ? $C tiles (nem)
+15EFF6-400000 ? $4C8 tiles (nem)
+15EFFC-400000 ? $30 tiles (nem)
+15F2EC-400000 ? $26 tiles (nem)
+15F528-400000 ? $1C tiles (nem)
+15F76C-400000 ? $E tiles (nem)
+15F888-400000 ? $12 tiles (nem)
+15F9D4-400000 ? $E tiles (nem)
+15FB06-400000 ? $E tiles (nem)
+15FC54-400000 ? $12 tiles (nem)
+15FDA6-400000 ? $12 tiles (nem)
+15FF04-400000 ? $12 tiles (nem)
+164BF2-400000 ? $5A tiles (nem)
+1671A2-400000 ? $E tiles (nem)
+1683F8-400000 ? $F0 tiles (nem)
+168400-400000 ? $F8 tiles (nem)
+16929E-400000 ? $F1 tiles (nem)
+16A3E0-400000 ? $10 tiles (nem)
+16B2CE-400000 ? $4 tiles (nem)
+16E548-400000 ? $4B tiles (nem)
+16EA04-400000 ? $49 tiles (nem)
+1706B0-400000 ? $52 tiles (nem)
+170C76-400000 ? $4A tiles (nem)
+171178-400000 ? $30 tiles (nem)
+171B0E-400000 ? $A0 tiles (nem)
+17272C-400000 ? $B6A tiles (nem)
+172732-400000 ? $6F tiles (nem)
+172BB4-400000 ? $3F tiles (nem)
+172F1E-400000 ? $E2 tiles (nem)
+173CCC-400000 ? $43 tiles (nem)
+17599C-400000 ? $AE tiles (nem)
+176B04-400000 ? $8FF tiles (nem)
+1791DE-400000 ? $4 tiles (nem)
+179B12-400000 ? $888 tiles (nem)
+17AB18-400000 ? $888 tiles (nem)
+17AB8E-400000 ? $899 tiles (nem)
+17AB9A-400000 ? $800 tiles (nem)
+17ACCE-400000 ? $899 tiles (nem)
+17ACDA-400000 ? $800 tiles (nem)
+17BB0A-400000 ? $899 tiles (nem)
+17BB16-400000 ? $888 tiles (nem)
+17BCD8-400000 ? $800 tiles (nem)
+17CB48-400000 ? $899 tiles (nem)
+17CCD8-400000 ? $800 tiles (nem)
+17D3B0-400000 ? $77 tiles (nem)
+17DB46-400000 ? $899 tiles (nem)
+17DCD6-400000 ? $800 tiles (nem)
+17ECD6-400000 ? $800 tiles (nem)
+17F800-400000 ? $2E tiles (nem)
+17FB4C-400000 ? $CCC tiles (nem)
+17FB50-400000 ? $50 tiles (nem)
+1800A2-400000 ? $44 tiles (nem)
+18041E-400000 ? $52 tiles (nem)
+180978-400000 ? $10 tiles (nem)
+18097A-400000 ? $20 tiles (nem)
+180BEC-400000 ? $43 tiles (nem)
+181002-400000 ? $57 tiles (nem)
+182180-400000 ? $46 tiles (nem)
+1882E4-400000 ? $FFF tiles (nem)
+1882E8-400000 ? $FFF tiles (nem)
+1884C6-400000 ? $FF tiles (nem)
+188B2E-400000 ? $F tiles (nem)
+188C18-400000 ? $FF tiles (nem)
+188C1C-400000 ? $FFF tiles (nem)
+1893DC-400000 ? $FFF tiles (nem)
+1893E0-400000 ? $FFF tiles (nem)
+189414-400000 ? $FF tiles (nem)
+189418-400000 ? $FFF tiles (nem)
+18947C-400000 ? $F tiles (nem)
+189480-400000 ? $FFF tiles (nem)
+189AA4-400000 ? $FFF tiles (nem)
+18AE18-400000 ? $F0 tiles (nem)
+18AE2A-400000 ? $10C tiles (nem)
+18CF6E-400000 ? $65 tiles (nem)
+18D3E0-400000 ? $28 tiles (nem)
+18D586-400000 ? $14 tiles (nem)
+18D72A-400000 ? $14 tiles (nem)
+18D8BC-400000 ? $1D tiles (nem)
+18DA22-400000 ? $F tiles (nem)
+18DB46-400000 ? $F tiles (nem)
+18DC90-400000 ? $9C tiles (nem)
+18E4D2-400000 ? $9 tiles (nem)
+18E4D8-400000 ? $28 tiles (nem)
+18E760-400000 ? $132 tiles (nem)
+18FAEC-400000 ? $9 tiles (nem)
+18FBB4-400000 ? $10 tiles (nem)
+18FCD4-400000 ? $8 tiles (nem)
+18FD88-400000 ? $5C tiles (nem)
+190348-400000 ? $50 tiles (nem)
+191B36-400000 ? $56 tiles (nem)
+19204C-400000 ? $38 tiles (nem)
+1936F2-400000 ? $30 tiles (nem)
+193714-400000 ? $C tiles (nem)
+19382E-400000 ? $A0 tiles (nem)
+19426C-400000 ? $52 tiles (nem)
+19487C-400000 ? $27 tiles (nem)
+194AAC-400000 ? $D63 tiles (nem)
+194AB0-400000 ? $EF8 tiles (nem)
+194AB6-400000 ? $DF tiles (nem)
+195874-400000 ? $18 tiles (nem)
+1959DE-400000 ? $92 tiles (nem)
+1964FC-400000 ? $3F tiles (nem)
+196760-400000 ? $4E tiles (nem)
+196B9C-400000 ? $19 tiles (nem)
+196D0E-400000 ? $800 tiles (nem)
+196D10-400000 ? $1C tiles (nem)
+196F02-400000 ? $3A tiles (nem)
+1973F4-400000 ? $690 tiles (nem)
+1973F8-400000 ? $E tiles (nem)
+19756E-400000 ? $280 tiles (nem)
+197570-400000 ? $7D tiles (nem)
+197BCA-400000 ? $5E tiles (nem)
+1980C4-400000 ? $5 tiles (nem)
+19815E-400000 ? $8E tiles (nem)
+1989A8-400000 ? $A2 tiles (nem)
+1996BE-400000 ? $34 tiles (nem)
+199A32-400000 ? $26 tiles (nem)
+
+animations
+
+mappings
+140FE0-1428AC Sonic
+143488-144456 Tails
+144BB8-144D74 Minis?
+147E30-147F89 Snowboarding Sonic
+
+cues
+1428AC-143488 Sonic
+144456-144BB8 Tails
+144D74-145000 Minis?
+147F8A-14819F Snowboarding Sonic
+
+palettes
+
+8C234-8C254 Sonic/Tails Main
+8C134
+8C1B4
+8C1D4-8C234
+8C274 Level Select Menu
+8C2F4 Knuckles/Tails?
+8C314 Angel Island 1
+8C374 Angel Island 1 Intro
+8C3D4 Angel Island 2
+8C434 AI2 Fire
+8C494 AI1 Underwater
+8C514 AI2 Underwater
+8C594 
+8C5F4
+8C654
+8C6D4
+8C754
+8C7B4
+8C814
+8C894
+8C8F4
+8C954
+8C9D4
+8CA34
+8CA94
+8CB14
+8CB74
+8CBD4
+8CC34
+8CC94
+8CCF4
+8CD54
+8CDB4
+8CE14
+
+
+end Sonic3
+****************************************************************
+
+****************************************************************
+name SonicK
+checksum DFB3
+mode s3
+tiles
+
+100000-1200C0 Sonic (unc)
+1200C0-140000 Knuckles (unc)
+140000-143D00 Sonic (secondary) (unc)
+143D00-146620 Tails (partial) (unc)
+
+39A00 ? $4 tiles (nem)
+5CD66 ? $4D tiles (nem)
+5D3C6 ? $2E tiles (nem)
+5D788 ? $14 tiles (nem)
+AD430 ? $10 tiles (nem)
+AD472 ? $2A tiles (nem)
+AD5F4 ? $4 tiles (nem)
+AD650 ? $1F tiles (nem)
+AD7BC ? $12 tiles (nem)
+AD904 ? $78 tiles (nem)
+ADF60 ? $59 tiles (nem)
+AEED0 ? $A tiles (nem)
+B07B8 ? $55F tiles (nem)
+CA5E0 ? $58 tiles (nem)
+D6498 ? $3F tiles (nem)
+D73CE ? $2E tiles (nem)
+D771E ? $52 tiles (nem)
+D7C7A ? $20 tiles (nem)
+D7EEC ? $43 tiles (nem)
+D8302 ? $57 tiles (nem)
+DB818 ? $52 tiles (nem)
+DBDDE ? $4A tiles (nem)
+DC2E0 ? $30 tiles (nem)
+DD990 ? $46 tiles (nem)
+DDE34 ? $41 tiles (nem)
+DDFE6 ? $44 tiles (nem)
+DEA00 ? $86 tiles (nem)
+14C926 ? $11B tiles (nem)
+14DBC0 ? $78 tiles (nem)
+14E1AC ? $8B tiles (nem)
+14E846 ? $131 tiles (nem)
+14F9FE ? $CB tiles (nem)
+150AAA ? $9 tiles (nem)
+150B86 ? $1A tiles (nem)
+150DAC ? $97 tiles (nem)
+1517CE ? $A tiles (nem)
+15183A ? $52 tiles (nem)
+151DF4 ? $87 tiles (nem)
+152812 ? $60 tiles (nem)
+152BB2 ? $1BA tiles (nem)
+154552 ? $147 tiles (nem)
+155AAA ? $51 tiles (nem)
+155FDA ? $1B tiles (nem)
+1561C0 ? $BB tiles (nem)
+157AE8 ? $159 tiles (nem)
+15FFBE ? $45 tiles (nem)
+160340 ? $3E tiles (nem)
+165C6C ? $1C tiles (nem)
+174B28 ? $C2 tiles (nem)
+1757B4 ? $A tiles (nem)
+189C7C ? $43 tiles (nem)
+189F62 Tails victory $15 tiles (nem)
+18A110 Miles life icon $C tiles (nem)
+190AC4 ? $6 tiles (nem)
+190B4C ? $1C tiles (nem)
+190D34 Sonic life icon $C tiles (nem)
+190E4C Knuckles life icon $C tiles (nem)
+190F4A Monitors $3C tiles (nem)
+1913A4 Sonic 2 style signposts? $6A tiles (nem)
+191B46 ? $38 tiles (nem)
+191DE4 ? $22 tiles (nem)
+19200A ? $44 tiles (nem)
+1923B0 ? $24 tiles (nem)
+19269C ? $C tiles (nem)
+1927FE ? $30 tiles (nem)
+192AEE ? $26 tiles (nem)
+192D2A ? $1C tiles (nem)
+192F6E Seal $E tiles (nem)
+19308A Pig $12 tiles (nem)
+1931D6 Bird $E tiles (nem)
+193308 Chicken $E tiles (nem)
+193456 Penguin $12 tiles (nem)
+1935A8 Squirrel $12 tiles (nem)
+193706 Rabbit $12 tiles (nem)
+19385A Gumballs $10C tiles (nem)
+
+AE3EE Big Emerald? (kos)
+AE9A0 Huge Emerald? (kos)
+CC6A0 SEGA logo (kos)
+CCA20 ??? (kos)
+CD912 Debug numbers (kos)
+CDDA2 Title Sonic? (kos)
+CE562 ??? (kos)
+CEDE2 ??? (kos)
+CF692 ??? (kos)
+CFEC2 ??? (kos)
+D0E14 ??? (kos)
+D14A4 ??? (kos)
+D1D34 ??? (kos)
+D2504 ??? (kos)
+D33E4 ??? (kos)
+D3A64 ??? (kos)
+D3BB6 Sonic Title Text (kos)
+D4386 Knuckles Title Text (kos)
+D4AC6 ??? (kos)
+D4BA6 ??? (kos)
+D5CC8 chars bonus (kos)
+D67F2 Knuckles Results Text (kos)
+D6A64 HUD/Results/Titlecards Text (kos)
+D6D86 Act 1 (kos)
+D6E48 Act 2 (kos)
+D6F2A ENOZ/ACT/SONIC (kos)
+D710C ABFGILRTY (kos)
+D726E ABNSTU (kos)
+DB408 Explosion poof (kos)
+DC6C4 ??? (kos)
+DC9C6 ??? (kos)
+DE364 ??? (kos)
+F6960 ??? (kos)
+F7760 ??? (kos)
+14C654 ??? (kos)
+1541B2 ??? (kos)
+156C08 ??? (kos)
+1574E8 ??? (kos)
+1578F8 ??? (kos)
+159CB0 ??? (kos)
+159D00 ??? (kos)
+159F12 ??? (kos)
+15A114 ??? (kos)
+15A774 ??? (kos)
+15B376 ??? (kos)
+15B4F8 ??? (kos)
+15B67A ??? (kos)
+15B7EC ??? (kos)
+15B95E ??? (kos)
+15BAC0 ??? (kos)
+15C130 ??? (kos)
+15C456 ??? (kos)
+15C5D8 ??? (kos)
+15C6EA ??? (kos)
+15C7FC ??? (kos)
+15C9BE ??? (kos)
+15CAA0 ??? (kos)
+15CC32 ??? (kos)
+15EDB2 ??? (kos)
+15FDDE Knuckles' Boss (kos)
+1607DA ??? (kos)
+160AAC ??? (kos)
+160D8E Dolphin (kos)
+161190 ??? (kos)
+161662 ??? (kos)
+161EF2 ??? (kos)
+1620D4 ??? (kos)
+1626F4 ??? (kos)
+162916 ??? (kos)
+1630E6 ??? (kos)
+163248 ??? (kos)
+16341A ??? (kos)
+163B9C Knuckles unknown (kos)
+16416E ??? (kos)
+164620 ??? (kos)
+165002 ??? (kos)
+1652B6 ??? (kos)
+165828 ??? (kos)
+165ABA ??? (kos)
+165F04 MHZ mushroom badnick (kos)
+1680CC ??? (kos)
+16889C ??? (kos)
+16908E MHZ act 1 boss hammer (kos)
+169430 ??? (kos)
+1695C2 Knuckles MHZ intro (kos)
+16A106 ??? (kos)
+16A926 ??? (kos)
+16ADC8 ??? (kos)
+16B03A ??? (kos)
+16B2BC ??? (kos)
+16CB5E ??? (kos)
+16D40E ??? (kos)
+16DCFE ??? (kos)
+16E1B2 ??? (kos)
+16E9E2 ??? (kos)
+16F334 ??? (kos)
+16F4E6 ??? (kos)
+16F7E8 ??? (kos)
+16F92A ??? (kos)
+17025C ??? (kos)
+17093E ??? (kos)
+170F50 ??? (kos)
+171280 ??? (kos)
+1715F4 ??? (kos)
+171D74 ??? (kos)
+172216 ??? (kos)
+17588C ??? (kos)
+17B180 ??? (kos)
+17DBC4 ??? (kos)
+17EDB6 ??? (kos)
+17EFA8 ??? (kos)
+17F73A ??? (kos)
+17FCBC Super Emerald (kos)
+18008E ??? (kos)
+1803F0 ??? (kos)
+1805A2 ??? (kos)
+180D92 ??? (kos)
+181004 ??? (kos)
+181724 ??? (kos)
+181D46 ??? (kos)
+182346 ??? (kos)
+182A06 ??? (kos)
+182BE8 Super Emerald 2 (kos)
+182EDA ??? (kos)
+18322C ??? (kos)
+183FCC ??? (kos)
+18477C ??? (kos)
+187D1C ??? (kos)
+188F1E ??? (kos)
+1897DE Unknown text & bumpers (kos)
+195042 ??? (kos)
+195782 ??? (kos)
+195DC2 ??? (kos)
+1964A2 ??? (kos)
+196BF2 More debug numbers? (kos)
+19ABF4 ??? (kos)
+19B3C4 ??? (kos)
+19BC54 ??? (kos)
+19C1B3 ??? (kos)
+19C3F4 ??? (kos)
+19CCB4 ??? (kos)
+19D044 ??? (kos)
+19DE94 ??? (kos)
+19E716 ??? (kos)
+19EED6 ??? (kos)
+19F736 ??? (kos)
+19F8A6 ??? (kos)
+1A1B36 ??? (kos)
+1A1EB8 ??? (kos)
+1A26D8 ??? (kos)
+1A2DA8 ??? (kos)
+1A30E8 ??? (kos)
+1A3568 ??? (kos)
+1A419A ??? (kos)
+1A4B0A ??? (kos)
+1A541A ??? (kos)
+1A5C2A ??? (kos)
+1A654A ??? (kos)
+1A6EAA ??? (kos)
+1A757A ??? (kos)
+1A773A ??? (kos)
+1AA1D4 ??? (kos)
+1AA1DA ??? (kos)
+1AA36C ??? (kos)
+1AA98C ??? (kos)
+1AD05C ??? (kos)
+1AD24E ??? (kos)
+1AD820 ??? (kos)
+1AE030 ??? (kos)
+1B1104 ??? (kos)
+1B1984 ??? (kos)
+1B1B14 ??? (kos)
+1B28F6 ??? (kos)
+1B2FC6 ??? (kos)
+1B38F6 ??? (kos)
+1B41E6 ??? (kos)
+1B4B96 ??? (kos)
+1B5386 ??? (kos)
+1B5B26 ??? (kos)
+1B5CD6 ??? (kos)
+1B8A96 ??? (kos)
+1B97D8 ??? (kos)
+1B9FD8 ??? (kos)
+1BAA48 ??? (kos)
+1BB238 ??? (kos)
+1BBA68 ??? (kos)
+1BC2D8 ??? (kos)
+1BC738 ??? (kos)
+1BEE5A ??? (kos)
+1BF6FA ??? (kos)
+1BFBEA ??? (kos)
+1BFCCA ??? (kos)
+1C051C ??? (kos)
+1C0DDC ??? (kos)
+1C16BC ??? (kos)
+1C1D5C ??? (kos)
+1C24AC ??? (kos)
+1C290C ??? (kos)
+1C30FC ??? (kos)
+1C474E ??? (kos)
+1C4F1E ??? (kos)
+1C58BE ??? (kos)
+1C60CE ??? (kos)
+1C68EE ??? (kos)
+1C71FE ??? (kos)
+1C8B00 ??? (kos)
+1C8E50 ??? (kos)
+1C9C52 ??? (kos)
+1CA262 ??? (kos)
+1CA962 ??? (kos)
+1CB0E2 ??? (kos)
+1CB7E2 ??? (kos)
+1CBDA2 ??? (kos)
+1CE312 ??? (kos)
+1CE834 ??? (kos)
+1CED34 ??? (kos)
+1CEFE4 ??? (kos)
+1CF2D4 ??? (kos)
+1CFB46 ??? (kos)
+1D02B6 ??? (kos)
+1D0C56 ??? (kos)
+1D14B6 ??? (kos)
+1D17A6 ??? (kos)
+1D1DD6 ??? (kos)
+1D2CE8 ??? (kos)
+1D33B8 ??? (kos)
+1D3A38 ??? (kos)
+1D40D8 ??? (kos)
+1D4898 ??? (kos)
+1D4EE8 ??? (kos)
+1D5068 ??? (kos)
+1D7628 ??? (kos)
+1D77DA ??? (kos)
+1D7E3A ??? (kos)
+1D7FCC ??? (kos)
+1D899C ??? (kos)
+1D93FE ??? (kos)
+1D984E ??? (kos)
+1D9CEE ??? (kos)
+1DA46E ??? (kos)
+1DAB1E ??? (kos)
+1DB14E ??? (kos)
+1DB8FE ??? (kos)
+1DC24E ??? (kos)
+1DC8BE ??? (kos)
+1DCD50 ??? (kos)
+1DD3F0 ??? (kos)
+1DDB20 ??? (kos)
+1DE360 ??? (kos)
+1DE530 ??? (kos)
+1DE770 ??? (kos)
+1DEB42 ??? (kos)
+1DF322 ??? (kos)
+1DFA92 ??? (kos)
+1DFE92 ??? (kos)
+1E01B2 ??? (kos)
+1E0AF4 ??? (kos)
+1E1424 ??? (kos)
+1E1CB4 ??? (kos)
+1E2304 ??? (kos)
+1E2A74 ??? (kos)
+1E3094 ??? (kos)
+1E36C4 ??? (kos)
+1FCF2A ??? (kos)
+1FD5CA ??? (kos)
+
+animations
+mappings
+cues
+palettes
+A8A3C-A8A5C Sonic/Tails Main
+A8AFC-A8B1C Knuckles Main
+end SonicK
+****************************************************************
+
+****************************************************************
+name SonicCrackers
+checksum 0000
+mode sc
+
+tiles
+80000-8C0A0 Sonic (unc)
+90000-93B20 Sonic on Map (unc)
+A0000-AB180 Tails (unc)
+B0000-B3820 Tails on Map (unc)
+30000-30E80 HUD Text (unc)
+
+animations
+mappings
+cues
+palettes
+end SonicC
+****************************************************************
+
+****************************************************************
+name S1Krev01
+checksum 3F81
+mode s1
+tiles
+animations
+mappings
+cues
+palettes
+end S1Krev01
+****************************************************************

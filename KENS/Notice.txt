@@ -1,0 +1,5 @@
+This is an unofficial, intermediate release of KENS in it's state as of this SonED release.
+The official release has not been made, but the Kosinski and Nemesis compressors/decompressors
+contain some necesary fixes that were made in collaboration between myself and David Declerck.
+
+-Stealth

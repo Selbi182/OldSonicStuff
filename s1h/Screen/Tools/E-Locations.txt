@@ -1,0 +1,57 @@
+---------------------------------------------------------------------------------------
+-      Enigma Location File
+-      Made by Hivebrain
+-      Locations: 40
+-         - Sonic 1 US: 17
+-         - Sonic 2 Final: 11
+-         - Sonic Crackers: 12
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+-      Sonic 1 Locations (US)
+---------------------------------------------------------------------------------------
+01E062 - Sega logo mappings
+01E15A - Title screen foreground mappings
+020C7C - Hidden Japanese writing mappings
+02CF1C - Special Stage birds and fish background mappings
+02DCE0 - Special Stage clouds background mappings
+03BCF2 - GHZ 16x16 mappings
+0411AA - LZ 16x16 mappings
+04580C - MZ 16x16 mappings
+04A01A - SLZ 16x16 mappings
+050782 - SYZ 16x16 mappings
+056BCC - SBZ 16x16 mappings
+065432 - Special Stage 1
+0656AC - Special Stage 2
+065ABE - Special Stage 3
+065E1A - Special Stage 4
+0662F4 - Special Stage 5
+0667C6 - Special Stage 6
+---------------------------------------------------------------------------------------
+-      Sonic 2 Locations (Final)
+---------------------------------------------------------------------------------------
+00B23A - "Sonic the Hedgehog 2" credits image mappings
+074D0E - Sega logo mappings
+074DC6 - Title screen background mappings set 1
+074E3A - Title screen background mappings set 2
+074E86 - Title screen foreground mappings
+07CB80 - Level select background mappings
+0906E0 - Ending sequence mappings (BW image #1)
+0906F8 - Ending sequence mappings (BW image #2)
+090722 - Ending sequence mappings (BW image #3)
+09073C - Ending sequence mappings (BW image #4)
+09076E - Ending sequence mappings (Bi-plane)
+---------------------------------------------------------------------------------------
+-      Sonic Crackers Locations
+---------------------------------------------------------------------------------------
+03452C - SSZ 16x16 tiles
+035762 - SSZ 128x128 tiles
+039086 - SSZ level layout
+03A5FE - SSZ 16x16 background tiles
+03A6E8 - SSZ 128x128 background tiles
+03A7B8 - SSZ background layout
+03BB24 - TTZ 16x16 tiles
+03C60A - TTZ 128x128 tiles
+03ED12 - TTZ level layout
+0409E2 - TTZ 16x16 background tiles
+04108C - TTZ 128x128 background tiles
+04183E - TTZ background layout

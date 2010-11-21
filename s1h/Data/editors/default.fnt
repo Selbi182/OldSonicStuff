@@ -1,0 +1,438 @@
+File Description: Sonic 2 Menu Font (By SEGA), Extra characters by Stealth
+
+Font Art Filename: dfont.pcx
+
+Font Type List-
+ 1- Full ASCII Set                       0 - 255
+ 2- Numbers/Letters (caps/lower)        48 -  57,  65 -  90,  97 - 122 
+ 3- Numbers/Letters (caps only)         48 -  57,  65 -  90
+ 4- Numbers Only                        48 -  57
+ 5- Numbers/Symbol/Letters (caps/lower) 33 - 126
+ 6- Numbers/Symbol/Letters (caps  only) 33 -  96, 123 - 126
+ 7- Hex                                 48 -  57,  65 -  70
+
+Font Type: 6
+
+Char 0x20 (SPACE)-
+    XOFF in file: 001
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+
+Char 0x21 ('!')-
+    XOFF in file: 010
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x22 ('"')-
+    XOFF in file: 019
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x23 ('#')-
+    XOFF in file: 028
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x24 ('$')-
+    XOFF in file: 037
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x25 ('%')-
+    XOFF in file: 046
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x26 ('&')-
+    XOFF in file: 055
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x27 (''')-
+    XOFF in file: 064
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x28 ('(')-
+    XOFF in file: 073
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x29 (')')-
+    XOFF in file: 082
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x2A ('*')-
+    XOFF in file: 091
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x2B ('+')-
+    XOFF in file: 100
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x2C (',')-
+    XOFF in file: 109
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x2D ('-')-
+    XOFF in file: 118
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x2E ('.')-
+    XOFF in file: 127
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x2F ('/')-
+    XOFF in file: 136
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+
+Char 0x30 ('0')-
+    XOFF in file: 145
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x31 ('1')-
+    XOFF in file: 154
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x32 ('2')-
+    XOFF in file: 163
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x33 ('3')-
+    XOFF in file: 172
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x34 ('4')-
+    XOFF in file: 181
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x35 ('5')-
+    XOFF in file: 190
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x36 ('6')-
+    XOFF in file: 199
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x37 ('7')-
+    XOFF in file: 208
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x38 ('8')-
+    XOFF in file: 217
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x39 ('9')-
+    XOFF in file: 226
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+
+Char 0x3A (COLON)-    ;Cannot place colon character here, as it will throw off the script reading
+    XOFF in file: 235
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x3B (';')-
+    XOFF in file: 244
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x3C ('<')-
+    XOFF in file: 253
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x3D ('=')-
+    XOFF in file: 262
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x3E ('>')-
+    XOFF in file: 271
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x3F ('?')-
+    XOFF in file: 280
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x40 ('@')-
+    XOFF in file: 289
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+
+Char 0x41 ('A')-
+    XOFF in file: 298
+    YOFF in file: 001
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x42 ('B')-
+    XOFF in file: 001
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x43 ('C')-
+    XOFF in file: 010
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x44 ('D')-
+    XOFF in file: 019
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x45 ('E')-
+    XOFF in file: 028
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x46 ('F')-
+    XOFF in file: 037
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x47 ('G')-
+    XOFF in file: 046
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x48 ('H')-
+    XOFF in file: 055
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x49 ('I')-
+    XOFF in file: 064
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x4A ('J')-
+    XOFF in file: 073
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x4B ('K')-
+    XOFF in file: 082
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x4C ('L')-
+    XOFF in file: 091
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x4D ('M')-
+    XOFF in file: 100
+    YOFF in file: 010 
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x4E ('N')-
+    XOFF in file: 109
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x4F ('O')-
+    XOFF in file: 118
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x50 ('P')-
+    XOFF in file: 127
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x51 ('Q')-
+    XOFF in file: 136
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x52 ('R')-
+    XOFF in file: 145
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x53 ('S')-
+    XOFF in file: 154
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x54 ('T')-
+    XOFF in file: 163
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x55 ('U')-
+    XOFF in file: 172
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x56 ('V')-
+    XOFF in file: 181
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x57 ('W')-
+    XOFF in file: 190
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x58 ('X')-
+    XOFF in file: 199
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x59 ('Y')-
+    XOFF in file: 208
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x5A ('Z')-
+    XOFF in file: 217
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+
+Char 0x5B ('[')-
+    XOFF in file: 226
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x5C ('\')-
+    XOFF in file: 235
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x5D (']')-
+    XOFF in file: 244
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x5E ('^')-
+    XOFF in file: 253
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x5F ('_')-
+    XOFF in file: 262
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x60 ('`')-
+    XOFF in file: 271
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+
+Char 0x7B ('{')-
+    XOFF in file: 280
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x7C ('|')-
+    XOFF in file: 289
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x7D ('}')-
+    XOFF in file: 298
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+Char 0x7E ('~')-
+    XOFF in file: 307
+    YOFF in file: 010
+           Width: 008
+          Height: 008
+ YOFF from DrawY:-008
+
+
+--EOF--

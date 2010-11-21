@@ -1,0 +1,28 @@
+                          SonED2 Art Exporting
+
+All graphical data from SonED2 can be exported to image files. All output
+files are 256-color PCX files of the sizes determined by the type and
+ammount of data to export. These options appear in the "Misc" menu under
+"Export to image"
+
+Tiles - 8x8 Tiles are dumped in vertical list format running in 4 columns,
+        one for each palette row variation
+
+Blocks - 16x16 Blocks are dumped in vertical list format, running 1 column
+
+
+Chunks - Chunks are dumped in a vertical list 2 chunks wide
+
+Solidity - Solidity is dumped in a chart format running 20 entries wide,
+           displaying each Height Map and it's corresponding Angle value
+
+Level Maps - Level maps are dumped as a full image, as seen by scrolling
+             through them in SonED2 or a game. Either one of the two
+             planes (A, foreground or B, background) can be dumped with
+             only "High" tiles, only "Low" tiles, or both showing. Plane
+             A dumps can also include solidity from either path 0 or (in
+             Sonic 2 type games) path 1 with or without corresponding
+             angle values, and can include all "Known" objects (Objects
+             with art defined within the Object Defs) or every object
+             in the level. These options may be toggled in the drop-down
+             menu before selecting Plane A for exporting

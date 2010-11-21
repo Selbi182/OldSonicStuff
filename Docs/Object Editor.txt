@@ -1,0 +1,173 @@
+                          SonED2 Object Editor
+
+The Object Editor is used for editing the layout of the objects within the
+normal gameplay levels. Objects are placed within levels by full X and Y
+pixel offsets (coordinates), and also contain a type value, and one or more
+property values/bitfields, as well as a few generic flags, all of which
+determine how the Object is displayed and how it behaves. The images and
+descriptions displayed in the editor are set up through "Object Listing"
+files that tell the editor what to display for the object, how to display
+it, and the layout of the property bitfield, how it's handled by the editing
+keys, and what text to display for each value. The files can be altered to
+expand on the data that is already included by making use of the instructions
+provided in the Object Listing files themselves.
+
+The status display in the Object editor shows the following information:
+
+Screen Position - The X and Y position of the top-left corner of the screen,
+                  shown in hex as with the in-game debug.
+
+Plane Size - The Width and Height of the current plane, measured in chunks,
+             shown in hex.
+
+Solid ??? - This entry describes which of the two solidity paths is being
+            drawn over the level, and whether or not the corresponding angle
+            values are shown
+
+Objects ??? - This entry describes how the objects are currently being
+              displayed relative to the high/low planes of the level
+
+Scroll Speed - The number of pixels that the screen will move when the arrow
+               keys are used
+
+Snap-To-Grid - This value is the object grid size. Objects being moved by the
+               cursor will only move in steps of this many pixels. This is
+               useful for making sure certain objects are aligned properly
+
+Total ??? - These are the total number of each type of object that are placed
+            within the level. "Objs" refers to standard game objects within
+            the Object Placement list, "Rings" refers to Ring objects placed
+            within the Ring Placement list (if applicable), and "Misc" refers
+            to special type objects that reside in their own listings (such
+            as Sonic 2's Casino Night Zone bumpers)
+
+
+
+The following status elements are only available when the cursor is hovering
+over an object:
+
+Object Position - This is the object's position in the level, expressed in
+                  hex as in the game
+
+Object Type ID - These are the full values of the object type, it's
+                 "Paramater"/"Property" value, and it's flags value
+
+Object Type - This is a small text description of the object's type
+
+Bits - This is a bitfield representation of the "Paramater"/"Property" value
+
+Param Field ? - If bitfields are defined for this object type in the Object
+                Listing file, these fields appear to describe the meaning of
+                the value stored in that bitfield
+
+Draw Dir - Describes the direction in which the object will be drawn (whether
+           it is mirrored and/or flipped)
+
+Unknown Flag - This flag appears in Sonic 2 type games. This entry specifies
+               whether this flag is on or off, but it's function is unknown
+
+Remember Sprite State - If this flag is on, any changes made to an object
+                        during gameplay (such as destroying a badnik) will
+                        remain in effect throughout the duration of the level.
+                        If it is off, the object will return to it's starting
+                        state when it leaves the screen
+
+
+
+The following status elements are only available when the cursor is hovering
+over a ring, if rings are stored differently than normal objects:
+
+Ring ??? - This entry specifies whether the ring object is a row or a column,
+           and how many rings it will create
+
+Size Value - This is the property value stored in the ring layout data that
+             causes the effect described by the above information
+
+
+
+The following status elements are only available when the cursor is hovering
+over a "misc" object:
+
+??? - This text describes the type of "Misc" object
+
+Type Value - This is the property value assigned to the object
+
+
+
+Listed below are the Object Editor functions:
+
+Moving an Object - To move an object that already exists, click and drag the
+                   object to it's new location. The object will move along
+                   the grid set up by the "Snap-To-Grid" seting. If that
+                   setting is 1, the Object will move freely
+
+Adding an Object - To add an object to the level, double-left-click any empty
+                   position in a level, and a "null" object will appear, which
+                   can be changed into any other type of object. In games who
+                   list rings separately, double-right-click any empty position
+                   in the level to create a new ring. To create a new "Misc"
+                   object, hold ctrl while double-left-clicking.
+
+Removing an Object - To remove an object of any type from the level,
+                     double-right-click it, and it will be destroyed
+
+Selecting Object Type - To select the type of an object by using the Object Type
+                        Selection List, double-click the desired object. When the
+                        list appears, scroll to the description of the desired
+                        object type and left-click. To exit the list without
+                        changing the object's type, right-click instead.
+
+Object Properties - Object properties may be directly altered by whole value by
+                    using the following keys:
+                    A/Z - Object Type
+                    S/X - Object "Property"
+                    D/C - Object Flags
+                    Pressing these keys alone changes the value by 1, but holding
+                    ctrl will change the value by 16
+
+Object Bitfields - When an object's "Property" value is actually a group of values
+                   stored as 1, it can be broken into "bitfields" representing
+                   each individual value. There can be up to 8 bitfields depending
+                   on how large each one is. To modify the value in a bitfield,
+                   press it's corresponding number key (the field's ID + 1, IE:
+                   field 0's key is 1) to add 1. Hold ctrl while pressing the key
+                   to subtract 1.
+
+
+Object Flags - All Objects have 4 generic flags, which are slightly different from
+               game to game. Sonic 1 style games seem only to use 2 of them, for
+               drawing direction. To change the drawing direction of an object, 
+               press 9. Holding ctrl will cycle through in reverse. Sonic 2 type
+               games use all 4. To modify the "Remember Object State" flag, which
+               causes destroyed objects to stay destroyed, press 0. To modify the
+               "unknown" flag, hold ctrl while pressing 0
+
+Other modes - The "Editors" menu has options to switch to any of other
+              editing modes available to a project using this Level Editor.
+              The following keys also have the same effect:
+
+              L - Level Editor Plane A (foreground)
+              P - Level Editor Plane B (background)
+              I - Tile Editor
+
+Altering scroll speed - The H and N keys increase and decrease the number of
+                        pixels that the screen will scroll when using the
+                        arrow keys or moving the mouse to the screen edges
+                        in full-screen mode.
+
+Altering Grid Size - The J and M keys increase and decrease the size of the
+                     Object "Snap-To" grid
+
+Viewing Controls - The following keys affect other viewing options:
+
+                   Q - Disable Solidity viewing
+                   W - Display Solidity Path 0 Over Level
+                   E - Display Solidity Path 1 Over Level (Sonic 2 and above)
+                   R - Toggle angle view when viewing solidity path
+                   T - Change object viewing status:
+                       -Disabled
+                       -Below High Plane (Game View, some objects "hidden")
+                       -Above High Plane (Objects on top, total visibility)
+                   Y - Toggles the "Low" plane on or off
+                   U - Toggles the "High" plane on or off
+

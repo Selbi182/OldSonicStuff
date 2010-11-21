@@ -1,0 +1,10 @@
+Palette File: testpal.bin
+Mapping File: testmap.bin
+Art File: testnem.bin
+Mapping Compression: Enigma
+Art Compression: Nemesis
+x-Size: 30
+y-Size: 28
+Tile Offset: 0
+Letter Offset: 0x0E
+Number Offset: 0x00

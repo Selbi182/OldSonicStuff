@@ -1,0 +1,9 @@
+Palette File: ../pallet/sega2.bin
+Mapping File: ../mapeni/segalogo.bin
+Art File: ../artnem/segalogo.bin
+Mapping Compression: Enigma
+Art Compression: Nemesis
+Palette Length: 0x20
+Palette Offset: 0x16
+x-Size: 40
+y-Size: 28

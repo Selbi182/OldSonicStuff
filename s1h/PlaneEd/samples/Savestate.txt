@@ -1,0 +1,13 @@
+Palette File: Savestate.gs0
+Mapping File: Savestate.gs0
+Art File: Savestate.gs0
+Palette Offset: 0x11f78
+Mapping Offset: 0x1E478
+Art Offset: 0x12478
+Palette Length: 0x80
+Mapping Length: 0x1000
+Art Length: 0x10000
+Mapping Compression: None
+Art Compression: None
+x-Size: 64
+y-Size: 32

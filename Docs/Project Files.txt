@@ -1,0 +1,44 @@
+                         SonED2 Project Files
+
+"Project Files" are the files that must be selected by the user to begin
+editing. These files list the filenames of the data files required for
+any editing project and any necessary settings values. The files use the
+extension ".sep" to identify them as "SonED Project Files", but they are
+plain text files that can be opened in any text editor.
+
+The basic formatting for entering data into a "Project File" is as
+follows:
+
+Description: Data
+
+Description may be used to denote the data type required on each line.
+It is completely ignored by the program and may say anything. The
+colon (:) marks the beginning of the data for each line. Data is only
+read between a colon and a newline, so anything on the following lines
+is reguarded as descriptions/comments and ignored until another colon is
+found.
+
+The first line in any "Project File" is always the project type value.
+Valid type values are as listed:
+
+1 - Sonic 1 Level/Tile/Object Editing Project
+2 - Sonic 2 Level/Tile/Object Editing Project
+
+Different project types require different data, so the format of the
+"Project File" is dependant on the type of project it is used for. If
+the proper format is not used, the data will either load improperly, or
+SonED2 may crash.
+
+It is suggested that the following line appear at the bottom of every
+"Project File":
+
+-EOF-
+
+Adding this line to the bottom of the file ensures that the last data
+line contains a newline character. If the final data line does not
+include a newline, the project interpreter may crash. Newline must
+be present because it marks the end of the dataline.
+
+If any filename listed in the "Project File" does not exist, a blank one
+will be created, and the data created in SonED will be saved to that
+file. If a path is given with the filename, the path MUST already exist.

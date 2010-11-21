@@ -1,0 +1,10 @@
+Palette File: ../Screen/palette.bin
+Mapping File: ../Screen/Maps_WithPRESENTS.bin
+Art File: ../Screen/Tiles.bin
+Mapping Compression: Enigma
+Art Compression: Nemesis
+Palette Length: 0x20
+Palette Offset: 0x00
+x-Size: 40
+y-Size: 28
+Tile Offset: 0x0

@@ -1,0 +1,12 @@
+Palette File:	kid.bin
+Mapping File:	kid.bin
+Art File:	kid.bin
+Save File:	Sky Castle Title.bin
+Palette Offset:	0x14E6E
+Mapping Offset:	0x14FDA
+Art Offset:	0x155D4
+Palette Length:	32
+Mapping Compression:	Enigma
+Art Compression:	Kid Chameleon
+x-Size:	14
+y-Size:	18

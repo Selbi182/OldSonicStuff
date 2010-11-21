@@ -1,0 +1,73 @@
+This type of project allows for editing tiles/blocks/chunks, level
+layout, and object layout for Sonic 1.
+
+Type setting is 1. Zone and Act IDs should be set to the Zone/Act this
+level will occupy when it is inserted into the game. Those values assist
+in managing data such as object def subentries. The Object Def file
+listed should contain the data for the objects used by the game that
+this project will be inserted to. The Object Def filename listed in this
+file SHOULD NOT have an extension. The program adds the extension itself
+to build the Object Def filename and it's art file's filename, and if an
+extension is already present, the filenames will become invalid and will
+not load. All other filenames listed in this file should contain their
+full name, including the extension.
+
+Required data are all three tile sizes, layout for foreground (plane A)
+and background (plane B), object locations, palette (which are usually
+split into "main" and "level" palettes), the angle array, the collision
+map array, it's rotated counterpart, and the current level's collision
+map index listing.
+
+Palettes are loaded by specifying how many colors are in the requested
+palette file, and which palette index to begin inserting them at.
+"Underwater" or other "accessory" palettes may be loaded by loading a
+palette file into indicies 64 through 127.
+
+An example is as follows. Please replace the data given in this example
+with the appropriate data required to load the desired files:
+
+
+
+
+
+Type: 1	
+
+Zone ID:    0
+Act ID:     0
+
+Object Def: s1obj
+
+8x8 Tiles: tiles.bin
+
+16x16 Tiles:   blocks.bin
+
+256x256 Tiles: chunks.bin
+
+FG Layout: planea.bin
+BG Layout: planeb.bin
+
+Objects:       object.bin
+
+Palettes-
+
+ Number of files: 2
+
+  Palette 1-
+
+   Start index:        0
+   Number of entries: 16
+   File:              mainpalette.bin
+
+  Palette 2-
+
+   Start index:       16
+   Number of entries: 48
+   File:              levelpalette.bin
+
+Angle Array:             Curve and resistance mapping.bin
+Collision Array:         Collision array 1.bin
+Rotated Collision Array: Collision array 2.bin
+
+Collision Index 1: collision index.bin
+
+-EOF-
