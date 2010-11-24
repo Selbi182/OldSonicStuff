@@ -4229,6 +4229,10 @@ loc_37B6:
 loc_37FC:
 		moveq	#1,d0
 		jsr	LoadPLC		; load standard	patterns
+		cmpi.w	#$001,($FFFFFE10).w	; is current level GHZ 2 (intro level)?
+		bne.s	Level_ClrRam		; if not, branch
+		moveq	#$13,d0			; set to star patterns
+		jsr	(LoadPLC).l		; load star patterns
 
 Level_ClrRam:
 		lea	($FFFFD000).w,a1
@@ -4409,7 +4413,7 @@ loc_39E8:
 		lsl.w	#2,d0
 		movea.l	(a1,d0.w),a1
 		tst.w	($FFFFFFF0).w	; is demo mode on?
-		bpl.s	Level_Demo	; if yes, branch
+		bne.s	Level_Demo	; if yes, branch
 		lea	(Demo_EndIndex).l,a1 ; load ending demo	data
 		move.w	($FFFFFFF4).w,d0
 		subq.w	#1,d0
@@ -4428,7 +4432,7 @@ Level_Demo_NullPress:
 	endif
 		move.w	#1800,($FFFFF614).w
 		tst.w	($FFFFFFF0).w
-		bpl.s	Level_ChkWaterPal
+		beq.s	Level_ChkWaterPal
 		move.w	#540,($FFFFF614).w
 		cmpi.w	#4,($FFFFFFF4).w
 		bne.s	Level_ChkWaterPal
@@ -4480,6 +4484,11 @@ Level_StartGame:
 ; ---------------------------------------------------------------------------
 
 Level_MainLoop:
+		cmpi.b	#$3F,($FFFFFFF0).w		; was demo mode set to $3F for some reason?
+		bne.s	Level_DemoOK			; thanks god if no
+		clr.w	($FFFFFFF0).w			; otherwise, clear it and hope that nothing bad happened
+
+Level_DemoOK:
 		jsr	PauseGame
 		move.b	#8,($FFFFF62A).w
 		jsr	DelayProgram
@@ -5178,9 +5187,6 @@ MoveSonicInDemo:			; XREF: Level_MainLoop; et al
 		bne.s	MoveDemo_On	; if yes, branch
 		rts
 	endif
-; ===========================================================================
-
-; This is an unused subroutine for recording a demo
 
 MoveDemo_Record:
 	;	lea	($80000).l,a1
@@ -22209,13 +22215,13 @@ Obj0D_Touch:				; XREF: Obj0D_Index
 		cmpi.w	#$20,d0		; is Sonic within $20 pixels of	the signpost?
 		bcc.s	locret_EBBA	; if not, branch
 		move.w	#$CF,d0
-		clr.b	($FFFFFFE7).w
 		jsr	(PlaySound).l	; play signpost	sound
 		clr.b	($FFFFFE1E).w	; stop time counter
 		move.w	($FFFFF72A).w,($FFFFF728).w ; lock screen position
 		addq.b	#2,$24(a0)
-		tst.b	($FFFFFFE7).w		; has sonic destroyed a S monitor?
+		tst.b	($FFFFFFE7).w		; is Sonic in Inhuman Mode?
 		beq.s	locret_EBBA		; if not, branch
+		clr.b	($FFFFFFE7).w		; disabled Inhuman Mode
 		move.w	d7,-(sp)		; back up d7
 		moveq	#3,d0			; load Sonic's pallet
 		jsr	PalLoad2		; restore sonic's palette
@@ -22281,13 +22287,8 @@ Obj0D_SonicRun:				; XREF: Obj0D_Index
 		bne.s	loc_EC70
 		move.b	#1,($FFFFF7CC).w ; lock	controls
 		move.w	#$800,($FFFFF602).w ; make Sonic run to	the right
-	;	clr.w	($FFFFF602).w	; clear button presses
-	;	move.b	#$1F,($FFFFD01C).w	; Change animation to spindash charge
-loc_EC70:
-	;	clr.w	$10(a0)		; clear X-velocity
 
-	;	move.w	#$E0,d0
-	;	jsr	(PlaySound_Special).l ;	fade out music
+loc_EC70:
 		tst.b	($FFFFD000).w	; is sonic stil on the screen?
 		beq.s	loc_EC86	; if yes, branch
 		move.w	($FFFFD008).w,d0
@@ -22295,8 +22296,6 @@ loc_EC70:
 		addi.w	#$128,d1
 		cmp.w	d1,d0
 		bcs.w	locret_ECEE
-	;	jsr	Pal_FadeOut
-	;	jmp	Obj3A_NextLevel
 
 loc_EC86:
 		addq.b	#2,$24(a0)

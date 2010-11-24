@@ -1,11 +1,14 @@
-Kann ma irgendwann gemacht werden Zeug:
+Bugs:
 - Musik nach tod wieder herstellen, wenn es nicht die normale Level Musik ist
+- Warum fängt auf einmal ne Demo beim Crabmeat Boss an zu spielen? ._.
+- Final Zone Title Cards kommen auf der anderen Seite wieder raus
+
+Wäre gut:
 - Ein geeignetes System für die Palettenwiederehrstellung von einem WhiteFlash finden
 - Ordentliche Grafik für Text Screen finden
-- ORDNER AUFRÄUMEN (so viel Müll, das gibt's nich)
 
 Ideen:
 - Vom Schatten verfolgt Challange
 - Demo Mode (Das gesammte Spiel wird vorgespielt)
-- Credits Text (siehe text.txt)
+- Pre-Credits Text (siehe Credits.txt)
 - Neuer Title Screen mit VIELEN Explosionen
