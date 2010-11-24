@@ -2,6 +2,7 @@ Bugs:
 - Musik nach tod wieder herstellen, wenn es nicht die normale Level Musik ist
 - Warum fängt auf einmal ne Demo beim Crabmeat Boss an zu spielen? ._.
 - Final Zone Title Cards kommen auf der anderen Seite wieder raus
+SonicVaan: - Nach der Benutzung eines Continues spielt die Levelmusik nicht mehr.
 
 Wäre gut:
 - Ein geeignetes System für die Palettenwiederehrstellung von einem WhiteFlash finden
