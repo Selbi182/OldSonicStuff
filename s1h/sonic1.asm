@@ -76,7 +76,7 @@ InhumanStars = 1
 ; 1 - Air Move
 AirType = 1
 ;==============================================
-;S1HL Sound Driver and samples
+;Use S1HL Sound Driver and samples
 ; 0 - No
 ; 1 - Yes
 S1HLDriver = 1
@@ -109,7 +109,7 @@ AutoDEMO = 0
 ;AfterImage_Counter  EQU  $FFFFFF6A
 ;==============================================
 ;Macros for ASM songs
-	include	s1smps2asm_inc.asm
+	include	"sound\Driver\s1smps2asm_inc.asm"
 ;==============================================
 
 ; ---------------------------------------------------------------------------
@@ -15426,7 +15426,7 @@ Obj4B_Okay:				; XREF: Obj4B_Main
 		move.b	#$52,$20(a0)
 		move.w	#$C40,($FFFFF7BE).w
 		
-	;	move.w	($FFFFFE20).w,($FFFFFFA5).w	; copy your rings to $FFA0
+		move.w	($FFFFFE20).w,($FFFFFF70).w	; copy your rings to $FF70
 
 Obj4B_Animate:				; XREF: Obj4B_Index
 		move.b	($FFFFFEC3).w,$1A(a0)
@@ -16027,14 +16027,14 @@ Obj2E_ChkInvinc:
 	;	jsr	Touch_KillEnemy
 	;	jsr	Touch_KillEnemy
 
-	;	move.b	#$38,($FFFFD200).w ; load stars	object ($3801)
-	;	move.b	#1,($FFFFD21C).w
-	;	move.b	#$38,($FFFFD240).w ; load stars	object ($3802)
-	;	move.b	#2,($FFFFD25C).w
-	;	move.b	#$38,($FFFFD280).w ; load stars	object ($3803)
-	;	move.b	#3,($FFFFD29C).w
-	;	move.b	#$38,($FFFFD2C0).w ; load stars	object ($3804)
-	;	move.b	#4,($FFFFD2DC).w
+		move.b	#$38,($FFFFD200).w ; load stars	object ($3801)
+		move.b	#1,($FFFFD21C).w
+		move.b	#$38,($FFFFD240).w ; load stars	object ($3802)
+		move.b	#2,($FFFFD25C).w
+		move.b	#$38,($FFFFD280).w ; load stars	object ($3803)
+		move.b	#3,($FFFFD29C).w
+		move.b	#$38,($FFFFD2C0).w ; load stars	object ($3804)
+		move.b	#4,($FFFFD2DC).w
 
 		tst.b	($FFFFF7AA).w	; is boss mode on?
 		bne.s	Obj2E_NoMusic	; if yes, branch
@@ -19254,7 +19254,7 @@ Obj7E_Main:
 
 Obj7E_Main_cont:
 		moveq	#0,d2			; clear d2
-		move.w	($FFFFFFA5).w,d2	; move stored rings to d2
+		move.w	($FFFFFF70).w,d2	; move stored rings to d2
 	;	add.w	($FFFFFE20).w,d2	; add special stage rings to it
 		move.w	d2,($FFFFFE20).w	; bam it together
 		movea.l	a0,a1
@@ -19451,7 +19451,7 @@ Obj7F_Display:
 ; Sprite mappings - zone title cards
 ; ---------------------------------------------------------------------------
 Map_obj34:
-		include	TitleCards.asm
+		include	"_maps\TitleCards.asm"
 
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - "SONIC HAS PASSED" title card
@@ -22228,6 +22228,7 @@ Obj0D_Touch:				; XREF: Obj0D_Index
 		bcs.s	locret_EBBA
 		cmpi.w	#$20,d0		; is Sonic within $20 pixels of	the signpost?
 		bcc.s	locret_EBBA	; if not, branch
+		move.b	#1,($FFFFFFA5).w	; move HUD off screen
 		move.w	#$CF,d0
 		jsr	(PlaySound).l	; play signpost	sound
 		clr.b	($FFFFFE1E).w	; stop time counter
@@ -40755,6 +40756,7 @@ Obj3E_Switched:				; XREF: Obj3E_Index
 		addq.w	#8,$C(a0)
 		move.b	#$A,$24(a0)
 		move.w	#$3C,$1E(a0)
+		move.b	#1,($FFFFFFA5).w	; move HUD off screen
 		clr.b	($FFFFFE1E).w	; stop time counter
 		clr.b	($FFFFF7AA).w	; lock screen position
 		move.b	#1,($FFFFF7CC).w ; lock	controls
@@ -43730,8 +43732,39 @@ Obj21_FrameSelected:
 		move.w	#$6CA,2(a0)
 		move.b	#0,1(a0)
 		move.b	#0,$18(a0)
+; ===========================================================================
 
 Obj21_Flash:
+		tst.b	($FFFFFFA5).w		; has Sonic touched the sign post?
+		beq.s	Obj21_NoSignPost	; if not, branch
+
+		addq.w	#1,$3C(a0)		; make HUD move faster
+		move.w	$3C(a0),d0		; move HUD speed add to d0
+		lsr.w	#2,d0			; devide by 2
+
+		cmpi.b	#1,$30(a0)		; is HUD ID = SCORE?
+		beq.s	Obj21_AltSpeed		; if yes, branch
+		cmpi.b	#3,$30(a0)		; is HUD ID = TIME?
+		bne.s	Obj21_ChkOffScreen	; if not, branch
+
+Obj21_AltSpeed:
+		neg.w	d0			; negate to go to the other direction
+
+Obj21_ChkOffScreen:
+		add.w	d0,$8(a0)		; move HUD
+		cmpi.w	#$20,$8(a0)		; is object before $20 on X-axis?
+		blt.s	Obj21_Delete2		; if yes, branch
+		cmpi.w	#$1F0,$8(a0)		; is object after $1F0 on X-axis?
+		blt.s	Obj21_Display2		; if not, branch
+
+Obj21_Delete2:
+		jmp	DeleteObject		; delete object
+
+Obj21_Display2:
+		jmp	DisplaySprite		; display sprite
+; ---------------------------------------------------------------------------
+
+Obj21_NoSignPost:
 		cmpi.b	#6,($FFFFD024).w	; is Sonic dying?
 		bne.s	Obj21_NotDying		; if not, branch
 		cmpi.w	#$30,$A(a0)		; is Y-position < $30?
@@ -43744,7 +43777,7 @@ Obj21_Flash:
 		add.w	d0,$A(a0)		; add $34(a0) pixels to Y-position
 		addq.w	#1,$34(a0)		; increase falling speed
 		jmp	DisplaySprite		; display sprite
-; ===========================================================================
+; ---------------------------------------------------------------------------
 
 Obj21_NotDying:
 		tst.b	$3A(a0)			; is everything done?
@@ -43785,7 +43818,7 @@ Obj21_ChkLives2:
 Obj21_XEnd:
 		move.w	$36(a0),$8(a0)		; make sure the position is really at the correct spot
 		bra.s	Obj21_SkipYEnd		; skip
-; ===========================================================================
+; ---------------------------------------------------------------------------
 
 Obj21_YEnd:
 		move.w	$38(a0),$A(a0)		; make sure the position is really at the correct spot
@@ -43793,12 +43826,12 @@ Obj21_YEnd:
 Obj21_SkipYEnd:
 		move.b	#1,$3A(a0)		; tell the game, everything's done
 		bra.s	Obj21_NoUpdate		; skip
-; ===========================================================================
+; ---------------------------------------------------------------------------
 
 Obj21_NormalUpdateX:
 		move.w	d0,8(a0)		; set X-pos to calculation
 		bra.s	Obj21_NoUpdate		; skip
-; ===========================================================================
+; ---------------------------------------------------------------------------
 
 Obj21_NormalUpdateY:
 		move.w	d0,$A(a0)		; set Y-pos to calculation
@@ -43810,7 +43843,7 @@ Obj21_NoUpdate:
 		tst.w	($FFFFFE20).w		; do you have any rings?
 		beq.s	Obj21_Flash2		; if not, branch
 		bra.s	Obj21_Cont
-; ===========================================================================
+; ---------------------------------------------------------------------------
 
 Obj21_Flash2:
 		ori.b	#1,($FFFFFE1D).w	; update ring counter
@@ -45124,7 +45157,54 @@ Nem_Squirrel:	incbin	artnem\squirrel.bin	; squirrel
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - primary patterns and block mappings
 ; ---------------------------------------------------------------------------
-		include	"LevelArt.asm"
+Nem_title:	incbin	artnem\8x8title.bin	; TS primary patterns
+		even
+Blk16_title:	incbin	map16\title.bin
+		even
+Blk256_title:	incbin	map256\title.bin	;title.bin
+		even		
+Blk16_GHZ:	incbin	map16\ghz.bin
+		even
+Nem_GHZ:	incbin	artnem\8x8ghz.bin	; New GHZ file.
+		even
+Nem_GHZ_1st:	incbin	artnem\8x8ghz1.bin	; GHZ primary patterns
+		even
+Nem_GHZ_2nd:	incbin	artnem\8x8ghz2.bin	; GHZ secondary patterns
+		even
+Blk256_GHZ:	incbin	map256\ghz.bin
+		even
+Blk16_LZ:	incbin	map16\lz.bin
+		even
+Nem_LZ:		incbin	artnem\8x8lz.bin	; LZ primary patterns
+		even
+Blk256_LZ:	incbin	map256\lz.bin
+		even
+Blk16_MZ:	incbin	map16\mz.bin
+		even
+Nem_MZ:		incbin	artnem\8x8mz.bin	; MZ primary patterns
+		even
+Blk256_MZ:	incbin	map256\mz.bin
+		even
+Blk16_SLZ:	incbin	map16\slz.bin
+		even
+Nem_SLZ:	incbin	artnem\8x8slz.bin	; SLZ primary patterns
+		even
+Blk256_SLZ:	incbin	map256\slz.bin
+		even
+Blk16_SYZ:	incbin	map16\syz.bin
+		even
+Nem_SYZ:	incbin	artnem\8x8syz.bin	; SYZ primary patterns
+		even
+Blk256_SYZ:	incbin	map256\syz.bin
+		even
+Blk16_SBZ:	incbin	map16\sbz.bin
+		even
+Nem_SBZ:	incbin	artnem\8x8sbz.bin	; SBZ primary patterns
+		even
+Blk256_SBZ:	incbin	map256\sbz.bin
+		even
+Blk256_END:	incbin	map256\ghz_end.bin
+		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - bosses and ending sequence
 ; ---------------------------------------------------------------------------
@@ -47797,9 +47877,9 @@ loc_72E64:				; XREF: loc_72A64
 ; ===========================================================================
 Kos_Z80:
  if S1HLDriver=1
-	incbin	z80.bin
+	incbin	sound\Driver\z80_S1HL.bin
  else
-	incbin	sound\z80_new.bin
+	incbin	sound\Driver\z80.bin
  endif
 	;	incbin	sound\z80_1.bin
 	;	dc.w ((SegaPCM&$FF)<<8)+((SegaPCM&$FF00)>>8)
@@ -48110,19 +48190,25 @@ Obj90:
 	include "OptionsScreen.asm"
 	include "InfoScreen.asm"
 
-; S1HL DAC samples banks:
- if S1HLDriver=1
-		align $100000
-	incbin 'S1HLDACBank.bin'
-		align $110000
-	incbin 'S1HLDACBank2.bin'
-		align $120000
-	incbin 'S1HLDACBank3.bin'
-		align $130000
-	incbin 'S1HLDACBank4.bin'
- endif
-; Para evitar que o rom fique maior sem precisar, não colocar inclusões/rotinas aqui, só acima das inclusões dos bancos
 
-; end of 'ROM'
-EndOfRom:
-		END
+	if S1HLDriver=1
+AlignValue =	$100000
+AlignValueZ80 =	(AlignValue>>16)
+
+		align	AlignValue
+		incbin	sound\Driver\S1HLDACBank.bin
+
+		align	AlignValue+$10000
+		incbin	sound\Driver\S1HLDACBank2.bin
+
+		align	AlignValue+$20000
+		incbin	sound\Driver\S1HLDACBank3.bin
+
+		align	AlignValue+$30000
+		incbin	sound\Driver\S1HLDACBank4.bin
+	endif
+
+
+; ===========================================================================
+EndOfRom:	END
+; ===========================================================================

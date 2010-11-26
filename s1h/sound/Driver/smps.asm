@@ -11,6 +11,8 @@
 	listing off
 	phase	0
 
+AlignValueZ80 = 10h
+
 DAC_Panning	equ	1FFDh		; I *THINK* this is for the panning of the DAC. I'm not sure though, so don't quote me on this. 
 Sample_to_Play	equ	1FFFh		; Sample to play, the 68K will move into this locatiton whatever sample that's supposed to be played.
 SampleFinish    equ     1FFAh           ; O 68k checa esse endereço para não fazer mais pedidos de samples durante a reprodução do sample que deverá ser totalmente reproduzido.
@@ -290,163 +292,163 @@ PCM_Table:
 	dw	DAC1_Location	; 01 - Dance Kick (Sonic Advance 3)
 	dw	DAC1_Size
 	dw	000Bh		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DACF_Location	;  Sonic 3 Snare sample
 	dw	DACF_Size
 	dw	0003h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db	00h
 
 	;dw	DAC2_Location	; 02 - Open Snare sample (The Hybrid Front)
 	;dw	DAC2_Size
 	;dw	0010h		; Pitch = 1h
-	;db	10h
+	;db	AlignValueZ80
 	;db	00h
 	
 	dw	DAC3_Location	; 03 - Sonic 2 Beta Synth Drum
 	dw	DAC3_Size
 	dw	000Ah		; Pitch = 1Bh
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC4_Location	; 04 - Clap (Sonic 3 - Sample $8F)
 	dw	DAC4_Size
 	dw	0008h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC15_Location
 	dw	DAC15_Size
 	dw	000Dh
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 	
 	dw	DAC6_Location	; Kick sample
 	dw	DAC6_Size
 	dw	0017h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC7_Location	; Kick sample
 	dw	DAC7_Size
 	dw	0039h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC8_Location	; Kick sample
 	dw	DAC8_Size
 	dw	0006h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC9_Location	; Kick sample
 	dw	DAC9_Size
 	dw	0012h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	;dw	DACA_Location	; Kick sample
 	;dw	DACA_Size
 	;dw	000Bh		; Pitch = 17h
-	;db	10h
+	;db	AlignValueZ80
 	;db      00h
 	
 	;dw	DACB_Location	; Kick sample
 	;dw	DACB_Size
 	;dw	0004h		; Pitch = 17h
-	;db	10h
+	;db	AlignValueZ80
 	;db      00h
 
 	dw	DACC_Location	; Kick sample		$8A	tom
 	dw	DACC_Size
 	dw	0005h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 
 	dw	DACC_Location	; Kick sample		$8B	tom
 	dw	DACC_Size
 	dw	0003h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 
 	dw	DACC_Location	; Kick sample		$8C	tom
 	dw	DACC_Size
 	dw	0001h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DACD_Location	; Kick sample
 	dw	DACD_Size
 	dw	0003h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 
 	;dw	DAC2A_Location			; C2 - Can't Let Her Get Away sample
 	;dw	DAC2A_Size
 	;dw	0006h
-	;db	12h
+	;db	AlignValueZ80+2h
 	;db      00h
 
 	dw	DACF_Location	
 	dw	DACF_Size
 	dw	0003h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DACF_Location	;  Sonic 3 Snare sample
 	dw	DACF_Size
 	dw	0003h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC10_Location	; Sonic 3 Kick sample
 	dw	DAC10_Size
 	dw	0003h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC3_Location	;  #11# Kick sample
 	dw	DAC3_Size
 	dw	000Eh		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC3_Location	;  #12$ Kick sample
 	dw	DAC3_Size
 	dw	0014h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC3_Location	; #13# Kick sample
 	dw	DAC3_Size
 	dw	0018h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC8_Location	; #14# Kick sample
 	dw	DAC8_Size
 	dw	001Eh		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC8_Location	; #15# Kick sample
 	dw	DAC8_Size
 	dw	0024h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC8_Location	; #16# Kick sample
 	dw	DAC8_Size
 	dw	0017h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DACC_Location	; #17# Kick sample
 	dw	DACC_Size
 	dw	0014h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DACC_Location	; #18# Kick sample
@@ -458,343 +460,343 @@ PCM_Table:
 	dw	DACC_Location	; #19# Kick sample
 	dw	DACC_Size
 	dw	0016h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DACD_Location	; #1A# Kick sample
 	dw	DACD_Size
 	dw	0009h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DACD_Location	; #1B# Kick sample
 	dw	DACD_Size
 	dw	0014h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DACD_Location	; #1C# Kick sample
 	dw	DACD_Size
 	dw	0021h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DACF_Location	;  Sonic 3 Snare (2nd pitch) 
 	dw	DACF_Size
 	dw	0005h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 
 	dw	DAC11_Location	; Ristar basic Snare (Sample ID=10)
 	dw	DAC11_Size
 	dw	0017h		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 
 	dw	DAC12_Location	; Ristar basic Snare (Sample ID=10)
 	dw	DAC12_Size
 	dw	000Ch		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 
 	dw	DAC12_Location	; Ristar basic Snare (Sample ID=10)
 	dw	DAC12_Size
 	dw	000Ch		; Pitch = 17h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw      DAC5_Location
 	dw      DAC5_Size
 	dw      0008h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw      DAC13_Location	;  Sample A2
 	dw      DAC13_Size
 	dw      0007h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw      DAC13_Location	;	Sample A3 (Variação do A2)
 	dw      DAC13_Size
 	dw      000Bh
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw      DAC13_Location	;	Sample A4 (Variação #2 do A2)
 	dw      DAC13_Size
 	dw      000Ch
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw      DAC13_Location
 	dw      DAC13_Size
 	dw      0008h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw      DAC14_Location		; #A6 Sonic 3 Has Passed Synth Drum 1
 	dw      DAC14_Size
 	dw      000Ah
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw      DAC14_Location		; #A7 Sonic 3 Has Passed Synth Drum 1
 	dw      DAC14_Size
 	dw      000Eh
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw      DAC14_Location		; #A8 Sonic 3 Has Passed Synth Drum 1
 	dw      DAC14_Size
 	dw      0016h
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw      DAC14_Location		; #A9 Sonic 3 Has Passed Synth Drum 1
 	dw      DAC14_Size
 	dw      001Ah
-	db	10h
+	db	AlignValueZ80
 	db      00h
 	
 	dw	DAC16_Location			; Crash Cymbal - Sonic Advance 3
 	dw	DAC16_Size
 	dw	000Fh
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 
 	dw	DAC17_Location			; Choir 'Oooh!' 1
 	dw	DAC17_Size
 	dw	000Fh
-	db	12h
+	db	AlignValueZ80+2h
 	db      00h
 
 	dw	DAC17_Location			; Choir 'Oooh!' 2
 	dw	DAC17_Size
 	dw	000Fh
-	db	12h
+	db	AlignValueZ80+2h
 	db      00h
 	
 	dw	DAC17_Location			; Choir 'Oooh!' 3
 	dw	DAC17_Size
 	dw	000Fh
-	db	12h
+	db	AlignValueZ80+2h
 	db      00h
 	
 	dw	DAC18_Location			; Parte 1 da sequência da Palmtree Panic Past
 	dw	DAC18_Size
 	dw	000Ah
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 
 	dw	DAC19_Location			; Parte 2 da sequência da Palmtree Panic Past
 	dw	DAC19_Size
 	dw	000Ah
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 	
 	dw	DAC1A_Location			; Parte 3 da sequência da Palmtree Panic Past
 	dw	DAC1A_Size
 	dw	000Ah
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 
 	dw	DAC1B_Location			; Knuckles Chaotix Snare
 	dw	DAC1B_Size
 	dw	001Bh
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 	
 	dw	DAC1C_Location			; Knuckles Chaotix Kick
 	dw	DAC1C_Size
 	dw	0016h
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
         	
 	dw	DAC1D_Location			; Crackers Snare
 	dw	DAC1D_Size
 	dw	000Ah
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 
 	dw	DAC1E_Location			; Michael Jackson's "IN THE CLOSET" Snare
 	dw	DAC1E_Size
 	dw	000Dh
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 
 	dw	DAC1F_Location			; Choir usado na música "Sonic Advance 3 - Chaos Angel Act 1"
 	dw	DAC1F_Size
 	dw	000Fh
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 
 	dw	DAC20_Location			; Sonic 1 Kick
 	dw	DAC20_Size
 	dw	000Fh
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 	
 	dw	DAC21_Location			; Sonic 1 Snare
 	dw	DAC21_Size
 	dw	0001h
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 	
 	dw	DAC22_Location			; #FALA# 'Okay!' - Sonic Advance 3
 	dw	DAC22_Size
 	dw	0001h
-	db	12h
+	db	AlignValueZ80+2h
 	db      01h
 
 	dw	DAC23_Location			; #FAlA# All Right! - Sonic Advance 3
 	dw	DAC23_Size
 	dw	0001h
-	db	12h
+	db	AlignValueZ80+2h
 	db      01h
 
 	dw	DAC24_Location			; Marry Me (Dreams Come True) Kick
 	dw	DAC24_Size
 	dw	0007h
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 
 	dw	DAC25_Location			; Marry Me (Dreams Come True) Kick - Versão Editada
 	dw	DAC25_Size
 	dw	0007h
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 
 	dw	DAC26_Location			; Sonic 3 "GO!"
 	dw	DAC26_Size
 	dw	000Dh
-	db	12h
+	db	AlignValueZ80+2h
 	db      00h
 
 	dw	DAC27_Location			; Voice Synth Drum
 	dw	DAC27_Size
 	dw	000Ah
-	db	12h
+	db	AlignValueZ80+2h
 	db      00h
 
 	dw	DAC27_Location			; Voice Synth Drum - Afinação 2
 	dw	DAC27_Size
 	dw	000Dh
-	db	12h
+	db	AlignValueZ80+2h
 	db      00h
 	
 	dw	DAC27_Location			; Voice Synth Drum - Afinação 3
 	dw	DAC27_Size
 	dw	000Dh
-	db	12h
+	db	AlignValueZ80+2h
 	db      00h
 
 	dw	DAC28_Location			; "Clap!" - Alternativo
 	dw	DAC28_Size
 	dw	000Dh
-	db	11h
+	db	AlignValueZ80+1h
 	db      00h
 	
 	dw	DAC29_Location			; #FALA# 'Yes!' - Sonic CD
 	dw	DAC29_Size
 	dw	0006h
-	db	12h
+	db	AlignValueZ80+2h
 	db      01h
 
 	dw	DAC2A_Location			; C2 - Can't Let Her Get Away sample
 	dw	DAC2A_Size
 	dw	0006h
-	db	12h
+	db	AlignValueZ80+2h
 	db      00h
 	
 	dw	DAC2B_Location			; C3 - Can't Let Her Get Away sample
 	dw	DAC2B_Size
 	dw	0006h
-	db	12h
+	db	AlignValueZ80+2h
 	db      00h
 
 	dw	DAC2C_Location			; Sample C4 - Chaotix Snare modificado
 	dw	DAC2C_Size
 	dw	0026h
-	db	12h
+	db	AlignValueZ80+2h
 	db        00h
 
 	dw	DAC2D_Location			; Sample C5 - Bate-Lata (Sonic 3 Sample 84/8A-8B)
 	dw	DAC2D_Size
 	dw	001Ah
-	db	11h
+	db	AlignValueZ80+1h
 	db        00h
 
 	dw	DAC2E_Location			; Sample C6 - Bate-Lata (Variação 1 - Mais grave)
 	dw	DAC2E_Size
 	dw	002Ah
-	db	11h
+	db	AlignValueZ80+1h
 	db        00h
 
 	dw	DAC2F_Location			; Sample C7 - Bate-Lata (Variação 1 - Mais grave)
 	dw	DAC2F_Size
 	dw	003Eh
-	db	11h
+	db	AlignValueZ80+1h
 	db        00h
 	
 	dw	DAC30_Location			; Sample C8 - Dance Kick 2 (Dance Kick mais forte)
 	dw	DAC30_Size
 	dw	00010h
-	db	13h
+	db	AlignValueZ80+3h
 	db        00h
 	
 	dw	DAC31_Location			; Sample C9 - Michael Jackson's Moonwalker Snare
 	dw	DAC31_Size
 	dw	0001Ch
-	db	13h
+	db	AlignValueZ80+3h
 	db        00h
 	
 	dw	DAC32_Location			; Sample CA - Sonic 2's Scratch
 	dw	DAC32_Size
 	dw	00008h
-	db	13h
+	db	AlignValueZ80+3h
 	db        00h
 	
 	dw	DAC33_Location			; Sample CB - Sonic 3's Sample 9B - Special Stage Snare
 	dw	DAC33_Size
 	dw	00010h
-	db	13h
+	db	AlignValueZ80+3h
 	db        00h
 		
 	dw	DAC34_Location			; Sample CC - Bongo #1
 	dw	DAC34_Size
 	dw	00002h
-	db	13h
+	db	AlignValueZ80+3h
 	db        00h
 			
 	dw	DAC35_Location			; Sample CD - Bongo #2
 	dw	DAC35_Size
 	dw	00006h
-	db	13h
+	db	AlignValueZ80+3h
 	db        00h
 				
 	dw	DAC36_Location			; Sample CE - Ohh #1
 	dw	DAC36_Size
 	dw	00010h
-	db	13h
+	db	AlignValueZ80+3h
 	db        00h
 					
 	dw	DAC37_Location			; Sample CF - Ohh #2
 	dw	DAC37_Size
 	dw	00012h
-	db	13h
+	db	AlignValueZ80+3h
 	db        00h
 	
 	dw	DAC38_Location			; Sample CF - Ohh #2
 	dw	DAC38_Size
 	dw	00012h
-	db	13h
+	db	AlignValueZ80+3h
 	db        00h
 					
 	dw	DAC39_Location			; Sample D0 - Ohh #3
 	dw	DAC39_Size
 	dw	0000Ch
-	db	13h
+	db	AlignValueZ80+3h
 	db        00h
 	
 ; Agora isso não é mais usado:

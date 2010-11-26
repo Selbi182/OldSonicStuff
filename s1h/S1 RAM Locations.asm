@@ -7,8 +7,8 @@
  ";S"	 = Used by Sega
 
 
-    ($FFFFFF70).w
-    ($FFFFFF71).w
+ ;  ($FFFFFF70).w
+ ;  ($FFFFFF71).w
     ($FFFFFF72).w
     ($FFFFFF73).w
     ($FFFFFF74).w
@@ -24,17 +24,17 @@
     ($FFFFFF7E).w
     ($FFFFFF7F).w
 
-    ($FFFFFF80).w
-    ($FFFFFF81).w
-    ($FFFFFF82).w
-    ($FFFFFF83).w
-    ($FFFFFF84).w
-    ($FFFFFF85).w
-    ($FFFFFF86).w
-    ($FFFFFF87).w
-    ($FFFFFF88).w
-    ($FFFFFF89).w
-    ($FFFFFF8A).w
+ ;S ($FFFFFF80).w
+ ;S ($FFFFFF81).w
+ ;S ($FFFFFF82).w
+ ;S ($FFFFFF83).w
+ ;S ($FFFFFF84).w
+ ;S ($FFFFFF85).w
+ ;  ($FFFFFF86).w
+ ;  ($FFFFFF87).w
+ ;  ($FFFFFF88).w
+ ;  ($FFFFFF89).w
+ ;  ($FFFFFF8A).w
     ($FFFFFF8B).w
     ($FFFFFF8C).w
     ($FFFFFF8D).w
@@ -52,17 +52,17 @@
  ;  ($FFFFFF98).w
  ;  ($FFFFFF99).w
  ;  ($FFFFFF9A).w
-    ($FFFFFF9B).w
+ ;  ($FFFFFF9B).w
  ;  ($FFFFFF9C).w
  ;  ($FFFFFF9D).w
     ($FFFFFF9E).w
     ($FFFFFF9F).w
 
-    ($FFFFFFA0).w
+ ;  ($FFFFFFA0).w
  ;  ($FFFFFFA1).w
  ;  ($FFFFFFA2).w
  ;  ($FFFFFFA3).w
-    ($FFFFFFA4).w
+ ;  ($FFFFFFA4).w
     ($FFFFFFA5).w
     ($FFFFFFA6).w
  ;  ($FFFFFFA7).w
