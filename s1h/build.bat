@@ -15,5 +15,5 @@ REM derecmp.exe ec sslay_u sslayout
 
 asm68k /o op+ /o os+ /o ow+ /o oz+ /o oaq+ /o osq+ /o omq+ /p /o ae- sonic1.asm, s1erz.bin
 fixheadr.exe s1built.bin
-copy s1erz.bin ..\s1erz.bin
+rem copy s1erz.bin ..\s1erz.bin
 pause

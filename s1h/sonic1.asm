@@ -48190,10 +48190,12 @@ Obj90:
 	include "OptionsScreen.asm"
 	include "InfoScreen.asm"
 
-
 	if S1HLDriver=1
-AlignValue =	$100000
-AlignValueZ80 =	(AlignValue>>16)
+		dc.b	'BBBB'
+
+AlignX:		dc.l	(((*)+$10000)&$00FF0000)
+
+AlignValue =	(((*-4)+$10000)&$00FF0000)
 
 		align	AlignValue
 		incbin	sound\Driver\S1HLDACBank.bin

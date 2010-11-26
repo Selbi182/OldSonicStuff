@@ -11,7 +11,7 @@
 	listing off
 	phase	0
 
-AlignValueZ80 = 10h
+AlignValueZ80 = 90h
 
 DAC_Panning	equ	1FFDh		; I *THINK* this is for the panning of the DAC. I'm not sure though, so don't quote me on this. 
 Sample_to_Play	equ	1FFFh		; Sample to play, the 68K will move into this locatiton whatever sample that's supposed to be played.
