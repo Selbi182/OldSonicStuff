@@ -48116,14 +48116,8 @@ Art_Dust	incbin	artunc\spindust.bin
 		even
 Sonic2_LevelSelectX:
 		include "s2_menu.asm"
-SSRGSplashScreen:
-		include "Screen/SSRG/SSRGSplash.asm"
 SelbiSplashScreen:
 		include "Screen/SelbiSplash.asm"
-TongaraSplashScreen:
-		include "Screen/Tongara/Tongara.asm"
-GayBombSplashScreen:
-		include "Screen/GayBomb/GayBomb.asm"
 ODIGHZSplashScreen:
 		include "Screen/ODIGHZ/ODIGHZ.asm"
 
