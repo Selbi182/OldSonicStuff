@@ -5594,8 +5594,8 @@ SS_NoDebug:
 ; ---------------------------------------------------------------------------
 
 SS_MainLoop:
-		cmpi.b	#1,($FFFFFE16).w	; is current special stage number = 1?
-		bne.s	SS_NoSkip		; if not, branch
+	;	cmpi.b	#1,($FFFFFE16).w	; is current special stage number = 1?
+	;	bne.s	SS_NoSkip		; if not, branch
 		btst	#7,($FFFFF605).w	; is Start button pressed?
 		beq.w	SS_NoSkip		; if not, branch
 		cmpi.b	#4,($FFFFD024).w	; is special stage exiting routine being run?
@@ -6075,7 +6075,7 @@ Cont_ClrObjRam:
 		move.l	#$6A200002,($C00004).l
 		lea	(Nem_MiniSonic).l,a0 ; load continue screen patterns
 		jsr	NemDec
-		moveq	#10,d1
+		moveq	#$00,d1
 		jsr	ContScrCounter	; run countdown	(start from 10)
 		moveq	#$12,d0
 		jsr	PalLoad1	; load continue	screen pallet
@@ -6091,6 +6091,8 @@ Cont_ClrObjRam:
 		move.b	#4,($FFFFD09A).w
 		move.b	#$80,($FFFFD0C0).w
 		move.b	#4,($FFFFD0E4).w
+		move.b	#1,($FFFFFFDC).w	; some flag to fix music issues
+		clr.w	($FFFFFF88).w
 		jsr	ObjectsLoad
 		jsr	BuildSprites
 		move.w	($FFFFF60C).w,d0
@@ -6108,10 +6110,19 @@ Cont_MainLoop:
 		cmpi.b	#6,($FFFFD024).w
 		bcc.s	loc_4DF2
 		move	#$2700,sr
-		move.w	($FFFFF614).w,d1
-		divu.w	#$3C,d1
-		andi.l	#$F,d1
-		jsr	ContScrCounter
+	;	move.w	($FFFFF614).w,d1
+	;	divu.w	#$3C,d1
+	;	andi.l	#$F,d1
+
+		add.w	#7,($FFFFFF88).w	; increase number by 7
+		cmpi.w	#99,($FFFFFF88).w	; is counter over 99?
+		ble.s	Cont_No99		; if not, branch
+		clr.w	($FFFFFF88).w		; otherwise reset it to 0
+
+Cont_No99:
+		move.w	($FFFFFF88).w,d1	; load counter into d0
+		jsr	ContScrCounter		; set new number
+
 		move	#$2300,sr
 
 loc_4DF2:
@@ -6122,20 +6133,21 @@ loc_4DF2:
 		cmpi.b	#6,($FFFFD024).w
 		bcc.s	Cont_MainLoop
 		tst.w	($FFFFF614).w
-		bne.w	Cont_MainLoop
-		move.b	#0,($FFFFF600).w ; go to Sega screen
-		rts	
+		bra.w	Cont_MainLoop
+	;	move.b	#0,($FFFFF600).w ; go to Sega screen
+	;	rts	
 ; ===========================================================================
 
 Cont_GotoLevelX:				; XREF: Cont_MainLoop
 		move.b	#$C,($FFFFF600).w ; set	screen mode to $0C (level)
 		move.b	#3,($FFFFFE12).w ; set lives to	3
 		moveq	#0,d0
-		move.w	d0,($FFFFFE20).w ; clear rings
+	;	move.w	d0,($FFFFFE20).w ; clear rings
+		move.w	($FFFFFF88).w,($FFFFFE20).w	; set rings to that random value
 		move.l	d0,($FFFFFE22).w ; clear time
 		move.l	d0,($FFFFFE26).w ; clear score
 		move.b	d0,($FFFFFE30).w ; clear lamppost count
-		subq.b	#1,($FFFFFE18).w ; subtract 1 from continues
+	;	subq.b	#1,($FFFFFE18).w ; subtract 1 from continues
 		rts	
 ; ===========================================================================
 
@@ -6177,8 +6189,10 @@ Obj80_MakeMiniSonic:			; XREF: Obj80_Index
 		movea.l	a0,a1
 		lea	(Obj80_MiniSonicPos).l,a2
 		moveq	#0,d1
+
 		move.b	#13,d1
 	;	move.b	($FFFFFE18).w,d1
+
 		subq.b	#2,d1
 		bcc.s	loc_4EC4
 		jmp	DeleteObject
@@ -6215,15 +6229,15 @@ loc_4EEA:
 		move.b	d3,$28(a1)
 
 Obj80_ChkType:				; XREF: Obj80_Index
-		tst.b	$28(a0)
-		beq.s	loc_4F40
+	;	tst.b	$28(a0)
+	;	beq.s	loc_4F40
 		cmpi.b	#6,($FFFFD024).w
 		bcs.s	loc_4F40
 		move.b	($FFFFFE0F).w,d0
 		andi.b	#1,d0
 		bne.s	loc_4F40
-		tst.w	($FFFFD010).w
-		bne.s	Obj80_Delete
+	;	tst.w	($FFFFD010).w
+	;	bne.s	Obj80_Delete
 		rts	
 ; ===========================================================================
 
@@ -22313,7 +22327,7 @@ GotThroughAct:				; XREF: Obj3E_EndAct
 		move.w	($FFFFF72A).w,($FFFFF728).w
 		clr.b	($FFFFFE2D).w	; disable invincibility
 		clr.b	($FFFFFE1E).w	; stop time counter
-	;	move.b	#$3A,($FFFFD5C0).w
+		move.b	#$3A,($FFFFD5C0).w
 		moveq	#$10,d0
 		jsr	(LoadPLC2).l	; load title card patterns
 		move.b	#1,($FFFFF7D6).w
@@ -41901,6 +41915,9 @@ SS_StartLoc:	incbin	misc\sloc_ss.bin
 
 
 SS_Load:				; XREF: SpecialStage
+		bra.s	SS_AlwaysStage1	; I only want special stage 1
+; ===========================================================================
+
 		moveq	#0,d0
 		move.b	($FFFFFE16).w,d0 ; load	number of last special stage entered
 		addq.b	#1,($FFFFFE16).w
@@ -41928,6 +41945,10 @@ SS_ChkEmldRepeat:
 
 SS_LoadData:
 		lsl.w	#2,d0
+; ===========================================================================
+
+SS_AlwaysStage1:
+		moveq	#0,d0
 		lea	SS_StartLoc(pc,d0.w),a1
 		move.w	(a1)+,($FFFFD008).w
 		move.w	(a1)+,($FFFFD00C).w
@@ -42068,6 +42089,8 @@ Obj09_Main:				; XREF: Obj09_Index
 		bset	#2,$22(a0)
 		bset	#1,$22(a0)
 		clr.b	($FFFFFFAE).w
+		clr.w	($FFFFFF86).w	; clear stored X-pos
+		clr.w	($FFFFFF88).w	; clear stored Y-pos
 ; ---------------------------------------------------------------------------
 
 Obj09_ChkDebug:				; XREF: Obj09_Index
@@ -42636,8 +42659,8 @@ Obj09_NoEmer:
 Obj09_ChkGhost:
 		cmpi.b	#$41,d4			; is the item a	ghost block?
 		bne.s	Obj09_ChkGhostTag	; if not, branch
-		cmpi.b	#1,($FFFFFE16).w	; is current special stage number = 1?
-		bne.s	Obj09_CG_Original		; if yes, branch
+	;	cmpi.b	#1,($FFFFFE16).w	; is current special stage number = 1?
+	;	bne.s	Obj09_CG_Original	; if not, branch
 		move.w	8(a0),($FFFFFF86).w	; save Sonic's X-position
 		move.w	$C(a0),($FFFFFF88).w	; save Sonic's Y-position
 		move.w	#$A1,d0			; set checkpoint sound
@@ -42869,8 +42892,8 @@ Obj09_GOAL:
 		bne.s	Obj09_UPblock		; if not, branch
 		addq.b	#2,$24(a0)		; run routine "Obj09_ExitStage"
 		move.w	#$A8,d0			; play special stage exit sound				
-		cmpi.b	#1,($FFFFFE16).w	; is current special stage number = 1?
-		bne.s	Obj09_NotSS1x		; if not, branch
+	;	cmpi.b	#1,($FFFFFE16).w	; is current special stage number = 1?
+	;	bne.s	Obj09_NotSS1x		; if not, branch
 		subq.b	#2,$24(a0)		; don't run "Obj09_ExitStage"
 		move.w	#$C3,d0			; play giant ring sound
 		clr.b	($FFFFFF8A).w		; make R block usable again
