@@ -2,7 +2,6 @@
 echo ============================================
 echo Sonic Erazor is building...
 echo ============================================
-echo.
 
 REM ::: automatic recompression of data - disabled by default because it's slow
 REM ::: remove "REM" from the lines below to re-enable it

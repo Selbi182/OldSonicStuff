@@ -36,10 +36,10 @@
  ;  ($FFFFFF89).w
  ;  ($FFFFFF8A).w
     ($FFFFFF8B).w
-    ($FFFFFF8C).w
-    ($FFFFFF8D).w
-    ($FFFFFF8E).w
-    ($FFFFFF8F).w
+ ;  ($FFFFFF8C).w
+ ;  ($FFFFFF8D).w
+ ;  ($FFFFFF8E).w
+ ;  ($FFFFFF8F).w
 
  ;  ($FFFFFF90).w
  ;  ($FFFFFF91).w
@@ -135,7 +135,7 @@
  ;S ($FFFFFFE6).w
  ;S ($FFFFFFE7).w
  ;  ($FFFFFFE8).w
- ;  ($FFFFFFE9).w
+    ($FFFFFFE9).w
  ;S ($FFFFFFEA).w
  ;S ($FFFFFFEB).w
  ;S ($FFFFFFEC).w

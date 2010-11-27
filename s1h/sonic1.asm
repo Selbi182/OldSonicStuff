@@ -25,10 +25,10 @@ align macro
 ; Used switches (Programmer)
 ;------------------------------------------------------
 ;==============================================
-;Debug Mode Enabled by default
+;Debug Mode and Level Select Enabled by default
 ; 0 - No
 ; 1 - Yes
-DebugModeDefault = 0
+DebugLSDefault = 0
 ;==============================================
 ;Required Boss hits
 ; 0 - Default
@@ -46,45 +46,18 @@ NoTitleScreenArt = 0
 ;------------------------------------------------------
 ;==============================================
 ;Speed of HUD
-; 10 = Default
-; Note: Replaced with ROM absolute value.
-;HUDSpeed = 1
-;	dc.w	$0001
-;==============================================
-;Dynamic Palettes 
-; 0 - Disabled
-; 1 - Enabled
-DynPal = 1
-;==============================================
-;Multi Shield Counter
-; 0 - Disbled
-; 1 - Enabled
-MultiShieldCounter = 1
+; 6 = Default
+HUDSpeed = 6
 ;==============================================
 ;Afterimage Type
 ; 0 - Short afterimage (like in S3k)
 ; 1 - Long/custom afterimage
-AfterImageType = 1
-;==============================================
-;Decide if Inhuman Mode has Stars or not
-; 0 - Disabled
-; 1 - Enabled
-InhumanStars = 1
-;==============================================
-;Air moving type
-; 0 - Air Freeze
-; 1 - Air Move
-AirType = 1
+AfterImageType = 0
 ;==============================================
 ;Use S1HL Sound Driver and samples
 ; 0 - No
 ; 1 - Yes
 S1HLDriver = 1
-;==============================================
-;Extended Camera Style (i.e. Sonic CD camera)
-; 0 - Disabled
-; 1 - Enabled
-ExtendedCamera = 1
 ;==============================================
 ;If 1, SYZ will be in the main gameplay. I'm
 ;yet to decide if I really want that zone.
@@ -93,6 +66,7 @@ ExtendedCamera = 1
 SYZEnabled = 0
 ;==============================================
 ;Enable Demo Recording (In RAM at $FFFFD200)
+;Also disables Stars and Shields
 ; 0 - Disabled
 ; 1 - Enabled
 RecordDemo = 0
@@ -102,11 +76,6 @@ AutoDEMO = 0
 ;------------------------------------------------------
 ; Misc
 ;------------------------------------------------------
-;==============================================
-;Afterimage Counter RAM adress
-; (needed for SPO, Spindash etc.)
-; Disabled because it's unnecesary
-;AfterImage_Counter  EQU  $FFFFFF6A
 ;==============================================
 ;Macros for ASM songs
 	include	"sound\Driver\s1smps2asm_inc.asm"
@@ -148,7 +117,7 @@ SRAMSupport:	dc.l $20202020		; change to $5241E020 to create	SRAM
 		dc.l $20202020		; SRAM start
 		dc.l $20202020		; SRAM end
 
-Notes:		dc.b 'This is the speed of the HUD:  <', $00, $06, '>                 '
+Notes:		dc.b '                                                    '
 
 Region:		dc.b 'JUE             ' ; Region
 
@@ -3141,18 +3110,10 @@ PalPointers:
          include "_inc\Pallet pointers.asm"
 
 PalPointers2:
-	if DynPal=1
          include "_inc\Pallet pointers2.asm"
-        else
-	 include "_inc\Pallet pointers.asm"
-	endif
 
 PalPointers3:
-	if DynPal=1
          include "_inc\Pallet pointers3.asm"
-        else
-	 include "_inc\Pallet pointers.asm"
-	endif
 
 ; ---------------------------------------------------------------------------
 ; Pallet data
@@ -3566,7 +3527,7 @@ NoTSLoad:
 		jsr	PalLoad1
 		move.b	#$8A,d0		; play title screen music
 		jsr	PlaySound_Special
-	if DebugModeDefault=1
+	if DebugLSDefault=1
 		move.b	#1,($FFFFFFFA).w ; enable debug mode
 	else
 		move.b	#0,($FFFFFFFA).w ; disable debug mode
@@ -3713,8 +3674,10 @@ StartCheck:
 		beq.w	loc_317C		; if not, branch
 
 Title_ChkLevSel:
+	if DebugLSDefault=0
 		tst.b	($FFFFFFE0).w		; check	if level select	code is	on
 		beq.w	Title_LoadOptions	; if not, load options screen
+	endif
 		btst	#6,($FFFFF604).w	; check if A is pressed
 		beq.w	Title_LoadOptions	; if not, load options screen
 		move.b	#1,($FFFFFFDC).w	; some flag to fix music issues in the level select
@@ -8341,18 +8304,6 @@ SH_NoDelay:
 @cont1:
 		move.w	($FFFFD008).w,d0	; move Sonic's X-pos to d0
 
-
-	if ExtendedCamera=0
-		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
-		bne.w	S_H_NoExtendedCam	; if not, branch
-		tst.b	($FFFFFFD8).w		; has Buzz Bomber been destroyed?
-		bne.w	S_H_NoExtendedCam	; if yes, branch
-		sub.w	#$35,d0			; make the middle between Sonic and the Bomber the cam-position
-		bra.w	S_H_NoExtendedCam	; don't use extended camera if it's disabled
-	endif
-
-
-
 CamSpeed = 2					; set camera moving speed (standart 2 or 3)
 
 		cmpi.w	#$601,($FFFFFE10).w	; is this the ending sequence?
@@ -8373,7 +8324,7 @@ S_H_NotGHZ1:
 		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
 		bne.s	S_H_NotGHZ2		; if not, branch
 		tst.b	($FFFFFFD8).w		; has Buzz Bomber been destroyed?
-		bne.s	S_H_NotGHZ2		; if yes, branch
+		bne.s	S_H_BuzzIgnore		; if yes, branch
 		sub.w	#$35,d0			; make the middle between Sonic and the Bomber the cam-position
 		bra.w	S_H_NoExtendedCam	; skip
 ; ===========================================================================
@@ -8381,16 +8332,8 @@ S_H_NotGHZ1:
 S_H_NotGHZ2:
 		tst.b	($FFFFFF93).w		; has extended cam been disabled via options?
 		bne.w	S_H_NoExtendedCam	; if yes, branch
-	;	move.w	#$0000,($FFFFFE26).w	; clear first part of score counter
-	;	move.w	($FFFFD010).w,d3
-	;	add.w	($FFFFD012).w,d3
-	;	tst.w	d3
-	;	bpl.s	@cont
-	;	neg.w	d3
-;@cont:
-	;	lsr.w	#4,d3
-	;	move.w	d3,($FFFFFE20).w	; set second part of it to Y-position of the object
-	;	ori.b	#$81,($FFFFFE1D).w	; update score counter
+
+S_H_BuzzIgnore:
 		tst.b	($FFFFFFAF).w		; has a flag been set to do this? (Peelout / Spindash)
 		bne.s	S_H_PeeloutSpindash	; if yes, branch
 		move.w	($FFFFD014).w,d2	; load sonic's ground speed to d2
@@ -8444,92 +8387,6 @@ S_H_ResetCamera_Left:
 
 S_H_CameraMove_End:
 		add.w	($FFFFFFCE).w,d0	; add counter to normal camera location
-	;	bra.w	S_H_NoExtendedCam	; skip over old code
-; ===========================================================================
-; ===========================================================================
-; ===========================================================================
-; ===========================================================================
-
-;S_H_OldCameraMovingCodeWhichWasBuggyAsHell:
-	;	tst.b	($FFFFFFAF).w		; has a flag been set to do this?
-	;	bne.s	S_H_PeeloutSpindash	; if yes, branch
-	;	move.w	($FFFFD014).w,d2	; load sonic's ground speed to d2
-	;	btst	#1,($FFFFD022).w	; is sonic in the air?
-	;	beq.s	S_H_NotInAir		; if not, branch
-	;	move.w	($FFFFD010).w,d2	; load sonic's general speed to d2 instead
-
-;S_H_NotInAir:
-	;	move.w	d2,d3			; backup d2 for later use
-	;	tst.w	d2			; check if speed is positive
-	;	bpl.s	S_H_SpeedPositive	; if yes, branch
-	;	neg.w	d2			; otherwise negate it
-
-;S_H_SpeedPositive:
-	;	tst.w	d2
-	;	bne.s	S_H_FastEnough
-	;	cmpi.w	#$600,d2		; is Sonic's speed more than $600?
-	;	bcc.s	S_H_FastEnough		; if yes, branch
-	;	tst.w	($FFFFFFCE).w		; is counter empty?
-	;	bpl.w	S_H_CounterNotEmpty	; if not, branch
-	;	clr.b	($FFFFFFB0).w		; clear direction flag
-	;	bra.s	S_H_NoExtendedCam	; skip
-; ===========================================================================
-
-;S_H_CounterNotEmpty:
-	;	subi.w	#2,($FFFFFFCE).w	; return to normal position step-by-step
-	;	cmpi.b	#1,($FFFFFFB0).w	; was camera sift flag set to 1?
-	;	beq.s	S_H_SpeedPosi		; if yes, branch
-	;	tst.w	($FFFFD010).w		; check if speed is negtive
-	;	bpl.s	S_H_SpeedNega		; if yes, branch
-	;	cmpi.b	#2,($FFFFFFB0).w	; was camera shift to the left before?
-	;	beq.s	S_H_SpeedNega		; if yes, branch to
-
-;S_H_SpeedPosi:
-	;	sub.w	($FFFFFFCE).w,d0	; reduce camera shift (left)
-	;	move.b	#1,($FFFFFFB0).w	; set camera shift flag to 1
-	;	bra.s	S_H_NoExtendedCam	; skip
-; ===========================================================================
-
-;S_H_SpeedNega:	
-	;	add.w	($FFFFFFCE).w,d0	; reduce camera shift (right)
-	;	move.b	#2,($FFFFFFB0).w	; set camera shift flag to 2
-	;	bra.s	S_H_NoExtendedCam	; skip
-; ===========================================================================
-
-;S_H_PeeloutSpindash:
-	;	cmpi.w	#$40,($FFFFFFCE).w	; is counter already at or over $40?
-	;	bge.s	S_H_Reached40X		; if yes, branch
-	;	addi.w	#2,($FFFFFFCE).w	; add 2 to counter
-
-;S_H_Reached40X:
-	;	btst	#0,($FFFFD022).w	; is sonic facing left?
-	;	bne.s	S_H_PeeloutSpdsh_Left	; if yes, branch
-	;	tst.w	($FFFFD014).w		; check if speed is negative
-	;	bmi.s	S_H_PeeloutSpdsh_Left	; if yes, branch
-	;	add.w	($FFFFFFCE).w,d0	; add number of the counter to the X-cam position (to the right)
-	;	bra.s	S_H_NoExtendedCam	; skip
-; ===========================================================================
-
-;S_H_FastEnough:
-	;	cmpi.w	#$40,($FFFFFFCE).w	; is counter already at or over $40?
-	;	bge.s	S_H_Reached40		; if yes, branch
-	;	addi.w	#2,($FFFFFFCE).w	; add 2 to counter
-
-;S_H_Reached40:
-	;	tst.w	d3			; check if speed is positive
-	;	bmi.s	S_H_Left		; if yes, branch
-
-;S_H_Right:
-	;	add.w	($FFFFFFCE).w,d0	; add number of the counter to the X-cam position (to the right)
-	;	bra.s	S_H_NoExtendedCam	; skip
-; ===========================================================================
-
-;S_H_Left:
-	;	tst.w	d3			; check if speed is positive
-	;	bpl.s	S_H_Right		; if yes, branch
-
-;S_H_PeeloutSpdsh_Left:
-	;	sub.w	($FFFFFFCE).w,d0	; sub number from the counter to the X-cam position (to the left)
 
 S_H_NoExtendedCam:
 		sub.w	($FFFFF700).w,d0
@@ -8539,12 +8396,6 @@ S_H_NoExtendedCam:
 		bge.s	loc_65CC
 		clr.w	($FFFFF73A).w
 		rts
-	;	subi.w	#$90,d0
-	;	bcs.s	loc_65F6
-	;	subi.w	#$10,d0
-	;	bcc.s	loc_65CC
-	;	clr.w	($FFFFF73A).w
-	;	rts
 ; ===========================================================================
 
 loc_65CC:
@@ -8563,7 +8414,6 @@ loc_65E4:
 		sub.w	($FFFFF700).w,d1
 		asl.w	#8,d1
 		move.w	d0,($FFFFF700).w
-	;	add.w	#$200,d1			; increase background moving speed, to give this awesome look
 		move.w	d1,($FFFFF73A).w
 		rts	
 ; ===========================================================================
@@ -8645,66 +8495,6 @@ SV_NotGHZ2:
 		moveq	#0,d1
 		moveq	#0,d0			; clear d0
 
-		bra.w	S_V_NoExtendedCam	; NO. FUCKING. VERTICAL. EXTENDED. CAMERA!!!
-
-	if ExtendedCamera=0
-		bra.w	S_V_NoExtendedCam	; don't use extended camera if it's disabled
-	endif
-		tst.b	($FFFFFF93).w		; has extended cam been disabled via options?
-		bne.w	S_V_NoExtendedCam	; if yes, branch
-
-
-CamSpeedV = 3
-		move.w	($FFFFD012).w,d2	; load sonic's general Y-speed to d2
-		tst.w	d2			; is speed positve?
-		bpl.s	S_V_SpeedPositive	; if yes, branch
-		neg.w	d2			; otherwise negate it
-
-S_V_SpeedPositive:
-	;	tst.w	($FFFFD012).w
-	;	beq.s	S_V_ResetCamera
-		cmpi.w	#$600,d2		; is Sonic's speed more than $600 (or less than -$600)?
-		blt.s	S_V_ResetCamera		; if not, branch
-		tst.w	($FFFFD012).w		; is Speed negative?
-		bpl.s	S_V_FastEnough_Right	; if yes, branch to code when Sonic's running to the right
-		bra.s	S_V_FastEnough_Left	; otherwise use the code when Sonic's running to the left
-; ===========================================================================
-
-S_V_PeeloutSpindash:
-		btst	#0,($FFFFD022).w	; is Sonic facing right while performing a Peelout / Spindash?
-		beq.s	S_V_FastEnough_Right	; if yes, branch
-		bra.s	S_V_FastEnough_Left	; otherwise, use code for left
-; ===========================================================================
-
-S_V_FastEnough_Right:
-		cmpi.w	#$40,($FFFFFF90).w	; is camera moving counter at or over $40?
-		bge.s	S_V_CameraMove_End	; if yes, don't change camera moving
-		add.w	#CamSpeedV,($FFFFFF90).w	; otherwise, make camera move to the left
-		bra.s	S_V_CameraMove_End	; skip to processing code
-; ===========================================================================
-
-S_V_FastEnough_Left:
-		cmpi.w	#-$40,($FFFFFF90).w	; is camera moving counter at or below -$40?
-		ble.s	S_V_CameraMove_End	; if yes, don't change camera moving
-		sub.w	#CamSpeedV,($FFFFFF90).w	; otherwise, make camera move to the right
-		bra.s	S_V_CameraMove_End	; skip to processing code
-; ===========================================================================
-
-S_V_ResetCamera:
-		tst.w	($FFFFFF90).w		; is camera moving counter empty?
-		beq.s	S_V_CameraMove_End	; if yes, branch to end
-		bpl.s	S_V_ResetCamera_Left	; is it positive? if yes, branch to code for left moving
-		add.w	#CamSpeedV,($FFFFFF90).w	; otherwise make it move to the right again
-		bra.s	S_V_CameraMove_End	; skip to end
-; ===========================================================================
-
-S_V_ResetCamera_Left:
-		sub.w	#CamSpeedV,($FFFFFF90).w	; make camera move to the elft again
-
-S_V_CameraMove_End:
-		add.w	($FFFFFF90).w,d0	; add counter to normal camera location
-
-S_V_NoExtendedCam:
 		add.w	($FFFFD00C).w,d0	; changed from move.w
 		cmpi.w	#$101,($FFFFFE10).w	; is level LZ2?
 		bne.s	SV_NotLZ2_2		; if not, branch
@@ -12984,7 +12774,6 @@ locret_8BAC:
 ; ===========================================================================
 
 Obj1E_Action:				; XREF: Obj1E_Index
-		jsr	HomeObject_New
 		tst.b	($FFFFFFB1).w
 		bmi.s	Obj1E_NotInhumanCrush
 		tst.b	1(a0)
@@ -13837,7 +13626,6 @@ locret_955A:
 Obj1F_Action:				; XREF: Obj1F_Index
 		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
 		beq.s	Obj1F_NoHome		; if yes, branch
-		jsr	HomeObject_New		; else make homing possible
 		bra.s	Obj1F_NotInhumanCrush	; skip
 
 Obj1F_NoHome:
@@ -15767,7 +15555,7 @@ loc_A246:
 ; ===========================================================================
 
 loc_A25C:
-		tst.b	($FFFFFFC4)	; is homing flag set?
+		tst.b	($FFFFFFEB).w	; is homing flag set?
 		beq.s	Obj26_NoHome	; if not, branch
 		move.b	#$41,$20(a0)	; make monitor breakable from touching it
 
@@ -15785,16 +15573,6 @@ Obj26_Animate:				; XREF: Obj26_Index
 		jsr	AnimateSprite
 
 Obj26_Display:				; XREF: Obj26_Index
-		cmpi.b	#4,$24(a0)
-		beq.s	Obj26_NoHoming
-		bpl.s	Obj26_NoHoming
-		cmpi.b	#9,$1C(a0)	; is monitor being broken?
-		beq.s	Obj26_NoHoming	; if yes, don't home			
-		cmpi.b	#$B,$1A(a0)	; is monitor broken?
-		beq.s	Obj26_NoHoming	; if yes, don't home
-		jsr	HomeObject_Monitor
-
-Obj26_NoHoming:
 		jsr	DisplaySprite
 		move.w	8(a0),d0
 		andi.w	#$FF80,d0
@@ -15808,15 +15586,20 @@ Obj26_NoHoming:
 ; ===========================================================================
 
 Obj26_BreakOpen:			; XREF: Obj26_Index
-	;	tst.b	($FFFFFFEB).w	; was monitor destroyed with a jumpdash?
-	;	beq.s	Obj26_BO_Rest	; if not, branch
-	;	jsr	BounceJD	; if yes, make sonic bounce up
+		tst.b	($FFFFFFEB).w		; is homing flag set?
+		beq.s	Obj26_BO_NoHome		; if not, branch
+		clr.b	($FFFFFFEB).w		; clear homing flag
+		clr.w	($FFFFD010).w		; clear Sonic's X-speed
+		move.w	#-$5F0,d0		; move Sonic upwards
+		btst	#6,($FFFFD022).w	; is Sonic underwater?
+		beq.s	Obj26_BO_MoveUpwards	; if not, branch
+		move.w	#-$300,d0		; otherwise move him slower upwards
 
-Obj26_BO_Rest:
+Obj26_BO_MoveUpwards:
+		move.w	d0,($FFFFD012).w	; move him upwards by the set speed
+
+Obj26_BO_NoHome:
 		bclr	#3,$22(a0)
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
 		addq.b	#2,$24(a0)
 		move.b	#0,$20(a0)
 		jsr	SingleObjLoad
@@ -15959,13 +15742,6 @@ ChkEggman_NotFZ:
 Obj2E_ChkSonic:
 		cmpi.b	#2,d0		; does monitor contain Sonic?
 		bne.w	Obj2E_ChkShoes
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
 
 ExtraLife:
 		addq.b	#1,($FFFFFE12).w ; add 1 to the	number of lives	you have
@@ -15977,9 +15753,6 @@ ExtraLife:
 Obj2E_ChkShoes:
 		cmpi.b	#3,d0		; does monitor contain speed shoes?
 		bne.s	Obj2E_ChkShield
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
 		move.b	#1,($FFFFFE2E).w ; speed up the	BG music
 		move.w	#$4B0,($FFFFD034).w ; time limit for the power-up
 		move.w	#$C00,($FFFFF760).w ; change Sonic's top speed
@@ -15994,22 +15767,19 @@ Obj2E_ChkShoes:
 Obj2E_ChkShield:
 		cmpi.b	#4,d0		; does monitor contain a shield?
 		bne.s	Obj2E_ChkInvinc
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
 		tst.b	($FFFFFFE7).w	; has sonic destroyed a S monitor?
 		bne.s	Obj2E_ChkInvinc	; if yes, don't give sonic a shield
-	if MultiShieldCounter=1
 		tst.b	($FFFFFE2C).w	; is sonic already having a shield?
 		bne.s	Obj2E_Shield_Add ; if yes, branch
 		clr.b	($FFFFFFFC).w
 Obj2E_Shield_Add:
 		add.b	#1,($FFFFFFFC).w ; increase shield counter X with 1
-	endif
-		move.b	#1,($FFFFFE2C).w ; give	Sonic a	shield	
+		move.b	#1,($FFFFFE2C).w ; give	Sonic a	shield
+	
+	if RecordDemo=0
 		move.b	#$38,($FFFFD180).w ; load shield object	($38)
+	endif
+
 		move.w	#$AF,d0
 		jmp	(PlaySound).l	; play shield sound
 ; ===========================================================================
@@ -16021,12 +15791,8 @@ Obj2E_ChkInvinc:
 		beq.s	Obj2E_ChkRings	; if yes, don't give sonic invinciblility
 		move.b	#1,($FFFFFE2D).w ; make	Sonic invincible
 		move.w	#$4B0,($FFFFD032).w ; time limit for the power-up
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
 
+	if RecordDemo=0
 		move.b	#$38,($FFFFD200).w ; load stars	object ($3801)
 		move.b	#1,($FFFFD21C).w
 		move.b	#$38,($FFFFD240).w ; load stars	object ($3802)
@@ -16035,6 +15801,7 @@ Obj2E_ChkInvinc:
 		move.b	#3,($FFFFD29C).w
 		move.b	#$38,($FFFFD2C0).w ; load stars	object ($3804)
 		move.b	#4,($FFFFD2DC).w
+	endif
 
 		tst.b	($FFFFF7AA).w	; is boss mode on?
 		bne.s	Obj2E_NoMusic	; if yes, branch
@@ -16051,16 +15818,6 @@ Obj2E_ChkRings:
 		bne.w	Obj2E_ChkS
 		addi.w	#$A,($FFFFFE20).w ; add	10 rings to the	number of rings	you have
 		ori.b	#1,($FFFFFE1D).w ; update the ring counter
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
-	;	jsr	Touch_KillEnemy
 		cmpi.w	#100,($FFFFFE20).w ; check if you have 100 rings
 		bcs.s	Obj2E_RingSound
 		bset	#1,($FFFFFE1B).w
@@ -16102,7 +15859,7 @@ Obj2E_ChkS:
 		bne.s	Obj2E_ChkGoggles
 		move.b	#1,($FFFFFFE7).w ; make sonic immortal
 
-	if InhumanStars=1	
+	if RecordDemo=0
 		move.b	#$38,($FFFFD280).w ; load stars	object ($3803)
 		move.b	#1,($FFFFD29C).w
 		move.b	#$38,($FFFFD2C0).w ; load stars	object ($3804)
@@ -16473,7 +16230,6 @@ Obj2B_ChgSpeed:				; XREF: Obj2B_Index
 		move.w	#-$700,$12(a0)	; set vertical speed	
 
 Obj2B_ChgAni:
-		jsr	HomeObject_New
 		tst.b	($FFFFFFB1).w
 		bmi.s	Obj2B_NotInhumanCrush
 		tst.b	1(a0)
@@ -16606,7 +16362,6 @@ Obj2C_Main:				; XREF: Obj2C_Index
 		neg.w	$10(a0)		; move Jaws to the right
 
 Obj2C_Turn:				; XREF: Obj2C_Index
-		jsr	HomeObject_New
 		tst.b	($FFFFFFB1).w
 		bmi.s	Obj2C_NotInhumanCrush
 		tst.b	1(a0)
@@ -16676,7 +16431,6 @@ Obj2D_Main:				; XREF: Obj2D_Index
 		move.b	#2,$1C(a0)
 
 Obj2D_Action:				; XREF: Obj2D_Index
-		jsr	HomeObject_New
 		tst.b	($FFFFFFB1).w
 		bmi.s	Obj2D_NotInhumanCrush
 		tst.b	1(a0)
@@ -18550,11 +18304,6 @@ Obj34_CheckSBZ3:			; XREF: Obj34_Index
 		movea.l	a0,a1
 		moveq	#0,d0
 		move.b	($FFFFFE10).w,d0
-	;	cmpi.w	#$001,($FFFFFE10).w ; check if level is	GHZ 2
-	;	bne.s	@cont
-	;	moveq	#2,d0		; load title card number 2 (MZ)
-
-;@cont:
 		cmpi.w	#$002,($FFFFFE10).w ; check if level is	GHZ 3
 		bne.s	@cont2
 		moveq	#15,d0		; load title card number 1 (GHZ)
@@ -18716,24 +18465,24 @@ Obj34_Delete:
 @NoDemo:
 		move.b	#$21,($FFFFD040).w		; load HUD object
 		move.b	#1,($FFFFD070).w		; set to SCORE
-		move.w	($000001DC).l,($FFFFD072).w	; set X-speed
-		move.w	($000001DC).l,($FFFFD074).w	; set Y-speed	
+		move.w	#HudSpeed,($FFFFD072).w		; set X-speed
+		move.w	#HudSpeed,($FFFFD074).w		; set Y-speed	
 		move.b	#$21,($FFFFD400).w		; load HUD object
 		move.b	#2,($FFFFD430).w		; set to RINGS
-		move.w	($000001DC).l,d3
-		neg.w	d3
+		move.w	#HUDSpeed,d3			; load HUD speed into d3
+		neg.w	d3				; negate it
 		move.w	d3,($FFFFD432).w		; set X-speed
-		move.w	($000001DC).l,($FFFFD434).w	; set Y-speed
+		move.w	#HUDSpeed,($FFFFD434).w		; set Y-speed
 		move.b	#$21,($FFFFD440).w		; load HUD object
 		move.b	#3,($FFFFD470).w		; set to TIME
-		move.w	($000001DC).l,($FFFFD472).w	; set X-speed
-		move.w	($000001DC).l,d3
-		neg.w	d3
+		move.w	#HUDSpeed,($FFFFD472).w		; set X-speed
+		move.w	#HUDSpeed,d3			; load HUD speed into d3
+		neg.w	d3				; negate it
 		move.w	d3,($FFFFD474).w		; set Y-speed
 		move.b	#$21,($FFFFD480).w		; load HUD object
 		move.b	#4,($FFFFD4B0).w		; set to LIVES
-		move.w	($000001DC).l,d3
-		neg.w	d3
+		move.w	#HUDSpeed,d3			; load HUD speed into d3
+		neg.w	d3				; negate it
 		move.w	d3,($FFFFD4B2).w		; set X-speed
 		move.w	d3,($FFFFD4B4).w		; set Y-speed
 
@@ -18776,7 +18525,7 @@ Obj34_ConData:	dc.w 0, $120, $FEFC, 0, 0, 0, $214, $154 ; GHZ1
 		dc.w 0,	$120, $FFF4, 0, 0, 0, 0, 0 ; SBZ
 	;	dc.w 0,	$120, $FF04, $144, $41C, $15C, $21C, $15C ; SBZ
 	;	dc.w 0,	$120, $FEF4, 0, $3EC, $3EC, 0, 0 ; FZ
-		dc.w 0,$120, $3EC,$3EC, $414,$154, $214,$154 ; FZ
+		dc.w 0,$120, $3EC,$3EC, $414,$16C, $214,$16C ; FZ
 		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 | (We need it that much times
 		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 | because he's pointing to number 12
 		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 | and I don't know how to change the
@@ -21140,7 +20889,6 @@ Obj42_Main:				; XREF: Obj42_Index
 		move.b	#8,$17(a0)
 
 Obj42_Action:				; XREF: Obj42_Index
-		jsr	HomeObject_New
 		tst.b	($FFFFFFE7).w
 		bne.s	Obj42_NotInhumanCrush
 		tst.b	($FFFFFFB1).w
@@ -21431,7 +21179,6 @@ locret_E052:
 ; ===========================================================================
 
 Obj43_Action:				; XREF: Obj43_Index
-		jsr	HomeObject_New
 		moveq	#0,d0
 		move.b	$25(a0),d0
 		move.w	Obj43_Index2(pc,d0.w),d1
@@ -22907,7 +22654,6 @@ Obj40_SetSmoke:				; XREF: Obj40_Main
 ; ===========================================================================
 
 Obj40_Action:				; XREF: Obj40_Index
-		jsr	HomeObject_New
 		moveq	#0,d0
 		move.b	$25(a0),d0
 		move.w	Obj40_Index2(pc,d0.w),d1
@@ -23113,7 +22859,6 @@ locret_F89E:
 ; ===========================================================================
 
 Obj50_Action:				; XREF: Obj50_Index
-		jsr	HomeObject_New
 		moveq	#0,d0
 		move.b	$25(a0),d0
 		move.w	Obj50_Index2(pc,d0.w),d1
@@ -23929,7 +23674,6 @@ Obj55_Main:				; XREF: Obj55_Index
 		move.b	#$10,$19(a0)
 
 Obj55_Action:				; XREF: Obj55_Index
-		jsr	HomeObject_New
 		tst.b	($FFFFFFB1).w
 		bmi.s	Obj55_NotInhumanCrush
 		tst.b	1(a0)
@@ -26410,7 +26154,6 @@ loc_11D10:
 		moveq	#3,d1
 
 Obj60_MakeOrbs:
-		jsr	HomeObject_New
 		tst.b	($FFFFFFB1).w
 		bmi.s	Obj60_NotInhumanCrush
 		tst.b	1(a0)
@@ -28674,7 +28417,6 @@ loc_12E0E:
 ; ---------------------------------------------------------------------------
 
 Obj01_MdNormal:				; XREF: Obj01_Modes
-		jsr	HomingEmergencyCancel
 		jsr	Sonic_Fire
 		jsr	Sonic_SpeedDash
 		jsr	Sonic_SuperPeelOut
@@ -28713,7 +28455,6 @@ loc_12E5C:
 ; ===========================================================================
 
 Obj01_MdRoll:				; XREF: Obj01_Modes
-		jsr	HomingEmergencyCancel
 		jsr	Sonic_Jump
 		jsr	Sonic_RollRepel
 		jsr	Sonic_RollSpeed
@@ -29568,12 +29309,9 @@ JD_NoWhiteFlash:
 		andi.b	#$10,d0			; is B pressed? (part 2)
 		bne.w	Sonic_DoubleJump	; if yes, branch to double jump code
 
-
-
 JD_NotInhuman:
 		move.w	#$BC,d0			; set jumpdash sound
 		jsr	(PlaySound).l		; play jumpdash sound
-	;	bclr	#4,$22(a0)		; clear double jump flag
 
 JD_SetSpeed1:
 		move.w	#$A00,d0		; set normal jumpdash speed
@@ -29603,386 +29341,126 @@ JD_Move:
 JD_NoA:
 		move.w	d0,$10(a0)		; move sonic forward (X-velocity)
 		clr.w	$12(a0)			; clear Y-velocity to move sonic directly down
+		bsr.s	Sonic_HomingAttack	; check if homing attack is possible
 
 JD_End:
 		rts				; return or cancel jumpdash
 		
 ; ===========================================================================
 
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Subroutine to enable the homing attack (Homing:)
-; ---------------------------------------------------------------------------
+
+; ===============================================================================
+; -------------------------------------------------------------------------------
+; Sonic Homing Attack ~by Selbi
+;
+; Please note that this code only triggers the homing itself. There are a couple
+; of other things spread around the disassembly, stopping and moving Sonic
+; upwards after hitting something and making monitors destroyable from any angle.
+; -------------------------------------------------------------------------------
 
 Sonic_HomingAttack:
-		clr.l	d0				; clear d0
-		cmp.b	#$01,($FFFFFFC4)		; is homing ready?
-		beq.w	Homing_Start			; if so, branch
-		cmp.b	#$01,($FFFFFFC3)		; has button been pressed yet?
-		beq.w	Home_ButtonPressed		; if so, branch
-		btst	#0,($FFFFF602).w		; is up pressed?
-		bne.s	No_Homing			; if yes, branch
-		move.b	($FFFFF603),d0			; load controls to d0
-		andi.b	#$20,d0				; are buttons A B or C pressed?
-		bne.s	Home_ButtonPressed		; if so, branch
-
-No_Homing:
-		rts					; return
-; ===========================================================================
-
-Home_ButtonPressed:
-		move.b	#$01,($FFFFFFC3)		; set button as pressed
-		clr.l	d0				; clear d0
-		btst	#$0,$22(a0)			; is sonic facing left
-		bne.w	Home_LeftChk			; if so, branch
-
-Home_RightChk:
-		move.w	($FFFFFFC6).w,d0		; load object's X pos
-		sub.w	($FFFFD008).w,d0		; minus sonic's X pos from it
-		bpl.s	Homing_DistChk			; if answer is possitive, branch
-		move.b	#$00,($FFFFFFC3)		; clear buttons pressed
-		jsr	Sonic_JumpDash
-		rts					; return
-
-Home_LeftChk:
-		move.w	($FFFFFFC6).w,d0		; load object's X pos
-		sub.w	($FFFFD008).w,d0		; minus sonic's X pos from it
-		neg.w	d0				; reverse d0
-		bpl.s	Homing_DistChk			; if answer is possitive, branch
-		move.b	#$00,($FFFFFFC3)		; clear buttons pressed
-		jsr	Sonic_JumpDash
-		rts					; return
-
-; ---------------------------------------------------------------------------
-
-Homing_DistChk:
-		clr.l	d0				; clear d0
-		clr.l	d1				; clear d1
-		move.w	($FFFFFFC6).w,d0		; load object's X pos
-		sub.w	($FFFFD008).w,d0		; minus sonic's X pos from it
-		bpl.w	Home_XChk			; if answer is possitive, branch
-		neg.w	d0				; reverse d0
-
-Home_XChk:
-		cmpi.w	#$0100,d0			; is sonic within 90 pixels of the object?
-		bge.w	Home_OutOfRange			; if not, branch
-
-		move.w	($FFFFFFC8).w,d1		; load object's Y pos
-		sub.w	($FFFFD00C).w,d1		; minus sonic's Y pos from it
-		bpl.w	Home_YChk			; if answer is possitive, branch
-		neg.w	d1				; reverse d1
-
-Home_YChk:
-		cmpi.w	#$0100,d1			; is sonic within 90 pixels of the object?
-		bge.w	Home_OutOfRange			; if not, branch
-		move.b	#$BC,d0				; load boost SFX
-		jsr	PlaySound_Special		; play boost SFX
-		move.b	#$01,($FFFFFFC4)		; set homing as ready
-		move.b	#2,($FFFFD01C)			; load Springing/Homing Spin Animation
-		rts					; return
-
-Home_OutOfRange:
-		clr.b	($FFFFFFC3)			; clear buttons pressed
-		clr.b	($FFFFFFC4)			; clear homing ready
-		jsr	Sonic_JumpDash
-		rts					; return
-
-; ===========================================================================
-
-Homing_Start:
-		jsr	Sonic_LevelBound		; routine Stop Sonic Breaking Physical Laws
-		jsr	Sonic_AnglePos			; routine Set Sonic's Angle Possision
-		cmp.b	#$01,($FFFFFFC5)		; has enemie been reached by homing attack?
-		beq.s	HomingFinish			; if so, branch
-		cmp.w	#$0030,($FFFFFFCA).w		; has homing timer finished?
-		beq.w	HomingEmergencyCancel		; if so, cancel homing
-		add.w	#$0001,($FFFFFFCA).w		; add 1 to the homing timer
-		clr.l	d0				; clear d0
-		clr.l	d1				; clear d1
-
-		move.w	($FFFFFFC6).w,d0		; load object's X pos
-		sub.w	($FFFFD008).w,d0		; minus sonic's X pos from it
-		move.w	($FFFFFFC8).w,d1		; load object's Y pos
-		sub.w	($FFFFD00C).w,d1		; minus sonic's Y pos from it
-
-; ---------------------------------------------------------------------------
-
-Home_XMovementFormular:
-		add.w	d0,d0				; add X dist to X dist
-		add.w	d0,d0				; add X dist to X dist
-		add.w	d0,d0				; add X dist to X dist
-		add.w	d0,d0				; add X dist to X dist
-		clr.w	d2				; clear d2
-		move.w	d0,d2				; store X dist in d2
-		bpl.w	Home_Posd0			; if d2 is positive, branch
-		add.w	#-$0400,d2			; add negative reversed code
-		bra.w	Home_Posd0Contin		; branch to continue homing X
-
-Home_Posd0:
-		add.w	#$0400,d2			; add possitive reversed code
-
-Home_Posd0Contin:
-		add.w	d2,d0				; add reversed code to modded X dist
-		move.w	d0,($FFFFD010).w		; add modded X dist to start sonic's X movement
-
-; ---------------------------------------------------------------------------
-
-Home_YMovementFormular:
-		add.w	d1,d1				; add Y dist to Y dist
-		add.w	d1,d1				; add Y dist to Y dist
-		add.w	d1,d1				; add Y dist to Y dist
-		add.w	d1,d1				; add Y dist to Y dist
-		clr.w	d2				; clear d2
-		move.w	d1,d2				; store Y dist in d2
-		bpl.w	Home_Posd1			; if d2 is positive, branch
-		add.w	#-$0400,d2			; add negative reversed code
-		bra.w	Home_Posd1Contin		; branch to continue homing Y
-
-Home_Posd1:
-		add.w	#$0400,d2			; add possitive reversed code
-
-Home_Posd1Contin:
-		add.w	d2,d1				; add reversed code to modded Y dist
-		move.w	d1,($FFFFD012).w		; add modded Y dist to start sonic's Y movement
-		jsr	Home_Chk0000XY			; subroutine to check if sonic has reached destination but enemie's death hasn't triggered
-		rts					; return
-
-; ===========================================================================
-
-HomingFinish:
-		move.w	#-$700,$12(a0)			; move sonic up
-		clr.w	$10(a0)				; clear sonic's X movement
-
-HomingEmergencyCancel:
-		tst.b	($FFFFFFC4)			; is homing flag set?
-		beq.s	Homing_NoFlag			; if not, branch
-		bclr	#3,$22(a0)			; clear object destroyed flag
-
-Homing_NoFlag:
-		clr.b	($FFFFFFEB)			; clear jumpdash flag
-		clr.b	($FFFFFFC3)			; clear buttons pressed
-		clr.b	($FFFFFFC4)			; clear homing ready
-		clr.b	($FFFFFFC5)			; clear enemie being reached by homing attack
-		clr.w	($FFFFFFC6).w			; clear object's prepared X pos
-		clr.w	($FFFFFFC8).w			; clear object's prepared Y pos
-		clr.w	($FFFFFFCA).w			; clear homing timer
-		move.w	#$8000,($FFFFFFCC).w		; clear last object's fused XY (Restore closest flag)
-
-		
-No_EClearing:
-		rts					; return
-
-; ===========================================================================
-
-Home_Chk0000XY:
-		clr.l	d0				; clear d0
-		clr.l	d1				; clear d1
-		move.w	($FFFFFFC6).w,d0		; load object's X pos
-		sub.w	($FFFFD008).w,d0		; minus sonic's X pos from it
-		bpl.w	Home_XChk00			; if answer is possitive, branch
-		neg.w	d0				; reverse d0
-
-Home_XChk00:
-		cmpi.w	#$0010,d0			; is sonic within 10 pixels of the object?
-		bge.w	Home_ContinueHoming		; if not, branch
-
-		move.w	($FFFFFFC8).w,d1		; load object's Y pos
-		sub.w	($FFFFD00C).w,d1		; minus sonic's Y pos from it
-		bpl.w	Home_YChk00			; if answer is possitive, branch
-		neg.w	d1				; reverse d1
-
-Home_YChk00:
-		cmpi.w	#$0010,d1			; is sonic within 10 pixels of the object?
-		bge.w	Home_ContinueHoming		; if not, branch
-		jsr	HomingFinish    		; finish homing (without moving sonic up etc...)
-
-Home_ContinueHoming:
-		rts					; return
-
-; ===========================================================================
-
-HomeObject_New:
-		tst.b	($FFFFFFE7).w		; is inhuman mode on?
-		beq.s	HomeObject_Monitor	; if not, branch
-		rts
-
-HomeObject_Monitor:
-		move.l	8(a0),d2			; load object's current X pos
-		move.l	$C(a0),d3			; load object's current Y pos
-		move.w	$10(a0),d0			; load object's current X speed
-		ext.l	d0				; expand and spread, etc...
-		add.l	d0,d2				; add object's modded X speed to object's X pos
-		move.w	$12(a0),d0			; load object's current Y speed
-		ext.l	d0				; expand and spread, etc...
-		add.l	d0,d3				; add object's modded Y speed to object's Y pos
-		move.l	d2,8(a0)			; set new X possision for the object (Update X)
-		move.l	d3,$C(a0)			; set new Y possision for the object (Update Y)
-
-Home_XChk1X:
-		clr.l	d0				; clear d0
-		clr.l	d1				; clear d1
-		move.w	$08(a0),d0			; load object's X pos
-		sub.w	($FFFFD008).w,d0		; minus sonic's X pos from it
-		bpl.w	Home_XChk2X			; if answer is possitive, branch
-		neg.w	d0				; reverse d0
-
-Home_XChk2X:
-		cmpi.w	#$90,d0				; is sonic within 90 pixels of the object?
-		bge.w	HomObj_OutOfRangeX		; if not, branch
-
-Home_YChk1X:
-		move.w	$0C(a0),d1			; load object's Y pos
-		sub.w	($FFFFD00C).w,d1		; minus sonic's Y pos from it
-		bpl.w	HomObj_YChk2X			; if answer is possitive, branch
-		neg.w	d1				; reverse d1
-
-HomObj_YChk2X:
-		cmpi.w	#$90,d1				; is sonic within 90 pixels of the object?
-		bge.w	HomObj_OutOfRangeX		; if not, branch
-		jsr	HomeObject_XCollectX		; start fuse checking	
-
-HomObj_OutOfRangeX:
-	;	move.w	#$8000,($FFFFFFCC).w		; set last object's fused XY as default (Clear Closest Object)
-		rts					; return
-; ---------------------------------------------------------------------------
-
-HomeObject_XCollectX:
-		clr.l	d0				; clear d0
-		clr.l	d1				; clear d1
-		move.w	($FFFFD008).w,d0		; load sonic's X pos
-		sub.w	$08(a0),d0			; minus object's X pos from it
-		bpl.s	HomeObject_YCollectX		; if answer is possitive, branch
-		neg.w	d0				; reverse d0
-
-HomeObject_YCollectX:
-		move.w	($FFFFD00C).w,d1		; load sonic's Y pos
-		sub.w	$0C(a0),d1			; minus object's Y pos from it
-		bpl.s	HomeObject_FuseChkX		; if answer is possitive, branch
-		neg.w	d1				; reverse d1
-
-HomeObject_FuseChkX:
-		add.w	d1,d0				; fuse both X and Y distances together
-		clr.l	d1				; clear d1
-		move.w	($FFFFFFCC).w,d1		; load last object's fused XY
-		sub.w	d0,d1				; minus new object's fused XY from it
-		bpl.s	HomeObject_CLOSESTX		; if answer is possitive, branch
-		rts					; return
-
-HomeObject_CLOSESTX:
-		move.w	d0,($FFFFFFCC).w		; set new object's fused XY as last (Closest)
-		move.w	$08(a0),($FFFFFFC6).w		; prepare object's X pos
-		move.w	$0C(a0),($FFFFFFC8).w		; prepare object's Y pos
-
-HAM_Move:
-		
-		adda.w  #$40,a1
-		cmpa.w  #$F000,a1
-		blt.w   HAM_End
-		tst.w   ($FFFFF508).w
-		beq.w   HAM_End
-		move.w  d3,d1
-		move.w  d4,d2
-		jsr	(CalcAngle).l
-		jsr	(CalcSine).l
-		muls.w  #$C00,d1		; multiply by $C00
-		asr.l   #8,d1
-		move.w  d1,$10(a0)		; move d1 to X-velocity
-		muls.w  #$C00,d0		; multiply by $C00
-		asr.l   #8,d0
-		move.w  d0,$12(a0)		; move d0 to Y-velocity
-
-HAM_End:
-		rts
-
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Object's Homing flags set
-; ---------------------------------------------------------------------------
-
-Home_Object:
-		jsr	HomeObject_UpdatePos		; update object's possision
-
-; ---------------------------------------------------------------------------
-
-HomObj_DistChk:
-		clr.l	d0				; clear d0
-		clr.l	d1				; clear d1
-		move.w	$08(a0),d0			; load object's X pos
-		sub.w	($FFFFD008).w,d0		; minus sonic's X pos from it
-		bpl.w	HomObj_XChk			; if answer is possitive, branch
-		neg.w	d0				; reverse d0
-
-HomObj_XChk:
-		cmpi.w	#$0090,d0			; is sonic within 90 pixels of the object?
-		bge.w	HomObj_OutOfRange		; if not, branch
-
-		move.w	$0C(a0),d1			; load object's Y pos
-		sub.w	($FFFFD00C).w,d1		; minus sonic's Y pos from it
-		bpl.w	HomObj_YChk			; if answer is possitive, branch
-		neg.w	d1				; reverse d1
-
-HomObj_YChk:
-		cmpi.w	#$0090,d1			; is sonic within 90 pixels of the object?
-		bge.w	HomObj_OutOfRange		; if not, branch
-
-		jsr	HomeObject_XCollect		; start fuse checking
-
-HomObj_OutOfRange:
-		move.w	#$8000,($FFFFFFCC).w		; set last object's fused XY as default (Clear Closest Object)
-
-No_HomeObject:
-		rts					; return
-
-; ---------------------------------------------------------------------------
-
-HomeObject_XCollect:
-		clr.l	d0				; clear d0
-		clr.l	d1				; clear d1
-
-		move.w	($FFFFD008).w,d0		; load sonic's X pos
-		sub.w	$08(a0),d0			; minus object's X pos from it
-		bpl.s	HomeObject_YCollect		; if answer is possitive, branch
-		neg.w	d0				; reverse d0
-
-HomeObject_YCollect:
-		move.w	($FFFFD00C).w,d1		; load sonic's Y pos
-		sub.w	$0C(a0),d1			; minus object's Y pos from it
-		bpl.s	HomeObject_FuseChk		; if answer is possitive, branch
-		neg.w	d1				; reverse d1
-
-HomeObject_FuseChk:
-		add.w	d1,d0				; fuse both X and Y distances together
-		clr.l	d1				; clear d1
-		move.w	($FFFFFFCC).w,d1		; load last object's fused XY
-		sub.w	d0,d1				; minus new object's fused XY from it
-		bpl.s	HomeObject_CLOSEST		; if answer is possitive, branch
-		rts					; return
-
-HomeObject_CLOSEST:
-		move.w	d0,($FFFFFFCC).w		; set new object's fused XY as last (Closest)
-		move.w	$08(a0),($FFFFFFC6).w		; prepare object's X pos
-		move.w	$0C(a0),($FFFFFFC8).w		; prepare object's Y pos
-		rts					; return
-
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Subroutine to update objects possision without increasing it's speed
-; ---------------------------------------------------------------------------
-
-HomeObject_UpdatePos:
-		move.l	8(a0),d2			; load object's current X pos
-		move.l	$C(a0),d3			; load object's current Y pos
-		move.w	$10(a0),d0			; load object's current X speed
-		ext.l	d0				; expand and spread, etc...
-		add.l	d0,d2				; add object's modded X speed to object's X pos
-		move.w	$12(a0),d0			; load object's current Y speed
-		ext.l	d0				; expand and spread, etc...
-		add.l	d0,d3				; add object's modded Y speed to object's Y pos
-		move.l	d2,8(a0)			; set new X possision for the object (Update X)
-		move.l	d3,$C(a0)			; set new Y possision for the object (Update Y)
-		rts					; return
-
-; ===========================================================================
+		clr.w	($FFFFFF8C).w		; clear X-distance storer
+		clr.w	($FFFFFF8E).w		; clear Y-distance storer
+
+		movem.l	d0-a3,-(sp)		; backup d0 to a3
+		lea	($FFFFD800).w,a1	; set a1 to level object RAM
+		moveq	#$5F,d2			; set d2 to $5F ($D800 to $F000 = $60 objects)
+
+SH_ObjectLoop:
+		lea	(SH_Objects).l,a2	; (re)set a2 to objects to be checked
+
+SH_EnemyLoop:
+		tst.b	(a2)			; is current entry $FF (end of array)?
+		bmi.w	SH_NoEnemy		; if yes, branch
+		move.b	(a1),d0			; move current object ID to d0
+		cmp.b	(a2)+,d0		; is current object a valid object?
+		bne.s	SH_EnemyLoop		; if not, loop
+
+		cmpi.b	#$26,(a1)		; was selected object a monitor?
+		bne.s	SH_NoMonitor		; if not, branch
+		cmpi.b	#4,$24(a1)		; is monitor being broken or already broken?
+		blt.s	SH_NoMonitor		; if not, branch
+		bra.s	SH_NoEnemy		; otherwise, skip object
+
+SH_NoMonitor:
+		move.w	$8(a1),d3		; load current X-pos into d3
+		sub.w	$8(a0),d3		; substract Sonic's X-pos from it
+		bpl.s	SH_XPositive		; if result it positive, branch
+		btst	#0,$22(a0)		; is Sonic looking at the target?
+		beq.s	SH_NoEnemy		; if not, branch
+		neg.w	d3			; otherwise, negate it
+		bra.s	SH_DirectionOK		; skip
+
+SH_XPositive:
+		btst	#0,$22(a0)		; is Sonic looking at the target?
+		bne.s	SH_NoEnemy		; if not, branch
+
+SH_DirectionOK:
+		cmpi.w	#$90,d3			; is Sonic within $90 pixels of that object?
+		bgt.s	SH_NoEnemy		; if not, branch
+
+		move.w	$C(a1),d4		; load current Y-pos into d3
+		sub.w	$C(a0),d4		; substract Sonic's Y-pos from it
+		bpl.s	SH_YPositive		; if result it positive, branch
+		neg.w	d4			; negate it
+
+SH_YPositive:
+		cmpi.w	#$90,d4			; is Sonic within $90 pixels of that object?
+		bgt.s	SH_NoEnemy		; if not, branch
+
+		cmp.w	($FFFFFF8C).w,d3	; is stored X-distance smaller than distance of current enemy?
+		blt.s	SH_NoEnemy		; if yes, branch
+		cmp.w	($FFFFFF8E).w,d4	; is stored X-distance smaller than distance of current enemy?
+		blt.s	SH_NoEnemy		; if yes, branch
+		move.w	d3,($FFFFFF8C).w	; store X-pos
+		move.w	d4,($FFFFFF8E).w	; store Y-pos
+		movea.l	a1,a3			; save RAM position of current enemy
+
+SH_NoEnemy:
+		adda.l	#$40,a1			; increase pointer by $40 (next object)
+		dbf	d2,SH_ObjectLoop	; loop
+
+		tst.w	($FFFFFF8C).w		; was any enemy found?
+		beq.s	SH_Return		; if not, use normal jumpdash
+		suba.l	#$40,a1			; decrease pointer by $40, because it got increased one more time before leaving the loop
+		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
+		bne.s	SH_NotGHZ1		; if not, branch
+		cmpi.b	#$1F,(a1)		; is found object a crabmeat?
+		beq.s	SH_Return		; if yes, don't allow homing
+
+SH_NotGHZ1:
+		move.w	$8(a3),d1		; load X-pos of nearest enemy into d1
+		sub.w	$8(a0),d1		; sub Sonic's X-pos from it
+		move.w	$C(a3),d2		; load Y-pos of nearest enemy into d1
+		sub.w	$C(a0),d2		; sub Sonic's Y-pos from it
+		jsr	CalcAngle		; calculate the angle
+		jsr	CalcSine		; calculate the sine
+		muls.w	#$A00,d0		; multiply result 1 by $900 (this line is for the Y-speed)
+		muls.w	#$A00,d1		; multiply result 2 by $900 (this line is for the X-speed)
+		asr.l	#8,d0			; align the results to the correct position in the bitfield ...
+		asr.l	#8,d1			; ... (e.g. 00000000xxxxxxxxxxxxxxxx00000000 to 0000000000000000xxxxxxxxxxxxxxxx)
+		move.w	d1,$10(a0)		; set final result to Sonic's X-speed
+		move.w	d0,$12(a0)		; set final result to Sonic's Y-speed
+
+SH_Return:
+		movem.l	(sp)+,d0-a3		; restore d0 to a3
+
+SH_Return2:
+		rts				; return
+; -------------------------------------------------------------------------------
+; ===============================================================================
+
+; ===============================================================================
+; -------------------------------------------------------------------------------
+; Homing Attack - Objects to be checked
+; -------------------------------------------------------------------------------
+
+SH_Objects:
+	dc.b	$1E, $1F, $22, $26, $2B, $2C, $2D, $40, $42, $43, $50, $55, $60, $78
+	dc.b	$FF	; this $FF is the end of list
+	even
+; -------------------------------------------------------------------------------
+; ===============================================================================
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to check if up is pressed, and if so, branch to Sonic_DoubleJump
@@ -30351,27 +29829,6 @@ SD_End:
 ; ---------------------------------------------------------------------------
 
 Sonic_AirFreeze:
-	if AirType=1
-		bra.s	Sonic_AirMove
-	endif
-		btst	#4,($FFFFF602).w	; is B pressed?
-		beq.w	AF_End			; if not, branch
-
-AF_Do:
-		clr.w	$10(a0)			; clear X-velocity
-		clr.w	$12(a0)			; clear Y-velocity
-		clr.w	$14(a0)			; clear interia
-
-AF_End:
-		clr.b	($FFFFFFE5).w		; clear flag
-		rts				; return
-; End of function Sonic_AirFreeze
-
-; ---------------------------------------------------------------------------
-; Subroutine to	move Sonic in the air when pressing B
-; ---------------------------------------------------------------------------
-
-Sonic_AirMove:
 		btst	#4,($FFFFF602).w	; is B pressed?
 		beq.w	AM_End			; if not, branch
 		
@@ -30601,7 +30058,6 @@ loc_134AE:
 		move.w	d1,$12(a0)
 
 locret_134C2:
-		jsr	Sonic_HomingAttack
 		rts	
 ; ===========================================================================
 
@@ -30970,7 +30426,6 @@ locret_1379E:
 
 
 Sonic_ResetOnFloor:			; XREF: PlatformObject; et al
-		jsr	HomingEmergencyCancel
 		clr.b	($FFFFFFEB).w	; clear jumpdash flag
 		clr.b	($FFFFFFDA).w	; clear Sonic_AutomaticRoll flag
 		clr.b	($FFFFFFAD).w	; clear jumpdash flag for afterimage
@@ -31983,10 +31438,8 @@ Obj38_DoStars:
 ; ===========================================================================
 
 Obj38_Shield:				; XREF: Obj38_Index
-	;if InhumanStars=1
 		tst.b	($FFFFFFE7).w	; is inhuman mode enabled?
 		bne.s	Obj38_RmvShield	; if yes, branch
-	;endif
 		tst.b	($FFFFFE2D).w	; does Sonic have invincibility?
 		bne.s	Obj38_RmvShield	; if yes, branch
 		tst.b	($FFFFFE2C).w	; does Sonic have shield?
@@ -32009,10 +31462,8 @@ Obj38_Delete:
 ; ===========================================================================
 
 Obj38_Stars:				; XREF: Obj38_Index
-	if InhumanStars=1
 		tst.b	($FFFFFFE7).w	; is inhuman mode enabled?
 		bne.s	Obj38_IfYes	; if yes, branch
-	endif
 		tst.b	($FFFFFE2D).w	; does Sonic have invincibility?
 		beq.s	Obj38_Delete2	; if not, branch
 
@@ -35424,7 +34875,6 @@ Obj78_QuitLoad:
 		clr.b	$3C(a0)
 
 Obj78_Action:				; XREF: Obj78_Index
-	;	jsr	HomeObject_Monitor		; does something weird but funny with the caterkiller (omfg that was the fucking error)
 		tst.b	$22(a0)
 		bmi.w	loc_16C96
 		moveq	#0,d0
@@ -41046,13 +40496,6 @@ loc_1AF1E:
 Sonic_RollingYes:
 		neg.w	$12(a0)		; reverse Sonic's y-motion
 		addq.b	#2,$24(a1)	; advance the monitor's routine counter
-		
-;----------------------------------------------------------------------------
-		tst.b	($FFFFFFC4)	; is homing flag set?
-		bne.w	BounceJD	; if yes, branch
-		tst.b	($FFFFFFEB).w	; was the monitor destroyed with a jumpdash?
-		bne.w	BounceJD	; if yes, branch
-;----------------------------------------------------------------------------
 
 locret_1AF2E:
 		rts	
@@ -41116,16 +40559,11 @@ loc_1AF9C:
 
 ;----------------------------------------------------------------------------
 		tst.b	($FFFFFFEB).w	; was the enemy destroyed with a jumpdash?
-		bne.s	JSR_BounceJD	; if yes, branch
-		tst.b	($FFFFFFC4).w	; was the enemy destroyed with a homing?
-		bne.s	JSR_BounceJD	; if yes, branch
-		bra.s	loc_1AF9C_Rest	; if not, skip
-		
-JSR_BounceJD:
+		beq.s	loc_1AF9C_Rest	; if not, branch
 		jsr	BounceJD	; jump to BounceJD
-;----------------------------------------------------------------------------
-		
+
 loc_1AF9C_Rest:
+;----------------------------------------------------------------------------
 		tst.w	$12(a0)
 		bmi.s	loc_1AFC2
 		move.w	$C(a0),d0
@@ -41161,17 +40599,13 @@ BounceJD:
 		btst	#6,$22(a0)	; is sonic underwater?
 		beq.s	BounceJD_SShoes	; if not, branch
 		move.w	#-$320,$12(a0)	; use only -$320 for Y-velocity (move sonic upwards)
-		move.b	#1,($FFFFFFE9)	; set flag for BounceJD_SShoes
-		
+		bra.s	BounceJD_End	; skip
+
 BounceJD_SShoes:
 		tst.b	($FFFFFE2E).w	; does sonic has speed shoes?
 		beq.s	BounceJD_End	; if not, branch
 		move.w	#-$620,$12(a0)	; use -$620 for Y-velocity (move sonic upwards)
-		tst.b	($FFFFFFE9)	; was BounceJD flag set?
-		beq.s	BounceJD_End	; if not, branch
-		move.w	#-$350,$12(a0)	; use -$350 for Y-velocity (move sonic upwards)
-		clr.b	($FFFFFFE9).w	; clear BounceJD_SShoes flag
-		
+
 BounceJD_End:
 		rts			; return
 ; End of function BounceJD
@@ -41225,12 +40659,10 @@ HurtSonic:
 		move.w	$C(a0),$C(a1)
 
 Hurt_Shield:
-	if MultiShieldCounter=1
 		subq.b	#1,($FFFFFFFC).w ; sub 1 from shield X counter
 		bne.s	HS_NotEmpty	; if counter is not empty, branch
 		clr.b	($FFFFFFFC).w	 ; clear shield counter
 	;	sub.b	#1,($FFFFFE2C).w ; sub 1 from shield counter
-	endif
 		clr.b	($FFFFFE2C).w	 ; remove shield	
 
 HS_NotEmpty:
@@ -41954,10 +41386,17 @@ SS_AlwaysStage1:
 		lea	SS_StartLoc(pc,d0.w),a1
 		move.w	(a1)+,($FFFFD008).w
 		move.w	(a1)+,($FFFFD00C).w
-		movea.l	SS_LayoutIndex(pc,d0.w),a0
-		lea	($FF4000).l,a1
-		move.w	#0,d0
-		jsr	(EniDec).l
+
+		movea.l	SS_LayoutIndex(pc,d0.w),a0	; set layout pointer
+		lea	($FF4000).l,a1			; set destination
+		move.w	#$3FC,d0			; set number of repeats to $3FC
+
+SS_LoadLoop:
+		move.l	(a0)+,(a1)+			; move 4 bytes from pointer into location
+		dbf	d0,SS_LoadLoop			; loop
+
+	;	move.w	#0,d0
+	;	jsr	(EniDec).l
 		lea	($FF0000).l,a1
 		move.w	#$FFF,d0
 
@@ -43786,7 +43225,7 @@ Obj21_NotDying:
 		cmpi.b	#1,$30(a0)
 		bne.s	Obj21_ChkRings2
 		move.w	8(a0),d0		; move X-pos into d0
-		sub.w	($000001DC).l,d0	; substract HUDSpeed - 1 from it
+		sub.w	#HudSpeed,d0		; substract HUDSpeed - 1 from it
 		cmp.w	$36(a0),d0		; check current position on goal position
 		bge.s	Obj21_NormalUpdateX	; if current position is bigger than goal position, move it normally
 		bra.s	Obj21_XEnd
@@ -43795,7 +43234,7 @@ Obj21_ChkRings2:
 		cmpi.b	#2,$30(a0)
 		bne.s	Obj21_ChkTime2
 		move.w	$A(a0),d0		; move Y-pos into d0
-		sub.w	($000001DC).l,d0		; substract HUDSpeed - 1 from it
+		sub.w	#HudSpeed,d0		; substract HUDSpeed - 1 from it
 		cmp.w	$38(a0),d0		; check current position on goal position
 		bge.s	Obj21_NormalUpdateY	; if current position is bigger than goal position, move it normally
 		bra.s	Obj21_YEnd
@@ -43804,14 +43243,14 @@ Obj21_ChkTime2:
 		cmpi.b	#3,$30(a0)
 		bne.s	Obj21_ChkLives2
 		move.w	$A(a0),d0		; move Y-pos into d0
-		add.w	($000001DC).l,d0		; add the HUDSpeed - 1 to it
+		add.w	#HudSpeed,d0		; add the HUDSpeed - 1 to it
 		cmp.w	$38(a0),d0		; check current position on goal position
 		bmi.s	Obj21_NormalUpdateY	; if current position is smaller than goal position, move it normally
 		bra.s	Obj21_YEnd
 
 Obj21_ChkLives2:
 		move.w	8(a0),d0		; move X-pos into d0
-		add.w	($000001DC).l,d0		; add the HUDSpeed - 1 to it
+		add.w	#HudSpeed,d0		; add the HUDSpeed - 1 to it
 		cmp.w	$36(a0),d0		; check current position on goal position
 		bmi.s	Obj21_NormalUpdateX	; if current position is smaller than goal position, move it normally
 

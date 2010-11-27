@@ -123,17 +123,17 @@ byte_CB47:	dc.b $D			; Oval
 		dc.b $C, 8, 0, $7C, $EC
 		dc.b 0
 byte_CB8A:	dc.b $B	;  FINAL | FINAL ROUND
-		dc.b $8, 5, 0, $14, $A4	; F
-		dc.b $8, 1, 0, $20, $B4	; I
-		dc.b $8, 5, 0, $2E, $BC	; N
-		dc.b $8, 5, 0, 0, $CC		; A
-		dc.b $8, 5, 0, $26, $DC	; L
-		dc.b $8, 0, 0, $56, $EC	; Space
-		dc.b $8, 5, 0, $3A, $FC	; R
-		dc.b $8, 5, 0, $32, $C	; O
-		dc.b $8, 5, 0, $46, $1C	; U
-		dc.b $8, 5, 0, $2E, $2C	; N
-		dc.b $8, 5, 0, $0C, $3C	; D
+		dc.b $08, 5, 0, $14, $A8	; F
+		dc.b $08, 1, 0, $20, $B8	; I
+		dc.b $08, 5, 0, $2E, $C0	; N
+		dc.b $08, 5, 0, 0, $D0		; A
+		dc.b $08, 5, 0, $26, $E0	; L
+		dc.b $08, 0, 0, $56, $F0	; Space
+		dc.b $08, 5, 0, $3A, $0	; R
+		dc.b $08, 5, 0, $32, $10	; O
+		dc.b $08, 5, 0, $46, $20	; U
+		dc.b $08, 5, 0, $2E, $30	; N
+		dc.b $08, 5, 0, $0C, $40	; D
 byte_GHZ:	dc.b $A	;  GREEN HILL | GREEN HILL
 		dc.b $F8, 5, 0, $18, $C4	; G
 		dc.b $F8, 5, 0, $3A, $D4	; R

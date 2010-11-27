@@ -3,7 +3,6 @@ echo ============================================
 echo Sonic Erazor is building...
 echo S1HL Sound Driver Mode on!
 echo ============================================
-echo.
 
 asm68k /q /o op+ /o os+ /o ow+ /o oz+ /o oaq+ /o osq+ /o omq+ /p /o ae- sonic1.asm, s1erz.bin
 
@@ -21,8 +20,6 @@ copy sound\Driver\output\compressed\smpsbuilt.bin sound\Driver\z80_S1HL.bin
 
 del sound\Driver\smps.p
 rmdir /s /q sound\Driver\output
-
-
 
 echo.
 echo ============================================
