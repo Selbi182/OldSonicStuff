@@ -28,7 +28,8 @@ align macro
 ;Debug Mode and Level Select Enabled by default
 ; 0 - No
 ; 1 - Yes
-DebugLSDefault = 0
+DebugModeDefault = 0
+LevSelDefault = 1
 ;==============================================
 ;Required Boss hits
 ; 0 - Default
@@ -3527,7 +3528,7 @@ NoTSLoad:
 		jsr	PalLoad1
 		move.b	#$8A,d0		; play title screen music
 		jsr	PlaySound_Special
-	if DebugLSDefault=1
+	if DebugModeDefault=1
 		move.b	#1,($FFFFFFFA).w ; enable debug mode
 	else
 		move.b	#0,($FFFFFFFA).w ; disable debug mode
@@ -3674,7 +3675,7 @@ StartCheck:
 		beq.w	loc_317C		; if not, branch
 
 Title_ChkLevSel:
-	if DebugLSDefault=0
+	if LevSelDefault=0
 		tst.b	($FFFFFFE0).w		; check	if level select	code is	on
 		beq.w	Title_LoadOptions	; if not, load options screen
 	endif
@@ -6030,7 +6031,7 @@ Cont_ClrObjRam:
 		dbf	d1,Cont_ClrObjRam ; clear object RAM
 
 		move.l	#$70000002,($C00004).l
-		lea	(Nem_TitleCard).l,a0 ; load title card patterns
+		lea	(Nem_TCCont).l,a0 ; load title card patterns
 		jsr	NemDec
 		move.l	#$60000002,($C00004).l
 		lea	(Nem_ContSonic).l,a0 ; load Sonic patterns
@@ -18337,8 +18338,10 @@ Obj34_NoLevelNumber:
 Obj34_Loop:
 		move.b	#$34,0(a1)
 		move.w	(a3),8(a1)	; load start x-position
-		move.w	(a3)+,$32(a1)	; load finish x-position (same as start)
+		move.w	(a3)+,$32(a1)	; load finish x-position
 		move.w	(a3)+,$30(a1)	; load main x-position
+		addq.b	#1,$3E(a0)
+		move.b	$3E(a0),$3F(a1)	; set ID
 		move.w	(a2)+,$A(a1)
 		move.b	(a2)+,$24(a1)
 		move.b	(a2)+,d0
@@ -18415,10 +18418,28 @@ Obj34_NotGHZ1:
 		bra.w	DisplaySprite
 ; ===========================================================================
 
+MoveOffSpeed = 4
+
 Obj34_ChkPos2:				; XREF: Obj34_Wait
+		cmpi.b	#1,$3F(a0)	; is current object Zone Name?
+		beq.s	Obj34_IsZone	; if yes, branch
+		cmpi.b	#3,$3F(a0)	; is current object Act?
+		bne.s	Obj34_NotZone2	; if not, branch
+		addq.w	#MoveOffSpeed,$A(a0)	; move object to the downwards
+		cmpi.w	#$200,$A(a0)
+		bgt.s	Obj34_ChangeArt
+		bra.w	DisplaySprite
+
+Obj34_IsZone:
+		subq.w	#MoveOffSpeed,$A(a0)	; move object to the upwards
+		cmpi.w	#$40,$A(a0)
+		blt.s	Obj34_ChangeArt
+		bra.w	DisplaySprite
+
+Obj34_NotZone2:
 		tst.b	1(a0)
 		bpl.s	Obj34_ChangeArt
-		moveq	#3,d1		; speed of the items to move away (20)
+		moveq	#MoveOffSpeed,d1	; speed of the items to move away (20)
 		move.w	$32(a0),d0
 		cmp.w	8(a0),d0	; has item reached the finish position?
 		beq.s	Obj34_ChangeArt	; if yes, branch
@@ -18460,7 +18481,6 @@ Obj34_Delete:
 		jsr	NemDec			; load art from nemesis
 		movem.l	(sp)+,d0-a6
 		bra.w	Obj34_JustDelete	; skip
-; ===========================================================================
 
 @NoDemo:
 		move.b	#$21,($FFFFD040).w		; load HUD object
@@ -18525,7 +18545,7 @@ Obj34_ConData:	dc.w 0, $120, $FEFC, 0, 0, 0, $214, $154 ; GHZ1
 		dc.w 0,	$120, $FFF4, 0, 0, 0, 0, 0 ; SBZ
 	;	dc.w 0,	$120, $FF04, $144, $41C, $15C, $21C, $15C ; SBZ
 	;	dc.w 0,	$120, $FEF4, 0, $3EC, $3EC, 0, 0 ; FZ
-		dc.w 0,$120, $3EC,$3EC, $414,$16C, $214,$16C ; FZ
+		dc.w 0,	$130, $FFFC, $13C, $414, $154, $214, $154 ; FZ
 		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 | (We need it that much times
 		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 | because he's pointing to number 12
 		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 | and I don't know how to change the
@@ -44538,6 +44558,8 @@ Nem_Cater:	incbin	artnem\caterkil.bin	; caterkiller
 ; Compressed graphics - various
 ; ---------------------------------------------------------------------------
 Nem_TitleCard:	incbin	artnem\ttlcards.bin	; title cards
+		even
+Nem_TCCont:	incbin	artnem\ttlcards_continue.bin	; title cards used for continue screen
 		even
 Nem_Hud:	incbin	artnem\hud.bin		; HUD (rings, time, score)
 		even

@@ -122,18 +122,19 @@ byte_CB47:	dc.b $D			; Oval
 		dc.b 4,	$C, 0, $7C, $EC
 		dc.b $C, 8, 0, $7C, $EC
 		dc.b 0
-byte_CB8A:	dc.b $B	;  FINAL | FINAL ROUND
-		dc.b $08, 5, 0, $14, $A8	; F
-		dc.b $08, 1, 0, $20, $B8	; I
-		dc.b $08, 5, 0, $2E, $C0	; N
-		dc.b $08, 5, 0, 0, $D0		; A
-		dc.b $08, 5, 0, $26, $E0	; L
-		dc.b $08, 0, 0, $56, $F0	; Space
-		dc.b $08, 5, 0, $3A, $0	; R
-		dc.b $08, 5, 0, $32, $10	; O
-		dc.b $08, 5, 0, $46, $20	; U
-		dc.b $08, 5, 0, $2E, $30	; N
-		dc.b $08, 5, 0, $0C, $40	; D
+byte_CB8A:	dc.b $C	;  FINAL | FINAL BATTLE
+		dc.b $F8, 5, 0, $14, $94	; F
+		dc.b $F8, 1, 0, $20, $A4	; I
+		dc.b $F8, 5, 0, $2E, $AC	; N
+		dc.b $F8, 5, 0, 0, $BC		; A
+		dc.b $F8, 5, 0, $26, $CC	; L
+		dc.b $F8, 0, 0, $56, $DC	; Space
+		dc.b $F8, 5, 0, 4, $EC		; B
+		dc.b $F8, 5, 0, 0, $FC		; A
+		dc.b $F8, 5, 0, $42, $C	; T
+		dc.b $F8, 5, 0, $42, $1C	; T
+		dc.b $F8, 5, 0, $26, $2C	; L
+		dc.b $F8, 5, 0, $10, $3C	; E
 byte_GHZ:	dc.b $A	;  GREEN HILL | GREEN HILL
 		dc.b $F8, 5, 0, $18, $C4	; G
 		dc.b $F8, 5, 0, $3A, $D4	; R

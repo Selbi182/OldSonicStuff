@@ -12,7 +12,11 @@ set USEANSI=n
 sound\Driver\as\asl -gnuerrors -c -A -xx sound\Driver\smps.asm
 sound\Driver\as\p2bin sound\Driver\smps.p sound\Driver\output\uncompressed\smpsbuilt.bin -r 0x-0x
 
+echo.
+echo ======================================
 BankAligner.exe
+echo ======================================
+echo.
 
 copy sound\Driver\output\uncompressed\smpsbuilt.bin sound\Driver\z80_S1HL_unc.bin
 derecmp kc sound\Driver\output\uncompressed sound\Driver\output\compressed
@@ -24,8 +28,7 @@ rmdir /s /q sound\Driver\output
 echo.
 echo ============================================
 asm68k /o op+ /o os+ /o ow+ /o oz+ /o oaq+ /o osq+ /o omq+ /p /o ae- sonic1.asm, s1erz.bin
-fixheadr.exe s1erz.bin
-rem copy s1erz.bin ..\s1erz.bin
+
 echo ============================================
 echo Built! Press any button to play.
 echo ============================================
