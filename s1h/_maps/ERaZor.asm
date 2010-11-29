@@ -2,9 +2,9 @@
 ; Sprite mappings - output from SonMapEd - Sonic 1 format
 ; --------------------------------------------------------------------------------
 
-SME_3Yt8i:	
-		dc.w SME_3Yt8i_4-SME_3Yt8i, SME_3Yt8i_127-SME_3Yt8i	
-SME_3Yt8i_4:	dc.b $3A	
+SME_r6tjY:	
+		dc.w SME_r6tjY_4-SME_r6tjY, SME_r6tjY_127-SME_r6tjY	
+SME_r6tjY_4:	dc.b $3A	
 		dc.b $14, 0, 0, 0, $C6	
 		dc.b $14, 0, 0, 1, $CE	
 		dc.b $14, 0, 0, 2, $D6	
@@ -63,5 +63,5 @@ SME_3Yt8i_4:	dc.b $3A
 		dc.b $FC, 0, 0, $37, $1E	
 		dc.b $FC, 0, 0, $38, $26	
 		dc.b $FC, 0, 0, $39, $2E	
-SME_3Yt8i_127:	dc.b 0	
+SME_r6tjY_127:	dc.b 0	
 		even

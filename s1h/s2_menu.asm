@@ -657,9 +657,7 @@ Wings_Mappings:
                 dc.w    $6000,$605E,$605F,$6060,$6061,$6062,$6063,$6064,$685E,$6000
 ;Wings_Line_6:
                 dc.w    $6000,$6000,$6065,$6066,$6067,$6867,$6866,$6865,$6000,$6000 
-;-------------------------------------------------------------------------------    
-Menu_Palette:
-                incbin  'data\menu\menu.pal'            
+;-------------------------------------------------------------------------------            
 Menu_ClearScreen:
                 jmp     ClearScreen
 Menu_ShowVDPGraphics:                
@@ -683,16 +681,18 @@ Menu_PalLoad1:
 Menu_DelayProgram:
                 jmp     DelayProgram
 ;-------------------------------------------------------------------------------
+Menu_Palette:
+                incbin  'data\unc_pal.bin'
 Menu_Font:
-                incbin  'data\menu\menufont.nem' 
+                incbin  'data\nem_font.bin'
 Level_Icons:
-                incbin  'data\menu\levelico.nem'   
+                incbin  'data\nem_lvlico.bin'
 Menu_Mappings:
-                incbin  'data\menu\menubg.eni'
+                incbin  'data\eni_bg.bin'
 Icons_Mappings:
-                incbin  'data\menu\iconsmap.eni'
+                incbin  'data\eni_icomap.bin'
 Sonic_Miles_Spr:                                         
-                incbin  'data\menu\soncmils.dat'   
+                incbin  'data\unc_soncmils.bin'
 ;===============================================================================
 ; Menu do Sonic 2 No Sonic 1 reprogramado por Esrael L. G. Neto
 ; [ Fim ]

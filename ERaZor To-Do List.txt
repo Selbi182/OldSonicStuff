@@ -1,16 +1,14 @@
 Bugs:
-- Musik nach tod wieder herstellen, wenn es nicht die normale Level Musik ist
+- Restore music after death, if it isn't the normal music.
 
-Wäre gut:
-- Ein geeignetes System für die Palettenwiederehrstellung von einem WhiteFlash finden
-- Ordentliche Grafik für Text Screen finden
+Would be great:
+- Find an more accurate system for the palette-restoration from WhiteFlash.
+- Find better graphics for the title screen.
 
-Ideen:
-- Vom Schatten verfolgt Challange
-- Demo Mode (Das gesammte Spiel wird vorgespielt)
-- Pre-Credits Text (siehe Credits.txt)
-- Neuer Title Screen mit VIELEN Explosionen
-- Easy Mode mit "Hard Part Skipper"
-- Ein ernstes Spiel machen. Das heißt: Cheat-Möglichkeiten ausschalten (Bis auf Air-Move on B), alle nicht-Haupt Level entfernen, und mehr...
-
-- Diese Datei mal in Englisch übersetzen...
+Ideas:
+- Challenge: Race against Sonic's shadow.
+- Demo Mode (Basically a walkthrough through the game.)
+- Pre-Credits Text (Credits.txt)
+- New title screen with much explosions.
+- Easy Mode with "Hard Part Skipper"
+- Making a serious game. That means: Turn cheats off (except Air-Move on B), remove all non-main level, etc...

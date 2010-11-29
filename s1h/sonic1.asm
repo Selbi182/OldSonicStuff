@@ -55,11 +55,6 @@ HUDSpeed = 6
 ; 1 - Long/custom afterimage
 AfterImageType = 0
 ;==============================================
-;Use S1HL Sound Driver and samples
-; 0 - No
-; 1 - Yes
-S1HLDriver = 1
-;==============================================
 ;If 1, SYZ will be in the main gameplay. I'm
 ;yet to decide if I really want that zone.
 ; 0 - Disabled
@@ -13683,13 +13678,21 @@ Obj1F_XChk:
 ; ===========================================================================
 
 Obj1F_Timesup:
+		move.b	#4,($FFFFD024).w
+		move.b	#$1A,($FFFFD01C).w
+		bset	#1,($FFFFD022).w
+		move.w	#-$200,($FFFFD010).w
+		move.w	#-$400,($FFFFD012).w
+		move.b	#1,($FFFFFF72).w
+
 		move.b	#$98,d0				; set boss music
 		jsr	PlaySound			; play it
 		jsr	Obj1F_MakeFire			; make fire
+
 		jsr	SingleObjLoad			; load from SingleObjLoad
 		bne.s	Obj1F_NoCamShake		; if SingleObjLoad is already in use, don't load object
 		move.b	#$10,0(a1)			; load cam shaking object (Object $10)
-		move.b	#10,$28(a1)			; set to "repeat 10 times"
+		move.b	#$F0,$28(a1)			; set to "repeat 10 times"
 		move.b	#1,$30(a1)			; disable sound		
 
 Obj1F_NoCamShake:
@@ -30558,8 +30561,13 @@ S_H_NoKillCheck:
 		move.w	#0,$30(a0)		; set invin time to 0
 		tst.b	($FFFFFF92).w		; has invin time been disabled?
 		bne.s	locret_13860		; if yes, branch
+		tst.b	($FFFFFF72).w
+		beq.s	S_H_NoGHZBoss
+		clr.b	($FFFFFF72).w
+		rts
+
+S_H_NoGHZBoss:
 		move.w	#$78,$30(a0)		; otherwise set invin time to $78
-		
 
 locret_13860:
 		rts
@@ -47337,11 +47345,8 @@ loc_72E64:				; XREF: loc_72A64
 		bra.w	sub_7272E
 ; ===========================================================================
 Kos_Z80:
- if S1HLDriver=1
-	incbin	sound\Driver\z80_S1HL.bin
- else
-	incbin	sound\Driver\z80.bin
- endif
+		incbin	sound\Driver\z80_S1HL.bin
+
 	;	incbin	sound\z80_1.bin
 	;	dc.w ((SegaPCM&$FF)<<8)+((SegaPCM&$FF00)>>8)
 	;	dc.b $21
@@ -47645,25 +47650,27 @@ Obj90:
 	include "OptionsScreen.asm"
 	include "InfoScreen.asm"
 
-	if S1HLDriver=1
-		dc.b	'BBBB'
 
-AlignX:		dc.l	(((*)+$10000)&$00FF0000)
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; BBBBFind:	dc.b	'BBBB'
+; BAPointer:	dc.l	(((*)+$10000)&$00FF0000)
+; AlignValue =	(((*-4)+$10000)&$00FF0000)
+AlignValue =	$D0000
 
-AlignValue =	(((*-4)+$10000)&$00FF0000)
+Bank1:		align	AlignValue+$8000
+		incbin	sound\Driver\S1HLDACBank1.bin
 
-		align	AlignValue
-		incbin	sound\Driver\S1HLDACBank.bin
-
-		align	AlignValue+$10000
+Bank2:		align	AlignValue+$10000+$8000
 		incbin	sound\Driver\S1HLDACBank2.bin
 
-		align	AlignValue+$20000
+Bank3:		align	AlignValue+$20000+$8000
 		incbin	sound\Driver\S1HLDACBank3.bin
 
-		align	AlignValue+$30000
+Bank4:		align	AlignValue+$30000+$8000
 		incbin	sound\Driver\S1HLDACBank4.bin
-	endif
+; ---------------------------------------------------------------------------
+; ===========================================================================
 
 
 ; ===========================================================================

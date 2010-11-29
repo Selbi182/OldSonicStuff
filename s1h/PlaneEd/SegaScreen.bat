@@ -1,1 +1,0 @@
-PlaneEd SegaScreen.txt
