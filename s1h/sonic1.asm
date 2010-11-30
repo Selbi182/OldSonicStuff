@@ -39,7 +39,7 @@ BossHits = 0
 ;No Title screen art (Sonic, emblem, etc.)
 ; 0 - Show Art
 ; 1 - Don't show art
-NoTitleScreenArt = 1
+NoTitleScreenArt = 0
 ;==============================================
 
 ;------------------------------------------------------
@@ -2989,54 +2989,54 @@ Pal_Sega2:	incbin	pallet\sega2.bin
 
 
 PalLoad1:
-                move.b $FFFFFE11,d1
-                lea (PalPointers).l,a1
-                cmp.b #0,d1
-                beq.w PalLoad1_Continue
-                lea (PalPointers2).l,a1
-                cmp.b #1,d1
-                beq.w PalLoad1_Continue
-                lea (PalPointers3).l,a1
+		move.b	$FFFFFE11,d1
+		lea	(PalPointers).l,a1
+		tst.b	d1
+		beq.s	PalLoad1_Continue
+		lea	(PalPointers2).l,a1
+		cmpi.b	#1,d1
+		beq.s	PalLoad1_Continue
+		lea	(PalPointers3).l,a1
 
 PalLoad1_Continue:
-                lsl.w #3,d0
-                adda.w d0,a1
-                movea.l (a1)+,a2
-                movea.w (a1)+,a3
-                adda.w #$80,a3
-                move.w (a1)+,d7
+		lsl.w	#3,d0
+		adda.w	d0,a1
+		movea.l	(a1)+,a2
+		movea.w	(a1)+,a3
+		adda.w	#$80,a3
+		move.w	(a1)+,d7
 
 loc_2110:
-                move.l (a2)+,(a3)+
-                dbf d7,loc_2110
-                rts
+		move.l	(a2)+,(a3)+
+		dbf	d7,loc_2110
+		rts
 ; End of function PalLoad1
 
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
+	
 
 PalLoad2:
-                move.b $FFFFFE11,d1
-                lea (PalPointers).l,a1
-                cmp.b #0,d1
-                beq.w PalLoad2_Continue
-                lea (PalPointers2).l,a1
-                cmp.b #1,d1
-                beq.w PalLoad2_Continue
-                lea (PalPointers3).l,a1
+		move.b	$FFFFFE11,d1
+		lea	(PalPointers).l,a1
+		tst.b	d1
+		beq.s	PalLoad2_Continue
+		lea	(PalPointers2).l,a1
+		cmpi.b	#1,d1
+		beq.s	PalLoad2_Continue
+		lea	(PalPointers3).l,a1
 
 PalLoad2_Continue:
-                lsl.w #3,d0
-                adda.w d0,a1
-                movea.l (a1)+,a2
-                movea.w (a1)+,a3
-                move.w (a1)+,d7
+		lsl.w	#3,d0
+		adda.w	d0,a1
+		movea.l	(a1)+,a2
+		movea.w	(a1)+,a3
+		move.w	(a1)+,d7
 
 loc_2128:
-                move.l (a2)+,(a3)+
-                dbf d7,loc_2128
-                rts
+		move.l	(a2)+,(a3)+
+		dbf	d7,loc_2128
+		rts
 ; End of function PalLoad2
 
 ; ---------------------------------------------------------------------------
@@ -3047,27 +3047,27 @@ loc_2128:
 
 
 PalLoad3_Water:
-                move.b $FFFFFE11,d1
-                lea (PalPointers).l,a1
-                cmp.b #0,d1
-                beq.w PalLoad3_Continue
-                lea (PalPointers2).l,a1
-                cmp.b #1,d1
-                beq.w PalLoad3_Continue
-                lea (PalPointers3).l,a1
+		move.b	$FFFFFE11,d1
+		lea	(PalPointers).l,a1
+		tst.b	d1
+		beq.s	PalLoad3_Continue
+		lea	(PalPointers2).l,a1
+		cmpi.b	#1,d1
+		beq.s	PalLoad3_Continue
+		lea	(PalPointers3).l,a1
 
 PalLoad3_Continue:
-                lsl.w #3,d0
-                adda.w d0,a1
-                movea.l (a1)+,a2
-                movea.w (a1)+,a3
-                suba.w #$80,a3
-                move.w (a1)+,d7
+		lsl.w	#3,d0
+		adda.w	d0,a1
+		movea.l	(a1)+,a2
+		movea.w	(a1)+,a3
+		suba.w	#$80,a3
+		move.w	(a1)+,d7
 
 loc_2144:
-                move.l (a2)+,(a3)+
-                dbf d7,loc_2144
-                rts
+		move.l	(a2)+,(a3)+
+		dbf	d7,loc_2144
+		rts
 ; End of function PalLoad3_Water
 
 
@@ -3075,27 +3075,27 @@ loc_2144:
 
 
 PalLoad4_Water:
-                move.b $FFFFFE11,d1
-                lea (PalPointers).l,a1
-                cmp.b #0,d1
-                beq.w PalLoad4_Continue
-                lea (PalPointers2).l,a1
-                cmp.b #1,d1
-                beq.w PalLoad4_Continue
-                lea (PalPointers3).l,a1
+		move.b	$FFFFFE11,d1
+		lea	(PalPointers).l,a1
+		tst.b	d1
+		beq.s	PalLoad4_Continue
+		lea	(PalPointers2).l,a1
+		cmpi.b	#1,d1
+		beq.s	PalLoad4_Continue
+		lea	(PalPointers3).l,a1
 
 PalLoad4_Continue:
-                lsl.w #3,d0
-                adda.w d0,a1
-                movea.l (a1)+,a2
-                movea.w (a1)+,a3
-                suba.w #$100,a3
-                move.w (a1)+,d7
+		lsl.w	#3,d0
+		adda.w	d0,a1
+		movea.l	(a1)+,a2
+		movea.w	(a1)+,a3
+		suba.w	#$100,a3
+		move.w	(a1)+,d7
 
 loc_2160:
-                move.l (a2)+,(a3)+
-                dbf d7,loc_2160
-                rts
+		move.l	(a2)+,(a3)+
+		dbf	d7,loc_2160
+		rts
 ; End of function PalLoad4_Water
 
 ; ===========================================================================
@@ -3446,8 +3446,8 @@ Title_ClrPallet:
 		move.l	d0,(a1)+
 		dbf	d1,Title_ClrPallet ; fill pallet with 0	(black)
 
-		moveq	#3,d0		; load Sonic's pallet
-		jsr	PalLoad1
+	;	moveq	#3,d0		; load Sonic's pallet
+	;	jsr	PalLoad1
 		move.b	#$8A,($FFFFD080).w ; load "SONIC TEAM PRESENTS"	object
 		jsr	ObjectsLoad
 		jsr	BuildSprites
@@ -3486,6 +3486,7 @@ NoTSLoad:
 		move.w	#0,($FFFFFFEA).w
 		move.w	#0,($FFFFFE10).w ; set level to	GHZ (00)
 		move.w	#0,($FFFFF634).w ; disable pallet cycling
+
 		jsr	LevelSizeLoad
 		jsr	DeformBgLayer
 		lea	($FFFFB000).w,a1
@@ -3495,7 +3496,8 @@ NoTSLoad:
 		lea	(Blk256_title).l,a0 ; load GHZ 256x256 mappings
 		lea	($FF0000).l,a1
 		jsr	KosDec
-		jsr	LevelLayoutLoad
+	;	jsr	LevelLayoutLoad
+
 		jsr	Pal_FadeFrom
 		move	#$2700,sr
 		jsr	ClearScreen
@@ -3518,7 +3520,7 @@ NoTSLoad:
 	endif
 		move.l	#$40000000,($C00004).l
 		lea	(Nem_title).l,a0 ; load GHZ patterns
-	;	jsr	NemDec		; disabled ONLY because of the ERaZor banner
+		jsr	NemDec		; disabled ONLY because of the ERaZor banner
 
 		move.l	#$64000002,($C00004).l
 		lea	(Nem_ERaZor).l,a0
@@ -3526,9 +3528,9 @@ NoTSLoad:
 
 		moveq	#1,d0		; load title screen pallet
 		jsr	PalLoad1
+		move.w	#0,($FFFFFB40).w	; set background colour to black
+		move.w	#0,($FFFFFBC0).w	; set background colour to black
 
-		moveq	#3,d0		; load sonic's pal
-		jsr	PalLoad1
 
 		move.b	#$8A,d0		; play title screen music
 		jsr	PlaySound_Special
@@ -3546,16 +3548,27 @@ Title_ClrObjRam2:
 		move.l	d0,(a1)+
 		dbf	d1,Title_ClrObjRam2
 		jsr	DeleteObject2
+
 	if NoTitleScreenArt=0
 		move.b	#$E,($FFFFD040).w ; load big Sonic object
 		move.b	#$F,($FFFFD080).w ; load "PRESS	START BUTTON" object
-		move.b	#$F,($FFFFD0C0).w ; load "TM" object
-		move.b	#3,($FFFFD0DA).w
+	;	move.b	#$F,($FFFFD0C0).w ; load "TM" object
+	;	move.b	#3,($FFFFD0DA).w
+		move.b	#$2,($FFFFD0C0).w	; load ERaZor banner object
 		move.b	#$F,($FFFFD100).w
 		move.b	#2,($FFFFD11A).w
 	endif
 
-		move.b	#$2,($FFFFD180).w	; load ERaZor banner object
+
+		movem.l	d0-a2,-(sp)		; backup d0 to a2
+		lea	(Pal_Sonic).l,a1	; set Sonic'S palette pointer
+		lea	($FFFFFBE0).l,a2	; set palette location
+		moveq	#7,d0			; set number of loops to 7
+
+Title_SonPalLoop:
+		move.l	(a1)+,(a2)+		; load 2 colours (4 bytes)
+		dbf	d0,Title_SonPalLoop	; loop
+		movem.l	(sp)+,d0-a2		; restore d0 to a2
 
 		jsr	ObjectsLoad
 		jsr	DeformBgLayer
@@ -3575,7 +3588,8 @@ loc_317C:
 		jsr	ObjectsLoad
 		jsr	DeformBgLayer
 		jsr	BuildSprites
-		jsr	PalCycle_Title
+	;	jsr	PalCycle_Title
+		move.w	#0,($FFFFFB40).w	; set background colour to black
 		jsr	RunPLC_RAM
 		move.w	($FFFFD008).w,d0
 		add.w	#5,d0 		; set speed
@@ -3637,39 +3651,39 @@ Title_CountC:
 		addq.w	#1,($FFFFFFE6).w ; increment C button counter
 
 loc_3230:
-	;	tst.w	($FFFFF614).w
-	;	beq.w	Demo
+	;	tst.w	($FFFFF614).w	; is time over?
+	;	beq.w	Demo		; if yes, play demo
 
+PalLocation = $FFFFFB60
+
+		move.w	($FFFFF614).w,d0			; load remaining time into d0
+		andi.w	#3,d0					; mask it against 3
+		bne.s	T_PalSkip_1				; if result isn't 0, branch
+		move.w	(PalLocation+$04).w,d0			; load first blue colour of sonic's palette into d0
+		moveq	#7,d1					; set loop counter to 7
+		lea	(PalLocation+$06).w,a1			; load second blue colour into a1
+
+T_PalLoop:
+		move.w	(a1),-2(a1)				; move colour to last spot
+		adda.l	#2,a1					; increase location pointer
+		dbf	d1,T_PalLoop				; loop
+		move.w	d0,(PalLocation+$12).w			; move first colour to last one
+
+T_PalSkip_1:
+		move.w	($FFFFF614).w,d0			; load remaining time into d0
+		andi.w	#7,d0					; mask it against 7
+		bne.s	T_PalSkip_2				; if result isn't 0, branch
+		move.w	(PalLocation+$18).w,d0			; backup first colour of the red
+		move.w	(PalLocation+$1A).w,(PalLocation+$18).w	; move second colour to first one
+		move.w	(PalLocation+$1C).w,(PalLocation+$1A).w	; move third colour to second one
+		move.w	d0,(PalLocation+$1C).w			; load first colour into third one
+
+T_PalSkip_2:
 		move.w	($FFFFF614).w,d0
-		neg.w	d0
-		andi.w	#3,d0
-		bne.s	cont1
-		move.w	($FFFFFB04).w,d0
-		moveq	#7,d1
-		lea	($FFFFFB06).w,a1
-		lea	($FFFFFB1A).w,a2
-
-Title_CheckForA:
-		move.w	(a1),-2(a1)
-		adda.l	#2,a1
-		dbf	d1,Title_CheckForA
-		move.w	d0,($FFFFFB12).w
-
-cont1:
-		move.w	($FFFFF614).w,d0
-		neg.w	d0
-		andi.w	#7,d0
-		bne.s	@cont2
-		move.w	($FFFFFB18).w,d0
-		move.w	($FFFFFB1A).w,($FFFFFB18).w
-		move.w	($FFFFFB1C).w,($FFFFFB1A).w
-		move.w	d0,($FFFFFB1C).w
-
-@cont2:
-		move.w	($FFFFF614).w,d0
-		neg.w	d0
 		andi.w	#1,d0
-	bra.s	Title_NoPalChange
+		bra.s	Title_NoPalChange
+	;	bne.s	Title_NoPalChange
+
 		add.w	#$0011,($FFFFFB00)	; increase Sonic's palette (color 1)
 		add.w	#$0011,($FFFFFB02)	; increase Sonic's palette (color 2)
 		add.w	#$0011,($FFFFFB04)	; increase Sonic's palette (color 3)
@@ -6167,9 +6181,9 @@ Obj02_Setup:
 		move.l	#Map_Obj02,4(a0)	; load mappings
 		move.b	#0,$18(a0)		; set priority
 		move.b	#0,1(a0)		; set render flag
-		move.w	#($A400/$20),2(a0)	; set art
+		move.w	#$6520,2(a0)		; set art
 		move.w	#$120,8(a0)
-		move.w	#$D0,$A(a0)
+		move.w	#$117,$A(a0)
 
 Obj02_Display:
 	;	addq.w	#2,$8(a0)
@@ -16071,6 +16085,8 @@ Map_obj26:
 ; ---------------------------------------------------------------------------
 
 Obj0E:					; XREF: Obj_Index
+		bset	#0,$22(a0)
+		bset	#1,$22(a0)
 		moveq	#0,d0
 		move.b	$24(a0),d0
 		move.w	Obj0E_Index(pc,d0.w),d1
@@ -16084,11 +16100,12 @@ Obj0E_Index:	dc.w Obj0E_Main-Obj0E_Index
 
 Obj0E_Main:				; XREF: Obj0E_Index
 		addq.b	#2,$24(a0)
-		move.w	#$F0,8(a0)
-		move.w	#$DE,$A(a0)
+		move.w	#$150,8(a0)
+	;	move.w	#$DE,$A(a0)
+		move.w	#0,$A(a0)
 		move.l	#Map_obj0E,4(a0)
 		move.w	#$2300,2(a0)
-		move.b	#1,$18(a0)
+	;	move.b	#1,$18(a0)
 		move.b	#29,$1F(a0)	; set time delay to 0.5	seconds
 		lea	(Ani_obj0E).l,a1
 		jsr	AnimateSprite
@@ -16105,8 +16122,8 @@ Obj0E_Wait:				; XREF: Obj0E_Delay
 ; ===========================================================================
 
 Obj0E_Move:				; XREF: Obj0E_Index
-		subq.w	#8,$A(a0)
-		cmpi.w	#$96,$A(a0)
+		addq.w	#8,$A(a0)
+		cmpi.w	#$D0,$A(a0)
 		bne.s	Obj0E_Display
 		addq.b	#2,$24(a0)
 
@@ -16142,7 +16159,7 @@ Obj0F_Index:	dc.w Obj0F_Main-Obj0F_Index
 Obj0F_Main:				; XREF: Obj0F_Index
 		addq.b	#2,$24(a0)
 		move.w	#$D8,8(a0)
-		move.w	#$130,$A(a0)
+		move.w	#$138,$A(a0)
 		move.l	#Map_obj0F,4(a0)
 		move.w	#$200,2(a0)
 		cmpi.b	#2,$1A(a0)	; is object "PRESS START"?
@@ -16152,7 +16169,7 @@ Obj0F_Main:				; XREF: Obj0F_Index
 		bne.s	locret_A6F8	; if not, branch
 		move.w	#$2510,2(a0)	; "TM" specific	code
 		move.w	#$170,8(a0)
-		move.w	#$F8,$A(a0)
+		move.w	#$FC,$A(a0)
 
 locret_A6F8:				; XREF: Obj0F_Index
 		rts	
