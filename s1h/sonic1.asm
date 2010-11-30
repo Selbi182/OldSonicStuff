@@ -39,7 +39,7 @@ BossHits = 0
 ;No Title screen art (Sonic, emblem, etc.)
 ; 0 - Show Art
 ; 1 - Don't show art
-NoTitleScreenArt = 0
+NoTitleScreenArt = 1
 ;==============================================
 
 ;------------------------------------------------------
@@ -3518,9 +3518,18 @@ NoTSLoad:
 	endif
 		move.l	#$40000000,($C00004).l
 		lea	(Nem_title).l,a0 ; load GHZ patterns
+	;	jsr	NemDec		; disabled ONLY because of the ERaZor banner
+
+		move.l	#$64000002,($C00004).l
+		lea	(Nem_ERaZor).l,a0
 		jsr	NemDec
+
 		moveq	#1,d0		; load title screen pallet
 		jsr	PalLoad1
+
+		moveq	#3,d0		; load sonic's pal
+		jsr	PalLoad1
+
 		move.b	#$8A,d0		; play title screen music
 		jsr	PlaySound_Special
 	if DebugModeDefault=1
@@ -3537,12 +3546,17 @@ Title_ClrObjRam2:
 		move.l	d0,(a1)+
 		dbf	d1,Title_ClrObjRam2
 		jsr	DeleteObject2
+	if NoTitleScreenArt=0
 		move.b	#$E,($FFFFD040).w ; load big Sonic object
 		move.b	#$F,($FFFFD080).w ; load "PRESS	START BUTTON" object
 		move.b	#$F,($FFFFD0C0).w ; load "TM" object
 		move.b	#3,($FFFFD0DA).w
 		move.b	#$F,($FFFFD100).w
 		move.b	#2,($FFFFD11A).w
+	endif
+
+		move.b	#$2,($FFFFD180).w	; load ERaZor banner object
+
 		jsr	ObjectsLoad
 		jsr	DeformBgLayer
 		jsr	BuildSprites
@@ -3567,7 +3581,7 @@ loc_317C:
 		add.w	#5,d0 		; set speed
 		move.w	d0,($FFFFD008).w ; move	Sonic to the right
 		cmpi.w	#$1C00,d0	; has Sonic object passed x-position $1C00?
-		bcs.s	Title_ChkRegion	; if not, branch
+		bra.s	Title_ChkRegion	; if not, branch
 		move.b	#0,($FFFFF600).w ; go to Sega screen
 		rts
 ; ===========================================================================
@@ -3625,12 +3639,37 @@ Title_CountC:
 loc_3230:
 	;	tst.w	($FFFFF614).w
 	;	beq.w	Demo
-		
-Title_CheckForA:
+
 		move.w	($FFFFF614).w,d0
 		neg.w	d0
-		and.w	#1,d0
-		bne.s	Title_NoPalChange
+		andi.w	#3,d0
+		bne.s	cont1
+		move.w	($FFFFFB04).w,d0
+		moveq	#7,d1
+		lea	($FFFFFB06).w,a1
+		lea	($FFFFFB1A).w,a2
+
+Title_CheckForA:
+		move.w	(a1),-2(a1)
+		adda.l	#2,a1
+		dbf	d1,Title_CheckForA
+		move.w	d0,($FFFFFB12).w
+
+cont1:
+		move.w	($FFFFF614).w,d0
+		neg.w	d0
+		andi.w	#7,d0
+		bne.s	@cont2
+		move.w	($FFFFFB18).w,d0
+		move.w	($FFFFFB1A).w,($FFFFFB18).w
+		move.w	($FFFFFB1C).w,($FFFFFB1A).w
+		move.w	d0,($FFFFFB1C).w
+
+@cont2:
+		move.w	($FFFFF614).w,d0
+		neg.w	d0
+		andi.w	#1,d0
+	bra.s	Title_NoPalChange
 		add.w	#$0011,($FFFFFB00)	; increase Sonic's palette (color 1)
 		add.w	#$0011,($FFFFFB02)	; increase Sonic's palette (color 2)
 		add.w	#$0011,($FFFFFB04)	; increase Sonic's palette (color 3)
@@ -6108,6 +6147,40 @@ Cont_GotoLevelX:				; XREF: Cont_MainLoop
 		move.b	d0,($FFFFFE30).w ; clear lamppost count
 	;	subq.b	#1,($FFFFFE18).w ; subtract 1 from continues
 		rts	
+; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Object 02 - ERaZor Banner
+; ---------------------------------------------------------------------------
+Obj02:
+		moveq	#0,d0			; clear d0
+		move.b	$24(a0),d0		; move routine counter to d0
+		move.w	Obj02_Index(pc,d0.w),d1 ; move the index to d1
+		jmp	Obj02_Index(pc,d1.w)	; find out the current position in the index
+; ===========================================================================
+Obj02_Index:	dc.w Obj02_Setup-Obj02_Index	; Set up the object (art etc.)	[$0]
+		dc.w Obj02_Display-Obj02_Index	; Display Sprite		[$2]
+; ===========================================================================
+
+Obj02_Setup:
+		addq.b	#2,$24(a0)		; set to Obj08_FixLoc
+		move.l	#Map_Obj02,4(a0)	; load mappings
+		move.b	#0,$18(a0)		; set priority
+		move.b	#0,1(a0)		; set render flag
+		move.w	#($A400/$20),2(a0)	; set art
+		move.w	#$120,8(a0)
+		move.w	#$D0,$A(a0)
+
+Obj02_Display:
+	;	addq.w	#2,$8(a0)
+		jmp	DisplaySprite		; jump to DisplaySprite
+; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Sprite mappings - Shadow object
+; ---------------------------------------------------------------------------
+Map_Obj02:
+		include	"_maps\ERaZor.asm"
 ; ===========================================================================
 
 ; ---------------------------------------------------------------------------
@@ -44265,17 +44338,10 @@ MainLoadBlocks:
 ; Pattern load cues
 ; ---------------------------------------------------------------------------
 ArtLoadCues:
-	;	cmpi.b	#1,($FFFFFFE7).w	; has sonic destryed a S monitor?
-	;	beq.s	ArtLoadCues2	; if yes, load crazy life icon
 		include	"_inc\Pattern load cues.asm"
-		
 		incbin	misc\padding.bin
 		even
-;ArtLoadCues2:
-	;	include	"_inc\Pattern load cues Crazy.asm"
-		
-	;	incbin	misc\padding.bin
-	;	even
+
 Nem_SegaLogo:	incbin	artnem\segalogo.bin	; large Sega logo
 		even
 Eni_SegaLogo:	incbin	mapeni\segalogo.bin	; large Sega logo (mappings)
@@ -44316,6 +44382,9 @@ Art_Sonic:	incbin	artunc\sonic.bin	; Sonic Normal
 
 Art_Sonic3:	incbin	artunc\s3_sonic.bin	; Sonic S3 Style
 		even
+
+Art_Dust:	incbin	artunc\spindust.bin	; spindash dust art
+		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - various
 ; ---------------------------------------------------------------------------
@@ -44334,6 +44403,8 @@ Nem_UnkFire:	incbin	artnem\xxxfire.bin	; unused fireball
 Nem_Warp:	incbin	artnem\xxxflash.bin	; unused entry to special stage flash
 		even
 Nem_Goggle:	incbin	artnem\xxxgoggl.bin	; unused goggles
+		even
+Nem_ERaZor:	incbin	artnem\ERaZor.bin	; ERaZor banner art
 		even
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - walls of the special stage
@@ -47578,84 +47649,22 @@ SoundD9:	incbin	sound\soundD9.bin
 SegaPCM:	incbin	sound\segapcm.bin
 		even
 
-Art_Dust	incbin	artunc\spindust.bin
-		even
-Sonic2_LevelSelectX:
+; ===========================================================================
+; ---------------------------------------------------------------------------
 		include "s2_menu.asm"
-SelbiSplashScreen:
 		include "Screen/SelbiSplash.asm"
-ODIGHZSplashScreen:
 		include "Screen/ODIGHZ/ODIGHZ.asm"
-
+		include "OptionsScreen.asm"
+		include "InfoScreen.asm"
 ; ---------------------------------------------------------------------------
-; Object 8D - Shadow object
-; ---------------------------------------------------------------------------
-Obj02:
-Obj8D:
-		moveq	#0,d0			; clear d0
-		move.b	$24(a0),d0		; move routine counter to d0
-		move.w	Obj8D_Index(pc,d0.w),d1 ; move the index to d1
-		jmp	Obj8D_Index(pc,d1.w)	; find out the current position in the index
 ; ===========================================================================
-Obj8D_Index:	dc.w Obj8D_Setup-Obj8D_Index	; Set up the object (art etc.)		[$0]
-		dc.w Obj8D_FixLoc-Obj8D_Index	; fix location to groudn (main line)	[$2]
-		dc.w Obj8D_Delete-Obj8D_Index	; delete object				[$4]
-; ===========================================================================
-
-Obj8D_Setup:
-		addq.b	#2,$24(a0)		; set to Obj08_FixLoc
-		move.l	#Map_obj8D,4(a0)	; load mappings
-		move.b	#3,$18(a0)		; set priority to behind
-		move.b	#4,1(a0)		; set render flag
-		move.w	#$541,2(a0)		; set art (this line is wrong!)
-		rts				; return
-; ===========================================================================
-
-Obj8D_FixLoc:
-		move.w	($FFFFD008).w,8(a0)	; set Y-position to Sonic's one
-		move.w	($FFFFD00C).w,$C(a0)	; set Y-position to Sonic's one
-		bra.s	Obj8D_Return
-	;	moveq	#0,d1			; clear d1
-	;	jsr	ObjHitFloor		; load from ObjHitFloor
-	;	sub.w	#5,d1
-	;	move.w	d1,$C(a0)		; set Y-position to it
-		jsr	SpeedToPos
-		jsr	ObjHitFloor
-		cmpi.w	#-8,d1
-		blt.s	Obj8D_Return
-		cmpi.w	#$C,d1
-		bge.s	Obj8D_Return
-		add.w	d1,$C(a0)	; match	newtron's position with floor
-
-Obj8D_Return:
-		jmp	DisplaySprite		; jump to DisplaySprite
-		rts	
-
-; ===========================================================================
-
-Obj8D_Delete:
-		jmp	DeleteObject		; delete object
-		
-; ---------------------------------------------------------------------------
-; Sprite mappings - Shadow object
-; ---------------------------------------------------------------------------
-Map_obj8D:
-		include	"_maps\Shadow.asm"
-; ===========================================================================
-Obj8E:
-Obj8F:
-Obj90:
-		rts
-
-	include "OptionsScreen.asm"
-	include "InfoScreen.asm"
-
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; BBBBFind:	dc.b	'BBBB'
 ; BAPointer:	dc.l	(((*)+$10000)&$00FF0000)
 ; AlignValue =	(((*-4)+$10000)&$00FF0000)
+
 AlignValue =	$D0000
 
 Bank1:		align	AlignValue+$8000

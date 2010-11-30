@@ -36,4 +36,3 @@
 	dc.l Obj81, Obj82, Obj83, Obj84
 	dc.l Obj85, Obj86, Obj87, Obj88
 	dc.l Obj89, Obj8A, Obj8B, Obj8C
-	dc.l Obj8D, Obj8E, Obj8F, Obj90
