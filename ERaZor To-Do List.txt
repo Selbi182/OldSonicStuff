@@ -1,14 +1,19 @@
+To-Do:
+- Finishing Overworld (find a good solution to display level names)
+
 Bugs:
-- Restore music after death, if it isn't the normal music.
+- Restore music after death, if it isn't the normal music
 
 Would be great:
-- Find an more accurate system for the palette-restoration from WhiteFlash.
-- Find better graphics for the title screen.
+- Find an more accurate system for the palette-restoration from WhiteFlash
+- Find better graphics for the title screen
 
 Ideas:
-- Challenge: Race against Sonic's shadow.
-- Demo Mode (Basically a walkthrough through the game.)
-- Pre-Credits Text (Credits.txt)
-- New title screen with much explosions.
+- Combining GHZ 1 and 3 (combining, not act transition!)
+- Hiding Buzz Bombers behind the waterfall in GHZ1
+- Challenge: Race against Sonic's shadow (i.e. Rayman - Candy Chateau)
+- Demo Mode (Basically a walkthrough, but in the game itself.)
+- Pre-Credits Text (See "Credits.txt")
+- New title screen with much explosions
 - Easy Mode with "Hard Part Skipper"
 - Making a serious game. That means: Turn cheats off (except Air-Move on B), remove all non-main level, etc...

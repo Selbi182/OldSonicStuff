@@ -21,9 +21,11 @@ align macro
      endm
 ; =====================
 
-;------------------------------------------------------
-; Used switches (Programmer)
-;------------------------------------------------------
+;--------------------------------------------------------
+; Assembly Options (NOTE: There are more spread around
+; the disassembly! Search for " = " (without the quotes)
+; to find them.
+;---------------------------------------------------------
 ;==============================================
 ;Debug Mode and Level Select Enabled by default
 ; 0 - No
@@ -31,35 +33,9 @@ align macro
 DebugModeDefault = 0
 LevSelDefault = 1
 ;==============================================
-;Required Boss hits
-; 0 - Default
-; 1 - Small (for testing purposes only)
-BossHits = 0
-;==============================================
-;No Title screen art (Sonic, emblem, etc.)
-; 0 - Show Art
-; 1 - Don't show art
-NoTitleScreenArt = 0
-;==============================================
-
-;------------------------------------------------------
-; Used switches (Random new functions)
-;------------------------------------------------------
-;==============================================
 ;Speed of HUD
 ; 6 = Default
 HUDSpeed = 6
-;==============================================
-;Afterimage Type
-; 0 - Short afterimage (like in S3k)
-; 1 - Long/custom afterimage
-AfterImageType = 0
-;==============================================
-;If 1, SYZ will be in the main gameplay. I'm
-;yet to decide if I really want that zone.
-; 0 - Disabled
-; 1 - Enabled
-SYZEnabled = 0
 ;==============================================
 ;Enable Demo Recording (In RAM at $FFFFD200)
 ;Also disables Stars and Shields
@@ -68,13 +44,10 @@ SYZEnabled = 0
 RecordDemo = 0
 AutoDEMO = 0
 ;==============================================
-
-;------------------------------------------------------
-; Misc
-;------------------------------------------------------
-;==============================================
-;Macros for ASM songs
-	include	"sound\Driver\s1smps2asm_inc.asm"
+;No Background on Title Screen
+; 0 - Show Art
+; 1 - Don't show art
+NoTSBGArt = 0
 ;==============================================
 
 ; ---------------------------------------------------------------------------
@@ -82,7 +55,7 @@ AutoDEMO = 0
 ; ---------------------------------------------------------------------------
 
 StartOfRom:
-Vectors:	dc.l $FFFE00, EntryPoint, BusError, AddressError
+		dc.l $FFFE00, EntryPoint, BusError, AddressError
 		dc.l IllegalInstr, ZeroDivide, ChkInstr, TrapvInstr
 		dc.l PrivilegeViol, Trace, -Line1010Emu,	Line1111Emu
 		dc.l ErrorExcept, ErrorExcept, ErrorExcept, ErrorExcept
@@ -461,7 +434,7 @@ Art_Text:	incbin	artunc\menutext.bin	; text used in level select and debug mode
 
 ; ===========================================================================
 
-loc_B10:				; XREF: Vectors
+loc_B10:				; XREF: StartOfRom
 		movem.l	d0-a6,-(sp)
 		tst.b	($FFFFF62A).w
 		beq.s	loc_B88
@@ -3422,42 +3395,7 @@ TitleScreen:				; XREF: GameModeArray
 Title_ClrObjRam:
 		move.l	d0,(a1)+
 		dbf	d1,Title_ClrObjRam ; fill object RAM ($D000-$EFFF) with	$0
-		jmp	SkipPresents
-		move.l	#$40000000,($C00004).l
-		lea	(Nem_JapNames).l,a0 ; load Japanese credits
-		jsr	NemDec
-		move.l	#$54C00000,($C00004).l
-		lea	(Nem_CreditText).l,a0 ;	load alphabet
-		jsr	NemDec
-		lea	($FF0000).l,a1
-		lea	(Eni_JapNames).l,a0 ; load mappings for	Japanese credits
-		move.w	#0,d0
-		jsr	EniDec
-		lea	($FF0000).l,a1
-		move.l	#$40000003,d0
-		moveq	#$27,d1
-		moveq	#$1B,d2
-		jsr	ShowVDPGraphics
-		lea	($FFFFFB80).w,a1
-		moveq	#0,d0
-		move.w	#$1F,d1
 
-Title_ClrPallet:
-		move.l	d0,(a1)+
-		dbf	d1,Title_ClrPallet ; fill pallet with 0	(black)
-
-	;	moveq	#3,d0		; load Sonic's pallet
-	;	jsr	PalLoad1
-		move.b	#$8A,($FFFFD080).w ; load "SONIC TEAM PRESENTS"	object
-		jsr	ObjectsLoad
-		jsr	BuildSprites
-		jsr	Pal_FadeTo
-		move	#$2700,sr
-
-SkipPresents:
-	if NoTitleScreenArt=1
-		bra.s	NoTSLoad
-	endif
 		move.l	#$40000001,($C00004).l
 		lea	(Nem_TitleFg).l,a0 ; load title	screen patterns
 		jsr	NemDec
@@ -3487,6 +3425,7 @@ NoTSLoad:
 		move.w	#0,($FFFFFE10).w ; set level to	GHZ (00)
 		move.w	#0,($FFFFF634).w ; disable pallet cycling
 
+	if NoTSBGArt=0
 		jsr	LevelSizeLoad
 		jsr	DeformBgLayer
 		lea	($FFFFB000).w,a1
@@ -3496,7 +3435,8 @@ NoTSLoad:
 		lea	(Blk256_title).l,a0 ; load GHZ 256x256 mappings
 		lea	($FF0000).l,a1
 		jsr	KosDec
-	;	jsr	LevelLayoutLoad
+		jsr	LevelLayoutLoad
+	endif
 
 		jsr	Pal_FadeFrom
 		move	#$2700,sr
@@ -3515,9 +3455,7 @@ NoTSLoad:
 		move.l	#$42080003,d0
 		moveq	#$21,d1
 		moveq	#$15,d2
-	if NoTitleScreenArt=0
 		jsr	ShowVDPGraphics
-	endif
 		move.l	#$40000000,($C00004).l
 		lea	(Nem_title).l,a0 ; load GHZ patterns
 		jsr	NemDec		; disabled ONLY because of the ERaZor banner
@@ -3528,9 +3466,10 @@ NoTSLoad:
 
 		moveq	#1,d0		; load title screen pallet
 		jsr	PalLoad1
-		move.w	#0,($FFFFFB40).w	; set background colour to black
-		move.w	#0,($FFFFFBC0).w	; set background colour to black
 
+	if NoTSBGArt=1
+		clr.w	($FFFFFBC0).w		; set background colour to black
+	endif
 
 		move.b	#$8A,d0		; play title screen music
 		jsr	PlaySound_Special
@@ -3549,7 +3488,6 @@ Title_ClrObjRam2:
 		dbf	d1,Title_ClrObjRam2
 		jsr	DeleteObject2
 
-	if NoTitleScreenArt=0
 		move.b	#$E,($FFFFD040).w ; load big Sonic object
 		move.b	#$F,($FFFFD080).w ; load "PRESS	START BUTTON" object
 	;	move.b	#$F,($FFFFD0C0).w ; load "TM" object
@@ -3557,8 +3495,6 @@ Title_ClrObjRam2:
 		move.b	#$2,($FFFFD0C0).w	; load ERaZor banner object
 		move.b	#$F,($FFFFD100).w
 		move.b	#2,($FFFFD11A).w
-	endif
-
 
 		movem.l	d0-a2,-(sp)		; backup d0 to a2
 		lea	(Pal_Sonic).l,a1	; set Sonic'S palette pointer
@@ -3588,8 +3524,9 @@ loc_317C:
 		jsr	ObjectsLoad
 		jsr	DeformBgLayer
 		jsr	BuildSprites
-	;	jsr	PalCycle_Title
-		move.w	#0,($FFFFFB40).w	; set background colour to black
+	if NoTSBGArt=0
+		jsr	PalCycle_Title
+	endif
 		jsr	RunPLC_RAM
 		move.w	($FFFFD008).w,d0
 		add.w	#5,d0 		; set speed
@@ -12049,6 +11986,12 @@ Map_obj18c:
 ; ---------------------------------------------------------------------------
 ; Object 19 - After Image
 ; ---------------------------------------------------------------------------
+;Afterimage Type
+; 0 - Short Afterimage
+; 1 - Long Afterimage
+AfterImageType = 0
+; ---------------------------------------------------------------------------
+
 Obj19:
 		tst.b	($FFFFFFAC).w		; is sonic dying?
 		bne.w	DeleteObject		; if yes, delete the object
@@ -13681,11 +13624,7 @@ Obj1F_Main:				; XREF: Obj1F_Index
 		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
 		bne.s	Obj01_NotGHZ1_Main2	; if not, branch
 		move.b	#$F,$20(a0)		; use boss touch response
-	if BossHits=1
-		move.b	#2,$21(a0)		; set number of	hits to	1
-	else
 		move.b	#24,$21(a0)		; set number of	hits to	12
-	endif
 		bra.s	Obj1F_NotGHZ1_Cont	; skip
 
 Obj01_NotGHZ1_Main2:
@@ -18579,13 +18518,17 @@ Obj34_Delete:
 		move.b	#$21,($FFFFD040).w		; load HUD object
 		move.b	#1,($FFFFD070).w		; set to SCORE
 		move.w	#HudSpeed,($FFFFD072).w		; set X-speed
-		move.w	#HudSpeed,($FFFFD074).w		; set Y-speed	
+		move.w	#HudSpeed,($FFFFD074).w		; set Y-speed
 		move.b	#$21,($FFFFD400).w		; load HUD object
 		move.b	#2,($FFFFD430).w		; set to RINGS
 		move.w	#HUDSpeed,d3			; load HUD speed into d3
 		neg.w	d3				; negate it
 		move.w	d3,($FFFFD432).w		; set X-speed
 		move.w	#HUDSpeed,($FFFFD434).w		; set Y-speed
+
+		cmpi.w	#$400,($FFFFFE10).w		; is level SYZ1 (overworld)?
+		beq.s	Obj34_JustDelete		; if yes, branch
+
 		move.b	#$21,($FFFFD440).w		; load HUD object
 		move.b	#3,($FFFFD470).w		; set to TIME
 		move.w	#HUDSpeed,($FFFFD472).w		; set X-speed
@@ -19001,19 +18944,7 @@ SNL_Cont1:
 
 SNL_Cont2:
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
-	if SYZEnabled=0
 		bne.s	SNL_Cont3		; if not, branch
-	else
-		bne.s	SNL_Cont3x		; if not, branch
-		move.w	#$401,($FFFFFE10).w	; set level number to SYZ2
-		move.b	#1,$34(a0)		; tell the system a new level has been set
-		rts				; return
-; ===========================================================================
-
-SNL_Cont3x:
-		cmpi.w	#$401,($FFFFFE10).w	; is level SYZ2?
-		bne.s	SNL_Cont3		; if not, branch
-	endif
 		move.w	#$101,($FFFFFE10).w	; set level number to LZ2
 		move.b	#1,$34(a0)		; tell the system a new level has been set
 		rts	
@@ -28075,6 +28006,8 @@ Obj01_PeeloutCancel:
 		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
 		cmpi.w	#$001,($FFFFFE10).w		; is level GHZ2?
 		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
+		cmpi.w	#$400,($FFFFFE10).w		; is level SYZ1?
+		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
 		cmpi.w	#$101,($FFFFFE10).w		; is level LZ2?
 		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
 		cmpi.w	#$502,($FFFFFE10).w		; is level FZ?
@@ -28126,6 +28059,34 @@ loc_12CB6:
 ; ---------------------------------------------------------------------------
 
 Sonic_Display:				; XREF: loc_12C7E
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1 (overworld)?
+		bne.s	S_D_NotSYZ1		; if not, branch
+		cmpi.w	#$450,$C(a0)		; is Sonic's position at or over $450 on Y-axis?
+		blt.s	S_D_NotSYZ1		; if not, branch
+		move.b	#$C,($FFFFF600).w	; set screen mode to level ($C)
+		move.w	#1,($FFFFFE02).w	; restart level
+		move.b	#1,($FFFFFFDC).w	; make sure music will be played
+
+
+		move.w	#$000,($FFFFFE10).w	; set level to GHZ1
+		cmpi.w	#$300,$8(a0)		; is Sonic past $300?
+		blt.s	S_D_OverReturn		; if not, branch
+		move.w	#$002,($FFFFFE10).w	; set level to GHZ3
+		cmpi.w	#$500,$8(a0)		; is Sonic past $500?
+		blt.s	S_D_OverReturn		; if not, branch
+		move.w	#$200,($FFFFFE10).w	; set level to MZ1
+		cmpi.w	#$600,$8(a0)		; is Sonic past $500?
+		blt.s	S_D_OverReturn		; if not, branch
+		move.w	#$101,($FFFFFE10).w	; set level to LZ2
+		cmpi.w	#$700,$8(a0)		; is Sonic past $500?
+		blt.s	S_D_OverReturn		; if not, branch
+		move.w	#$502,($FFFFFE10).w	; set level to FZ
+
+S_D_OverReturn:
+		rts				; return
+; ===========================================================================
+
+S_D_NotSYZ1:
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		bne.s	S_D_NotMZ1		; if not, branch
 	;	tst.b	($FFFFFFBE).w		; is a jumpdash being performed?
@@ -29496,6 +29457,13 @@ SH_EnemyLoop:
 		bra.s	SH_NoEnemy		; otherwise, skip object
 
 SH_NoMonitor:
+		cmpi.b	#$1F,(a1)		; was selected object a crabmeat?
+		bne.s	SH_NoCrabMeat		; if not, branch
+		cmpi.b	#6,$24(a1)		; is object an exploding ball?
+		blt.s	SH_NoCrabMeat		; if not, brank
+		bra.s	SH_NoEnemy		; otherwise, skip object
+
+SH_NoCrabMeat:
 		move.w	$8(a1),d3		; load current X-pos into d3
 		sub.w	$8(a0),d3		; substract Sonic's X-pos from it
 		bpl.s	SH_XPositive		; if result it positive, branch
@@ -29569,7 +29537,7 @@ SH_Return2:
 ; -------------------------------------------------------------------------------
 
 SH_Objects:
-	dc.b	$1E, $1F, $22, $26, $2B, $2C, $2D, $40, $42, $43, $50, $55, $60, $78
+	dc.b	$1E, $1F, $22, $26, $2B, $2C, $2D, $40, $42, $43, $50, $55, $60
 	dc.b	$FF	; this $FF is the end of list
 	even
 ; -------------------------------------------------------------------------------
@@ -35654,11 +35622,7 @@ loc_17772:
 		move.w	8(a0),$30(a0)
 		move.w	$C(a0),$38(a0)
 		move.b	#$F,$20(a0)
-	if BossHits=1
-		move.b	#5,$21(a0)	; set number of	hits to	5
-	else
 		move.b	#12,$21(a0)	; set number of	hits to	12
-	endif
 
 Obj3D_ShipMain:				; XREF: Obj3D_Index
 		moveq	#0,d0
@@ -39285,11 +39249,7 @@ loc_19E3E:
 
 loc_19E5A:
 		move.w	#0,$34(a0)
-	if BossHits=1
-		move.b	#5,$21(a0)	; set number of	hits to	5
-	else
 		move.b	#30,$21(a0)	; set number of	hits to	30
-	endif
 		move.w	#-1,$30(a0)
 
 Obj85_Eggman:				; XREF: Obj85_Index
@@ -47434,30 +47394,21 @@ loc_72E64:				; XREF: loc_72A64
 ; ===========================================================================
 Kos_Z80:
 		incbin	sound\Driver\z80_S1HL.bin
+		include	"sound\Driver\s1smps2asm_inc.asm"
 
-	;	incbin	sound\z80_1.bin
-	;	dc.w ((SegaPCM&$FF)<<8)+((SegaPCM&$FF00)>>8)
-	;	dc.b $21
-	;	dc.w (((EndOfRom-SegaPCM)&$FF)<<8)+(((EndOfRom-SegaPCM)&$FF00)>>8)
-	;	incbin	sound\z80_2.bin
 		even
 Music81:	include	"sound\EK\Battletoads - Surf City.asm"
-	;	incbin	sound\music81.bin
-	;	even
+		even
 Music82:	include "sound\DalekSam\MTZ3.asm"
-	;	incbin	sound\music82.bin
-	;	even
+		even
 Music83:	incbin	sound\music83.bin
 		even
 Music84:	include "sound\DalekSam\MM4_GBTitle.asm"
-	;	incbin	sound\music84.bin
-	;	even
+		even
 Music85:	include "sound\DalekSam\whee.asm"
-	;	incbin	sound\music85.bin
-	;	even
+		even
 Music86:	include "sound\DalekSam\MANDRILL.asm"
-	;	incbin	sound\music86.bin
-	;	even
+		even
 Music87:	incbin	sound\music87.bin
 		even
 Music88:	incbin	sound\music88.bin
@@ -47465,19 +47416,13 @@ Music88:	incbin	sound\music88.bin
 Music89:	incbin	sound\music89.bin
 		even
 Music8A:	include	"sound\DalekSam\ENDING.asm"
-	;	incbin	sound\music8A.bin
-	;	even
+		even
 Music8B:	incbin	sound\music8B.bin
 		even
 Music8C:	include "sound\EK\m46-Boss.asm"
-	;	incbin	sound\EK\m46-Boss.bin
-	;	even
-	;	incbin	sound\music8C.bin
-	;	even
+		even
 Music8D:	incbin	sound\EK\m5A-FZIntro.bin
 		even
-	;	incbin	sound\music8D.bin
-	;	even
 Music8E:	incbin	sound\music8E.bin
 		even
 Music8F:	incbin	sound\music8F.bin
@@ -47493,24 +47438,19 @@ Music93:	incbin	sound\music93.bin
 Music94:	incbin	sound\music94.bin
 		even
 Music95:	include	"sound\DalekSam\KEN.asm"
-	;	incbin	sound\music95.bin
-	;	even
+		even
 Music96:	incbin	sound\music82.bin
 		even
 Music97:	include	"sound\DalekSam\RHYTHM.asm"
-	;	incbin	sound\music97.bin
-	;	even
+		even
 Music98:	incbin	sound\EK\bosspinch.bin
-	;	incbin	sound\music98.bin
 		even
 Music99:	include	"sound\EK\m41-MZ3.asm"
-	;	incbin	sound\music99.bin
-	;	even
+		even
 Music9A:        incbin	sound\music9A.bin
 		even
 Music9B:	include	"sound\DalekSam\STAGSelbi.asm"
-	;	incbin	sound\music9B.bin
-	;	even
+		even
 Music9C:	incbin	sound\music9C.bin
 		even
 Music9D:	incbin	sound\music9D.bin
