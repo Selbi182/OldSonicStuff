@@ -5123,6 +5123,47 @@ ClearEverySpecialFlag:
 ; End of function ClearEverySpecialFlag
 ; ===========================================================================
 
+; ===============================================================================
+; -------------------------------------------------------------------------------
+; Subroutine to set blocks to high plane in the GHZ1 waterfall section
+; -------------------------------------------------------------------------------
+
+GHZ_MakeBlocksHigh:
+		movem.l	d1-a2,-(sp)		; backup d1 to a2
+
+		lea	(MBH_Array).l,a2	; set a2 to block ID array
+		moveq	#12,d2			; set number of loops to 12 (13 blocks)
+
+MBH_Loop:
+		move.w	(a2)+,d1		; get current entry
+		lsl.w	#3,d1			; multiply d1 by 8
+		add.w	#$B000,d1		; add $B000 to d1
+		movea.w	d1,a1			; set result to a1
+		bset	#7,0(a1)		; make 1st tile high plane
+		bset	#7,2(a1)		; make 2nd tile high plane
+		bset	#7,4(a1)		; make 3rd tile high plane
+		bset	#7,6(a1)		; make 4th tile high plane
+		tst.b	d0			; is d0 set?
+		beq.s	MBH_Skip		; if not, branch
+		bclr	#7,0(a1)		; make 1st tile low plane again
+		bclr	#7,2(a1)		; make 2nd tile low plane again
+		bclr	#7,4(a1)		; make 3rd tile low plane again
+		bclr	#7,6(a1)		; make 4th tile low plane again
+
+MBH_Skip:
+		dbf	d2,MBH_Loop		; loop
+		
+		movem.l	(sp)+,d1-a2		; restore d1 to a2
+		rts				; return
+
+; ===============================================================================
+; -------------------------------------------------------------------------------
+MBH_Array:	; 13 entries
+		dc.w	$001, $06E, $072, $073, $076, $077, $0B6, $0B8, $0F1, $0F2, $140, $1A9, $1AA
+; -------------------------------------------------------------------------------
+; ===============================================================================
+
+
 ; ---------------------------------------------------------------------------
 ; Subroutine to	move Sonic in demo mode
 ; ---------------------------------------------------------------------------
@@ -11621,6 +11662,12 @@ Obj18_SetFrame:
 		move.b	d1,$1A(a0)	; set frame to d1
 
 Obj18_Solid:				; XREF: Obj18_Index
+		bclr	#7,2(a0)		; make object low plane
+		tst.b	($FFFFFFA6).w		; is flag set?
+		beq.s	Obj18_NoHigh		; if not, branch
+		bset	#7,2(a0)		; otherwise make object high plane
+
+Obj18_NoHigh:
 		tst.b	$38(a0)
 		beq.s	loc_7EE0
 		subq.b	#4,$38(a0)
@@ -13056,6 +13103,12 @@ Obj27_NoCamShake:
 		move.b	#1,($FFFFFFF6).w
 
 Obj27_Animate:				; XREF: Obj27_Index
+		bclr	#7,2(a0)		; make object low plane
+		tst.b	($FFFFFFA6).w		; is flag set?
+		beq.s	Obj27_NoHigh		; if not, branch
+		bset	#7,2(a0)		; otherwise make object high plane
+
+Obj27_NoHigh:
 		subq.b	#1,$1E(a0)	; subtract 1 from frame	duration
 		bpl.s	Obj27_Display
 		move.b	#7,$1E(a0)	; set frame duration to	7 frames
@@ -14325,10 +14378,10 @@ Obj22_NotInhumanCrush:
 		beq.s	Obj22_NotHigher		; if he isn't, branch
 		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
 		bne.s	Obj22_NotGHZ1		; if not, branch
-		cmpi.w	#$18B0,($FFFFD008).w	; is Sonic past the X-location $18B0?
-		bpl.s	Obj22_NotGHZ1		; if yes, branch
-		cmpi.w	#$1340,($FFFFD008).w	; is Sonic before the X-location $1340?
+		cmpi.w	#$13C0,$8(a0)		; is buzz bomber before $13C0?
 		bmi.s	Obj22_NotGHZ1		; if yes, branch
+		cmpi.w	#$1800,$8(a0)		; is buzz bomber after $1800?
+		bpl.s	Obj22_NotGHZ1		; if yes, branch
 		move.b	#0,$20(a0)		; make the buzz bomber not destroyable
 		bra.s	Obj22_NotHigher		; skip
 ; ===========================================================================
@@ -14751,6 +14804,12 @@ loc_9C0E:
 ; ---------------------------------------------------------------------------
 
 Obj25_Animate:				; XREF: Obj25_Index
+		bclr	#7,2(a0)		; make object low plane
+		tst.b	($FFFFFFA6).w		; is flag set?
+		beq.s	Obj25_NoHigh		; if not, branch
+		bset	#7,2(a0)		; otherwise make object high plane
+
+Obj25_NoHigh:
 		tst.b	$29(a0)			; was ring already set to follow you?
 		beq.s	Obj25_DoCheck		; if not, branch
 		tst.b	($FFFFFE2C).w		; is sonic still having a shield?
@@ -15106,6 +15165,12 @@ Obj37_Play:
 ; ---------------------------------------------------------------------------
 
 Obj37_Bounce:				; XREF: Obj37_Index
+		bclr	#7,2(a0)		; make object low plane
+		tst.b	($FFFFFFA6).w		; is flag set?
+		beq.s	Obj37_NoHigh		; if not, branch
+		bset	#7,2(a0)		; otherwise make object high plane
+
+Obj37_NoHigh:
 		tst.b	$30(a0)			; is this the multi read balls (crabmeat)?
 		bne.s	Obj37_NoRingsMove	; if yes, branch
 		
@@ -15478,6 +15543,12 @@ Obj26_NotBroken:			; XREF: Obj26_Main
 		move.b	$28(a0),$1C(a0)	; copy subtype to animation
 
 Obj26_Solid:				; XREF: Obj26_Index
+		bclr	#7,2(a0)		; make object low plane
+		tst.b	($FFFFFFA6).w		; is flag set?
+		beq.s	Obj26_NoHigh		; if not, branch
+		bset	#7,2(a0)		; otherwise make object high plane
+
+Obj26_NoHigh:
 		cmpi.w	#$502,($FFFFFE10).w
 		beq.s	Obj26_SetToNormal
 		move.w	($FFFFD014).w,d2	; move Sonic's interia to d2
@@ -20749,6 +20820,12 @@ Obj41_Powers:	dc.w -$1000		; power	of red spring
 ; ===========================================================================
 
 Obj41_Up:				; XREF: Obj41_Index
+		bclr	#7,2(a0)		; make object low plane
+		tst.b	($FFFFFFA6).w		; is flag set?
+		beq.s	Obj41_NoHigh		; if not, branch
+		bset	#7,2(a0)		; otherwise make object high plane
+
+Obj41_NoHigh:
 		move.w	#$1B,d1
 		move.w	#8,d2
 		move.w	#$10,d3
@@ -28067,7 +28144,6 @@ Sonic_Display:				; XREF: loc_12C7E
 		move.w	#1,($FFFFFE02).w	; restart level
 		move.b	#1,($FFFFFFDC).w	; make sure music will be played
 
-
 		move.w	#$000,($FFFFFE10).w	; set level to GHZ1
 		cmpi.w	#$300,$8(a0)		; is Sonic past $300?
 		blt.s	S_D_OverReturn		; if not, branch
@@ -28128,16 +28204,40 @@ BranchRoutine:	bra.w	S_D_NoTeleport
 S_D_NotMZ1:
 		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
 		bne.w	S_D_NoTeleport		; if not, branch
+
+		cmpi.w	#$1900,8(a0)		; is Sonic past the X-location $1900?
+		bpl.s	S_D_Revert		; if yes, branch
+		cmpi.w	#$1300,8(a0)		; is Sonic before the X-location $1300?
+		bmi.s	S_D_Revert		; if yes, branch
+		
+		tst.b	($FFFFFFA6).w		; is flag set?
+		bne.s	S_D_NoWaterfall		; if yes, branch
+		moveq	#0,d0			; clear d0
+		jsr	GHZ_MakeBlocksHigh	; make the blocks in the waterfall section high plane
+		move.b	#1,($FFFFFFA6).w	; set flag
+		bset	#7,2(a0)		; make Sonic high plane
+		bra.s	S_D_NoWaterfall
+
+S_D_Revert:
+		tst.b	($FFFFFFA6).w		; is flag set?
+		beq.s	S_D_NoWaterfall		; if not, branch
+		moveq	#1,d0			; set d0 to 1
+		jsr	GHZ_MakeBlocksHigh	; make the blocks in the waterfall section low plane again
+		move.b	#0,($FFFFFFA6).w	; unset flag
+		bclr	#7,2(a0)		; make Sonic's plane normal again
+
+S_D_NoWaterfall:
 		tst.b	($FFFFFFE7).w		; is inhuman mode on?
-		beq.s	S_D_TeleNoInhuman	; if not, branch+
-		bra.s	S_D_NoTeleport		; otherwise skip
+		beq.s	S_D_TeleNoInhuman	; if not, branch
+		bra.w	S_D_NoTeleport		; otherwise skip
 ; ===========================================================================
 
 S_D_TeleNoInhuman:
 		cmpi.w	#$1BB0,8(a0)		; is Sonic past the X-location $1BB0?
-		bpl.s	S_D_NoTeleport		; if yes, branch
+		bpl.w	S_D_NoTeleport		; if yes, branch
 		cmpi.w	#$1340,8(a0)		; is Sonic before the X-location $1340?
-		bmi.s	S_D_NoTeleport		; if yes, branch
+		bmi.w	S_D_NoTeleport		; if yes, branch
+		
 		cmpi.w	#$4E0,$C(a0)		; is Sonic above the Y-location $3E0?
 		bmi.s	S_D_NoTeleport		; if yes, branch
 		cmpi.w	#20,($FFFFFE20).w	; do you have at least 20 rings?
@@ -28164,6 +28264,7 @@ S_D_20Rings:
 		clr.b	($FFFFFE2C).w		; remove any shields
 		clr.b	($FFFFFFFC).w		; clear shield counter
 		jsr	FixLevel
+; ===========================================================================
 
 S_D_NoTeleport:
 		tst.b	($FFFFFFAE).w		; is WF2 flag set?
@@ -30552,11 +30653,13 @@ Obj01_Hurt:				; XREF: Obj01_Index
 		beq.s	Obj01_Hurt_Normal ; if not, branch
 		btst	#4,($FFFFF605).w ; is button B pressed?
 		beq.s	Obj01_Hurt_Normal ; if not, branch
-		move.w	#1,($FFFFFE08).w ; change Sonic	into a ring/item
 		clr.b	($FFFFF7CC).w	; unlock controls
 		clr.w	$10(a0)		; clear X-speed
 		clr.w	$12(a0)		; clear Y-speed
 		clr.w	$14(a0)		; clear interia
+		move.b	#2,$24(a0)	; set to Obj01_Control
+		clr.w	$30(a0)		; don't make any flashing
+		move.b	#2,$1C(a0)	; use rolling animation
 		rts
 ; ===========================================================================
 

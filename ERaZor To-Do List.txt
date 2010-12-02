@@ -10,7 +10,6 @@ Would be great:
 
 Ideas:
 - Combining GHZ 1 and 3 (combining, not act transition!)
-- Hiding Buzz Bombers behind the waterfall in GHZ1
 - Challenge: Race against Sonic's shadow (i.e. Rayman - Candy Chateau)
 - Demo Mode (Basically a walkthrough, but in the game itself.)
 - Pre-Credits Text (See "Credits.txt")

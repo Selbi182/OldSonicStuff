@@ -63,8 +63,8 @@
  ;  ($FFFFFFA2).w
  ;  ($FFFFFFA3).w
  ;  ($FFFFFFA4).w
-    ($FFFFFFA5).w
-    ($FFFFFFA6).w
+ ;  ($FFFFFFA5).w
+ ;  ($FFFFFFA6).w
  ;  ($FFFFFFA7).w
     ($FFFFFFA8).w
  ;  ($FFFFFFA9).w
