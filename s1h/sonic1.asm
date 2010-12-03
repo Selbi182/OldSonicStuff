@@ -49,6 +49,11 @@ AutoDEMO = 0
 ; 1 - Don't show art
 NoTSBGArt = 0
 ;==============================================
+;Enable second menu (the one after the options menu)
+; 0 - Disabled, game will directly start after options menu
+; 1 - Enabled, after options, this screen will appear
+Menu2 = 0
+;==============================================
 
 ; ---------------------------------------------------------------------------
 ; Start of ROM - Sonic ERaZor
@@ -219,8 +224,11 @@ GameClrRAM:
 		move.b	#0,($FFFFF600).w ; set Game Mode to Sega Screen
 
 MainGameLoop:
+		moveq	#0,d0
 		move.b	($FFFFF600).w,d0 ; load	Game Mode
-		andi.w	#$003C,d0	; $1C
+		move.w	d0,d1
+		lsr.b	#1,d1
+		add.w	d1,d0
 		jsr	GameModeArray(pc,d0.w) ; jump to apt location in ROM
 		bra.s	MainGameLoop
 ; ===========================================================================
@@ -229,23 +237,25 @@ MainGameLoop:
 ; ---------------------------------------------------------------------------
 
 GameModeArray:
-		bra.w	SegaScreen	; Sega Screen ($00)
+		jmp	SegaScreen	; Sega Screen ($00)
 ; ===========================================================================
-		bra.w	TitleScreen	; Title	Screen ($04)
+		jmp	TitleScreen	; Title	Screen ($04)
 ; ===========================================================================
-		bra.w	Level		; Demo Mode ($08)
+		jmp	Level		; Demo Mode ($08)
 ; ===========================================================================
-		bra.w	Level		; Normal Level ($0C)
+		jmp	Level		; Normal Level ($0C)
 ; ===========================================================================
-		bra.w	SpecialStage	; Special Stage	($10)
+		jmp	SpecialStage	; Special Stage	($10)
 ; ===========================================================================
-		bra.w	ContinueScreen	; Continue Screen ($14)
+		jmp	ContinueScreen	; Continue Screen ($14)
 ; ===========================================================================
-		bra.w	EndingSequence	; End of game sequence ($18)
+		jmp	EndingSequence	; End of game sequence ($18)
 ; ===========================================================================
-		bra.w	Credits		; Credits ($1C)
+		jmp	Credits		; Credits ($1C)
 ; ===========================================================================
 		jmp	InfoScreen	; Info Screen ($20)
+; ===========================================================================
+		jmp	OptionsScreen	; Options Screen ($24)
 ; ===========================================================================	
 		rts	
 ; ===========================================================================
@@ -3632,32 +3642,10 @@ T_PalSkip_2:
 	;	add.w	#$0011,($FFFFFB10)	; increase Sonic's palette (color 9)
 
 Title_NoPalChange:
-	;	tst.b	($FFFFFFE0).w		; is level select enabled?
-	;	bne.w	Title_ChkLevSel		; if yes, branch
-	;	andi.b	#$80,($FFFFF605).w 	; has Start been pressed?
-	;	bne.w	StartCheck		; if yes, branch
 		cmpi.b	#$C0,($FFFFF605)	; has A + Start been pressed?
 		beq.s	Title_ChkLevSel		; if yes, branch	
-	;	tst.b	($FFFFFFE0).w		; is level select enabled?
-	;	bne.w	Title_ChkLevSel		; if not, branch
-
-Title_CheckForC:
-		move.b	($FFFFF605).w,d0	; move the current button press to d0 (we may not and d0 directly for whatever reason)
-		and.b	#$20,d0			; and the your value on it ($20/C in this case)
-		beq.s	Title_CheckForB		; if B is not being pressed, branch
-		not.b	($FFFFFFFA).w		; enable/disable Debug
-		move.w	#$A1,d0			; set lampost sound
-		jsr	(PlaySound).l		; play lampost sound
-
-Title_CheckForB:
-		move.b	($FFFFF605).w,d0	; move the current button press to d0 (we may not and d0 directly for whatever reason)
-		and.b	#$10,d0			; and the your value on it ($10/B in this case)
-		beq.s	StartCheck		; if B is not being pressed, branch
-		jmp	OptionsScreen		; load options Screen
-		
-StartCheck:
-		andi.b	#$80,($FFFFF605).w 	; check if Start is pressed
-		beq.w	loc_317C		; if not, branch
+		cmpi.b	#$80,($FFFFF605).w 	; check if Start is pressed
+		bne.w	loc_317C		; if not, branch
 
 Title_ChkLevSel:
 	if LevSelDefault=0
@@ -3665,7 +3653,7 @@ Title_ChkLevSel:
 		beq.w	Title_LoadOptions	; if not, load options screen
 	endif
 		btst	#6,($FFFFF604).w	; check if A is pressed
-		beq.w	Title_LoadOptions	; if not, load options screen
+		beq.s	Title_LoadOptions	; if not, load options screen
 		move.b	#1,($FFFFFFDC).w	; some flag to fix music issues in the level select
 		move.b	#$E4,d0			; set sound #E4
 		jsr	PlaySound_Special	; stop music
@@ -3673,14 +3661,15 @@ Title_ChkLevSel:
 ; ===========================================================================
 
 Title_LoadOptions:
-		jmp	OptionsScreen		; load options screen
+		move.b	#$24,($FFFFF600).w	; set game mode to options screen
+		rts				; return
 ; ===========================================================================
 
 Title_ChkLevSel_Rest:
 	;	move.b	#$82,d0		; play level select (s1) music
 	;	jsr	PlaySound_Special
-		moveq	#2,d0
-		jsr	PalLoad2	; load level select pallet
+	;	moveq	#2,d0
+	;	jsr	PalLoad2	; load level select pallet
 		lea	($FFFFCC00).w,a1
 		moveq	#0,d0
 		move.w	#$DF,d1
@@ -3701,6 +3690,7 @@ Title_ClrVram:
 		move.l	d0,(a6)
 		dbf	d1,Title_ClrVram ; fill	VRAM with 0
 		jsr	LevSelTextLoad
+
 ; ---------------------------------------------------------------------------
 ; Level	Select
 ; ---------------------------------------------------------------------------
@@ -3710,6 +3700,7 @@ LevelSelect:
 		jsr	DelayProgram
 		jsr	LevSelControls
 		jsr	RunPLC_RAM
+		jsr	Options_PalCycle	; animate ERaZor banners
 		tst.l	($FFFFF680).w
 		bne.s	LevelSelect
 		move.b	($FFFFF605).w,d1; is A pressed? (part 1)
@@ -4148,14 +4139,6 @@ MusicList4:	incbin	misc\muslist4.bin
 
 Level:					; XREF: GameModeArray
 		bset	#7,($FFFFF600).w ; add $80 to screen mode (for pre level sequence)
-		tst.w	($FFFFFFF0).w
-		bmi.s	loc_37B6
-	;	move.b	#$E0,d0
-	;	jsr	PlaySound_Special ; fade out music
-		nop
-
-
-loc_37B6:
 		jsr	ClearPLC
 		jsr	Pal_FadeFrom	
 		tst.w	($FFFFFFF0).w
@@ -4273,6 +4256,7 @@ Level_GetBgm:
 Level_NoMusic:
 		clr.b	($FFFFFF98).w
 		clr.b	($FFFFFF99).w
+		clr.w	($FFFFFFCE).w	; clear extended camera counter
 	;	move.b	#0,($FFFFFFDF).w
 		jsr	ClearEverySpecialFlag
 		cmpi.w	#$001,($FFFFFE10).w
@@ -5616,21 +5600,11 @@ SS_ChkEnd:
 		cmpi.b	#$10,($FFFFF600).w ; is	game mode $10 (special stage)?
 		beq.w	SS_MainLoop	; if yes, branch
 
-	;	tst.w	($FFFFFFF0).w	; is demo mode on?
-	;	bne.w	SS_ToSegaScreen	; if yes, branch
-		
-		move.b	#$C,($FFFFF600).w ; set	screen mode to $0C (level)
-		cmpi.w	#$503,($FFFFFE10).w ; is level number higher than FZ?
-		bcs.s	SS_End		; if not, branch
-		clr.w	($FFFFFE10).w	; set to GHZ1
+		cmpi.b	#3,($FFFFFF8B).w	; has special stage already been played?
+		bge.s	SS_NoNewLevel		; if yes, branch
+		addq.b	#1,($FFFFFF8B).w	; otherwise you beat a new level and can go to the next one
 
-SS_End:
-		jsr	CheckIfMainLevel
-		tst.b	d5
-		beq.s	@cont
-		move.b	#$20,($FFFFF600).w
-
-@cont:
+SS_NoNewLevel:
 		move.w	#60,($FFFFF614).w ; set	delay time to 1	second
 		move.w	#$3F,($FFFFF626).w
 		clr.w	($FFFFF794).w
@@ -5662,6 +5636,27 @@ loc_47D4:
 SS_EndClrObjRamX:
 		move.l	d0,(a1)+
 		dbf	d1,SS_EndClrObjRamX ; clear object RAM
+
+		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
+		move.b	#$C,($FFFFF600).w	; set to level
+		move.w	#1,($FFFFFE02).w	; restart level
+
+		clr.b	($FFFFFFE7).w	; make sonic mortal
+		clr.b	($FFFFFFE1).w	; make sonic not being on the foreground
+		clr.b	($FFFFFFAA).w		; clear crabmeat boss flag 1
+		clr.b	($FFFFFFAB).w		; clear crabmeat boss flag 2
+		clr.b	($FFFFFFA9).w		; clear crabmeat boss flag 3
+		clr.b	($FFFFFFB3).w
+		clr.b	($FFFFFFB4).w
+		clr.b	($FFFFFFB8).w
+		clr.b	($FFFFFFB7).w
+		clr.b	($FFFFFFB9).w
+		clr.b	($FFFFFE30).w	; clear	lamppost counter
+		move.b	#0,($FFFFFFD3).w	; $FFD3
+		clr.b	($FFFFFFBB).w
+		clr.b	($FFFFFFB6).w
+		jsr	Sonic_ResetOnFloor
+
 		move.b	#1,($FFFFFFDE).w
 	;	clr.b	($FFFFFFDF).w
 		clr.b	($FFFFFFBB).w
@@ -6139,40 +6134,6 @@ Cont_GotoLevelX:				; XREF: Cont_MainLoop
 		move.b	d0,($FFFFFE30).w ; clear lamppost count
 	;	subq.b	#1,($FFFFFE18).w ; subtract 1 from continues
 		rts	
-; ===========================================================================
-
-; ---------------------------------------------------------------------------
-; Object 02 - ERaZor Banner
-; ---------------------------------------------------------------------------
-Obj02:
-		moveq	#0,d0			; clear d0
-		move.b	$24(a0),d0		; move routine counter to d0
-		move.w	Obj02_Index(pc,d0.w),d1 ; move the index to d1
-		jmp	Obj02_Index(pc,d1.w)	; find out the current position in the index
-; ===========================================================================
-Obj02_Index:	dc.w Obj02_Setup-Obj02_Index	; Set up the object (art etc.)	[$0]
-		dc.w Obj02_Display-Obj02_Index	; Display Sprite		[$2]
-; ===========================================================================
-
-Obj02_Setup:
-		addq.b	#2,$24(a0)		; set to Obj08_FixLoc
-		move.l	#Map_Obj02,4(a0)	; load mappings
-		move.b	#0,$18(a0)		; set priority
-		move.b	#0,1(a0)		; set render flag
-		move.w	#$6520,2(a0)		; set art
-		move.w	#$120,8(a0)
-		move.w	#$117,$A(a0)
-
-Obj02_Display:
-	;	addq.w	#2,$8(a0)
-		jmp	DisplaySprite		; jump to DisplaySprite
-; ===========================================================================
-
-; ---------------------------------------------------------------------------
-; Sprite mappings - Shadow object
-; ---------------------------------------------------------------------------
-Map_Obj02:
-		include	"_maps\ERaZor.asm"
 ; ===========================================================================
 
 ; ---------------------------------------------------------------------------
@@ -12040,8 +12001,8 @@ AfterImageType = 0
 ; ---------------------------------------------------------------------------
 
 Obj19:
-		tst.b	($FFFFFFAC).w		; is sonic dying?
-		bne.w	DeleteObject		; if yes, delete the object
+		cmpi.b	#6,($FFFFD024).w	; is sonic dying?
+		beq.w	DeleteObject		; if yes, delete the object
 		moveq	#0,d0			; clear d0
 		move.b	$24(a0),d0		; move routine counte to d0
 		move.w	Obj19_Index(pc,d0.w),d1 ; move the index to d1
@@ -12081,11 +12042,18 @@ Obj19_Index:
 
 Obj19_Increase:
 		addq.b	#2,$24(a0)		; increase routine counter
+
 Obj19_Return:
 		rts				; return
 ; ===========================================================================
 
 Obj19_DoAfter:
+		bclr	#7,2(a0)		; make object low plane
+		tst.b	($FFFFFFA6).w		; is flag set?
+		beq.s	Obj19_NoHigh		; if not, branch
+		bset	#7,2(a0)		; otherwise make object high plane
+
+Obj19_NoHigh:
 		addq.b	#2,$24(a0)		; increase routine counter
 		move.b	($FFFFFE05).w,d0	; copy the game frame timer to d0
 		and.b	$30(a0),d0		; and it by the number in $30(a0) (each after image sprite is flashing a bit more than the rest)
@@ -12639,7 +12607,15 @@ Obj2A_Main:				; XREF: Obj2A_Index
 		move.b	#4,$18(a0)
 
 Obj2A_OpenShut:				; XREF: Obj2A_Index
-		move.w	#$40,d1
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1 (overworld)?
+		bne.s	Obj2A_NotSYZ1		; if not, branch
+		move.b	($FFFFFF8B).w,d0	; get ammount of beat levels
+		cmp.b	$28(a0),d0		; is subtype greater than ammount of beat levels?
+		blt.s	Obj2A_Animate		; if yes, don't allow going through it
+		bra.s	Obj2A_Open		; otherwise, open door
+
+Obj2A_NotSYZ1:
+		move.w	#$40,d1		; set minimum distance between door and Sonic
 		clr.b	$1C(a0)		; use "closing"	animation
 		move.w	($FFFFD008).w,d0
 		add.w	d1,d0
@@ -12658,6 +12634,8 @@ Obj2A_OpenShut:				; XREF: Obj2A_Index
 ; ===========================================================================
 
 loc_899A:				; XREF: Obj2A_OpenShut
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1 (overworld)?
+		beq.s	Obj2A_Open		; if yes, branch
 		btst	#0,$22(a0)
 		beq.s	Obj2A_Animate
 
@@ -12872,7 +12850,7 @@ Obj1E_SetBall:				; XREF: Obj1E_Action
 		clr.b	$32(a0)		; set to launch	cannonball
 
 Obj1E_MarkAsGone:			; XREF: Obj1E_Action
-		bra.w	MarkObjGone
+		jmp	MarkObjGone
 ; ===========================================================================
 
 Obj1E_MakeBall:				; XREF: Obj1E_Action
@@ -15279,7 +15257,7 @@ Obj4B_Index:	dc.w Obj4B_Main-Obj4B_Index
 ; ===========================================================================
 
 Obj4B_Main:				; XREF: Obj4B_Index
-	;	jsr	SignpostArtLoad
+		jsr	SignpostArtLoad
 		move.l	#Map_obj4B,4(a0)
 		move.w	#$2400,2(a0)
 		ori.b	#4,1(a0)
@@ -18898,6 +18876,7 @@ Obj3A_NextLevelX:			; XREF: Obj3A_Index
 		clr.b	($FFFFFFB8).w
 		clr.b	($FFFFFFB7).w
 		clr.b	($FFFFFFB9).w
+		clr.b	($FFFFFE30).w	; clear	lamppost counter
 		move.b	#0,($FFFFFFD3).w	; $FFD3
 		clr.b	($FFFFFFBB).w
 		clr.b	($FFFFFFB6).w
@@ -18920,6 +18899,11 @@ Obj3A_NoRing:
 ; ===========================================================================
 
 Obj3A_SNL_Fail:
+		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
+		move.b	#$C,($FFFFF600).w	; set to level
+		rts				; return
+; ===========================================================================
+
 		moveq	#0,d2
 		jsr	CheckIfMainLevel
 		tst.b	d5
@@ -19117,10 +19101,8 @@ Obj7E_Main:
 	;	jmp	Obj7E_Exit	; skip this shit
 
 Obj7E_Main_cont:
-		moveq	#0,d2			; clear d2
-		move.w	($FFFFFF70).w,d2	; move stored rings to d2
-	;	add.w	($FFFFFE20).w,d2	; add special stage rings to it
-		move.w	d2,($FFFFFE20).w	; bam it together
+		move.w	($FFFFFF70).w,($FFFFFE20).w	; restore the rings you had before entering special stage
+
 		movea.l	a0,a1
 		lea	(Obj7E_Config).l,a2
 		moveq	#3,d1
@@ -22102,6 +22084,15 @@ Obj0D_Touch:				; XREF: Obj0D_Index
 		clr.b	($FFFFFE1E).w	; stop time counter
 		move.w	($FFFFF72A).w,($FFFFF728).w ; lock screen position
 		addq.b	#2,$24(a0)
+
+		jsr	CheckIfMainLevel	; get level ID and load it into d5
+		subq.b	#1,d5			; don't count in the intro stage
+		cmp.b	($FFFFFF8B).w,d5	; is progress ID greater than level number?
+		bmi.s	Obj0D_NoNewLevel	; if yes, you played an old level
+		beq.s	Obj0D_NoNewLevel	; if yes, you played an old level
+		addq.b	#1,($FFFFFF8B).w	; otherwise you beat a new level and can go to the next one
+
+Obj0D_NoNewLevel:
 		tst.b	($FFFFFFE7).w		; is Sonic in Inhuman Mode?
 		beq.s	locret_EBBA		; if not, branch
 		clr.b	($FFFFFFE7).w		; disabled Inhuman Mode
@@ -27505,16 +27496,8 @@ loc_1DD36:				; DATA XREF: h+6DBAo
 		move	#-$3000,$3E(a0)
 		move	#$F400,$3C(a0)
 		cmp	#-$2E40,a0
-		beq.s	loc_1DD8C
+		beq.s	loc_1DD90
 		move.b	#1,$34(a0)
-;		cmp	#2,($FFFFFF70).w
-;		beq.s	loc_1DD8C
-;		move	#$48C,2(a0)
-;		move	#-$4FC0,$3E(a0)
-;		move	#-$6E80,$3C(a0)
-
-loc_1DD8C:				; CODE XREF: h+6DF6j h+6E04j
-;		jsr	sub_16D6E
 
 loc_1DD90:				; DATA XREF: h+6DBAo
 		movea.w	$3E(a0),a2
@@ -27820,8 +27803,47 @@ word_1E0EA:	dc 0
 word_1E0EC:	dc 1
 	dc $F0BA
 	even
-
 ; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Object 02 - ERaZor Banner
+; ---------------------------------------------------------------------------
+Obj02:
+		moveq	#0,d0			; clear d0
+		move.b	$24(a0),d0		; move routine counter to d0
+		move.w	Obj02_Index(pc,d0.w),d1 ; move the index to d1
+		jmp	Obj02_Index(pc,d1.w)	; find out the current position in the index
+; ===========================================================================
+Obj02_Index:	dc.w Obj02_Setup-Obj02_Index	; Set up the object (art etc.)	[$0]
+		dc.w Obj02_Display-Obj02_Index	; Display Sprite		[$2]
+; ===========================================================================
+
+Obj02_Setup:
+		addq.b	#2,$24(a0)		; set to Obj08_FixLoc
+		move.l	#Map_Obj02,4(a0)	; load mappings
+		move.b	#0,$18(a0)		; set priority
+		move.b	#0,1(a0)		; set render flag
+		move.w	#$6520,2(a0)		; set art, use fourth palette line
+		cmpi.b	#$24,($FFFFF600).w	; is screen mode options menu?
+		bne.s	Obj02_NotOptions	; if not, branch
+		move.w	#$2520,2(a0)		; set art, use second palette line
+		bra.s	Obj02_Display		; use XY positions set while loading object
+
+Obj02_NotOptions:
+		move.w	#$120,8(a0)		; set X-position
+		move.w	#$117,$A(a0)		; set Y-position
+
+Obj02_Display:
+		jmp	DisplaySprite		; jump to DisplaySprite
+; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Sprite mappings - Shadow object
+; ---------------------------------------------------------------------------
+Map_Obj02:
+		include	"_maps\ERaZor.asm"
+; ===========================================================================
+
 ; ---------------------------------------------------------------------------
 ; Afterimage creating routine
 ; ---------------------------------------------------------------------------
@@ -28145,16 +28167,16 @@ Sonic_Display:				; XREF: loc_12C7E
 		move.b	#1,($FFFFFFDC).w	; make sure music will be played
 
 		move.w	#$000,($FFFFFE10).w	; set level to GHZ1
-		cmpi.w	#$300,$8(a0)		; is Sonic past $300?
+		cmpi.w	#$3B0,$8(a0)		; is Sonic past $300?
 		blt.s	S_D_OverReturn		; if not, branch
 		move.w	#$002,($FFFFFE10).w	; set level to GHZ3
-		cmpi.w	#$500,$8(a0)		; is Sonic past $500?
+		cmpi.w	#$7B0,$8(a0)		; is Sonic past $500?
 		blt.s	S_D_OverReturn		; if not, branch
 		move.w	#$200,($FFFFFE10).w	; set level to MZ1
-		cmpi.w	#$600,$8(a0)		; is Sonic past $500?
+		cmpi.w	#$9B0,$8(a0)		; is Sonic past $500?
 		blt.s	S_D_OverReturn		; if not, branch
 		move.w	#$101,($FFFFFE10).w	; set level to LZ2
-		cmpi.w	#$700,$8(a0)		; is Sonic past $500?
+		cmpi.w	#$BB0,$8(a0)		; is Sonic past $500?
 		blt.s	S_D_OverReturn		; if not, branch
 		move.w	#$502,($FFFFFE10).w	; set level to FZ
 
@@ -31598,6 +31620,12 @@ Map_obj0A:
 ; ---------------------------------------------------------------------------
 
 Obj38:					; XREF: Obj_Index
+		bclr	#7,2(a0)		; make object low plane
+		tst.b	($FFFFFFA6).w		; is flag set?
+		beq.s	Obj38_NoHigh		; if not, branch
+		bset	#7,2(a0)		; otherwise make object high plane
+
+Obj38_NoHigh:
 		moveq	#0,d0
 		move.b	$24(a0),d0
 		move.w	Obj38_Index(pc,d0.w),d1
@@ -40369,6 +40397,14 @@ Obj3E_ChkOpened:
 		bset	#1,($FFFFD022).w
 
 Obj3E_DoOpen:
+		jsr	CheckIfMainLevel	; get level ID and load it into d5
+		subq.b	#1,d5			; don't count in the intro stage
+		cmp.b	($FFFFFF8B).w,d5	; is progress ID greater than level number?
+		bmi.s	Obj3E_NoNewLevel	; if yes, you played an old level
+		beq.s	Obj3E_NoNewLevel	; if yes, you played an old level
+		addq.b	#1,($FFFFFF8B).w	; otherwise you beat a new level and can go to the next one
+
+Obj3E_NoNewLevel:
 		move.b	#2,$1A(a0)	; use frame number 2 (destroyed	prison)
 		rts	
 ; ===========================================================================
@@ -40493,6 +40529,11 @@ Obj3E_FindObj28:
 		beq.s	Obj3E_Obj28Found ; if yes, branch
 		adda.w	d2,a1		; next object RAM
 		dbf	d0,Obj3E_FindObj28 ; repeat $3E	times
+		
+		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
+		move.b	#$C,($FFFFF600).w	; set to level
+		move.w	#1,($FFFFFE02).w	; restart level
+		rts				; return
 
 		jsr	GotThroughAct
 		jmp	DeleteObject

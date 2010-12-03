@@ -151,6 +151,18 @@ Info_NoTextChange:
 		move.b	($FFFFF605).w,d1
 		andi.b	#$80,d1
 		beq.s	InfoScreen_MainLoop	; if not, branch
+		cmpi.b	#1,($FFFFFF9C).w	; is this the intro-dialouge?
+		bne.s	Info_NoIntro		; if not, branch
+		clr.b	($FFFFFF95).w
+		clr.w	($FFFFFF96).w
+		clr.w	($FFFFFF98).w
+		clr.w	($FFFFFF9A).w
+		clr.w	($FFFFFF9C).w
+		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
+		move.b	#$C,($FFFFF600).w
+		jmp	NextLevelX
+
+Info_NoIntro:
 		clr.b	($FFFFFF95).w
 		clr.w	($FFFFFF96).w
 		clr.w	($FFFFFF98).w
@@ -670,17 +682,17 @@ InfoText_1:
 		dc.b	'BACK  TO  GREEN HILL ZONE TO'
 		dc.b	' SEE IF EVERYTHING IS OKAY. '
 		dc.b	'                            '
-		dc.b	' AS SOON AS HE GOT THERE HE '
+		dc.b	'AS SOON AS HE GOT THERE,  HE'
 		dc.b	'WAS ATTACKED BY AN EVIL GREY'
 		dc.b	'   METALLIC  BUZZ BOMBER.   '
 		dc.b	'                            '
-		dc.b	'  SONIC WAS ABLE TO ESCAPE  '
-		dc.b	'HOWEVER, THE RING OF TIME HE'
-		dc.b	'  JUMPED IN SENT HIM A FEW  '
-		dc.b	'   DAYS INTO THE  FUTURE.   '
+		dc.b	'     SONIC ESCAPED HIM.     '
+		dc.b	'HOWEVER,  THE RING HE JUMPED'
+		dc.b	'IN SENT HIM TO  SPRING YARD.'
 		dc.b	'                            '
-		dc.b	'   MANY THINGS CHANGED IN   '
-		dc.b	'     THIS SHORT TIME...     '
+		dc.b	'NOW HE HAS TO USE  THE RINGS'
+		dc.b	'THERE TO FIND BACK TO EGGMAN'
+		dc.b	'       TO STOP HIM...       '
 		dc.b	$FF	; this $FF tells the game, the end of the list has been reached.
 		even
 ; ---------------------------------------------------------------------------

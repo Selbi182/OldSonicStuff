@@ -27,41 +27,73 @@ Options_ClrObjRam:
 		move.l	d0,(a1)+
 		dbf	d1,Options_ClrObjRam ; fill object RAM ($D000-$EFFF) with $0
 
-		move	#$2700,sr
-		move.l	#$40000001,($C00004).l
-		lea	(Nem_TitleFg).l,a0 ; load Options	screen patterns
-		jsr	NemDec
+	;	move	#$2700,sr
+	;	move.l	#$40000001,($C00004).l
+	;	lea	(Nem_TitleFg).l,a0 ; load Options	screen patterns
+	;	jsr	NemDec
+
 		lea	($C00000).l,a6
-		move.l	#$50000003,4(a6)
+		move.l	#$6E000002,4(a6)
 		lea	(Art_Text).l,a5
-		move.w	#$28F,d1
+		move.w	#$59F,d1		; Original: $28F
 
 Options_LoadText:
 		move.w	(a5)+,(a6)
 		dbf	d1,Options_LoadText ; load uncompressed text patterns
 
 		jsr	Pal_FadeFrom
-		move	#$2700,sr
-		lea	($FF0000).l,a1
-		lea	(Eni_Title).l,a0 ; load	Options screen mappings
-		move.w	#0,d0
-		jsr	EniDec
-		lea	($FF0000).l,a1
-		move.l	#$42060003,d0
-		moveq	#$21,d1
-		moveq	#$15,d2
-		jsr	ShowVDPGraphics
-		move.b	#$21,($FFFFD040).w
+
+	;	move	#$2700,sr
+	;	lea	($FF0000).l,a1
+	;	lea	(Eni_Title).l,a0 ; load	Options screen mappings
+	;	move.w	#0,d0
+	;	jsr	EniDec
+	;	lea	($FF0000).l,a1
+	;	move.l	#$42080003,d0
+	;	moveq	#$21,d1
+	;	moveq	#$15,d2
+	;	jsr	ShowVDPGraphics
+
+; ---------------------------------------------------------------------------
+
+		move.b	#$02,($FFFFD100).w	; load ERaZor banner object
+		move.w	#$BD,($FFFFD108).w	; set X-position
+		move.w	#$81,($FFFFD10A).w	; set Y-position
+
+		move.b	#$02,($FFFFD140).w	; load ERaZor banner object
+		move.w	#$182,($FFFFD148).w	; set X-position
+		move.w	#$81,($FFFFD14A).w	; set Y-position
+
+		move.b	#$02,($FFFFD180).w	; load ERaZor banner object
+		move.w	#$BD,($FFFFD188).w	; set X-position
+		move.w	#$142,($FFFFD18A).w	; set Y-position
+
+		move.b	#$02,($FFFFD1C0).w	; load ERaZor banner object
+		move.w	#$182,($FFFFD1C8).w	; set X-position
+		move.w	#$142,($FFFFD1CA).w	; set Y-position
+
+		jsr	ObjectsLoad
+		jsr	BuildSprites
+; ---------------------------------------------------------------------------
+
 		moveq	#2,d0		; load Options screen pallet
 		jsr	PalLoad1
 		move.b	#$86,d0		; play Options screen music
 		jsr	PlaySound_Special
 
 LOADLS:
-		jsr	Pal_FadeTo
-
 		moveq	#2,d0
 		jsr	PalLoad2	; load level select pallet
+
+		movem.l	d0-a2,-(sp)		; backup d0 to a2
+		lea	(Pal_Sonic).l,a1	; set Sonic'S palette pointer
+		lea	($FFFFFBA0).l,a2	; set palette location
+		moveq	#7,d0			; set number of loops to 7
+
+Options_SonPalLoop:
+		move.l	(a1)+,(a2)+		; load 2 colours (4 bytes)
+		dbf	d0,Options_SonPalLoop	; loop
+		movem.l	(sp)+,d0-a2		; restore d0 to a2
 		
 		moveq	#0,d0
 		lea	($FFFFCA00).w,a1	; set location for the text
@@ -95,8 +127,40 @@ Options_ClrVram:
 		move.l	d0,(a6)
 		dbf	d1,Options_ClrVram ; fill	VRAM with 0
 		move.w	#19,($FFFFFF82).w	; set position to 4
-	;	jsr	OptionsTextLoad
-	;	jsr	Pal_FadeTo
+
+		jsr	Pal_FadeTo
+		bra.s	OptionsScreen_MainLoop
+
+; ===========================================================================
+
+Options_PalCycle:
+
+PalLocationO = $FFFFFB20
+
+		move.w	($FFFFF614).w,d0			; load remaining time into d0
+		andi.w	#3,d0					; mask it against 3
+		bne.s	O_PalSkip_1				; if result isn't 0, branch
+		move.w	(PalLocationO+$04).w,d0			; load first blue colour of sonic's palette into d0
+		moveq	#7,d1					; set loop counter to 7
+		lea	(PalLocationO+$06).w,a1			; load second blue colour into a1
+
+O_PalLoop:
+		move.w	(a1),-2(a1)				; move colour to last spot
+		adda.l	#2,a1					; increase location pointer
+		dbf	d1,O_PalLoop				; loop
+		move.w	d0,(PalLocationO+$12).w			; move first colour to last one
+
+O_PalSkip_1:
+		move.w	($FFFFF614).w,d0			; load remaining time into d0
+		andi.w	#7,d0					; mask it against 7
+		bne.s	O_PalSkip_2				; if result isn't 0, branch
+		move.w	(PalLocationO+$18).w,d0			; backup first colour of the red
+		move.w	(PalLocationO+$1A).w,(PalLocationO+$18).w	; move second colour to first one
+		move.w	(PalLocationO+$1C).w,(PalLocationO+$1A).w	; move third colour to second one
+		move.w	d0,(PalLocationO+$1C).w			; load first colour into third one
+
+O_PalSkip_2:
+		rts
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -109,6 +173,9 @@ OptionsScreen_MainLoop:
 		jsr	DelayProgram
 		jsr	OptionsControls
 		jsr	RunPLC_RAM
+		
+		bsr.s	Options_PalCycle
+
 		tst.l	($FFFFF680).w
 		bne.s	OptionsScreen_MainLoop
 		tst.b	($FFFFFF9B).w	; is routine counter at $12 (Options_NoMore)?
@@ -131,11 +198,14 @@ Options_NoStart:
 		bra.s	OptionsScreen_MainLoop
 
 Options_NoTextChange:
-		move.b	($FFFFF605).w,d1
+		move.b	($FFFFF605).w,d1	; get button presses
+		cmpi.w	#19,($FFFFFF82).w	; is selected line EXIT?
+		beq.s	Options_NoLR		; if yes, don't check for Left/Right buttons
 		andi.b	#$C,d1			; is left/right	pressed?
 		bne.s	Options_OK		; if yes, branch
-		move.b	($FFFFF605).w,d1
-		andi.b	#$F0,d1			; is A, B, C, or Start pressed?
+
+Options_NoLR:
+		andi.b	#$F0,d1			; is A, B, C or Start pressed?
 		beq.s	OptionsScreen_MainLoop	; if not, branch
 
 Options_OK:
@@ -195,11 +265,19 @@ Options_Not13:
 
 Options_Not16:
 		cmpi.w	#19,d0		; have you selected item 19 (EXIT)?
-		bne.s	Options_Not10	; if not, check for next numbers
-		bset	#7,($FFFFF040).w
-		jmp	Title_ChkLevSel_Rest
-		move.b	#4,($FFFFF600).w	; set screen mode to title screen
-		rts
+		bne.s	Options_Error	; if not, something went wrong
+
+	if Menu2=1
+		jmp	Title_ChkLevSel_Rest	; go to Menu 2
+	else
+		jsr	Pal_FadeOut		; fade out palette
+		move.b	#$C,($FFFFF600).w	; set screen mode to level ($C)
+		jmp	ODIGHZSplash		; jump to One Day in Green Hill Zone screen
+	endif
+; ===========================================================================
+
+Options_Error:
+		rts			; return
 ; ===========================================================================
 
 ; ---------------------------------------------------------------------------
@@ -1096,10 +1174,18 @@ Options_SonicArt2:
 		even
 ; -----------------------------------------------------------------------------------------------------------------------------------------------------
 Options_Exit:
+	if Menu2=1
 		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
+	else
+		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $23, $24, $11, $22, $24, $FF, $17, $11, $1D, $15, $29, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; START GAME
+	endif
 		even
 ; -----------------------------------------------------------------------------------------------------------------------------------------------------
 Options_Exit2:
-		dc.b	$15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
+	if Menu2=1
+		dc.b				      $15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
+	else
+		dc.b				      $23, $24, $11, $22, $24, $FF, $17, $11, $1D, $15, $29, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; START GAME
+	endif
 		even
 ; ======================================================================================================================================================
