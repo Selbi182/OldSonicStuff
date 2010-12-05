@@ -12610,8 +12610,10 @@ Obj2A_OpenShut:				; XREF: Obj2A_Index
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1 (overworld)?
 		bne.s	Obj2A_NotSYZ1		; if not, branch
 		move.b	($FFFFFF8B).w,d0	; get ammount of beat levels
+		move.w	#$0809,$02(a0)				; MJ: Use red light art
 		cmp.b	$28(a0),d0		; is subtype greater than ammount of beat levels?
 		blt.s	Obj2A_Animate		; if yes, don't allow going through it
+		move.w	#$4801,$02(a0)				; MJ: Use green light art
 		bra.s	Obj2A_Open		; otherwise, open door
 
 Obj2A_NotSYZ1:
