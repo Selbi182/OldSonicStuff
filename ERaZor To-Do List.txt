@@ -2,17 +2,19 @@ To-Do:
 - Finishing Overworld:
 	- It only works untill you unlock Marble Zone. I was too lazy to do the rest for now.
 	- Finding a good solution to display level names over tubes.
-	- Use giant rings as entrance and teleporters to the levels.
-	- Find art for the doors.
 	- Rewrite story, since a lot doesn't make sense with the overworld anymore.
+	- Be able to go back to the overworld once you enter a level, maybe by using a giant ring again.
 
-- Change Options Screen's text arrays into ASCII arrays. Reading bytes sucks.
 - Find new music for Night Hill Zone.
+- For the release, remove the level select and debug mode.
+- There are some ugly pixels on the level select font.
 
 Bugs:
 - Restore music after death, if it isn't the normal music.
+- After beating Marble Zone, nothing happens.
 
 Would be great:
+- Change Options Screen's text arrays into ASCII arrays. Reading bytes sucks.
 - Find a more accurate system for the palette-restoration from WhiteFlash.
 - Find better graphics for the title screen background.
 
@@ -23,4 +25,4 @@ Ideas:
 - Pre-Credits Text (See "Credits.txt")
 - Add explosions to the title screen
 - Easy Mode with "Hard Part Skipper"
-- Making a serious game. That means: Turn cheats off (except Air-Move on B), remove all non-main level, etc...
+- Making a serious game. That means: Turn cheats off (except Air-Move on B), remove all non-main levels, etc...

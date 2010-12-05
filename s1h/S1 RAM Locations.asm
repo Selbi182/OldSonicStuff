@@ -35,7 +35,7 @@
  ;  ($FFFFFF88).w
  ;  ($FFFFFF89).w
  ;  ($FFFFFF8A).w
-    ($FFFFFF8B).w
+ ;  ($FFFFFF8B).w
  ;  ($FFFFFF8C).w
  ;  ($FFFFFF8D).w
  ;  ($FFFFFF8E).w

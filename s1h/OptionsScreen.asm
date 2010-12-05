@@ -41,6 +41,10 @@ Options_LoadText:
 		move.w	(a5)+,(a6)
 		dbf	d1,Options_LoadText ; load uncompressed text patterns
 
+		move.l	#$64000002,($C00004).l
+		lea	(Nem_ERaZor).l,a0
+		jsr	NemDec
+
 		jsr	Pal_FadeFrom
 
 	;	move	#$2700,sr
@@ -266,7 +270,14 @@ Options_Not13:
 Options_Not16:
 		cmpi.w	#19,d0		; have you selected item 19 (EXIT)?
 		bne.s	Options_Error	; if not, something went wrong
+		tst.b	($FFFFFF9E).w
+		beq.s	Options_NoSYZ1
+		jsr	Pal_FadeOut		; fade out palette
+		move.w	#$400,($FFFFFE10).w
+		move.b	#$C,($FFFFF600).w	; set screen mode to level ($C)
+		rts
 
+Options_NoSYZ1:
 	if Menu2=1
 		jmp	Title_ChkLevSel_Rest	; go to Menu 2
 	else
@@ -350,7 +361,7 @@ OptionsTextLoad:				; XREF: TitleScreen
 		lea	($FFFFCA00).w,a1		
 		lea	($C00000).l,a6
 		move.l	#$62100003,d4	; screen position (text)
-		move.w	#$E680,d3	; VRAM setting
+		move.w	#$E570,d3	; VRAM setting
 		moveq	#$14,d1		; number of lines of text
 
 
@@ -372,13 +383,13 @@ loc2_34FE:				; XREF: OptionsTextLoad+26j
 		add.w	d1,d1
 		add.w	d0,d1
 		adda.w	d1,a1
-		move.w	#$C680,d3
+		move.w	#$C570,d3
 		move.l	d4,4(a6)
 
 Options_SetCorrectLocation:
 		tst.b	($FFFFFF9B).w		; is routine counter at $12 (Options_NoMore)?
 		bne.s	Options_Finished		; if yes, branch
-		move.w	#$E680,d3
+		move.w	#$E570,d3
 
 Options_Finished:
 		cmpi.w	#4,($FFFFFF82).w	; is selection AIR MOVE ON B?
@@ -407,10 +418,10 @@ Cont_Not13:
 
 Cont_Not16:
 		jsr	Options_ChgLine
-		move.w	#$E680,d3
+		move.w	#$E570,d3
 		cmpi.w	#$14,($FFFFFF82).w
 		bne.s	loc2_3550
-		move.w	#$C680,d3
+		move.w	#$C570,d3
 
 loc2_3550:
 		rts	
@@ -481,8 +492,8 @@ Options_Loop_Invinx:
 		move.b	(a2)+,(a1)+		; load current char to a1
 		dbf	d5,Options_Loop_Invinx	; loop
 ; ----------------------------------------------------------------------------
-		bsr.s	Options_MakeSpaceLine	; make an empty line
-		bsr.s	Options_MakeSpaceLine	; make an empty line
+		bsr.w	Options_MakeSpaceLine	; make an empty line
+		bsr.w	Options_MakeSpaceLine	; make an empty line
 ; ----------------------------------------------------------------------------
 		lea	(Options_Debug1).l,a2	; get text location
 		move.w	#23,d5			; set numbers of loops to 23
@@ -524,6 +535,11 @@ Options_Loop_SonicArtx:
 		bsr.s	Options_MakeSpaceLine	; make an empty line
 ; ----------------------------------------------------------------------------
 		lea	(Options_Exit).l,a2	; get text location
+		tst.b	($FFFFFF9E).w
+		beq.s	@cont
+		lea	(Options_ExitX).l,a2
+
+@cont:
 		move.w	#23,d5			; set numbers of loops to 23
 		
 Options_Loop_Exitx:
@@ -1071,6 +1087,11 @@ Options_ExitText:
 		moveq	#0,d5			; make sure d5 is empty
 		lea	($FFFFCBCE).w,a1	; reset the text location, just in case
 		lea	(Options_Exit2).l,a2	; get text location
+		tst.b	($FFFFFF9E).w
+		beq.s	@cont
+		lea	(Options_ExitX2).l,a2
+
+@cont:
 		move.w	($FFFFFF96).w,d5	; set numbers of loops (this will make the "typing" effect)
 		
 Options_Loop_Exit:
@@ -1173,19 +1194,16 @@ Options_SonicArt2:
 		dc.b	$23, $1F, $1E, $19, $13, $FF, $11, $22, $24, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $23, $03		; SONIC ART (S3)
 		even
 ; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_Exit:
-	if Menu2=1
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
-	else
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $23, $24, $11, $22, $24, $FF, $17, $11, $1D, $15, $29, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; START GAME
-	endif
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
+Options_Exit:	dc.b	$FF, $FF, $FF, $FF, $FF, $FF	; it will continue to Options_EXit2
 Options_Exit2:
 	if Menu2=1
 		dc.b				      $15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
 	else
-		dc.b				      $23, $24, $11, $22, $24, $FF, $17, $11, $1D, $15, $29, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; START GAME
+		dc.b				      $23, $24, $11, $22, $24, $FF, $17, $11, $1D, $15, $0A, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; START GAME
 	endif
+		even
+; -----------------------------------------------------------------------------------------------------------------------------------------------------
+Options_ExitX:	dc.b	$FF, $FF, $FF, $FF, $FF, $FF	; it will continue to Options_EXitX2
+Options_ExitX2:	dc.b				      $15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
 		even
 ; ======================================================================================================================================================

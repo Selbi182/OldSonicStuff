@@ -54,6 +54,11 @@ NoTSBGArt = 0
 ; 1 - Enabled, after options, this screen will appear
 Menu2 = 0
 ;==============================================
+;If 1, the doors in the SYZ are always open.
+; 0 - Closed, you need to play the levels first
+; 1 - Opened´
+DoorsAlwaysOpen = 1
+;==============================================
 
 ; ---------------------------------------------------------------------------
 ; Start of ROM - Sonic ERaZor
@@ -76,22 +81,29 @@ StartOfRom:
 		dc.l ErrorTrap,	ErrorTrap, ErrorTrap, ErrorTrap
 		dc.l ErrorTrap,	ErrorTrap, ErrorTrap, ErrorTrap
 		dc.l ErrorTrap,	ErrorTrap, ErrorTrap, ErrorTrap
+
+
 Console:	dc.b 'SEGA MEGA DRIVE ' ; Hardware system ID
+
 Date:		dc.b '(C)SELBI 2010   ' ; Release date
 Title_Local:	dc.b 'Sonic ERaZor                                    ' ; Domestic name
 Title_Int:	dc.b 'Sonic ERaZor                                    ' ; International name
-Serial:		dc.b 'GM 00001009-00'   ; Serial/version number
-Checksum:	dc.w 0
-		dc.b 'J               ' ; I/O support
-RomStartLoc:	dc.l StartOfRom		; ROM start
-RomEndLoc:	dc.l EndOfRom-1		; ROM end
-RamStartLoc:	dc.l $FF0000		; RAM start
-RamEndLoc:	dc.l $FFFFFF		; RAM end
-SRAMSupport:	dc.l $20202020		; change to $5241E020 to create	SRAM
-		dc.l $20202020		; SRAM start
-		dc.l $20202020		; SRAM end
+Serial:		dc.b 'GM 00001337-00' 	; Serial/version number
 
-Notes:		dc.b '                                                    '
+Checksum:	dc.w 0
+		dc.b 'J               '	; I/O support
+
+RomStartLoc:	dc.l StartOfRom	; ROM start
+RomEndLoc:	dc.l EndOfRom-1	; ROM end
+
+RamStartLoc:	dc.l $FF0000	; RAM start
+RamEndLoc:	dc.l $FFFFFF	; RAM end
+
+SRAMSupport:	dc.l $20202020	; Change to $5241E020 to create	SRAM
+		dc.l $20202020	; SRAM start
+		dc.l $20202020	; SRAM end
+
+Notes:		dc.b '                                                    '	; Notes
 
 Region:		dc.b 'JUE             ' ; Region
 
@@ -257,8 +269,6 @@ GameModeArray:
 ; ===========================================================================
 		jmp	OptionsScreen	; Options Screen ($24)
 ; ===========================================================================	
-		rts	
-; ===========================================================================
 
 BusError:
 		move.b	#2,($FFFFFC44).w
@@ -1090,9 +1100,15 @@ SoundDriverLoad:			; XREF: GameClrRAM; TitleScreen
 		nop	
 		move.w	#$100,($A11100).l ; stop the Z80
 		move.w	#$100,($A11200).l ; reset the Z80
-		lea	(Kos_Z80).l,a0	; load sound driver
-		lea	($A00000).l,a1
-		jsr	KosDec		; decompress
+
+		lea	(Kos_Z80).l,a0		; load sound driver
+		lea	($A00000).l,a1		; set destination
+		move.w	#863,d5			; sound driver size is 864 bytes
+
+SDL_Loop:
+		move.b	(a0)+,(a1)+		; load next bytes
+		dbf	d5,SDL_Loop		; loop
+
 		move.w	#0,($A11200).l
 		nop	
 		nop	
@@ -4289,6 +4305,11 @@ loc_3946:
 		jsr	DeformBgLayer
 		bset	#2,($FFFFF754).w
 		jsr	MainLoadBlockLoad ; load block mappings	and pallets
+
+		move.l	#$64600002,($C00004).l
+		lea	(Nem_HSpring).l,a0
+		jsr	NemDec
+
 		jsr	LoadTilesFromStart
 		jsr	FloorLog_Unk
 		jsr	ColIndexLoad
@@ -4298,7 +4319,7 @@ loc_3946:
 	;	bmi.s	Level_ChkDebug
 	;	move.b	#$21,($FFFFD040).w ; load HUD object
 
-Level_ChkDebug:
+; Level_ChkDebug:
 		tst.b	($FFFFFFE2).w	; has debug cheat been entered?
 		beq.s	Level_ChkWater	; if not, branch
 		btst	#6,($FFFFF604).w ; is A	button pressed?
@@ -12609,12 +12630,13 @@ Obj2A_Main:				; XREF: Obj2A_Index
 Obj2A_OpenShut:				; XREF: Obj2A_Index
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1 (overworld)?
 		bne.s	Obj2A_NotSYZ1		; if not, branch
+	if DoorsAlwaysOpen=0
 		move.b	($FFFFFF8B).w,d0	; get ammount of beat levels
-		move.w	#$0809,$02(a0)				; MJ: Use red light art
+		move.w	#$0809,2(a0)		; use red light art
 		cmp.b	$28(a0),d0		; is subtype greater than ammount of beat levels?
 		blt.s	Obj2A_Animate		; if yes, don't allow going through it
-		move.w	#$4801,$02(a0)				; MJ: Use green light art
-		bra.s	Obj2A_Open		; otherwise, open door
+	endif
+		move.w	#$4801,2(a0)		; use green light art
 
 Obj2A_NotSYZ1:
 		move.w	#$40,d1		; set minimum distance between door and Sonic
@@ -12626,7 +12648,7 @@ Obj2A_NotSYZ1:
 		sub.w	d1,d0
 		sub.w	d1,d0
 		cmp.w	8(a0),d0
-		bcc.s	Obj2A_Animate
+		bcc.s	Obj2A_Open
 		add.w	d1,d0
 		cmp.w	8(a0),d0
 		bcc.s	loc_899A
@@ -15259,7 +15281,11 @@ Obj4B_Index:	dc.w Obj4B_Main-Obj4B_Index
 ; ===========================================================================
 
 Obj4B_Main:				; XREF: Obj4B_Index
-		jsr	SignpostArtLoad
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
+		bne.s	Obj4B_Main_Cont		; if not, branch
+		move.b	#60,($FFFFFFBA).w
+
+Obj4B_Main_Cont:
 		move.l	#Map_obj4B,4(a0)
 		move.w	#$2400,2(a0)
 		ori.b	#4,1(a0)
@@ -15305,6 +15331,12 @@ Obj4B_Animate:				; XREF: Obj4B_Index
 ; ===========================================================================
 
 Obj4B_Collect:				; XREF: Obj4B_Index
+		move.l	a0,-(sp)
+		move.l	#$4C400002,($C00004).l
+		lea	(Nem_BigFlash).l,a0
+		jsr	NemDec
+		move.l	(sp)+,a0
+
 		cmpi.w	#$000,($FFFFFE10).w
 		bne.s	Obj4B_NotGHZ1
 		subq.b	#2,$24(a0)
@@ -15355,6 +15387,42 @@ Obj4B_PlaySnd:
 ; ===========================================================================
 
 Obj4B_Delete:				; XREF: Obj4B_Index
+		bsr.w	Obj4B_Animate		; still animate ring
+
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
+		bne.s	Obj4B_NotSYZ1		; if not, branch
+		subq.b	#1,($FFFFFFBA).w
+		bpl.w	Obj4B_Return
+		tst.b	$28(a0)			; is subtype = 0?
+		beq.w	Obj4B_SetSS		; if yes, branch
+		cmpi.b	#1,$28(a0)		; if subtype = 1?
+		bne.s	Obj4B_ChkIf28Is2	; if not, branch
+
+		move.b	#$C,($FFFFF600).w	; set screen mode to level ($C)
+		move.w	#1,($FFFFFE02).w	; restart level
+		move.b	#1,($FFFFFFDC).w	; make sure music will be played
+		move.w	#$000,($FFFFFE10).w	; set level to GHZ1
+		cmpi.w	#$3B0,($FFFFD008).w	; is Sonic past $300?
+		blt.s	Obj4B_ChkIf28Is2	; if not, branch
+		move.w	#$002,($FFFFFE10).w	; set level to GHZ3
+		cmpi.w	#$7B0,($FFFFD008).w	; is Sonic past $500?
+		blt.s	Obj4B_ChkIf28Is2	; if not, branch
+		move.w	#$200,($FFFFFE10).w	; set level to MZ1
+		cmpi.w	#$9B0,($FFFFD008).w	; is Sonic past $500?
+		blt.s	Obj4B_ChkIf28Is2	; if not, branch
+		move.w	#$101,($FFFFFE10).w	; set level to LZ2
+		cmpi.w	#$BB0,($FFFFD008).w	; is Sonic past $500?
+		blt.s	Obj4B_ChkIf28Is2	; if not, branch
+		move.w	#$502,($FFFFFE10).w	; set level to FZ
+
+Obj4B_ChkIf28Is2:
+		cmpi.b	#2,$28(a0)		; is subtype = 2?
+		bne.s	Obj4B_Return		; if not, branch
+		move.b	#$24,($FFFFF600).w
+		move.b	#1,($FFFFFF9E).w
+		rts
+
+Obj4B_NotSYZ1:
 		cmpi.w	#$001,($FFFFFE10).w
 		beq.s	Obj4B_GHZ2
 		cmpi.w	#$000,($FFFFFE10).w
@@ -15427,9 +15495,14 @@ Obj7C_ChkDel:				; XREF: Obj7C_Index
 
 
 Obj7C_Collect:				; XREF: Obj7C_ChkDel
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
+		beq.s	Obj7C_NotSYZ1		; if not, branch
+
 		subq.b	#1,$1E(a0)
 		bpl.s	locret_9F76
 		move.b	#1,$1E(a0)
+
+Obj7C_NotSYZ1:
 		addq.b	#1,$1A(a0)
 		cmpi.b	#8,$1A(a0)	; has animation	finished?
 		bcc.s	Obj7C_End	; if yes, branch
@@ -15437,6 +15510,8 @@ Obj7C_Collect:				; XREF: Obj7C_ChkDel
 		bne.s	locret_9F76	; if not, branch
 		movea.l	$3C(a0),a1
 		move.b	#6,$24(a1)	; delete giant ring object (Obj4B)
+
+		move.w	#0,($FFFFD000).w ; remove Sonic	object
 		move.b	#$1C,($FFFFD01C).w ; make Sonic	invisible
 		move.b	#1,($FFFFF7CD).w ; stop	Sonic getting bonuses
 		clr.b	($FFFFFE2D).w	; remove invincibility
@@ -15449,7 +15524,6 @@ locret_9F76:
 
 Obj7C_End:				; XREF: Obj7C_Collect
 		addq.b	#2,$24(a0)
-		move.w	#0,($FFFFD000).w ; remove Sonic	object
 		addq.l	#4,sp
 		rts	
 ; End of function Obj7C_Collect
@@ -18624,21 +18698,22 @@ Obj34_ItemData:
 ; 4 bytes per item (YYYY XXXX)
 ; 4 items per level (GREEN HILL, ZONE, ACT X, oval)
 ; ---------------------------------------------------------------------------
-Obj34_ConData:	dc.w 0, $120, $FEFC, 0, 0, 0, $214, $154 ; GHZ1
-		dc.w 0,	$120, $FEFC, $13C, $414, $154, $214, $154 ; LZ
-		dc.w 0,	$120, $FEEC, $13C, $414, $154, $214, $154 ; MZ
-		dc.w 0,	$120, $FEFC, $13C, $414, $154, $214, $154 ; SLZ
-		dc.w 0,	$120, $FFFC, $13C, $414, $154, $214, $154 ; SYZ
-		dc.w 0,	$120, $FFF4, 0, 0, 0, 0, 0 ; SBZ
-	;	dc.w 0,	$120, $FF04, $144, $41C, $15C, $21C, $15C ; SBZ
-	;	dc.w 0,	$120, $FEF4, 0, $3EC, $3EC, 0, 0 ; FZ
-		dc.w 0,	$130, $FFFC, $13C, $414, $154, $214, $154 ; FZ
-		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 | (We need it that much times
-		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 | because he's pointing to number 12
-		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 | and I don't know how to change the
-		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 | pointers.)
-		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2
-		dc.w 0, $120, $FEFC, $13C, 0, 0, $214, $154 ; GHZ2 (<-- The one we are using)
+Obj34_ConData:	dc.w 0,$120, $FEFC,0, 0,0, $214,$154 ; GHZ1
+		dc.w 0,$120, $FEFC,$13C, $414,$154, $214,$154 ; LZ
+		dc.w 0,$120, $FEEC,$13C, $414,$154, $214,$154 ; MZ
+		dc.w 0,$120, $FEFC,$13C, $414,$154, $214,$154 ; SLZ
+		dc.w 0,$120, $FFFC,$13C, 0,0, $214,$154 ; SYZ
+	;	dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; SYZ
+		dc.w 0,$120, $FFF4,0, 0,0, 0,0 ; SBZ
+	;	dc.w 0,$120, $FF04,$144, $41C,$15C, $21C,$15C ; SBZ
+	;	dc.w 0,$120, $FEF4,0, $3EC,$3EC, 0,0 ; FZ
+		dc.w 0,$130, $FFFC,$13C, $414,$154, $214,$154 ; FZ
+		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2 | (We need it that much times
+		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2 | because he's pointing to number 12
+		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2 | and I don't know how to change the
+		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2 | pointers.)
+		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2
+		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2 (<-- The one we are using)
 		even
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -28160,33 +28235,6 @@ loc_12CB6:
 ; ---------------------------------------------------------------------------
 
 Sonic_Display:				; XREF: loc_12C7E
-		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1 (overworld)?
-		bne.s	S_D_NotSYZ1		; if not, branch
-		cmpi.w	#$450,$C(a0)		; is Sonic's position at or over $450 on Y-axis?
-		blt.s	S_D_NotSYZ1		; if not, branch
-		move.b	#$C,($FFFFF600).w	; set screen mode to level ($C)
-		move.w	#1,($FFFFFE02).w	; restart level
-		move.b	#1,($FFFFFFDC).w	; make sure music will be played
-
-		move.w	#$000,($FFFFFE10).w	; set level to GHZ1
-		cmpi.w	#$3B0,$8(a0)		; is Sonic past $300?
-		blt.s	S_D_OverReturn		; if not, branch
-		move.w	#$002,($FFFFFE10).w	; set level to GHZ3
-		cmpi.w	#$7B0,$8(a0)		; is Sonic past $500?
-		blt.s	S_D_OverReturn		; if not, branch
-		move.w	#$200,($FFFFFE10).w	; set level to MZ1
-		cmpi.w	#$9B0,$8(a0)		; is Sonic past $500?
-		blt.s	S_D_OverReturn		; if not, branch
-		move.w	#$101,($FFFFFE10).w	; set level to LZ2
-		cmpi.w	#$BB0,$8(a0)		; is Sonic past $500?
-		blt.s	S_D_OverReturn		; if not, branch
-		move.w	#$502,($FFFFFE10).w	; set level to FZ
-
-S_D_OverReturn:
-		rts				; return
-; ===========================================================================
-
-S_D_NotSYZ1:
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		bne.s	S_D_NotMZ1		; if not, branch
 	;	tst.b	($FFFFFFBE).w		; is a jumpdash being performed?
@@ -47539,10 +47587,12 @@ loc_72E64:				; XREF: loc_72A64
 		bra.w	sub_7272E
 ; ===========================================================================
 Kos_Z80:
-		incbin	sound\Driver\z80_S1HL.bin
+		include	"sound\Driver\z80_S1HL.asm"
+	;	incbin	sound\Driver\z80_S1HL.bin
+	;	even
+; ===========================================================================
 		include	"sound\Driver\s1smps2asm_inc.asm"
-
-		even
+; ===========================================================================
 Music81:	include	"sound\EK\Battletoads - Surf City.asm"
 		even
 Music82:	include "sound\DalekSam\MTZ3.asm"
