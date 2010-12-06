@@ -1,6 +1,0 @@
-- Sound Driver is now uncompressed
-- Updated Overworld:
-	- Instead of just falling down, rings are now being used.
-	- You can now go to the options menu by jumping on the spring to the left
-
-And more. And I really mean MORE.

@@ -57,7 +57,7 @@ Menu2 = 0
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened´
-DoorsAlwaysOpen = 1
+DoorsAlwaysOpen = 0
 ;==============================================
 
 ; ---------------------------------------------------------------------------
@@ -99,9 +99,9 @@ RomEndLoc:	dc.l EndOfRom-1	; ROM end
 RamStartLoc:	dc.l $FF0000	; RAM start
 RamEndLoc:	dc.l $FFFFFF	; RAM end
 
-SRAMSupport:	dc.l $20202020	; Change to $5241E020 to create	SRAM
-		dc.l $20202020	; SRAM start
-		dc.l $20202020	; SRAM end
+SRAMSupport:	dc.l $5241F820		; change to $5241F820 to create SRAM
+		dc.l $200000		; SRAM start
+		dc.l $2001FF		; SRAM end
 
 Notes:		dc.b '                                                    '	; Notes
 
@@ -220,9 +220,6 @@ SetupValues:	dc.w $8000		; XREF: PortA_Ok
 ; ===========================================================================
 
 GameProgram:
-
-
-GameInit:
 		lea	($FF0000).l,a6
 		moveq	#0,d7
 		move.w	#$3F7F,d6
@@ -234,6 +231,21 @@ GameClrRAM:
 		jsr	SoundDriverLoad
 		jsr	JoypadInit
 		move.b	#0,($FFFFF600).w ; set Game Mode to Sega Screen
+
+		moveq	#0,d0			; clear d0
+		move.b	#1,($A130F1).l		; enable SRAM
+		lea	($200000).l,a1		; base of SRAM
+		move.b	$3(a1),($FFFFFFBC).w
+		move.b	$5(a1),($FFFFFF92).w
+		move.b	$7(a1),($FFFFFFFB).w
+		move.b	$9(a1),($FFFFFF93).w
+		move.b	$B(a1),($FFFFFF94).w
+		movep.w	$D(a1),d0
+		move.w	d0,($FFFFFE20).w
+		movep.l	$11(a1),d0
+		move.l	d0,($FFFFFE26).w
+		move.b	$19(a1),($FFFFFF8B).w	; otherwise update check value
+		move.b	#0,($A130F1).l		; disable SRAM
 
 MainGameLoop:
 		moveq	#0,d0
@@ -3677,8 +3689,8 @@ Title_ChkLevSel:
 ; ===========================================================================
 
 Title_LoadOptions:
-		move.b	#$24,($FFFFF600).w	; set game mode to options screen
-		rts				; return
+		move.b	#$C,($FFFFF600).w	; set screen mode to level ($C)
+		jmp	ODIGHZSplash		; jump to One Day in Green Hill Zone screen
 ; ===========================================================================
 
 Title_ChkLevSel_Rest:
@@ -3848,7 +3860,7 @@ LevSel_Level_SS:			; XREF: LevelSelect
 		clr.w	($FFFFFE10).w	; clear	level
 		move.b	#3,($FFFFFE12).w ; set lives to	3
 		moveq	#0,d0
-		move.w	d0,($FFFFFE20).w ; clear rings
+	;	move.w	d0,($FFFFFE20).w ; clear rings
 		move.l	d0,($FFFFFE22).w ; clear time
 		move.l	d0,($FFFFFE26).w ; clear score
 		rts	
@@ -3862,7 +3874,7 @@ PlayLevelX:				; XREF: ROM:00003246j ...
 		move.b	#$C,($FFFFF600).w ; set	screen mode to $0C (level)
 		move.b	#3,($FFFFFE12).w ; set lives to	3
 		moveq	#0,d0
-		move.w	d0,($FFFFFE20).w ; clear rings
+	;	move.w	d0,($FFFFFE20).w ; clear rings
 		move.l	d0,($FFFFFE22).w ; clear time
 		move.l	d0,($FFFFFE26).w ; clear score
 		move.b	d0,($FFFFFE16).w ; clear special stage number
@@ -3943,7 +3955,7 @@ loc_3422:
 Demo_LevelX:
 		move.b	#3,($FFFFFE12).w ; set lives to	3
 		moveq	#0,d0
-		move.w	d0,($FFFFFE20).w ; clear rings
+	;	move.w	d0,($FFFFFE20).w ; clear rings
 		move.l	d0,($FFFFFE22).w ; clear time
 		move.l	d0,($FFFFFE26).w ; clear score
 		rts	
@@ -4158,7 +4170,7 @@ Level:					; XREF: GameModeArray
 		jsr	ClearPLC
 		jsr	Pal_FadeFrom	
 		tst.w	($FFFFFFF0).w
-		bmi.s	Level_ClrRam
+		bmi.w	Level_ClrRam
 		move	#$2700,sr
 		move.l	#$6B800002,($C00004).l		; changed from $70000003
 		lea	(Nem_TitleCard).l,a0 ; load title card patterns
@@ -4175,6 +4187,18 @@ Level:					; XREF: GameModeArray
 		jsr	LoadPLC		; load level patterns
 
 loc_37FC:
+		moveq	#0,d0			; clear d0
+		move.b	#1,($A130F1).l		; enable SRAM
+		lea	($200000).l,a1		; base of SRAM
+		move.b	#$FF,$1(a1)		; make sure SRAM will be created
+		move.w	($FFFFFE20).w,d0	; move rings to d0
+		movep.w	d0,$D(a1)		; backup rings
+		move.l	($FFFFFE26).w,d0	; move rings to d0
+		movep.l	d0,$11(a1)		; backup rings
+		move.b	($FFFFFF8B).w,$19(a1)	; otherwise update check value
+		move.b	#$FF,$1B(a1)		; make sure SRAM will be created at the correct size
+		move.b	#0,($A130F1).l		; disable SRAM
+
 		moveq	#1,d0
 		jsr	LoadPLC		; load standard	patterns
 		cmpi.w	#$001,($FFFFFE10).w	; is current level GHZ 2 (intro level)?
@@ -4992,6 +5016,11 @@ CIML_NotLZ2:
 		moveq	#6,d5			; tell the game, the current level is one of the main one
 
 CIML_NotFZ:
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
+		bne.s	CIML_NotSYZ1		; if not, branch
+		moveq	#7,d5			; tell the game, the current level is one of the main one
+
+CIML_NotSYZ1:
 		rts
 ; End of function PlayLevelMusic
 ; ===========================================================================
@@ -5542,13 +5571,6 @@ SS_ClrNemRam:
 		clr.b	($FFFFF64E).w
 		clr.w	($FFFFFE02).w
 
-
-		jsr	CheckIfMainLevel
-		tst.b	d5
-		bne.s	@cont
-		jsr	NextLevelX
-
-@cont:
 		moveq	#$A,d0
 		jsr	PalLoad1	; load special stage pallet
 		jsr	SS_Load
@@ -5612,20 +5634,13 @@ SS_NoPauseGame:
 		jsr	BuildSprites
 		jsr	SS_ShowLayout
 		jsr	SS_BGAnimate
-	;	tst.w	($FFFFFFF0).w	; is demo mode on?
-	;	beq.s	SS_ChkEnd	; if not, branch
-	;	tst.w	($FFFFF614).w	; is there time	left on	the demo?
-	;	beq.w	SS_ToSegaScreen	; if not, branch
 
 SS_ChkEnd:
 		cmpi.b	#$10,($FFFFF600).w ; is	game mode $10 (special stage)?
 		beq.w	SS_MainLoop	; if yes, branch
 
-		cmpi.b	#3,($FFFFFF8B).w	; has special stage already been played?
-		bge.s	SS_NoNewLevel		; if yes, branch
-		addq.b	#1,($FFFFFF8B).w	; otherwise you beat a new level and can go to the next one
+		bset	#2,($FFFFFF8B).w	; open third door in the level
 
-SS_NoNewLevel:
 		move.w	#60,($FFFFF614).w ; set	delay time to 1	second
 		move.w	#$3F,($FFFFF626).w
 		clr.w	($FFFFF794).w
@@ -5661,6 +5676,9 @@ SS_EndClrObjRamX:
 		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
 		move.b	#$C,($FFFFF600).w	; set to level
 		move.w	#1,($FFFFFE02).w	; restart level
+		move.w	($FFFFFF70).w,d0	; restore the rings you had before entering special stage to d0
+		add.w	($FFFFFE20).w,d0	; add your new collected rings to it
+		move.w	d0,($FFFFFE20).w	; move result to rings counter
 
 		clr.b	($FFFFFFE7).w	; make sonic mortal
 		clr.b	($FFFFFFE1).w	; make sonic not being on the foreground
@@ -5679,82 +5697,15 @@ SS_EndClrObjRamX:
 		jsr	Sonic_ResetOnFloor
 
 		move.b	#1,($FFFFFFDE).w
-	;	clr.b	($FFFFFFDF).w
 		clr.b	($FFFFFFBB).w
-	;	jsr	PauseGame
 		move.b	#$C,($FFFFF62A).w
 		jsr	DelayProgram
 		jsr	ObjectsLoad
 		jsr	BuildSprites
 		jsr	RunPLC_RAM
-	;	tst.w	($FFFFFE02).w
-	;	beq.s	SS_NormalExit
-	;	tst.l	($FFFFF680).w
-	;	bne.s	SS_NormalExit
-	;	move.w	#$CA,d0
-	;	jsr	PlaySound_Special ; play special stage exit sound
-	;	jsr	PlayLevelMusic	; play level music
 		jsr	Pal_MakeFlash
 		rts
-
-		move	#$2700,sr
-		lea	($C00004).l,a6
-		move.w	#$8230,(a6)
-		move.w	#$8407,(a6)
-		move.w	#$9001,(a6)
-		jsr	ClearScreen
-		move.l	#$70000002,($C00004).l
-		lea	(Nem_TitleCard).l,a0 ; load title card patterns
-		jsr	NemDec
-		jsr	Hud_Base
-		clr.w	($FFFFC800).w
-		move.l	#$FFFFC800,($FFFFC8FC).w
-		move	#$2300,sr
-		moveq	#$11,d0
-		jsr	PalLoad2	; load results screen pallet
-		moveq	#0,d0
-		jsr	LoadPLC2
-		moveq	#$1B,d0
-		jsr	LoadPLC		; load results screen patterns
-		move.b	#1,($FFFFFE1F).w ; update score	counter
-		move.b	#1,($FFFFF7D6).w ; update ring bonus counter
-		move.w	($FFFFFE20).w,d0
-		mulu.w	#10,d0		; multiply rings by 10
-		move.w	d0,($FFFFF7D4).w ; set rings bonus
-		move.w	#$E0,d0
-		jsr	(PlaySound_Special).l ;	play end-of-level music
-		lea	($FFFFD000).w,a1
-		moveq	#0,d0
-		move.w	#$7FF,d1
-
-SS_EndClrObjRam:
-		move.l	d0,(a1)+
-		dbf	d1,SS_EndClrObjRam ; clear object RAM
-
-	;	move.b	#$7E,($FFFFD5C0).w ; load results screen object
-
-SS_NormalExit:
-		move.b	#1,($FFFFFFDE).w
-	;	clr.b	($FFFFFFDF).w
-	;	jsr	PauseGame
-		move.b	#$C,($FFFFF62A).w
-		jsr	DelayProgram
-		jsr	ObjectsLoad
-		jsr	BuildSprites
-		jsr	RunPLC_RAM
-		tst.w	($FFFFFE02).w
-		beq.s	SS_NormalExit
-		tst.l	($FFFFF680).w
-		bne.s	SS_NormalExit
-	;	move.w	#$CA,d0
-	;	jsr	PlaySound_Special ; play special stage exit sound
-		jsr	Pal_MakeFlash
-		rts	
 ; ===========================================================================
-
-SS_ToSegaScreen:
-	;	move.b	#0,($FFFFF600).w ; set screen mode to 00 (Sega screen)
-		rts
 
 ; ---------------------------------------------------------------------------
 ; Special stage	background loading subroutine
@@ -6181,7 +6132,7 @@ Obj80_Main:				; XREF: Obj80_Index
 		move.b	#$3C,$19(a0)
 		move.w	#$120,8(a0)
 		move.w	#$C0,$A(a0)
-		move.w	#0,($FFFFFE20).w ; clear rings
+	;	move.w	#0,($FFFFFE20).w ; clear rings
 
 Obj80_Display:				; XREF: Obj80_Index
 		jmp	DisplaySprite
@@ -6452,7 +6403,7 @@ End_LoadSonic:
 		jsr	ObjectsLoad
 		jsr	BuildSprites
 		moveq	#0,d0
-		move.w	d0,($FFFFFE20).w
+	;	move.w	d0,($FFFFFE20).w
 		move.l	d0,($FFFFFE22).w
 		move.b	d0,($FFFFFE1B).w
 		move.b	d0,($FFFFFFFC).w
@@ -6467,6 +6418,9 @@ End_LoadSonic:
 		move.b	#1,($FFFFFE1F).w
 		move.b	#1,($FFFFFE1D).w
 		move.b	#0,($FFFFFE1E).w
+
+		bset	#5,($FFFFFF8B).w	; unlock sixths and last door
+
 		move.w	#1800,($FFFFF614).w
 		move.b	#$18,($FFFFF62A).w
 		jsr	DelayProgram
@@ -6939,7 +6893,7 @@ EndingDemoLoad:				; XREF: Credits
 		move.b	#8,($FFFFF600).w ; set game mode to 08 (demo)
 		move.b	#3,($FFFFFE12).w ; set lives to	3
 		moveq	#0,d0
-		move.w	d0,($FFFFFE20).w ; clear rings
+	;	move.w	d0,($FFFFFE20).w ; clear rings
 		move.l	d0,($FFFFFE22).w ; clear time
 		move.l	d0,($FFFFFE26).w ; clear score
 		move.b	d0,($FFFFFE30).w ; clear lamppost counter
@@ -12630,12 +12584,14 @@ Obj2A_Main:				; XREF: Obj2A_Index
 Obj2A_OpenShut:				; XREF: Obj2A_Index
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1 (overworld)?
 		bne.s	Obj2A_NotSYZ1		; if not, branch
+
 	if DoorsAlwaysOpen=0
-		move.b	($FFFFFF8B).w,d0	; get ammount of beat levels
 		move.w	#$0809,2(a0)		; use red light art
-		cmp.b	$28(a0),d0		; is subtype greater than ammount of beat levels?
-		blt.s	Obj2A_Animate		; if yes, don't allow going through it
+		move.b	($FFFFFF8B).w,d0	; get ammount of beat levels
+		and.b	$28(a0),d0
+		beq.s	Obj2A_Animate
 	endif
+
 		move.w	#$4801,2(a0)		; use green light art
 
 Obj2A_NotSYZ1:
@@ -12647,8 +12603,18 @@ Obj2A_NotSYZ1:
 		bcs.s	Obj2A_Animate
 		sub.w	d1,d0
 		sub.w	d1,d0
+
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1 (overworld)?
+		bne.s	Obj2A_NotSYZ1x		; if not, branch
 		cmp.w	8(a0),d0
 		bcc.s	Obj2A_Open
+		bra.s	Obj2A_SYZ1
+
+Obj2A_NotSYZ1x:
+		cmp.w	8(a0),d0
+		bcc.s	Obj2A_Animate
+
+Obj2A_SYZ1:
 		add.w	d1,d0
 		cmp.w	8(a0),d0
 		bcc.s	loc_899A
@@ -15314,8 +15280,6 @@ Obj4B_Okay:				; XREF: Obj4B_Main
 		move.b	#2,$18(a0)
 		move.b	#$52,$20(a0)
 		move.w	#$C40,($FFFFF7BE).w
-		
-		move.w	($FFFFFE20).w,($FFFFFF70).w	; copy your rings to $FF70
 
 Obj4B_Animate:				; XREF: Obj4B_Index
 		move.b	($FFFFFEC3).w,$1A(a0)
@@ -15333,8 +15297,12 @@ Obj4B_Animate:				; XREF: Obj4B_Index
 Obj4B_Collect:				; XREF: Obj4B_Index
 		move.l	a0,-(sp)
 		move.l	#$4C400002,($C00004).l
-		lea	(Nem_BigFlash).l,a0
-		jsr	NemDec
+		lea	(Art_RingFlash).l,a0
+		move.w	#2687,d1
+
+Obj4B_ArtLoadLoop:
+		move.w	(a0)+,(a6)
+		dbf	d1,Obj4B_ArtLoadLoop
 		move.l	(sp)+,a0
 
 		cmpi.w	#$000,($FFFFFE10).w
@@ -15365,7 +15333,7 @@ Obj4B_NoCapsule:
 		move.b	#60,($FFFFFFBA).w
 		clr.w	($FFFFF73A).w
 		jsr	WhiteFlash4		; make white flash
-		move.w	#0,($FFFFFE20).w
+	;	move.w	#0,($FFFFFE20).w
 
 Obj4B_NotGHZ2:
 		clr.b	($FFFFFFE7).w
@@ -15390,7 +15358,7 @@ Obj4B_Delete:				; XREF: Obj4B_Index
 		bsr.w	Obj4B_Animate		; still animate ring
 
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
-		bne.s	Obj4B_NotSYZ1		; if not, branch
+		bne.w	Obj4B_NotSYZ1		; if not, branch
 		subq.b	#1,($FFFFFFBA).w
 		bpl.w	Obj4B_Return
 		tst.b	$28(a0)			; is subtype = 0?
@@ -15417,9 +15385,15 @@ Obj4B_Delete:				; XREF: Obj4B_Index
 
 Obj4B_ChkIf28Is2:
 		cmpi.b	#2,$28(a0)		; is subtype = 2?
-		bne.s	Obj4B_Return		; if not, branch
-		move.b	#$24,($FFFFF600).w
+		bne.s	Obj4B_ChkIf28Is3	; if not, branch
+		move.b	#$24,($FFFFF600).w	; load options menu
 		move.b	#1,($FFFFFF9E).w
+		rts
+
+Obj4B_ChkIf28Is3:
+		cmpi.b	#3,$28(a0)		; is subtype = 3?
+		bne.s	Obj4B_Return		; if not, branch
+		move.b	#$18,($FFFFF600).w	; load ending sequence
 		rts
 
 Obj4B_NotSYZ1:
@@ -15449,6 +15423,7 @@ Obj4B_GHZ1:
 		rts
 
 Obj4B_SetSS:
+		move.w	($FFFFFE20).w,($FFFFFF70).w	; copy your rings to $FF70
 		move.b	#$10,($FFFFF600).w ; set screen mode to $10 (special stage)
 		bra.w	DeleteObject
 
@@ -18510,9 +18485,7 @@ Obj34_ActNumber:
 		bne.s	Obj34_MakeSprite	; if not, branch
 		jsr	CheckIfMainLevel	; check for main level and get ID
 		tst.b	d5			; check ID
-		beq.s	Obj34_NoMainLevel	; if result is 0, branchh (we are not in a main level)
-	;	cmpi.b	#6,d5			; is level FZ?
-	;	beq.s	Obj34_NoMainLevel	; if yes, branch
+		beq.s	Obj34_NoMainLevel	; if result is 0, branch (we are not in a main level)
 		add.b	d5,d0			; add ID to frame ID
 		subq.b	#2,d0			; substract 2 from frame ID
 		bra.s	Obj34_MakeSprite	; skip
@@ -18698,22 +18671,19 @@ Obj34_ItemData:
 ; 4 bytes per item (YYYY XXXX)
 ; 4 items per level (GREEN HILL, ZONE, ACT X, oval)
 ; ---------------------------------------------------------------------------
-Obj34_ConData:	dc.w 0,$120, $FEFC,0, 0,0, $214,$154 ; GHZ1
-		dc.w 0,$120, $FEFC,$13C, $414,$154, $214,$154 ; LZ
-		dc.w 0,$120, $FEEC,$13C, $414,$154, $214,$154 ; MZ
-		dc.w 0,$120, $FEFC,$13C, $414,$154, $214,$154 ; SLZ
-		dc.w 0,$120, $FFFC,$13C, 0,0, $214,$154 ; SYZ
-	;	dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; SYZ
-		dc.w 0,$120, $FFF4,0, 0,0, 0,0 ; SBZ
-	;	dc.w 0,$120, $FF04,$144, $41C,$15C, $21C,$15C ; SBZ
-	;	dc.w 0,$120, $FEF4,0, $3EC,$3EC, 0,0 ; FZ
+Obj34_ConData:	dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; LZ
+		dc.w 0,$120, $FFEC,$13C, $414,$154, $214,$154 ; MZ
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; SLZ
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; SLZ
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; SBZ
 		dc.w 0,$130, $FFFC,$13C, $414,$154, $214,$154 ; FZ
-		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2 | (We need it that much times
-		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2 | because he's pointing to number 12
-		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2 | and I don't know how to change the
-		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2 | pointers.)
-		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2
-		dc.w 0,$120, $FEFC,$13C, 0,0, $214,$154 ; GHZ2 (<-- The one we are using)
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
 		even
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -18797,352 +18767,13 @@ Obj39_ResetLvl:				; XREF: Obj39_ChgMode
 Obj39_Display:				; XREF: Obj39_ChgMode
 		bra.w	DisplaySprite
 ; ---------------------------------------------------------------------------
-; Object 3A - "SONIC GOT THROUGH" title	card
+; Object 3A - Blank
 ; ---------------------------------------------------------------------------
 
 Obj3A:					; XREF: Obj_Index
-		moveq	#0,d0
-		move.b	$24(a0),d0
-		move.w	Obj3A_Index(pc,d0.w),d1
-		jmp	Obj3A_Index(pc,d1.w)
-; ===========================================================================
-Obj3A_Index:	dc.w Obj3A_ChkPLC-Obj3A_Index
-		dc.w Obj3A_ChkPos-Obj3A_Index
-		dc.w Obj3A_Wait-Obj3A_Index
-		dc.w Obj3A_TimeBonus-Obj3A_Index
-		dc.w Obj3A_Wait-Obj3A_Index
-		dc.w Obj3A_NextLevelX-Obj3A_Index
-		dc.w Obj3A_Wait-Obj3A_Index
-		dc.w Obj3A_ChkPos2-Obj3A_Index
-		dc.w loc_C766-Obj3A_Index
-; ===========================================================================
-
-Obj3A_ChkPLC:				; XREF: Obj3A_Index
-		tst.l	($FFFFF680).w	; are the pattern load cues empty?
-		beq.s	Obj3A_Main	; if yes, branch
-		rts	
-; ===========================================================================
-
-Obj3A_Main:
-		cmpi.w	#$501,($FFFFFE10).w ; is level SBZ2?
-		beq.s	Obj3A_Main_cont	; if yes, branch
-		jmp	Obj3A_NextLevelX ; skip all this shit!!!
-
-Obj3A_Main_cont:
-		movea.l	a0,a1
-		lea	(Obj3A_Config).l,a2
-		moveq	#6,d1
-
-Obj3A_Loop:
-		move.b	#$3A,0(a1)
-		move.w	(a2),8(a1)	; load start x-position
-		move.w	(a2)+,$32(a1)	; load finish x-position (same as start)
-		move.w	(a2)+,$30(a1)	; load main x-position
-		move.w	(a2)+,$A(a1)	; load y-position
-		move.b	(a2)+,$24(a1)
-		move.b	(a2)+,d0
-		cmpi.b	#6,d0
-		bne.s	loc_C5CA
-		add.b	($FFFFFE11).w,d0 ; add act number to frame number
-
-loc_C5CA:
-		move.b	d0,$1A(a1)
-		move.l	#Map_obj3A,4(a1)
-		move.w	#$8580,2(a1)
-		move.b	#0,1(a1)
-		lea	$40(a1),a1
-		dbf	d1,Obj3A_Loop	; repeat 6 times
-
-Obj3A_ChkPos:				; XREF: Obj3A_Index
-		moveq	#$10,d1		; set horizontal speed
-		move.w	$30(a0),d0
-		cmp.w	8(a0),d0	; has item reached its target position?
-		beq.s	loc_C61A	; if yes, branch
-		bge.s	Obj3A_Move
-		neg.w	d1
-
-Obj3A_Move:
-		add.w	d1,8(a0)	; change item's position
-
-loc_C5FE:				; XREF: loc_C61A
-		move.w	8(a0),d0
-		bmi.s	locret_C60E
-		cmpi.w	#$200,d0	; has item moved beyond	$200 on	x-axis?
-		bcc.s	locret_C60E	; if yes, branch
-		bra.w	DisplaySprite
-; ===========================================================================
-
-locret_C60E:
-		rts	
-; ===========================================================================
-
-loc_C610:				; XREF: loc_C61A
-		move.b	#$E,$24(a0)
-		bra.w	Obj3A_ChkPos2
-; ===========================================================================
-
-loc_C61A:				; XREF: Obj3A_ChkPos
-		cmpi.b	#$E,($FFFFD724).w
-		beq.s	loc_C610
-		cmpi.b	#4,$1A(a0)
-		bne.s	loc_C5FE
-		addq.b	#2,$24(a0)
-		move.w	#180,$1E(a0)	; set time delay to 3 seconds
-
-Obj3A_Wait:				; XREF: Obj3A_Index
-		subq.w	#1,$1E(a0)	; subtract 1 from time delay
-		bne.s	Obj3A_Display
-		addq.b	#2,$24(a0)
-
-Obj3A_Display:
-		bra.w	DisplaySprite
-; ===========================================================================
-
-Obj3A_TimeBonus:			; XREF: Obj3A_Index
-		jsr	DisplaySprite
-		move.b	#1,($FFFFF7D6).w ; set time/ring bonus update flag
-		moveq	#0,d0
-		tst.w	($FFFFF7D2).w	; is time bonus	= zero?
-		beq.s	Obj3A_RingBonus	; if yes, branch
-		addi.w	#10,d0		; add 10 to score
-		subi.w	#10,($FFFFF7D2).w ; subtract 10	from time bonus
-
-Obj3A_RingBonus:
-		tst.w	($FFFFF7D4).w	; is ring bonus	= zero?
-		beq.s	Obj3A_ChkBonus	; if yes, branch
-		addi.w	#10,d0		; add 10 to score
-		subi.w	#10,($FFFFF7D4).w ; subtract 10	from ring bonus
-
-Obj3A_ChkBonus:
-		tst.w	d0		; is there any bonus?
-		bne.s	Obj3A_AddBonus	; if yes, branch
-		move.w	#$C5,d0
-		jsr	(PlaySound_Special).l ;	play "ker-ching" sound
-		move.w	#$800,($FFFFF602).w ; make Sonic run to	the right
-		addq.b	#2,$24(a0)
-		cmpi.w	#$501,($FFFFFE10).w
-		bne.s	Obj3A_SetDelay
-		cmpi.w	#$000,($FFFFFE10).w
-		bne.s	Obj3A_SetDelay
-		addq.b	#4,$24(a0)
-
-Obj3A_SetDelay:
-		move.w	#180,$1E(a0)	; set time delay to 3 seconds
-
-locret_C692:
-		rts	
-; ===========================================================================
-
-Obj3A_AddBonus:				; XREF: Obj3A_ChkBonus
-		jsr	AddPoints
-		move.b	($FFFFFE0F).w,d0
-		andi.b	#3,d0
-		bne.s	locret_C692
-		move.w	#$CD,d0
-		jmp	(PlaySound_Special).l ;	play "blip" sound
-; ===========================================================================
-
-Obj3A_NextLevelX:			; XREF: Obj3A_Index
-		clr.b	($FFFFFFE7).w	; make sonic mortal
-		clr.b	($FFFFFFE1).w	; make sonic not being on the foreground
-		clr.b	($FFFFFFAA).w		; clear crabmeat boss flag 1
-		clr.b	($FFFFFFAB).w		; clear crabmeat boss flag 2
-		clr.b	($FFFFFFA9).w		; clear crabmeat boss flag 3
-		clr.b	($FFFFFFB3).w
-		clr.b	($FFFFFFB4).w
-		clr.b	($FFFFFFB8).w
-		clr.b	($FFFFFFB7).w
-		clr.b	($FFFFFFB9).w
-		clr.b	($FFFFFE30).w	; clear	lamppost counter
-		move.b	#0,($FFFFFFD3).w	; $FFD3
-		clr.b	($FFFFFFBB).w
-		clr.b	($FFFFFFB6).w
-		jsr	Sonic_ResetOnFloor
-		bra.s	Obj3A_SNL_Fail
-; ===========================================================================
-		bsr.w	SetNewLevel		; because I just don't fucking get the normal way
-		tst.b	$34(a0)			; has a new level been set?
-		beq.s	Obj3A_SNL_Fail		; if not, branch
-		clr.b	($FFFFFE30).w		; clear	lamppost counter
-		tst.b	($FFFFF7CD).w		; has Sonic jumped into	a giant	ring?
-		beq.s	Obj3A_NoRing		; if not, branch
-		move.b	#$10,($FFFFF600).w	; set game mode to Special Stage (10)
-		bra.s	Obj3A_Display2		; display
-; ===========================================================================
-			
-Obj3A_NoRing:
-		move.b	#$C,($FFFFF600).w	; set game mode to level (00)
-		bra.s	Obj3A_Display2		; display
-; ===========================================================================
-
-Obj3A_SNL_Fail:
-		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
-		move.b	#$C,($FFFFF600).w	; set to level
-		rts				; return
-; ===========================================================================
-
-		moveq	#0,d2
-		jsr	CheckIfMainLevel
-		tst.b	d5
-		beq.s	Obj3A_NoText		; if not, branch
-		move.b	#$20,d2		; set game mode to level (00)
-		bra.s	Obj3A_SNL_OK
-
-Obj3A_NoText:
-		bsr.s	NextLevelX
-		tst.w	d0
-		bne.s	Obj3A_ChkSS
-
-Obj3A_SNL_OK:
-		move.b	d2,($FFFFF600).w	; set game mode
-		bra.s	Obj3A_Display2
-; ===========================================================================
-
-Obj3A_ChkSS:				; XREF: Obj3A_NextLevel
-		clr.b	($FFFFFE30).w	; clear	lamppost counter
-		tst.b	($FFFFF7CD).w	; has Sonic jumped into	a giant	ring?
-		beq.s	loc_C6EA	; if not, branch
-		move.b	#$10,($FFFFF600).w ; set game mode to Special Stage (10)
-		bra.s	Obj3A_Display2
-; ===========================================================================
-
-loc_C6EA:				; XREF: Obj3A_ChkSS
-		jsr	CheckIfMainLevel
-		tst.b	d5
-		bne.s	Obj3A_SNL_OK
-		move.w	#1,($FFFFFE02).w ; restart level
-
-Obj3A_Display2:				; XREF: Obj3A_NextLevel, Obj3A_ChkSS
-		bra.w	DisplaySprite
-; ===========================================================================
-
-NextLevelX:
-		clr.b	($FFFFFFE7).w	; make sonic mortal
-		clr.b	($FFFFFFE1).w	; make sonic not being on the foreground
-		clr.b	($FFFFFFAA).w		; clear crabmeat boss flag 1
-		clr.b	($FFFFFFAB).w		; clear crabmeat boss flag 2
-		clr.b	($FFFFFFA9).w		; clear crabmeat boss flag 3
-		clr.b	($FFFFFFB3).w
-		clr.b	($FFFFFFB4).w
-		clr.b	($FFFFFFB8).w
-		clr.b	($FFFFFFB7).w
-		clr.b	($FFFFFFB9).w
-		move.b	#0,($FFFFFFD3).w	; $FFD3
-		clr.b	($FFFFFFBB).w
-		clr.b	($FFFFFFB6).w
-		clr.b	($FFFFFE30).w	; clear	lamppost counter
-	;	move.b	($FFFFFE10).w,d0	; do the original stuff...
-	;	andi.w	#7,d0
-	;	lsl.w	#3,d0
-	;	move.b	($FFFFFE11).w,d1
-	;	andi.w	#3,d1
-	;	add.w	d1,d1
-	;	add.w	d1,d0
-	;	move.w	LevelOrder(pc,d0.w),d0	; load level from level order array
-	;	move.w	d0,($FFFFFE10).w	; set level number
-		bsr.s	SetNewLevel
 		rts
 ; ===========================================================================
 
-; ---------------------------------------------------------------------------
-; Level	order array
-; ---------------------------------------------------------------------------
-LevelOrder:
-		include "misc\lvl_ord.asm"
-	;	incbin	misc\lvl_ord.bin
-	;	even
-; ===========================================================================
-
-; ---------------------------------------------------------------------------
-; Subroutine to set new level, as the default system is way too hard to
-; understand for me...
-; ---------------------------------------------------------------------------
-
-SetNewLevel:
-		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
-		bne.s	SNL_Cont1		; if not, branch
-		move.w	#$002,($FFFFFE10).w	; set level number to GHZ3
-		move.b	#1,$34(a0)		; tell the system a new level has been set
-		rts				; return
-; ===========================================================================
-
-SNL_Cont1:
-		cmpi.w	#$002,($FFFFFE10).w	; is level GHZ3?
-		bne.s	SNL_Cont2		; if not, branch
-		move.w	#$200,($FFFFFE10).w	; set level number to MZ1
-		move.b	#1,$34(a0)		; tell the system a new level has been set
-		rts				; return
-; ===========================================================================
-
-SNL_Cont2:
-		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
-		bne.s	SNL_Cont3		; if not, branch
-		move.w	#$101,($FFFFFE10).w	; set level number to LZ2
-		move.b	#1,$34(a0)		; tell the system a new level has been set
-		rts	
-; ===========================================================================
-
-SNL_Cont3:
-		cmpi.w	#$101,($FFFFFE10).w	; is level LZ2?
-		bne.s	SNL_Return		; if not, branch
-		move.w	#$502,($FFFFFE10).w	; set level number to FZ
-		move.b	#1,$34(a0)		; tell the system a new level has been set
-
-SNL_Return:
-		rts				; return
-; ===========================================================================
-
-Obj3A_ChkPos2:				; XREF: Obj3A_Index
-		moveq	#$20,d1		; set horizontal speed
-		move.w	$32(a0),d0
-		cmp.w	8(a0),d0	; has item reached its finish position?
-		beq.s	Obj3A_SBZ2	; if yes, branch
-		bge.s	Obj3A_Move2
-		neg.w	d1
-
-Obj3A_Move2:
-		add.w	d1,8(a0)	; change item's position
-		move.w	8(a0),d0
-		bmi.s	locret_C748
-		cmpi.w	#$200,d0	; has item moved beyond	$200 on	x-axis?
-		bcc.s	locret_C748	; if yes, branch
-		bra.w	DisplaySprite
-; ===========================================================================
-
-locret_C748:
-		rts	
-; ===========================================================================
-
-Obj3A_SBZ2:				; XREF: Obj3A_ChkPos2
-		cmpi.b	#4,$1A(a0)
-		bne.w	DeleteObject
-		addq.b	#2,$24(a0)
-		clr.b	($FFFFF7CC).w	; unlock controls
-		move.w	#$8D,d0
-		jmp	(PlaySound).l	; play FZ music
-; ===========================================================================
-
-loc_C766:				; XREF: Obj3A_Index
-		addq.w	#2,($FFFFF72A).w
-		cmpi.w	#$2100,($FFFFF72A).w
-		beq.w	DeleteObject
-		rts	
-; ===========================================================================
-Obj3A_Config:	dc.w 4,	$124, $BC	; x-start, x-main, y-main
-		dc.b 2,	0		; routine number, frame	number (changes)
-		dc.w $FEE0, $120, $D0
-		dc.b 2,	1
-		dc.w $40C, $14C, $D6
-		dc.b 2,	6
-		dc.w $520, $120, $EC
-		dc.b 2,	2
-		dc.w $540, $120, $FC
-		dc.b 2,	3
-		dc.w $560, $120, $10C
-		dc.b 2,	4
-		dc.w $20C, $14C, $CC
-		dc.b 2,	5
-; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 7E - special stage results screen
 ; ---------------------------------------------------------------------------
@@ -19178,8 +18809,6 @@ Obj7E_Main:
 	;	jmp	Obj7E_Exit	; skip this shit
 
 Obj7E_Main_cont:
-		move.w	($FFFFFF70).w,($FFFFFE20).w	; restore the rings you had before entering special stage
-
 		movea.l	a0,a1
 		lea	(Obj7E_Config).l,a2
 		moveq	#3,d1
@@ -22162,14 +21791,6 @@ Obj0D_Touch:				; XREF: Obj0D_Index
 		move.w	($FFFFF72A).w,($FFFFF728).w ; lock screen position
 		addq.b	#2,$24(a0)
 
-		jsr	CheckIfMainLevel	; get level ID and load it into d5
-		subq.b	#1,d5			; don't count in the intro stage
-		cmp.b	($FFFFFF8B).w,d5	; is progress ID greater than level number?
-		bmi.s	Obj0D_NoNewLevel	; if yes, you played an old level
-		beq.s	Obj0D_NoNewLevel	; if yes, you played an old level
-		addq.b	#1,($FFFFFF8B).w	; otherwise you beat a new level and can go to the next one
-
-Obj0D_NoNewLevel:
 		tst.b	($FFFFFFE7).w		; is Sonic in Inhuman Mode?
 		beq.s	locret_EBBA		; if not, branch
 		clr.b	($FFFFFFE7).w		; disabled Inhuman Mode
@@ -22259,35 +21880,28 @@ loc_EC86:
 
 
 GotThroughAct:				; XREF: Obj3E_EndAct
-		tst.b	($FFFFD5C0).w
-		bne.s	locret_ECEE
-		move.w	($FFFFF72A).w,($FFFFF728).w
-		clr.b	($FFFFFE2D).w	; disable invincibility
-		clr.b	($FFFFFE1E).w	; stop time counter
-		move.b	#$3A,($FFFFD5C0).w
-		moveq	#$10,d0
-		jsr	(LoadPLC2).l	; load title card patterns
-		move.b	#1,($FFFFF7D6).w
-		moveq	#0,d0
-		move.b	($FFFFFE23).w,d0
-		mulu.w	#60,d0		; convert minutes to seconds
-		moveq	#0,d1
-		move.b	($FFFFFE24).w,d1
-		add.w	d1,d0		; add up your time
-		divu.w	#15,d0		; divide by 15
-		moveq	#$14,d1
-		cmp.w	d1,d0		; is time 5 minutes or higher?
-		bcs.s	loc_ECD0	; if not, branch
-		move.w	d1,d0		; use minimum time bonus (0)
+		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
+		bne.s	GTA_ChkMZ1		; if not, branch
+		bset	#0,($FFFFFF8B).w	; unlock first door (second door is GHZ3)
 
-loc_ECD0:
-		add.w	d0,d0
-		move.w	TimeBonuses(pc,d0.w),($FFFFF7D2).w ; set time bonus
-		move.w	($FFFFFE20).w,d0 ; load	number of rings
-		mulu.w	#10,d0		; multiply by 10
-		move.w	d0,($FFFFF7D4).w ; set ring bonus
-		;move.w	#$8E,d0
-		;jsr	(PlaySound_Special).l ;	play "Sonic got	through" music
+GTA_ChkMZ1:
+		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
+		bne.s	GTA_ChkLZ2		; if not, branch
+		bset	#3,($FFFFFF8B).w	; unlock fourth door (third door is special stage)
+
+GTA_ChkLZ2:
+		cmpi.w	#$101,($FFFFFE10).w	; is level LZ2?
+		bne.s	GTA_ChkFZ		; if not, branch
+		bset	#4,($FFFFFF8B).w	; unlock fifths door
+
+GTA_ChkFZ:
+		cmpi.w	#$502,($FFFFFE10).w	; is level LZ2?
+		bne.s	GTA_NoDoor		; if not, branch
+		bset	#5,($FFFFFF8B).w	; unlock sixths door
+
+GTA_NoDoor:
+		bsr.s	NextLevelX		; set to SYZ1
+
 		jsr	CheckIfMainLevel
 		tst.b	d5
 		bne.s	locret_ECEE
@@ -22301,6 +21915,29 @@ loc_ECD0:
 locret_ECEE:
 		rts	
 ; End of function GotThroughAct
+
+; ===========================================================================
+NextLevelX:
+		clr.b	($FFFFFFE7).w	; make sonic mortal
+		clr.b	($FFFFFFE1).w	; make sonic not being on the foreground
+		clr.b	($FFFFFFAA).w		; clear crabmeat boss flag 1
+		clr.b	($FFFFFFAB).w		; clear crabmeat boss flag 2
+		clr.b	($FFFFFFA9).w		; clear crabmeat boss flag 3
+		clr.b	($FFFFFFB3).w
+		clr.b	($FFFFFFB4).w
+		clr.b	($FFFFFFB8).w
+		clr.b	($FFFFFFB7).w
+		clr.b	($FFFFFFB9).w
+		clr.b	($FFFFFE30).w	; clear	lamppost counter
+		move.b	#0,($FFFFFFD3).w	; $FFD3
+		clr.b	($FFFFFFBB).w
+		clr.b	($FFFFFFB6).w
+		jsr	Sonic_ResetOnFloor
+		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
+		move.b	#$C,($FFFFF600).w	; set to level
+		move.w	#1,($FFFFFE02).w	; restart level
+		rts
+; ===========================================================================
 
 ; ===========================================================================
 TimeBonuses:	dc.w 5000, 5000, 1000, 500, 400, 400, 300, 300,	200, 200
@@ -35569,7 +35206,7 @@ Obj79_LoadInfo:				; XREF: LevelSizeLoad
 		move.w	($FFFFFE34).w,($FFFFD00C).w
 		move.w	($FFFFFE36).w,($FFFFFE20).w
 		move.b	($FFFFFE54).w,($FFFFFE1B).w
-		clr.w	($FFFFFE20).w
+	;	clr.w	($FFFFFE20).w
 		clr.b	($FFFFFE1B).w
 		move.l	($FFFFFE38).w,($FFFFFE22).w
 		move.b	#59,($FFFFFE25).w
@@ -40447,14 +40084,8 @@ Obj3E_ChkOpened:
 		bset	#1,($FFFFD022).w
 
 Obj3E_DoOpen:
-		jsr	CheckIfMainLevel	; get level ID and load it into d5
-		subq.b	#1,d5			; don't count in the intro stage
-		cmp.b	($FFFFFF8B).w,d5	; is progress ID greater than level number?
-		bmi.s	Obj3E_NoNewLevel	; if yes, you played an old level
-		beq.s	Obj3E_NoNewLevel	; if yes, you played an old level
-		addq.b	#1,($FFFFFF8B).w	; otherwise you beat a new level and can go to the next one
+		bset	#1,($FFFFFF8B).w	; unlock second door
 
-Obj3E_NoNewLevel:
 		move.b	#2,$1A(a0)	; use frame number 2 (destroyed	prison)
 		rts	
 ; ===========================================================================
@@ -40583,6 +40214,7 @@ Obj3E_FindObj28:
 		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
 		move.b	#$C,($FFFFF600).w	; set to level
 		move.w	#1,($FFFFFE02).w	; restart level
+		clr.b	($FFFFFE30).w	; clear	lamppost counter
 		rts				; return
 
 		jsr	GotThroughAct
@@ -41819,7 +41451,7 @@ Obj09_NoDebug:
 		jsr	Obj09_MakeGoalSolid	; go to solid making code
 
 Obj09_NoW:
-		cmpi.b	#1,($FFFFFF8A).w	; is flag set to 1?
+		cmpi.b	#1,($FFFFFF9F).w	; is flag set to 1?
 		bne.s	Obj09_NoRot		; if not, branch
 		jsr	Obj09_Rotation		; go to rotation code
 
@@ -42410,7 +42042,7 @@ Obj09_Rotation:
 		add.w	#$400,($FFFFF780).w	; increase stage-rotation by $400
 		cmpi.w	#$8000,($FFFFF780).w	; is rotation = $8000?
 		bne.s	Obj09_Rot_End		; if not, branch
-		move.b	#2,($FFFFFF8A).w	; tell the game, the process is done
+		move.b	#2,($FFFFFF9F).w	; tell the game, the process is done
 		clr.b	($FFFFF7C8).w		; unlock controls
 
 Obj09_Rot_End:
@@ -42609,7 +42241,7 @@ Obj09_GOAL:
 	;	bne.s	Obj09_NotSS1x		; if not, branch
 		subq.b	#2,$24(a0)		; don't run "Obj09_ExitStage"
 		move.w	#$C3,d0			; play giant ring sound
-		clr.b	($FFFFFF8A).w		; make R block usable again
+		clr.b	($FFFFFF9F).w		; make R block usable again
 
 		move.w	#$03D0,d1		; set Sonic's X-position, when he didn't pass any checkpoints yet
 		move.w	#$02E0,d2		; set Sonic's Y-position, when he didn't pass any checkpoints yet
@@ -42684,7 +42316,7 @@ Obj09_Rblock:
 		move.l	d0,4(a2)
 
 Obj09_RevStage:
-		move.b	#1,($FFFFFF8A).w	; set flag
+		move.b	#1,($FFFFFF9F).w	; set flag
 		move.w	#$C3,d0			; set giant ring sound
 		jmp	(PlaySound_Special).l	; play it
 ; ===========================================================================
@@ -43633,15 +43265,6 @@ HudUpdate:
 Hud_ChkRings:
 		tst.b	($FFFFFE1D).w	; does the ring	counter	need updating?
 		beq.s	Hud_ChkTime	; if not, branch
-		cmpi.b	#1,($FFFFFFE7).w	; has sonic destroyed a S monitor?
-		bne.s	Hud_NotS	; if not, branch
-	
-		bra.s	Hud_NotS	; the following has been disabled
-
-		clr.w	($FFFFFE20).w	; if sonic is immortal, stop him from gaining rings
-		ori.b	#1,($FFFFFE1D).w ; update the ring counter
-
-Hud_NotS:
 		cmpi.w	#999,($FFFFFE20).w ; does sonic have over 999 rings?
 		ble.s	Hud_Not999	; if equal or less, branch
 		move.w	#999,($FFFFFE20).w ; if it's over 999, set to 999
@@ -45003,6 +44626,8 @@ Art_MzLava2:	incbin	artunc\mzlava2.bin	; MZ lava
 Art_MzTorch:	incbin	artunc\mztorch.bin	; MZ torch in background
 		even
 Art_SbzSmoke:	incbin	artunc\sbzsmoke.bin	; SBZ smoke in background
+		even
+Art_RingFlash:	incbin	artunc\ringflash.bin	; ring flash that appears when you enter a giant ring
 		even
 
 ; ---------------------------------------------------------------------------

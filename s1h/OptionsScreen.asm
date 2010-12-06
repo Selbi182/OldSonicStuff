@@ -229,7 +229,7 @@ Options_OK:
 Options_Check4:
 		cmpi.w	#4,d0		; have you selected item 4 (AIR MOVE)?
 		bne.s	Options_Not4	; if not, check for next numbers
-		not.b	($FFFFFFBC).w	; enable/disable air move
+		bchg	#0,($FFFFFFBC).w	; enable/disable air move
 		jsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
@@ -237,7 +237,7 @@ Options_Check4:
 Options_Not4:
 		cmpi.w	#7,d0		; have you selected item 7 (INVIN TIME)?
 		bne.s	Options_Not7	; if not, check for next numbers
-		not.b	($FFFFFF92).w	; enable/disable invin time
+		bchg	#0,($FFFFFF92).w	; enable/disable invin time
 		jsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
@@ -245,8 +245,7 @@ Options_Not4:
 Options_Not7:
 		cmpi.w	#10,d0		; have you selected item 10 (DEBUG)?
 		bne.s	Options_Not10	; if not, check for next numbers
-		not.w	($FFFFFFFA).w	; enable/disable debug
-		bchg	#2,($FFFFFF84).w
+		bchg	#0,($FFFFFFFB).w	; enable/disable debug
 		jsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
@@ -254,7 +253,7 @@ Options_Not7:
 Options_Not10:
 		cmpi.w	#13,d0		; have you selected item 13 (EXTENDED CAM)?
 		bne.s	Options_Not13	; if not, check for next numbers
-		not.b	($FFFFFF93).w	; enable/disable extended camera
+		bchg	#0,($FFFFFF93).w	; enable/disable extended camera
 		jsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
@@ -262,7 +261,7 @@ Options_Not10:
 Options_Not13:
 		cmpi.w	#16,d0		; have you selected item 16 (SONIC ART)?
 		bne.s	Options_Not16	; if not, check for next numbers
-		not.b	($FFFFFF94).w	; change art style flag
+		bchg	#0,($FFFFFF94).w	; change art style flag
 		jsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
@@ -270,6 +269,19 @@ Options_Not13:
 Options_Not16:
 		cmpi.w	#19,d0		; have you selected item 19 (EXIT)?
 		bne.s	Options_Error	; if not, something went wrong
+
+		moveq	#0,d0			; clear d0
+		move.b	#1,($A130F1).l		; enable SRAM
+		lea	($200000).l,a1		; base of SRAM
+		move.b	#$FF,$1(a1)		; make sure SRAM will be created
+		move.b	($FFFFFFBC).w,$3(a1)	; backup air move flag
+		move.b	($FFFFFF92).w,$5(a1)	; backup invin time flag
+		move.b	($FFFFFFFB).w,$7(a1)	; backup debug flag
+		move.b	($FFFFFF93).w,$9(a1)	; backup extended camera flag
+		move.b	($FFFFFF94).w,$B(a1)	; backup art style flag
+		move.b	#$FF,$1B(a1)		; make sure SRAM will be created at the correct size
+		move.b	#0,($A130F1).l		; disable SRAM
+
 		tst.b	($FFFFFF9E).w
 		beq.s	Options_NoSYZ1
 		jsr	Pal_FadeOut		; fade out palette
@@ -497,7 +509,7 @@ Options_Loop_Invinx:
 ; ----------------------------------------------------------------------------
 		lea	(Options_Debug1).l,a2	; get text location
 		move.w	#23,d5			; set numbers of loops to 23
-		btst	#2,($FFFFFF84).w	; is flag set?
+		btst	#0,($FFFFFFFB).w	; is flag set?
 		beq.s	Options_Loop_Debugx	; if yes, branch
 		lea	(Options_Debug2).l,a2	; get alternate text location	
 		
@@ -876,7 +888,7 @@ Options_Loop_Invin2x:
 		beq.s	Options_Invin_Return2	; if returned result is -1, branch
 		
 		lea	(Options_Debug1).l,a2	; get text location
-		btst	#2,($FFFFFF84).w	; is flag set?
+		btst	#0,($FFFFFFFB).w	; is flag set?
 		beq.s	Options_Loop_Debugx2	; if yes, branch
 		lea	(Options_Debug2).l,a2	; get alternate text location	
 		
@@ -903,7 +915,7 @@ Options_Debug:
 		beq.s	Options_Debug_Return	; if returned result is -1, branch
 		
 		lea	(Options_Debug1).l,a2	; get text location
-		btst	#2,($FFFFFF84).w	; is flag set?
+		btst	#0,($FFFFFFFB).w	; is flag set?
 		beq.s	Options_Loop_Debug	; if yes, branch
 		lea	(Options_Debug2).l,a2	; get alternate text location	
 		
@@ -934,7 +946,7 @@ Options_Debug2x:
 		beq.s	Options_Debug_Return2x	; if returned result is -1, branch
 		
 		lea	(Options_Debug1).l,a2	; get text location
-		btst	#2,($FFFFFF84).w	; is flag set?
+		btst	#0,($FFFFFFFB).w	; is flag set?
 		beq.s	Options_Loop_Debug2x	; if yes, branch
 		lea	(Options_Debug2).l,a2	; get alternate text location	
 		

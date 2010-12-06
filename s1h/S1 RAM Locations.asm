@@ -55,8 +55,8 @@
  ;  ($FFFFFF9B).w
  ;  ($FFFFFF9C).w
  ;  ($FFFFFF9D).w
-    ($FFFFFF9E).w
-    ($FFFFFF9F).w
+ ;  ($FFFFFF9E).w
+ ;  ($FFFFFF9F).w
 
  ;  ($FFFFFFA0).w
  ;  ($FFFFFFA1).w

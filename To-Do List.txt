@@ -1,6 +1,5 @@
 To-Do:
 - Finishing Overworld:
-	- It only works untill you unlock Marble Zone. I was too lazy to do the rest for now.
 	- Finding a good solution to display level names over tubes.
 	- Rewrite story, since a lot doesn't make sense with the overworld anymore.
 	- Be able to go back to the overworld once you enter a level, maybe by using a giant ring again.
@@ -8,6 +7,8 @@ To-Do:
 - Find new music for Night Hill Zone.
 - For the release, remove the level select and debug mode.
 - There are some ugly pixels on the level select font.
+- Finishing SRAM support.
+- New Title Screen background art.
 
 Bugs:
 - Restore music after death, if it isn't the normal music.
@@ -16,10 +17,9 @@ Bugs:
 Would be great:
 - Change Options Screen's text arrays into ASCII arrays. Reading bytes sucks.
 - Find a more accurate system for the palette-restoration from WhiteFlash.
-- Find better graphics for the title screen background.
 
 Ideas:
-- Combining GHZ 1 and 3 (combining, not act transition!)
+- Combining GHZ 1 and 3 (and I mean combining, not act transition!)
 - Challenge: Race against Sonic's shadow (i.e. Rayman - Candy Chateau)
 - Demo Mode (Basically a walkthrough, but in the game itself.)
 - Pre-Credits Text (See "Credits.txt")
