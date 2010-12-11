@@ -26,20 +26,26 @@ ODIGHZSplash_VDP:
 		
 ODIGHZSplash_Art:
 		move.l	#$40000000,($C00004).l		; Load art
-		lea	($C00000).l,a6		
-		lea	(Art_Chapter1).l,a1		; load stuff for chapter 1
-		cmpi.b	#1,($FFFFFFA0).w		; is flag set to chapter 2?
-		bne.s	ODIGHZ_NoArt2			; if not, branch
-		lea	(Art_Chapter2).l,a1		; load chapter 2 stuff instead
+		lea	($C00000).l,a6
+
+		move.b	#1,($A130F1).l		; enable SRAM
+		lea	($200000).l,a1		; base of SRAM
+		move.b	$1(a1),d1		; get current chaper number
+		move.b	#0,($A130F1).l		; disable SRAM
+
+		lea	(Art_Chapter1).l,a1	; load stuff for chapter 1
+		cmpi.b	#1,d1			; is flag set to chapter 2?
+		bne.s	ODIGHZ_NoArt2		; if not, branch
+		lea	(Art_Chapter2).l,a1	; load chapter 2 stuff instead
 
 ODIGHZ_NoArt2:
-		cmpi.b	#2,($FFFFFFA0).w		; is flag set to chapter 3?
-		bne.s	ODIGHZ_NoArt3			; if not, branch
-		lea	(Art_Chapter3).l,a1		; load chapter 3 stuff instead
+		cmpi.b	#2,d1			; is flag set to chapter 3?
+		bne.s	ODIGHZ_NoArt3		; if not, branch
+		lea	(Art_Chapter3).l,a1	; load chapter 3 stuff instead
 
 ODIGHZ_NoArt3:
-		move.w	#$B6,d1
-		jsr	LoadTiles
+		move.w	#$B6,d1			; load 183 tiles
+		jsr	LoadTiles		; load tiles
 
 ODIGHZSplash_Mappings:
 		lea	(Map_Chapter1).l,a1		; load stuff for chapter 1

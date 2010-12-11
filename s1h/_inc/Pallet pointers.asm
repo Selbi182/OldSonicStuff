@@ -16,43 +16,43 @@
 	dc.l Pal_GHZ
 	dc.w $FB20
 	dc.w $17
-	dc.l Pal_LZ
+	dc.l Pal_Null
 	dc.w $FB20
 	dc.w $17
 	dc.l Pal_MZ
 	dc.w $FB20
 	dc.w $17
-	dc.l Pal_SLZ
+	dc.l Pal_Null
 	dc.w $FB20
 	dc.w $17
 	dc.l Pal_SYZ
 	dc.w $FB20
 	dc.w $17
-	dc.l Pal_SBZ1
+	dc.l Pal_Null
 	dc.w $FB20
 	dc.w $17
 	dc.l Pal_Special
 	dc.w $FB00
 	dc.w $1F
-	dc.l Pal_LZWater
+	dc.l Pal_Null
 	dc.w $FB00
 	dc.w $1F
-	dc.l Pal_SBZ3
+	dc.l Pal_Null
 	dc.w $FB20
 	dc.w $17
-	dc.l Pal_SBZ3Water
+	dc.l Pal_Null
 	dc.w $FB00
 	dc.w $1F
-	dc.l Pal_SBZ2
+	dc.l Pal_Null
 	dc.w $FB20
 	dc.w $17
-	dc.l Pal_LZSonWater
+	dc.l Pal_Null
 	dc.w $FB00
 	dc.w 7
-	dc.l Pal_SBZ3SonWat
+	dc.l Pal_Null
 	dc.w $FB00
 	dc.w 7
-	dc.l Pal_SpeResult
+	dc.l Pal_Null
 	dc.w $FB00
 	dc.w $1F
 	dc.l Pal_SpeContinue

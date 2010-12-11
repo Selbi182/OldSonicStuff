@@ -235,7 +235,7 @@ GameClrRAM:
 		moveq	#0,d0			; clear d0
 		move.b	#1,($A130F1).l		; enable SRAM
 		lea	($200000).l,a1		; base of SRAM
-		tst.b	$1(a1)			; does SRAM exist?
+		tst.b	$1B(a1)			; does SRAM exist?
 		beq.s	NoSRAM			; if not, branch
 		move.b	$3(a1),($FFFFFFBC).w
 		move.b	$5(a1),($FFFFFF92).w
@@ -2240,11 +2240,7 @@ PalCycle_LZ:				; XREF: PalCycle
 		andi.w	#3,d0
 		lsl.w	#3,d0
 		lea	(Pal_LZCyc1).l,a0
-		cmpi.b	#3,($FFFFFE11).w ; check if level is SBZ3
-		bne.s	loc_19C0
-		lea	(Pal_SBZ3Cyc1).l,a0 ; load SBZ3	pallet instead
 
-loc_19C0:
 		lea	($FFFFFB56).w,a1
 		move.l	(a0,d0.w),(a1)+
 		move.l	4(a0,d0.w),(a1)
@@ -2304,27 +2300,6 @@ PalCycle_MZ:				; XREF: PalCycle
 
 
 PalCycle_SLZ:				; XREF: PalCycle
-		subq.w	#1,($FFFFF634).w
-		bpl.s	locret_1A80
-		move.w	#7,($FFFFF634).w
-		move.w	($FFFFF632).w,d0
-		addq.w	#1,d0
-		cmpi.w	#6,d0
-		bcs.s	loc_1A60
-		moveq	#0,d0
-
-loc_1A60:
-		move.w	d0,($FFFFF632).w
-		move.w	d0,d1
-		add.w	d1,d1
-		add.w	d1,d0
-		add.w	d0,d0
-		lea	(Pal_SLZCyc).l,a0
-		lea	($FFFFFB56).w,a1
-		move.w	(a0,d0.w),(a1)
-		move.l	2(a0,d0.w),4(a1)
-
-locret_1A80:
 		rts	
 ; End of function PalCycle_SLZ
 
@@ -2360,76 +2335,6 @@ locret_1AC6:
 
 
 PalCycle_SBZ:				; XREF: PalCycle
-		lea	(Pal_SBZCycList).l,a2
-		tst.b	($FFFFFE11).w
-		beq.s	loc_1ADA
-		lea	(Pal_SBZCycList2).l,a2
-
-loc_1ADA:
-		lea	($FFFFF650).w,a1
-		move.w	(a2)+,d1
-
-loc_1AE0:
-		subq.b	#1,(a1)
-		bmi.s	loc_1AEA
-		addq.l	#2,a1
-		addq.l	#6,a2
-		bra.s	loc_1B06
-; ===========================================================================
-
-loc_1AEA:				; XREF: PalCycle_SBZ
-		move.b	(a2)+,(a1)+
-		move.b	(a1),d0
-		addq.b	#1,d0
-		cmp.b	(a2)+,d0
-		bcs.s	loc_1AF6
-		moveq	#0,d0
-
-loc_1AF6:
-		move.b	d0,(a1)+
-		andi.w	#$F,d0
-		add.w	d0,d0
-		movea.w	(a2)+,a0
-		movea.w	(a2)+,a3
-		move.w	(a0,d0.w),(a3)
-
-loc_1B06:				; XREF: PalCycle_SBZ
-		dbf	d1,loc_1AE0
-		subq.w	#1,($FFFFF634).w
-		bpl.s	locret_1B64
-		lea	(Pal_SBZCyc4).l,a0
-		move.w	#1,($FFFFF634).w
-		tst.b	($FFFFFE11).w
-		beq.s	loc_1B2E
-		lea	(Pal_SBZCyc10).l,a0
-		move.w	#0,($FFFFF634).w
-
-loc_1B2E:
-		moveq	#-1,d1
-		tst.b	($FFFFF7C0).w
-		beq.s	loc_1B38
-		neg.w	d1
-
-loc_1B38:
-		move.w	($FFFFF632).w,d0
-		andi.w	#3,d0
-		add.w	d1,d0
-		cmpi.w	#3,d0
-		bcs.s	loc_1B52
-		move.w	d0,d1
-		moveq	#0,d0
-		tst.w	d1
-		bpl.s	loc_1B52
-		moveq	#2,d0
-
-loc_1B52:
-		move.w	d0,($FFFFF632).w
-		add.w	d0,d0
-		lea	($FFFFFB58).w,a1
-		move.l	(a0,d0.w),(a1)+
-		move.w	4(a0,d0.w),(a1)
-
-locret_1B64:
 		rts	
 ; End of function PalCycle_SBZ
 
@@ -2439,27 +2344,9 @@ Pal_GHZCyc:	incbin	pallet\c_ghz.bin
 Pal_LZCyc1:	incbin	pallet\c_lz_wat.bin	; waterfalls pallet
 Pal_LZCyc2:	incbin	pallet\c_lz_bel.bin	; conveyor belt pallet
 Pal_LZCyc3:	incbin	pallet\c_lz_buw.bin	; conveyor belt (underwater) pallet
-Pal_SBZ3Cyc1:	incbin	pallet\c_sbz3_w.bin	; waterfalls pallet
-Pal_SLZCyc:	incbin	pallet\c_slz.bin
 Pal_SYZCyc1:	incbin	pallet\c_syz_1.bin
 Pal_SYZCyc2:	incbin	pallet\c_syz_2.bin
 
-Pal_SBZCycList:
-		include	"_inc\SBZ pallet script 1.asm"
-
-Pal_SBZCycList2:
-		include	"_inc\SBZ pallet script 2.asm"
-
-Pal_SBZCyc1:	incbin	pallet\c_sbz_1.bin
-Pal_SBZCyc2:	incbin	pallet\c_sbz_2.bin
-Pal_SBZCyc3:	incbin	pallet\c_sbz_3.bin
-Pal_SBZCyc4:	incbin	pallet\c_sbz_4.bin
-Pal_SBZCyc5:	incbin	pallet\c_sbz_5.bin
-Pal_SBZCyc6:	incbin	pallet\c_sbz_6.bin
-Pal_SBZCyc7:	incbin	pallet\c_sbz_7.bin
-Pal_SBZCyc8:	incbin	pallet\c_sbz_8.bin
-Pal_SBZCyc9:	incbin	pallet\c_sbz_9.bin
-Pal_SBZCyc10:	incbin	pallet\c_sbz_10.bin
 ; ---------------------------------------------------------------------------
 ; Subroutine to	fade out and fade in
 ; ---------------------------------------------------------------------------
@@ -3135,40 +3022,22 @@ PalPointers3:
 ; ---------------------------------------------------------------------------
 ; Pallet data
 ; ---------------------------------------------------------------------------
-Pal_SegaBG:		incbin	 pallet\sega_bg.bin
-Pal_Title:		incbin	 pallet\title.bin
-Pal_LevelSel:		incbin	 pallet\levelsel.bin
-Pal_LevelSel2:		incbin	 pallet\levsel2.bin
-Pal_Sonic:		incbin	 pallet\sonic.bin
-Pal_GHZ:		incbin	 pallet\ghz.bin
-Pal_GHZ2:		incbin	 pallet\ghz2.bin
-Pal_GHZ3:		incbin	 pallet\ghz3.bin
-Pal_LZ:			incbin	 pallet\lz.bin
-Pal_LZ2:		incbin	 pallet\lz.bin
-Pal_LZ3:		incbin	 pallet\lz3.bin
-Pal_LZWater:		incbin	 pallet\lz_uw.bin
-Pal_LZWater2:		incbin	 pallet\lz_uw.bin
-Pal_LZWater3:		incbin	 pallet\lz_uw3.bin
-Pal_MZ:			incbin	 pallet\mz.bin
-Pal_MZ2:		incbin	 pallet\mz2.bin
-Pal_MZ3:		incbin	 pallet\mz3.bin
-Pal_SLZ:		incbin	 pallet\slz.bin
-Pal_SLZ2:		incbin	 pallet\slz2.bin
-Pal_SLZ3:		incbin	 pallet\slz3.bin
-Pal_SYZ:		incbin	 pallet\syz.bin
-Pal_SYZ2:		incbin	 pallet\syz2.bin
-Pal_SYZ3:		incbin	 pallet\syz3.bin
-Pal_SBZ1:		incbin	 pallet\sbz_act1.bin
-Pal_SBZ2:		incbin	 pallet\sbz_act2.bin
-Pal_Special:		incbin	 pallet\special.bin
-Pal_SBZ3:		incbin	 pallet\sbz_act3.bin
-Pal_SBZ3Water:		incbin	 pallet\sbz_a3uw.bin
-Pal_LZSonWater:		incbin	 pallet\son_lzuw.bin
-Pal_SBZ3SonWat:		incbin	 pallet\son_sbzu.bin
-Pal_SpeResult:		incbin	 pallet\ssresult.bin
-Pal_SpeContinue:	incbin	 pallet\sscontin.bin
-Pal_Ending:		incbin	 pallet\ending.bin
-
+Pal_SegaBG:		incbin	pallet\sega_bg.bin
+Pal_Title:		incbin	pallet\title.bin
+Pal_LevelSel:		incbin	pallet\levelsel.bin
+Pal_Sonic:		incbin	pallet\sonic.bin
+Pal_GHZ:		incbin	pallet\ghz.bin
+Pal_GHZ2:		incbin	pallet\ghz2.bin
+Pal_GHZ3:		incbin	pallet\ghz3.bin
+Pal_LZ2:		incbin	pallet\lz2.bin
+Pal_LZWater2:		incbin	pallet\lz_uw2.bin
+Pal_MZ:			incbin	pallet\mz.bin
+Pal_SYZ:		incbin	pallet\syz.bin
+Pal_Special:		incbin	pallet\special.bin
+Pal_LZSonWater:		incbin	pallet\son_lzuw.bin
+Pal_SpeContinue:	incbin	pallet\sscontin.bin
+Pal_Ending:		incbin	pallet\ending.bin
+Pal_Null:		incbin	pallet\null.bin
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to	delay the program by ($FFFFF62A) frames
@@ -3684,7 +3553,7 @@ Title_ChkLevSel:
 
 Title_Exit:
 		move.b	#1,($A130F1).l		; enable SRAM
-		tst.b	($200001).l		; does SRAM exist?
+		tst.b	($20001B).l		; does SRAM exist?
 		beq.s	Title_NoSRAM		; if not, branch
 		move.b	#0,($A130F1).l		; disable SRAM
 		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
@@ -3766,7 +3635,6 @@ LevSel_456Sel:
 		jsr	PlaySound_Special
 		jsr	Pal_FadeOut
 		move.b	#$0C,($FFFFF600).w ; set screen mode to $0C (level)
-		move.b	#0,($FFFFFFA0).w
 		jmp	ODIGHZSplash	; jump to One Day in Green Hill Zone screen
 ; ===========================================================================
 
@@ -4194,7 +4062,6 @@ loc_37FC:
 		moveq	#0,d0			; clear d0
 		move.b	#1,($A130F1).l		; enable SRAM
 		lea	($200000).l,a1		; base of SRAM
-		move.b	#$FF,$1(a1)		; make sure SRAM will be created
 		move.w	($FFFFFE20).w,d0	; move rings to d0
 		movep.w	d0,$D(a1)		; backup rings
 		move.l	($FFFFFE26).w,d0	; move rings to d0
@@ -4395,15 +4262,7 @@ loc_39E8:
 		move.b	($FFFFFE10).w,d0
 		lsl.w	#2,d0
 		movea.l	(a1,d0.w),a1
-		tst.w	($FFFFFFF0).w	; is demo mode on?
-		bne.s	Level_Demo	; if yes, branch
-		lea	(Demo_EndIndex).l,a1 ; load ending demo	data
-		move.w	($FFFFFFF4).w,d0
-		subq.w	#1,d0
-		lsl.w	#2,d0
-		movea.l	(a1,d0.w),a1
 
-Level_Demo:
 	if RecordDemo=0
 		move.b	1(a1),($FFFFF792).w ; load key press duration
 		subq.b	#1,($FFFFF792).w ; subtract 1 from duration
@@ -4499,7 +4358,12 @@ L_ML_NoPalCycle:
 		jsr	RunPLC_RAM
 		jsr	OscillateNumDo
 		jsr	ChangeRingFrame
+
+		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
+		beq.s	L_ML_NoSAL		; if not, branch
 		jsr	SignpostArtLoad
+
+L_ML_NoSAL:
 		cmpi.b	#8,($FFFFF600).w
 		beq.s	Level_ChkDemo	; if screen mode is 08 (demo), branch
 		tst.w	($FFFFFE02).w	; is the level set to restart?
@@ -5258,15 +5122,6 @@ loc_4022:
 loc_4038:
 		lsl.w	#2,d0
 		movea.l	(a1,d0.w),a1
-		tst.w	($FFFFFFF0).w
-		bpl.s	loc_4056
-		lea	(Demo_EndIndex).l,a1
-		move.w	($FFFFFFF4).w,d0
-		subq.w	#1,d0
-		lsl.w	#2,d0
-		movea.l	(a1,d0.w),a1
-
-loc_4056:
 		move.w	($FFFFF790).w,d0
 		adda.w	d0,a1
 		move.b	(a1),d0
@@ -5292,14 +5147,6 @@ locret_407E:
 ; ---------------------------------------------------------------------------
 Demo_Index:
 		include	"_inc\Demo pointers for intro.asm"
-
-Demo_EndIndex:
-		include	"_inc\Demo pointers for ending.asm"
-
-		dc.b 0,	$8B, 8,	$37, 0,	$42, 8,	$5C, 0,	$6A, 8,	$5F, 0,	$2F, 8,	$2C
-		dc.b 0,	$21, 8,	3, $28,	$30, 8,	8, 0, $2E, 8, $15, 0, $F, 8, $46
-		dc.b 0,	$1A, 8,	$FF, 8,	$CA, 0,	0, 0, 0, 0, 0, 0, 0, 0,	0
-		even
 
 ; ---------------------------------------------------------------------------
 ; Collision index loading subroutine
@@ -7179,26 +7026,6 @@ Map_obj8B:
 		include	"_maps\obj8B.asm"
 
 ; ---------------------------------------------------------------------------
-; Ending sequence demos
-; ---------------------------------------------------------------------------
-Demo_EndGHZ1:	incbin	demodata\e_ghz1.bin
-		even
-Demo_EndMZ:	incbin	demodata\e_mz.bin
-		even
-Demo_EndSYZ:	incbin	demodata\e_syz.bin
-		even
-Demo_EndLZ:	incbin	demodata\e_lz.bin
-		even
-Demo_EndSLZ:	incbin	demodata\e_slz.bin
-		even
-Demo_EndSBZ1:	incbin	demodata\e_sbz1.bin
-		even
-Demo_EndSBZ2:	incbin	demodata\e_sbz2.bin
-		even
-Demo_EndGHZ2:	incbin	demodata\e_ghz2.bin
-		even
-
-; ---------------------------------------------------------------------------
 ; Subroutine to	load level boundaries and start	locations
 ; ---------------------------------------------------------------------------
 
@@ -8251,8 +8078,9 @@ SH_NotLZ2:
 		tst.b	($FFFFFFB9).w		; has Sonic collected the giant ring in GHZ2?
 		bne.s	locret_65B0		; if yes, branch
 		cmpi.b	#1,($FFFFFFAA).w	; is Sonic fighting against the crabmeat?
-		beq.s	locret_65B0		; if yes, branch
-		
+		bne.s	@cont1			; if not, branch
+		move.w	($FFFFF72A).w,($FFFFF728).w	; lock left screen position
+
 @cont1:
 		move.w	($FFFFF700).w,d4
 		bsr.s	ScrollHoriz2
@@ -9984,9 +9812,6 @@ locret_6E08:
 		cmpi.b	#2,($FFFFFFD4).w
 		beq.s	locret_6E08X
 		move.b	#1,($FFFFF7CC).w		; lock controls
-		move.w	($FFFFF700).w,($FFFFF728).w	; lock screen
-		move.w	#$2185,($FFFFF72A).w 	; lock screen
-	;	addi.w	#$140,($FFFFF72A).w
 		move.b	#1,($FFFFF7AA).w 		; lock screen
 		move.b	#$E0,d0
 		jsr	PlaySound_Special
@@ -13748,9 +13573,9 @@ Obj1F_Timesup:
 		move.b	#1,$30(a1)			; disable sound		
 
 Obj1F_NoCamShake:
-		move.w	($FFFFF700).w,($FFFFF728).w	; lock screen
+	;	move.w	($FFFFF700).w,($FFFFF728).w	; lock screen
 	;	move.w	#$2185,($FFFFF72A).w 		; lock screen
-		move.b	#1,($FFFFF7AA).w 		; lock screen
+	;	move.b	#1,($FFFFF7AA).w 		; lock screen
 
 		move.b	#1,($FFFFFFAA).w		; set flag 1
 		clr.b	($FFFFF7C8).w			; unlock controls 1
@@ -18562,13 +18387,15 @@ Obj34_ChkPos2:				; XREF: Obj34_Wait
 		beq.s	Obj34_IsZone	; if yes, branch
 		cmpi.b	#3,$3F(a0)	; is current object Act?
 		bne.s	Obj34_NotZone2	; if not, branch
-		addq.w	#MoveOffSpeed,$A(a0)	; move object to the downwards
+		addq.w	#MoveOffSpeed,$A(a0)	; move Act number downwards
+		addq.w	#MoveOffSpeed,$8(a0)
 		cmpi.w	#$200,$A(a0)
 		bgt.s	Obj34_ChangeArt
 		bra.w	DisplaySprite
 
 Obj34_IsZone:
-		subq.w	#MoveOffSpeed,$A(a0)	; move object to the upwards
+		subq.w	#MoveOffSpeed,$A(a0)	; move Zone to the upwards
+		subq.w	#MoveOffSpeed,$8(a0)
 		cmpi.w	#$40,$A(a0)
 		blt.s	Obj34_ChangeArt
 		bra.w	DisplaySprite
@@ -18585,6 +18412,7 @@ Obj34_NotZone2:
 
 Obj34_Move2:
 		add.w	d1,8(a0)	; change item's position
+		sub.w	d1,$A(a0)	; move object to the upwards
 		move.w	8(a0),d0
 		bmi.s	locret_C412
 		cmpi.w	#$200,d0	; has item moved beyond	$200 on	x-axis?
@@ -25729,9 +25557,9 @@ locret_11938:
 ; ===========================================================================
 Obj5E_Speeds:	dc.w $FFF8, $FFE4, $FFD1, $FFE4, $FFF8
 
-Obj5E_Data1:	incbin	misc\slzssaw1.bin
+Obj5E_Data1:;	incbin	misc\slzssaw1.bin
 		even
-Obj5E_Data2:	incbin	misc\slzssaw2.bin
+Obj5E_Data2:;	incbin	misc\slzssaw2.bin
 		even
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - seesaws (SLZ)
@@ -27766,6 +27594,7 @@ Obj01_Not0B00:
 	;	cmpi.w	#$2180,($FFFFF700).w		; has the camera reached $2180 on x-axis?
 		cmpi.w	#$2224,($FFFFD008).w		; has Sonic reached position $2224 on x-axis?
 		bcs.s	Obj01_NotGHZ1_Main		; if not, branch
+	;	move.w	#$2185,($FFFFF728).w
 		clr.b	($FFFFF602).w			; cancel any presses
 		clr.w	$10(a0)				; clear X-speed
 		clr.w	$14(a0)				; clear interia
@@ -28938,14 +28767,6 @@ locret_13302:
 
 
 Sonic_LevelBound:			; XREF: Obj01_MdNormal; et al
-		cmpi.w	#$000,($FFFFFE10).w
-		bne.s	SLB_NotGHZ1
-		tst.b	($FFFFFF72).w
-		beq.s	SLB_NotGHZ1
-		cmpi.w	#$22C5,$8(a0)
-		bcc.w	Boundary_Sides
-
-SLB_NotGHZ1:
 		move.l	8(a0),d1
 		move.w	$10(a0),d0
 		ext.l	d0
@@ -42606,70 +42427,6 @@ locret_1C1EA:
 ; ---------------------------------------------------------------------------
 
 AniArt_SBZ:				; XREF: AniArt_Index
-		tst.b	($FFFFF7B4).w
-		beq.s	loc_1C1F8
-		subq.b	#1,($FFFFF7B4).w
-		bra.s	loc_1C250
-; ===========================================================================
-
-loc_1C1F8:
-		subq.b	#1,($FFFFF7B1).w
-		bpl.s	loc_1C250
-		move.b	#7,($FFFFF7B1).w
-		lea	(Art_SbzSmoke).l,a1 ; load smoke patterns
-		move.l	#$49000002,($C00004).l
-		move.b	($FFFFF7B0).w,d0
-		addq.b	#1,($FFFFF7B0).w
-		andi.w	#7,d0
-		beq.s	loc_1C234
-		subq.w	#1,d0
-		mulu.w	#$180,d0
-		lea	(a1,d0.w),a1
-		move.w	#$B,d1
-		bra.w	LoadTiles
-; ===========================================================================
-
-loc_1C234:
-		move.b	#$B4,($FFFFF7B4).w
-
-loc_1C23A:
-		move.w	#5,d1
-		jsr	LoadTiles
-		lea	(Art_SbzSmoke).l,a1
-		move.w	#5,d1
-		bra.w	LoadTiles
-; ===========================================================================
-
-loc_1C250:
-		tst.b	($FFFFF7B5).w
-		beq.s	loc_1C25C
-		subq.b	#1,($FFFFF7B5).w
-		bra.s	locret_1C2A0
-; ===========================================================================
-
-loc_1C25C:
-		subq.b	#1,($FFFFF7B3).w
-		bpl.s	locret_1C2A0
-		move.b	#7,($FFFFF7B3).w
-		lea	(Art_SbzSmoke).l,a1
-		move.l	#$4A800002,($C00004).l
-		move.b	($FFFFF7B2).w,d0
-		addq.b	#1,($FFFFF7B2).w
-		andi.w	#7,d0
-		beq.s	loc_1C298
-		subq.w	#1,d0
-		mulu.w	#$180,d0
-		lea	(a1,d0.w),a1
-		move.w	#$B,d1
-		bra.w	LoadTiles
-; ===========================================================================
-
-loc_1C298:
-		move.b	#$78,($FFFFF7B5).w
-		bra.s	loc_1C23A
-; ===========================================================================
-
-locret_1C2A0:
 		rts	
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -44163,9 +43920,9 @@ Nem_TitleSonic:	incbin	artnem\titleson.bin	; Sonic on title screen
 		even
 Nem_TitleTM:	incbin	artnem\titletm.bin	; TM on title screen
 		even
-Eni_JapNames:	incbin	mapeni\japcreds.bin	; Japanese credits (mappings)
+Eni_JapNames:;	incbin	mapeni\japcreds.bin	; Japanese credits (mappings)
 		even
-Nem_JapNames:	incbin	artnem\japcreds.bin	; Japanese credits
+Nem_JapNames:;	incbin	artnem\japcreds.bin	; Japanese credits
 		even
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - Sonic
@@ -44214,6 +43971,8 @@ Nem_Warp:	incbin	artnem\xxxflash.bin	; unused entry to special stage flash
 Nem_Goggle:	incbin	artnem\xxxgoggl.bin	; unused goggles
 		even
 Nem_ERaZor:	incbin	artnem\ERaZor.bin	; ERaZor banner art
+		even
+Nem_Null:	incbin	artnem\null.bin		; just a file with one blank tile
 		even
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - walls of the special stage
@@ -44345,25 +44104,6 @@ Nem_Lava:	incbin	artnem\mzlava.bin	; MZ lava
 Nem_MzBlock:	incbin	artnem\mzblock.bin	; MZ green pushable block
 		even
 Nem_MzUnkBlock:	incbin	artnem\xxxmzblo.bin	; MZ unused background block
-		even
-; ---------------------------------------------------------------------------
-; Compressed graphics - SLZ stuff
-; ---------------------------------------------------------------------------
-Nem_Seesaw:	incbin	artnem\slzseesa.bin	; SLZ seesaw
-		even
-Nem_SlzSpike:	incbin	artnem\slzspike.bin	; SLZ spikeball that sits on a seesaw
-		even
-Nem_Fan:	incbin	artnem\slzfan.bin	; SLZ fan
-		even
-Nem_SlzWall:	incbin	artnem\slzwall.bin	; SLZ smashable wall
-		even
-Nem_Pylon:	incbin	artnem\slzpylon.bin	; SLZ foreground pylon
-		even
-Nem_SlzSwing:	incbin	artnem\slzswing.bin	; SLZ swinging platform
-		even
-Nem_SlzBlock:	incbin	artnem\slzblock.bin	; SLZ 32x32 block
-		even
-Nem_SlzCannon:	incbin	artnem\slzcanno.bin	; SLZ fireball launcher cannon
 		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - SYZ stuff
@@ -44534,11 +44274,11 @@ Nem_MZ:		incbin	artnem\8x8mz.bin	; MZ primary patterns
 		even
 Blk256_MZ:	incbin	map256\mz.bin
 		even
-Blk16_SLZ:	incbin	map16\slz.bin
+Blk16_SLZ:;	incbin	map16\slz.bin
 		even
-Nem_SLZ:	incbin	artnem\8x8slz.bin	; SLZ primary patterns
+Nem_SLZ:;	incbin	artnem\8x8slz.bin	; SLZ primary patterns
 		even
-Blk256_SLZ:	incbin	map256\slz.bin
+Blk256_SLZ:;	incbin	map256\slz.bin
 		even
 Blk16_SYZ:	incbin	map16\syz.bin
 		even
@@ -44604,7 +44344,7 @@ Col_LZ:		incbin	collide\lz.bin		; LZ index
 		even
 Col_MZ:		incbin	collide\mz.bin		; MZ index
 		even
-Col_SLZ:	incbin	collide\slz.bin		; SLZ index
+Col_SLZ:	;incbin	collide\slz.bin		; SLZ index
 		even
 Col_SYZ:	incbin	collide\syz.bin		; SYZ index
 		even
@@ -44618,12 +44358,6 @@ SS_1:		incbin	sslayout\1.bin
 SS_2:		incbin	sslayout\2.bin
 		even
 SS_3:		incbin	sslayout\3.bin
-		even
-SS_4:		incbin	sslayout\4.bin
-		even
-SS_5:		incbin	sslayout\5.bin
-		even
-SS_6:		incbin	sslayout\6.bin
 		even
 ; ---------------------------------------------------------------------------
 ; Animated uncompressed graphics
@@ -44639,8 +44373,6 @@ Art_MzLava1:	incbin	artunc\mzlava1.bin	; MZ lava surface
 Art_MzLava2:	incbin	artunc\mzlava2.bin	; MZ lava
 		even
 Art_MzTorch:	incbin	artunc\mztorch.bin	; MZ torch in background
-		even
-Art_SbzSmoke:	incbin	artunc\sbzsmoke.bin	; SBZ smoke in background
 		even
 Art_RingFlash:	incbin	artunc\ringflash.bin	; ring flash that appears when you enter a giant ring
 		even
@@ -44691,7 +44423,7 @@ Level_GHZbg:	incbin	levels\ghzbg.bin
 byte_68F84:	dc.b 0,	0, 0, 0
 byte_68F88:	dc.b 0,	0, 0, 0
 
-Level_LZ1:	incbin	levels\lz1.bin
+Level_LZ1:	;incbin	levels\lz1.bin
 		even
 Level_LZbg:	incbin	levels\lzbg.bin
 		even
@@ -44700,10 +44432,10 @@ Level_LZ2:	;incbin	levels\lz2.bin
 		include	"levels\lz2.asm"
 		even
 byte_6922E:	dc.b 0,	0, 0, 0
-Level_LZ3:	incbin	levels\lz3.bin
+Level_LZ3:	;incbin	levels\lz3.bin
 		even
 byte_6934C:	dc.b 0,	0, 0, 0
-Level_SBZ3:	incbin	levels\sbz3.bin
+Level_SBZ3:	;incbin	levels\sbz3.bin
 		even
 byte_6940A:	dc.b 0,	0, 0, 0
 
@@ -44711,25 +44443,25 @@ Level_MZ1:	incbin	levels\mz1.bin
 		even
 Level_MZ1bg:	incbin	levels\mz1bg.bin
 		even
-Level_MZ2:	incbin	levels\mz2.bin
+Level_MZ2:	;incbin	levels\mz2.bin
 		even
-Level_MZ2bg:	incbin	levels\mz2bg.bin
+Level_MZ2bg:	;incbin	levels\mz2bg.bin
 		even
 byte_6965C:	dc.b 0,	0, 0, 0
-Level_MZ3:	incbin	levels\mz3.bin
+Level_MZ3:	;incbin	levels\mz3.bin
 		even
-Level_MZ3bg:	incbin	levels\mz3bg.bin
+Level_MZ3bg:	;incbin	levels\mz3bg.bin
 		even
 byte_697E6:	dc.b 0,	0, 0, 0
 byte_697EA:	dc.b 0,	0, 0, 0
 
-Level_SLZ1:	incbin	levels\slz1.bin
+Level_SLZ1:	;incbin	levels\slz1.bin
 		even
-Level_SLZbg:	incbin	levels\slzbg.bin
+Level_SLZbg:	;incbin	levels\slzbg.bin
 		even
-Level_SLZ2:	incbin	levels\slz2.bin
+Level_SLZ2:	;incbin	levels\slz2.bin
 		even
-Level_SLZ3:	incbin	levels\slz3.bin
+Level_SLZ3:	;incbin	levels\slz3.bin
 		even
 byte_69B84:	dc.b 0,	0, 0, 0
 
@@ -44738,21 +44470,21 @@ Level_SYZ1:	incbin	levels\syz1.bin
 Level_SYZbg:	incbin	levels\syzbg.bin
 		even
 byte_69C7E:	dc.b 0,	0, 0, 0
-Level_SYZ2:	incbin	levels\syz2.bin
+Level_SYZ2:	;incbin	levels\syz2.bin
 		even
 byte_69D86:	dc.b 0,	0, 0, 0
-Level_SYZ3:	incbin	levels\syz3.bin
+Level_SYZ3:	;incbin	levels\syz3.bin
 		even
 byte_69EE4:	dc.b 0,	0, 0, 0
 byte_69EE8:	dc.b 0,	0, 0, 0
 
-Level_SBZ1:	incbin	levels\sbz1.bin
+Level_SBZ1:	;incbin	levels\sbz1.bin
 		even
-Level_SBZ1bg:	incbin	levels\sbz1bg.bin
+Level_SBZ1bg:	;incbin	levels\sbz1bg.bin
 		even
-Level_SBZ2:	incbin	levels\sbz2.bin
+Level_SBZ2:	;incbin	levels\sbz2.bin
 		even
-Level_SBZ2bg:	incbin	levels\sbz2bg.bin
+Level_SBZ2bg:	;incbin	levels\sbz2bg.bin
 		even
 byte_6A2F8:	dc.b 0,	0, 0, 0
 byte_6A2FC:	dc.b 0,	0, 0, 0
@@ -44819,62 +44551,62 @@ ObjPos_GHZ2:	incbin	objpos\ghz2.bin
 		even
 ObjPos_GHZ3:	incbin	objpos\ghz3.bin
 		even
-ObjPos_LZ1:	incbin	objpos\lz1.bin
+ObjPos_LZ1:;	incbin	objpos\lz1.bin
 		even
 ObjPos_LZ2:;	incbin	objpos\lz2.bin
 		include	"objpos\lz2.asm"
 		even
-ObjPos_LZ3:	incbin	objpos\lz3.bin
+ObjPos_LZ3:;	incbin	objpos\lz3.bin
 		even
-ObjPos_SBZ3:	incbin	objpos\sbz3.bin
+ObjPos_SBZ3:;	incbin	objpos\sbz3.bin
 		even
-ObjPos_LZ1pf1:	incbin	objpos\lz1pf1.bin
+ObjPos_LZ1pf1:;	incbin	objpos\lz1pf1.bin
 		even
-ObjPos_LZ1pf2:	incbin	objpos\lz1pf2.bin
+ObjPos_LZ1pf2:;	incbin	objpos\lz1pf2.bin
 		even
 ObjPos_LZ2pf1:	incbin	objpos\lz2pf1.bin
 		even
 ObjPos_LZ2pf2:	incbin	objpos\lz2pf2.bin
 		even
-ObjPos_LZ3pf1:	incbin	objpos\lz3pf1.bin
+ObjPos_LZ3pf1:;	incbin	objpos\lz3pf1.bin
 		even
-ObjPos_LZ3pf2:	incbin	objpos\lz3pf2.bin
+ObjPos_LZ3pf2:;	incbin	objpos\lz3pf2.bin
 		even
 ObjPos_MZ1:	incbin	objpos\mz1.bin
 		even
-ObjPos_MZ2:	incbin	objpos\mz2.bin
+ObjPos_MZ2:;	incbin	objpos\mz2.bin
 		even
-ObjPos_MZ3:	incbin	objpos\mz3.bin
+ObjPos_MZ3:;	incbin	objpos\mz3.bin
 		even
-ObjPos_SLZ1:	incbin	objpos\slz1.bin
+ObjPos_SLZ1:;	incbin	objpos\slz1.bin
 		even
-ObjPos_SLZ2:	incbin	objpos\slz2.bin
+ObjPos_SLZ2:;	incbin	objpos\slz2.bin
 		even
-ObjPos_SLZ3:	incbin	objpos\slz3.bin
+ObjPos_SLZ3:;	incbin	objpos\slz3.bin
 		even
 ObjPos_SYZ1:	incbin	objpos\syz1.bin
 		even
-ObjPos_SYZ2:	incbin	objpos\syz2.bin
+ObjPos_SYZ2:;	incbin	objpos\syz2.bin
 		even
-ObjPos_SYZ3:	incbin	objpos\syz3.bin
+ObjPos_SYZ3:;	incbin	objpos\syz3.bin
 		even
-ObjPos_SBZ1:	incbin	objpos\sbz1.bin
+ObjPos_SBZ1:;	incbin	objpos\sbz1.bin
 		even
-ObjPos_SBZ2:	incbin	objpos\sbz2.bin
+ObjPos_SBZ2:;	incbin	objpos\sbz2.bin
 		even
 ObjPos_FZ:	incbin	objpos\fz.bin
 		even
-ObjPos_SBZ1pf1:	incbin	objpos\sbz1pf1.bin
+ObjPos_SBZ1pf1:;	incbin	objpos\sbz1pf1.bin
 		even
-ObjPos_SBZ1pf2:	incbin	objpos\sbz1pf2.bin
+ObjPos_SBZ1pf2:;	incbin	objpos\sbz1pf2.bin
 		even
-ObjPos_SBZ1pf3:	incbin	objpos\sbz1pf3.bin
+ObjPos_SBZ1pf3:;	incbin	objpos\sbz1pf3.bin
 		even
-ObjPos_SBZ1pf4:	incbin	objpos\sbz1pf4.bin
+ObjPos_SBZ1pf4:;	incbin	objpos\sbz1pf4.bin
 		even
-ObjPos_SBZ1pf5:	incbin	objpos\sbz1pf5.bin
+ObjPos_SBZ1pf5:;	incbin	objpos\sbz1pf5.bin
 		even
-ObjPos_SBZ1pf6:	incbin	objpos\sbz1pf6.bin
+ObjPos_SBZ1pf6:;	incbin	objpos\sbz1pf6.bin
 		even
 ObjPos_End:	incbin	objpos\ending.bin
 		even
@@ -47460,9 +47192,9 @@ SegaPCM:	incbin	sound\segapcm.bin
 ; BAPointer:	dc.l	(((*)+$10000)&$00FF0000)
 ; AlignValue =	(((*-4)+$10000)&$00FF0000)
 
-AlignValue =	$D0000
+AlignValue =	$0B0000
 
-Bank1:		align	AlignValue+$8000
+Bank1:		align	AlignValue+$00000+$8000
 		incbin	sound\Driver\S1HLDACBank1.bin
 
 Bank2:		align	AlignValue+$10000+$8000

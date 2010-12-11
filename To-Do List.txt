@@ -6,10 +6,11 @@ To-Do:
 
 - Find new music for Night Hill Zone.
 - For the release, remove the level select and debug mode.
-- There are some ugly pixels on the level select font.
+- There are some ugly pixels on the level select font which need to be removed.
 - Finishing SRAM support.
 - Finding new Title Screen background art.
 - Getting "Don't allow Sonic to leave the screen" on Crabmeat boss to work (right now it's like, either prevent the screen going too far bug or going out of screen >_>).
+- In the last big cleanup phase, I accidentely deleted a lot of stuff for FZ, which needs to be restored...
 
 Bugs:
 - Restore music after death, if it isn't the normal music.

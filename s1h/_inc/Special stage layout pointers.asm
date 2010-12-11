@@ -4,7 +4,4 @@
 	dc.l SS_1
 	dc.l SS_2
 	dc.l SS_3
-	dc.l SS_4
-	dc.l SS_5
-	dc.l SS_6
 	even

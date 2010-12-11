@@ -183,38 +183,12 @@ PLC_MZ2:	dc.w 4
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Star Light
 ; ---------------------------------------------------------------------------
-PLC_SLZ:	dc.w 8
-		dc.l Nem_SLZ		; SLZ main patterns
-		dc.w 0
-		dc.l Nem_Bomb		; bomb enemy
-		dc.w $8000
-		dc.l Nem_Orbinaut	; orbinaut enemy
-		dc.w $8520
-		dc.l Nem_MzFire		; fireballs
-		dc.w $9000
-		dc.l Nem_SlzBlock	; block
-		dc.w $9C00
-		dc.l Nem_SlzWall	; breakable wall
-		dc.w $A260
-		dc.l Nem_Spikes		; spikes
-		dc.w $A360
-		dc.l Nem_HSpring	; horizontal spring
-		dc.w $A460
-		dc.l Nem_VSpring	; vertical spring
-		dc.w $A660
-PLC_SLZ2:	dc.w 5
-		dc.l Nem_Seesaw		; seesaw
-		dc.w $6E80
-		dc.l Nem_Fan		; fan
-		dc.w $7400
-		dc.l Nem_Pylon		; foreground pylon
-		dc.w $7980
-		dc.l Nem_SlzSwing	; swinging platform
-		dc.w $7B80
-		dc.l Nem_SlzCannon	; fireball launcher
-		dc.w $9B00
-		dc.l Nem_SlzSpike	; spikeball
-		dc.w $9E00
+PLC_SLZ:	dc.w 0
+		dc.l Nem_Null
+		dc.w $B000
+PLC_SLZ2:	dc.w 0
+		dc.l Nem_Null
+		dc.w $B000
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Spring Yard
 ; ---------------------------------------------------------------------------
@@ -306,12 +280,11 @@ PLC_SBZ2:	dc.w $C
 ; ---------------------------------------------------------------------------
 PLC_TitleCard:	dc.w 0
 		dc.l Nem_TitleCard
-	;	dc.w $B000
 		dc.w $AB80
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - act 3 boss
 ; ---------------------------------------------------------------------------
-PLC_Boss:	dc.w 5
+PLC_Boss:	dc.w 4
 		dc.l Nem_Eggman		; Eggman main patterns
 		dc.w $8000
 		dc.l Nem_Weapons	; Eggman's weapons
@@ -319,8 +292,6 @@ PLC_Boss:	dc.w 5
 		dc.l Nem_Prison		; prison capsule
 		dc.w $93A0
 		dc.l Nem_Bomb		; bomb enemy (gets overwritten)
-		dc.w $A300
-		dc.l Nem_SlzSpike	; spikeball (SLZ boss)
 		dc.w $A300
 		dc.l Nem_Exhaust	; exhaust flame
 		dc.w $A540
@@ -338,8 +309,6 @@ PLC_Signpost:	dc.w 2
 ; Pattern load cues - beta special stage warp effect
 ; ---------------------------------------------------------------------------
 PLC_Warp:	dc.w 0
-	;	dc.l Nem_Warp
-	;	dc.w $A820
 		dc.l Nem_Stars		; invincibility	stars
 		dc.w $AB80
 ; ---------------------------------------------------------------------------
@@ -413,27 +382,21 @@ PLC_MZAnimals:	dc.w 1
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - SLZ animals
 ; ---------------------------------------------------------------------------
-PLC_SLZAnimals:	dc.w 1
-		dc.l Nem_Pig		; pig
+PLC_SLZAnimals:	dc.w 0
+		dc.l Nem_Null
 		dc.w $B000
-		dc.l Nem_Flicky		; flicky
-		dc.w $B240
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - SYZ animals
 ; ---------------------------------------------------------------------------
-PLC_SYZAnimals:	dc.w 1
-		dc.l Nem_Pig		; pig
+PLC_SYZAnimals:	dc.w 0
+		dc.l Nem_Null
 		dc.w $B000
-		dc.l Nem_Chicken	; chicken
-		dc.w $B240
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - SBZ animals
 ; ---------------------------------------------------------------------------
-PLC_SBZAnimals:	dc.w 1
-		dc.l Nem_Rabbit		; rabbit
+PLC_SBZAnimals:	dc.w 0
+		dc.l Nem_Null
 		dc.w $B000
-		dc.l Nem_Chicken	; chicken
-		dc.w $B240
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - special stage results screen
 ; ---------------------------------------------------------------------------
@@ -460,8 +423,6 @@ PLC_Ending:	dc.w $E
 		dc.w $7C20
 		dc.l Nem_VSpring	; vertical spring
 		dc.w $A480
-	;	dc.l Nem_EndEggman	; Eggman's death (unused)
-	;	dc.w $A480
 		dc.l Nem_Rabbit		; rabbit
 		dc.w $AA60
 		dc.l Nem_Chicken	; chicken
@@ -491,13 +452,9 @@ PLC_TryAgain:	dc.w 2
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Eggman on SBZ 2
 ; ---------------------------------------------------------------------------
-PLC_EggmanSBZ2:	dc.w 2
-		dc.l Nem_SbzBlock	; block
-		dc.w $A300
-		dc.l Nem_Sbz2Eggman	; Eggman
-		dc.w $8000
-		dc.l Nem_LzSwitch	; switch
-		dc.w $9400
+PLC_EggmanSBZ2:	dc.w 0
+		dc.l Nem_Null
+		dc.w $B000
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - final boss
 ; ---------------------------------------------------------------------------
