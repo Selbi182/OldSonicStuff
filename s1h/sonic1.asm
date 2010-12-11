@@ -99,7 +99,7 @@ RomEndLoc:	dc.l EndOfRom-1	; ROM end
 RamStartLoc:	dc.l $FF0000	; RAM start
 RamEndLoc:	dc.l $FFFFFF	; RAM end
 
-SRAMSupport:	dc.l $5241F820		; change to $5241F820 to create SRAM
+SRAMSupport:	dc.l $5241F820		; create SRAM
 		dc.l $200000		; SRAM start
 		dc.l $2001FF		; SRAM end
 
@@ -235,6 +235,8 @@ GameClrRAM:
 		moveq	#0,d0			; clear d0
 		move.b	#1,($A130F1).l		; enable SRAM
 		lea	($200000).l,a1		; base of SRAM
+		tst.b	$1(a1)			; does SRAM exist?
+		beq.s	NoSRAM			; if not, branch
 		move.b	$3(a1),($FFFFFFBC).w
 		move.b	$5(a1),($FFFFFF92).w
 		move.b	$7(a1),($FFFFFFFB).w
@@ -245,7 +247,14 @@ GameClrRAM:
 		movep.l	$11(a1),d0
 		move.l	d0,($FFFFFE26).w
 		move.b	$19(a1),($FFFFFF8B).w	; otherwise update check value
+
+NoSRAM:
 		move.b	#0,($A130F1).l		; disable SRAM
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Main Game Loop, everything before this is only done on startup.
+; ---------------------------------------------------------------------------
 
 MainGameLoop:
 		moveq	#0,d0
@@ -255,6 +264,7 @@ MainGameLoop:
 		add.w	d1,d0
 		jsr	GameModeArray(pc,d0.w) ; jump to apt location in ROM
 		bra.s	MainGameLoop
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Main game mode array (screen modes / game modes)
@@ -3654,22 +3664,6 @@ T_PalSkip_1:
 		move.w	d0,(PalLocation+$1C).w			; load first colour into third one
 
 T_PalSkip_2:
-		move.w	($FFFFF614).w,d0
-		andi.w	#1,d0
-		bra.s	Title_NoPalChange
-	;	bne.s	Title_NoPalChange
-
-		add.w	#$0011,($FFFFFB00)	; increase Sonic's palette (color 1)
-		add.w	#$0011,($FFFFFB02)	; increase Sonic's palette (color 2)
-		add.w	#$0011,($FFFFFB04)	; increase Sonic's palette (color 3)
-		add.w	#$0011,($FFFFFB06)	; increase Sonic's palette (color 4)
-		add.w	#$0011,($FFFFFB08)	; increase Sonic's palette (color 5)
-		add.w	#$0011,($FFFFFB0A)	; increase Sonic's palette (color 6)
-	;	add.w	#$0011,($FFFFFB0C)	; increase Sonic's palette (color 7)
-		add.w	#$0011,($FFFFFB0E)	; increase Sonic's palette (color 8)
-	;	add.w	#$0011,($FFFFFB10)	; increase Sonic's palette (color 9)
-
-Title_NoPalChange:
 		cmpi.b	#$C0,($FFFFF605)	; has A + Start been pressed?
 		beq.s	Title_ChkLevSel		; if yes, branch	
 		cmpi.b	#$80,($FFFFF605).w 	; check if Start is pressed
@@ -3681,23 +3675,30 @@ Title_ChkLevSel:
 		beq.w	Title_LoadOptions	; if not, load options screen
 	endif
 		btst	#6,($FFFFF604).w	; check if A is pressed
-		beq.s	Title_LoadOptions	; if not, load options screen
+		beq.s	Title_Exit		; if not, exit title screen
 		move.b	#1,($FFFFFFDC).w	; some flag to fix music issues in the level select
 		move.b	#$E4,d0			; set sound #E4
 		jsr	PlaySound_Special	; stop music
 		jmp	Level_Select_Menu	; jump to Sonic 2 Level Select
 ; ===========================================================================
 
-Title_LoadOptions:
+Title_Exit:
+		move.b	#1,($A130F1).l		; enable SRAM
+		tst.b	($200001).l		; does SRAM exist?
+		beq.s	Title_NoSRAM		; if not, branch
+		move.b	#0,($A130F1).l		; disable SRAM
+		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
+		move.b	#$C,($FFFFF600).w	; set to level
+		move.w	#1,($FFFFFE02).w	; restart level
+		rts
+
+Title_NoSRAM:
+		move.b	#0,($A130F1).l		; disable SRAM
 		move.b	#$C,($FFFFF600).w	; set screen mode to level ($C)
 		jmp	ODIGHZSplash		; jump to One Day in Green Hill Zone screen
 ; ===========================================================================
 
 Title_ChkLevSel_Rest:
-	;	move.b	#$82,d0		; play level select (s1) music
-	;	jsr	PlaySound_Special
-	;	moveq	#2,d0
-	;	jsr	PalLoad2	; load level select pallet
 		lea	($FFFFCC00).w,a1
 		moveq	#0,d0
 		move.w	#$DF,d1
@@ -4187,6 +4188,9 @@ Level:					; XREF: GameModeArray
 		jsr	LoadPLC		; load level patterns
 
 loc_37FC:
+		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
+		beq.s	Level_NoSRAM		; if yes, branch
+
 		moveq	#0,d0			; clear d0
 		move.b	#1,($A130F1).l		; enable SRAM
 		lea	($200000).l,a1		; base of SRAM
@@ -4199,6 +4203,7 @@ loc_37FC:
 		move.b	#$FF,$1B(a1)		; make sure SRAM will be created at the correct size
 		move.b	#0,($A130F1).l		; disable SRAM
 
+Level_NoSRAM:
 		moveq	#1,d0
 		jsr	LoadPLC		; load standard	patterns
 		cmpi.w	#$001,($FFFFFE10).w	; is current level GHZ 2 (intro level)?
@@ -4490,6 +4495,7 @@ loc_3B14:
 		jsr	PalCycle_Load
 
 L_ML_NoPalCycle:
+		jsr	ObjPosLoad
 		jsr	RunPLC_RAM
 		jsr	OscillateNumDo
 		jsr	ChangeRingFrame
@@ -8310,14 +8316,6 @@ CamSpeed = 2					; set camera moving speed (standart 2 or 3)
 ; ===========================================================================
 
 S_H_NoEnding:
-		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
-		bne.s	S_H_NotGHZ1		; if not, branch
-		cmpi.w	#$20D0,($FFFFD008).w	; is Sonic past location $20D0?
-		blt.s	S_H_NotGHZ1		; if not, branch
-		bra.w	S_H_ResetCamera		; branch
-; ===========================================================================
-
-S_H_NotGHZ1:
 		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
 		bne.s	S_H_NotGHZ2		; if not, branch
 		tst.b	($FFFFFFD8).w		; has Buzz Bomber been destroyed?
@@ -9969,6 +9967,9 @@ Resize_GHZx:	dc.w Resize_GHZ1-Resize_GHZx
 ; ===========================================================================
 
 Resize_GHZ1:
+		cmpi.w	#$2600,($FFFFF700).w	; has the camera reached $2600 on x-axis?
+		bcc.w	Resize_GHZ3		; if yes, branch
+
 		move.w	#$300,($FFFFF726).w ; set lower	y-boundary
 		cmpi.w	#$12A0,($FFFFF700).w ; has the camera reached $1780 on x-axis?
 		bcs.s	locret_6E08	; if not, branch
@@ -9982,7 +9983,11 @@ locret_6E08:
 		bne.s	locret_6E08X
 		cmpi.b	#2,($FFFFFFD4).w
 		beq.s	locret_6E08X
-		move.b	#1,($FFFFF7CC).w ; lock controls
+		move.b	#1,($FFFFF7CC).w		; lock controls
+		move.w	($FFFFF700).w,($FFFFF728).w	; lock screen
+		move.w	#$2185,($FFFFF72A).w 	; lock screen
+	;	addi.w	#$140,($FFFFF72A).w
+		move.b	#1,($FFFFF7AA).w 		; lock screen
 		move.b	#$E0,d0
 		jsr	PlaySound_Special
 		clr.w	($FFFFD014).w
@@ -10017,10 +10022,10 @@ off_6E4A:	dc.w Resize_GHZ3main-off_6E4A
 
 Resize_GHZ3main:
 		move.w	#$300,($FFFFF726).w ; set lower	y-boundary
-		cmpi.w	#$1780,($FFFFF700).w ; has the camera reached $1780 on x-axis?
+		cmpi.w	#$3E80,($FFFFF700).w ; has the camera reached $1780 on x-axis?
 		bcs.s	locret_6E96	; if not, branch
 		move.w	#$400,($FFFFF726).w ; set lower	y-boundary
-		cmpi.w	#$2700,($FFFFF700).w
+		cmpi.w	#$4E00,($FFFFF700).w
 		bcc.w	loc_6E98
 		
 locret_6E96:
@@ -10385,7 +10390,6 @@ locret_715C:
 Resize_SLZ3end:
 		move.w	($FFFFF700).w,($FFFFF728).w
 		rts
-		rts
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Spring Yard Zone dynamic screen resizing
@@ -10404,6 +10408,7 @@ Resize_SYZx:	dc.w Resize_SYZ1-Resize_SYZx
 ; ===========================================================================
 
 Resize_SYZ1:
+		move.w	#$3A0,($FFFFF726).w
 		rts	
 ; ===========================================================================
 
@@ -13744,7 +13749,9 @@ Obj1F_Timesup:
 
 Obj1F_NoCamShake:
 		move.w	($FFFFF700).w,($FFFFF728).w	; lock screen
-		move.b	#1,($FFFFF7AA).w 		; lock	screen
+	;	move.w	#$2185,($FFFFF72A).w 		; lock screen
+		move.b	#1,($FFFFF7AA).w 		; lock screen
+
 		move.b	#1,($FFFFFFAA).w		; set flag 1
 		clr.b	($FFFFF7C8).w			; unlock controls 1
 		clr.b	($FFFFF7CC).w			; unlock controls 2
@@ -28931,6 +28938,14 @@ locret_13302:
 
 
 Sonic_LevelBound:			; XREF: Obj01_MdNormal; et al
+		cmpi.w	#$000,($FFFFFE10).w
+		bne.s	SLB_NotGHZ1
+		tst.b	($FFFFFF72).w
+		beq.s	SLB_NotGHZ1
+		cmpi.w	#$22C5,$8(a0)
+		bcc.w	Boundary_Sides
+
+SLB_NotGHZ1:
 		move.l	8(a0),d1
 		move.w	$10(a0),d0
 		ext.l	d0
@@ -44662,7 +44677,8 @@ Level_Index:	dc.w Level_GHZ1-Level_Index, Level_GHZbg-Level_Index, byte_68D70-Le
 		dc.w byte_6A320-Level_Index, byte_6A320-Level_Index, byte_6A320-Level_Index
 		dc.w byte_6A320-Level_Index, byte_6A320-Level_Index, byte_6A320-Level_Index
 
-Level_GHZ1:	incbin	levels\ghz1.bin
+Level_GHZ1:	;incbin	levels\ghz1.bin
+		include	"levels\ghz1.asm"
 		even
 byte_68D70:	dc.b 0,	0, 0, 0
 Level_GHZ2:	incbin	levels\ghz2.bin
@@ -44680,7 +44696,7 @@ Level_LZ1:	incbin	levels\lz1.bin
 Level_LZbg:	incbin	levels\lzbg.bin
 		even
 byte_69190:	dc.b 0,	0, 0, 0
-Level_LZ2:;	incbin	levels\lz2.bin
+Level_LZ2:	;incbin	levels\lz2.bin
 		include	"levels\lz2.asm"
 		even
 byte_6922E:	dc.b 0,	0, 0, 0
@@ -44796,7 +44812,8 @@ ObjPos_Index:	dc.w ObjPos_GHZ1-ObjPos_Index, ObjPos_Null-ObjPos_Index
 		dc.w ObjPos_SBZ1pf5-ObjPos_Index, ObjPos_SBZ1pf6-ObjPos_Index
 		dc.w ObjPos_SBZ1pf1-ObjPos_Index, ObjPos_SBZ1pf2-ObjPos_Index
 		dc.b $FF, $FF, 0, 0, 0,	0
-ObjPos_GHZ1:	incbin	objpos\ghz1.bin
+ObjPos_GHZ1:;	incbin	objpos\ghz1.bin
+		include	"objpos\ghz1.asm"
 		even
 ObjPos_GHZ2:	incbin	objpos\ghz2.bin
 		even

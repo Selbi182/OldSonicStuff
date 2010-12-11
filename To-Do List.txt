@@ -8,17 +8,18 @@ To-Do:
 - For the release, remove the level select and debug mode.
 - There are some ugly pixels on the level select font.
 - Finishing SRAM support.
-- New Title Screen background art.
+- Finding new Title Screen background art.
+- Getting "Don't allow Sonic to leave the screen" on Crabmeat boss to work (right now it's like, either prevent the screen going too far bug or going out of screen >_>).
 
 Bugs:
 - Restore music after death, if it isn't the normal music.
-- After beating Marble Zone, nothing happens.
 
 Would be great:
 - Change Options Screen's text arrays into ASCII arrays. Reading bytes sucks.
 - Find a more accurate system for the palette-restoration from WhiteFlash.
 
 Ideas:
+- Blood impact when being hit
 - Combining GHZ 1 and 3 (and I mean combining, not act transition!)
 - Challenge: Race against Sonic's shadow (i.e. Rayman - Candy Chateau)
 - Demo Mode (Basically a walkthrough, but in the game itself.)
