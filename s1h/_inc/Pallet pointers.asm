@@ -61,9 +61,6 @@
 	dc.l Pal_Ending
 	dc.w $FB00
 	dc.w $1F
-	dc.l Menu_Palette; pallet address
-	dc.w $FB00	; RAM address
-	dc.w $1F	; (pallet length / 2) - 1
 	dc.l Pal_InfoScreen
 	dc.w $FB00
 	dc.w $1F

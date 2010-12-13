@@ -62,7 +62,7 @@ Info_LoadText:
 LOADIS:
 	;	jsr	Pal_FadeTo
 
-		moveq	#$15,d0
+		moveq	#$14,d0
 		jsr	PalLoad2	; load level select pallet
 
 	;	moveq	#$15,d0
@@ -73,12 +73,7 @@ LOADIS:
 		clr.w	($FFFFFF98).w
 		clr.w	($FFFFFF9A).w
 		clr.w	($FFFFFF9C).w
-		
-	;	cmpi.w	#$000,($FFFFFE10).w
-	;	bne.s	Info_NoGHZ1
-	;	move.b	#1,($FFFFFF9C).w
 
-;Info_NoGHZ1:
 		jsr	CheckIfMainLevel
 		move.b	d5,($FFFFFF9C).w
 		
@@ -153,6 +148,13 @@ Info_NoTextChange:
 		beq.s	InfoScreen_MainLoop	; if not, branch
 		cmpi.b	#1,($FFFFFF9C).w	; is this the intro-dialouge?
 		bne.s	Info_NoIntro		; if not, branch
+
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	#1,($200001).l		; run first chapter screen
+		move.b	#0,($A130F1).l		; disable SRAM
+		jmp	ODIGHZSplash
+
+Info_NoIntro:
 		clr.b	($FFFFFF95).w
 		clr.w	($FFFFFF96).w
 		clr.w	($FFFFFF98).w
@@ -161,49 +163,6 @@ Info_NoTextChange:
 		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
 		move.b	#$C,($FFFFF600).w
 		jmp	NextLevelX
-
-Info_NoIntro:
-		clr.b	($FFFFFF95).w
-		clr.w	($FFFFFF96).w
-		clr.w	($FFFFFF98).w
-		clr.w	($FFFFFF9A).w
-		clr.w	($FFFFFF9C).w
-
-Info_OK:
-		move.w	#$D9,d0
-		jsr	PlaySound_Special
-		
-		cmpi.w	#$001,($FFFFFE10).w
-		bne.s	Info_NotGHZ2
-		move.w	#$000,($FFFFFE10).w
-		bra.s	Info_NextLevel
-
-Info_NotGHZ2:
-		jsr	NextLevelX
-
-Info_NextLevel:
-		clr.b	($FFFFFF95).w
-		clr.w	($FFFFFF96).w
-		clr.w	($FFFFFF98).w
-		clr.w	($FFFFFF9A).w
-		clr.w	($FFFFFF9C).w
-		move.b	#$C,($FFFFF600).w
-
-		jsr	CheckIfMainLevel	; check for main level
-		cmpi.b	#4,d5			; is level MZ1?
-		bne.s	Info_NotMZ1		; if not, branch
-		move.b	#1,($FFFFFFA0).w	; set to Chapter 2
-		jmp	ODIGHZSplash		; jump to One Day in Green Hill Zone screen
-
-Info_NotMZ1:
-		cmpi.b	#5,d5			; is level LZ2?
-		bne.s	Info_NotLZ2		; if not, branch
-		move.b	#2,($FFFFFFA0).w	; set to Chapter 3
-		jmp	ODIGHZSplash		; jump to One Day in Green Hill Zone screen
-
-Info_NotLZ2:
-		rts
-	;	jmp	PlayLevelX
 ; ===========================================================================
 
 ; ---------------------------------------------------------------------------

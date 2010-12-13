@@ -290,13 +290,9 @@ Options_Not16:
 		rts
 
 Options_NoSYZ1:
-	if Menu2=1
-		jmp	Title_ChkLevSel_Rest	; go to Menu 2
-	else
 		jsr	Pal_FadeOut		; fade out palette
 		move.b	#$C,($FFFFF600).w	; set screen mode to level ($C)
 		jmp	ODIGHZSplash		; jump to One Day in Green Hill Zone screen
-	endif
 ; ===========================================================================
 
 Options_Error:
@@ -547,11 +543,6 @@ Options_Loop_SonicArtx:
 		bsr.s	Options_MakeSpaceLine	; make an empty line
 ; ----------------------------------------------------------------------------
 		lea	(Options_Exit).l,a2	; get text location
-		tst.b	($FFFFFF9E).w
-		beq.s	@cont
-		lea	(Options_ExitX).l,a2
-
-@cont:
 		move.w	#23,d5			; set numbers of loops to 23
 		
 Options_Loop_Exitx:
@@ -1099,11 +1090,6 @@ Options_ExitText:
 		moveq	#0,d5			; make sure d5 is empty
 		lea	($FFFFCBCE).w,a1	; reset the text location, just in case
 		lea	(Options_Exit2).l,a2	; get text location
-		tst.b	($FFFFFF9E).w
-		beq.s	@cont
-		lea	(Options_ExitX2).l,a2
-
-@cont:
 		move.w	($FFFFFF96).w,d5	; set numbers of loops (this will make the "typing" effect)
 		
 Options_Loop_Exit:
@@ -1206,16 +1192,7 @@ Options_SonicArt2:
 		dc.b	$23, $1F, $1E, $19, $13, $FF, $11, $22, $24, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $23, $03		; SONIC ART (S3)
 		even
 ; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_Exit:	dc.b	$FF, $FF, $FF, $FF, $FF, $FF	; it will continue to Options_EXit2
-Options_Exit2:
-	if Menu2=1
-		dc.b				      $15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
-	else
-		dc.b				      $23, $24, $11, $22, $24, $FF, $17, $11, $1D, $15, $0A, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; START GAME
-	endif
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_ExitX:	dc.b	$FF, $FF, $FF, $FF, $FF, $FF	; it will continue to Options_EXitX2
-Options_ExitX2:	dc.b				      $15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
+Options_Exit:	dc.b	$FF, $FF, $FF, $FF, $FF, $FF	; it will continue to Options_Exit2
+Options_Exit2:	dc.b				      $15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
 		even
 ; ======================================================================================================================================================

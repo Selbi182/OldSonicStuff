@@ -1,11 +1,10 @@
 ; =====================================================================================================================
 ; "One Day in Green Hill Zone" screen - Code made by Marc
 ; =====================================================================================================================
-ODIGHZSplash_MusicID		EQU	$95		; Music to play
 ODIGHZSplash_NxtScr		EQU	$0C		; Screen mode to go to next (Sega Screen)
 ODIGHZSplash_Wait		EQU	$C0		; Time to wait
-
 ; ---------------------------------------------------------------------------------------------------------------------
+
 ODIGHZSplash:
 		jsr	ClearPLC			; Clear PLCs
 		jsr	Pal_FadeFrom			; Fade out previous palette
@@ -29,17 +28,16 @@ ODIGHZSplash_Art:
 		lea	($C00000).l,a6
 
 		move.b	#1,($A130F1).l		; enable SRAM
-		lea	($200000).l,a1		; base of SRAM
-		move.b	$1(a1),d1		; get current chaper number
+		move.b	($200001).l,($FFFFFFA0).w	; get current chaper number
 		move.b	#0,($A130F1).l		; disable SRAM
 
 		lea	(Art_Chapter1).l,a1	; load stuff for chapter 1
-		cmpi.b	#1,d1			; is flag set to chapter 2?
+		cmpi.b	#2,($FFFFFFA0).w	; is flag set to chapter 2?
 		bne.s	ODIGHZ_NoArt2		; if not, branch
 		lea	(Art_Chapter2).l,a1	; load chapter 2 stuff instead
 
 ODIGHZ_NoArt2:
-		cmpi.b	#2,d1			; is flag set to chapter 3?
+		cmpi.b	#3,($FFFFFFA0).w	; is flag set to chapter 3?
 		bne.s	ODIGHZ_NoArt3		; if not, branch
 		lea	(Art_Chapter3).l,a1	; load chapter 3 stuff instead
 
@@ -49,12 +47,12 @@ ODIGHZ_NoArt3:
 
 ODIGHZSplash_Mappings:
 		lea	(Map_Chapter1).l,a1		; load stuff for chapter 1
-		cmpi.b	#1,($FFFFFFA0).w		; is flag set to chapter 2?
+		cmpi.b	#2,($FFFFFFA0).w		; is flag set to chapter 2?
 		bne.s	ODIGHZ_NoMap2			; if not, branch
 		lea	(Map_Chapter2).l,a1		; load chapter 2 stuff instead
 
 ODIGHZ_NoMap2:
-		cmpi.b	#2,($FFFFFFA0).w		; is flag set to chapter 3?
+		cmpi.b	#3,($FFFFFFA0).w		; is flag set to chapter 3?
 		bne.s	ODIGHZ_NoMap3			; if not, branch
 		lea	(Map_Chapter3).l,a1		; load chapter 3 stuff instead
 
@@ -66,12 +64,12 @@ ODIGHZ_NoMap3:
 		
 ODIGHZSplash_Palette:
 		lea	(Pal_Chapter1).l,a1		; load stuff for chapter 1
-		cmpi.b	#1,($FFFFFFA0).w		; is flag set to chapter 2?
+		cmpi.b	#2,($FFFFFFA0).w		; is flag set to chapter 2?
 		bne.s	ODIGHZ_NoPal2			; if not, branch
 		lea	(Pal_Chapter2).l,a1		; load chapter 2 stuff instead
 
 ODIGHZ_NoPal2:
-		cmpi.b	#2,($FFFFFFA0).w		; is flag set to chapter 3?
+		cmpi.b	#3,($FFFFFFA0).w		; is flag set to chapter 3?
 		bne.s	ODIGHZ_NoPal3			; if not, branch
 		lea	(Pal_Chapter3).l,a1		; load chapter 3 stuff instead
 
@@ -101,32 +99,12 @@ ODIGHZSplash_Loop:
 		move.b	#2,($FFFFF62A).w		; Function 2 in vInt
 		jsr	DelayProgram			; Run delay program
 		tst.w	($FFFFF614).w			; Test wait time
-		beq.s	ODIGHZSplash_Next		; is it over? branch
-		cmpi.w	#$30,($FFFFF614).w		; Test wait time
-		bne.s	ODIGHZSplash_Loop		; is it over? branch
-		tst.b	($FFFFFFA0).w
-		bne.s	ODIGHZSplash_Loop
-		move.w	#ODIGHZSplash_MusicID,d0	; Play music
-		jsr	PlaySound
-		bra.s	ODIGHZSplash_Loop		; if not, loop
+		bne.s	ODIGHZSplash_Loop		; if it isn't over, loop
 
 ODIGHZSplash_Next:
-		move.b	#$C,($FFFFF600).w ; set	screen mode to $0C (level)
-		tst.b	($FFFFFFA0).w
-		bne.s	ODIGHZ_NoGHZ2
-		move.w	#$001,($FFFFFE10).w		; load GHZ2		
-		move.b	#3,($FFFFFE12).w ; set lives to	3
-		moveq	#0,d0
-		move.w	d0,($FFFFFE20).w ; clear rings
-		move.l	d0,($FFFFFE22).w ; clear time
-		move.l	d0,($FFFFFE26).w ; clear score
-		move.b	d0,($FFFFFE16).w ; clear special stage number
-		move.b	d0,($FFFFFE57).w ; clear emeralds
-		move.l	d0,($FFFFFE58).w ; clear emeralds
-		move.l	d0,($FFFFFE5C).w ; clear emeralds
-		move.b	d0,($FFFFFE18).w ; clear continues
-
-ODIGHZ_NoGHZ2:
+		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
+		move.b	#$C,($FFFFF600).w	; set to level
+		move.w	#1,($FFFFFE02).w	; restart level
 		rts
 		
 ; ---------------------------------------------------------------------------------------------------------------------
