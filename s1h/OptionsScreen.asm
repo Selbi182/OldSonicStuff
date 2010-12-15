@@ -27,14 +27,9 @@ Options_ClrObjRam:
 		move.l	d0,(a1)+
 		dbf	d1,Options_ClrObjRam ; fill object RAM ($D000-$EFFF) with $0
 
-	;	move	#$2700,sr
-	;	move.l	#$40000001,($C00004).l
-	;	lea	(Nem_TitleFg).l,a0 ; load Options	screen patterns
-	;	jsr	NemDec
-
 		lea	($C00000).l,a6
 		move.l	#$6E000002,4(a6)
-		lea	(Art_Text).l,a5
+		lea	(Options_TextArt).l,a5
 		move.w	#$59F,d1		; Original: $28F
 
 Options_LoadText:
@@ -47,19 +42,7 @@ Options_LoadText:
 
 		jsr	Pal_FadeFrom
 
-	;	move	#$2700,sr
-	;	lea	($FF0000).l,a1
-	;	lea	(Eni_Title).l,a0 ; load	Options screen mappings
-	;	move.w	#0,d0
-	;	jsr	EniDec
-	;	lea	($FF0000).l,a1
-	;	move.l	#$42080003,d0
-	;	moveq	#$21,d1
-	;	moveq	#$15,d2
-	;	jsr	ShowVDPGraphics
-
 ; ---------------------------------------------------------------------------
-
 		move.b	#$02,($FFFFD100).w	; load ERaZor banner object
 		move.w	#$BD,($FFFFD108).w	; set X-position
 		move.w	#$81,($FFFFD10A).w	; set Y-position
@@ -182,24 +165,22 @@ OptionsScreen_MainLoop:
 
 		tst.l	($FFFFF680).w
 		bne.s	OptionsScreen_MainLoop
-		tst.b	($FFFFFF9B).w	; is routine counter at $12 (Options_NoMore)?
+
+		tst.b	($FFFFFF9B).w		; is building-up-sequence done?
 		bne.s	Options_NoTextChange	; if yes, branch
-		move.b	($FFFFF605).w,d1
-	;	andi.b	#$F0,d1
+
+		tst.b	($FFFFF605).w
 		beq.s	Options_NoStart
 		move.b	#1,($FFFFFF9B).w
 		jsr	OptionsTextLoad		; update text
 		bra.s	OptionsScreen_MainLoop	; if not, branch
 
 Options_NoStart:
-	;	subq.b	#1,($FFFFFF95).w	; sub 1 from delay
-	;	bpl.s	Options_NoTextChange	; if time remains, branch
 		jsr	OptionsTextLoad		; update text
-	;	move.b	#1,($FFFFFF95).w	; reset delay timer
-	;	move.b	#1,($FFFFF7CC).w ; lock controls
 		tst.b	($FFFFFF9B).w	; is routine counter at $12 (Options_NoMore)?
 		bne.s	Options_NoTextChange	; if yes, branch
 		bra.s	OptionsScreen_MainLoop
+; ---------------------------------------------------------------------------
 
 Options_NoTextChange:
 		move.b	($FFFFF605).w,d1	; get button presses
@@ -217,7 +198,6 @@ Options_OK:
 		clr.w	($FFFFFF96).w
 		clr.w	($FFFFFF98).w
 		clr.b	($FFFFFF9A).w
-	;	clr.b	($FFFFFF9B).w
 		clr.w	($FFFFFF9C).w
 
 		move.w	#$D9,d0
@@ -227,7 +207,7 @@ Options_OK:
 ; ===========================================================================
 
 Options_Check4:
-		cmpi.w	#4,d0		; have you selected item 4 (AIR MOVE)?
+		cmpi.w	#4,d0		; have you selected item 4 (AIR MOVE ON B)?
 		bne.s	Options_Not4	; if not, check for next numbers
 		bchg	#0,($FFFFFFBC).w	; enable/disable air move
 		jsr	OptionsTextLoad
@@ -235,34 +215,33 @@ Options_Check4:
 ; ===========================================================================
 
 Options_Not4:
-		cmpi.w	#7,d0		; have you selected item 7 (INVIN TIME)?
+		cmpi.w	#7,d0		; have you selected item 7 (EXTENDED CAMERA)?
 		bne.s	Options_Not7	; if not, check for next numbers
-		bchg	#0,($FFFFFF92).w	; enable/disable invin time
-		jsr	OptionsTextLoad
-		bra.w	OptionsScreen_MainLoop
-; ===========================================================================
-
-Options_Not7:
-		cmpi.w	#10,d0		; have you selected item 10 (DEBUG)?
-		bne.s	Options_Not10	; if not, check for next numbers
-		bchg	#0,($FFFFFFFB).w	; enable/disable debug
-		jsr	OptionsTextLoad
-		bra.w	OptionsScreen_MainLoop
-; ===========================================================================
-
-Options_Not10:
-		cmpi.w	#13,d0		; have you selected item 13 (EXTENDED CAM)?
-		bne.s	Options_Not13	; if not, check for next numbers
 		bchg	#0,($FFFFFF93).w	; enable/disable extended camera
 		jsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
 
-Options_Not13:
-		cmpi.w	#16,d0		; have you selected item 16 (SONIC ART)?
-		bne.s	Options_Not16	; if not, check for next numbers
+Options_Not7:
+		cmpi.w	#10,d0		; have you selected item 10 (SONIC ART)?
+		bne.s	Options_Not10	; if not, check for next numbers
 		bchg	#0,($FFFFFF94).w	; change art style flag
 		jsr	OptionsTextLoad
+		bra.w	OptionsScreen_MainLoop
+; ===========================================================================
+
+Options_Not10:
+		cmpi.w	#13,d0		; have you selected item 13 (FOURTH OPTION)?
+		bne.s	Options_Not13	; if not, check for next numbers
+		bchg	#0,($FFFFFF92).w	; enable/disable fourth option
+		jsr	OptionsTextLoad
+		bra.w	OptionsScreen_MainLoop
+; ===========================================================================
+
+Options_Not13:
+		cmpi.w	#16,d0		; have you selected item 16 (SOUND TEST)?
+		bne.s	Options_Not16	; if not, check for next numbers
+	;	move.b	#$28,($FFFFF600).w	; set game mode to sound test (doesn't exist yet)
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
 
@@ -396,35 +375,15 @@ loc2_34FE:				; XREF: OptionsTextLoad+26j
 
 Options_SetCorrectLocation:
 		tst.b	($FFFFFF9B).w		; is routine counter at $12 (Options_NoMore)?
-		bne.s	Options_Finished		; if yes, branch
+		bne.s	Options_Finished	; if yes, branch
 		move.w	#$E570,d3
 
 Options_Finished:
-		cmpi.w	#4,($FFFFFF82).w	; is selection AIR MOVE ON B?
-		bne.s	Cont_Not4		; if not, branch
-		lea	($FFFFCA60).w,a1	; set location
-
-Cont_Not4:
-		cmpi.w	#7,($FFFFFF82).w	; is selection
-		bne.s	Cont_Not7		; if not, branch
-		lea	($FFFFCAA8).w,a1	; set location
-
-Cont_Not7:
-		cmpi.w	#10,($FFFFFF82).w	; is selection
-		bne.s	Cont_Not10		; if not, branch
-		lea	($FFFFCAF0).w,a1	; set location
-
-Cont_Not10:
-		cmpi.w	#13,($FFFFFF82).w	; is selection
-		bne.s	Cont_Not13		; if not, branch
-		lea	($FFFFCB38).w,a1	; set location
-
-Cont_Not13:
-		cmpi.w	#16,($FFFFFF82).w	; is selection
-		bne.s	Cont_Not16		; if not, branch
-		lea	($FFFFCB80).w,a1	; set location
-
-Cont_Not16:
+		lea	($FFFFCA00).w,a1	; set location
+		move.w	($FFFFFF82).w,d5	; get current selection
+		mulu.w	#24,d5			; multiply it by 24 (number of characters per line)
+		adda.w	d5,a1			; add result to pointer
+		
 		jsr	Options_ChgLine
 		move.w	#$E570,d3
 		cmpi.w	#$14,($FFFFFF82).w
@@ -458,741 +417,167 @@ loc2_3598:				; XREF: Options_ChgLine
 ; End of function Options_ChgLine
 
 ; ===========================================================================
-; ===========================================================================
-; ===========================================================================
-; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to write the options text.
+; ---------------------------------------------------------------------------
 
 GetOptionsText:
-		tst.b	($FFFFFF9B).w		; is routine counter at $12 (Options_NoMore)?
-		beq.w	Options_LoadUp		; if yes, branch
-		
-		moveq	#0,d5			; make sure d5 is empty
-		lea	($FFFFCA00).w,a1	; load destination location to a1
-		lea	(Options_HeaderText).l,a2	; get text location
-		move.w	#71,d5			; set numbers of loops to 71
-		
-Options_Loop_Headerx:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Headerx	; loop
-; ----------------------------------------------------------------------------
-		bsr.w	Options_MakeSpaceLine	; make an empty line
-; ----------------------------------------------------------------------------
-		lea	(Options_AirMove1).l,a2	; get text location
-		move.w	#23,d5			; set numbers of loops to 23
-		tst.b	($FFFFFFBC).w		; is flag set?
-		beq.s	Options_Loop_AirMovex	; if not, branch
-		lea	(Options_AirMove2).l,a2	; get alternate text location	
-		
-Options_Loop_AirMovex:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_AirMovex	; loop
-; ----------------------------------------------------------------------------
-		bsr.w	Options_MakeSpaceLine	; make an empty line
-		bsr.w	Options_MakeSpaceLine	; make an empty line
-; ----------------------------------------------------------------------------
-		lea	(Options_Invin2).l,a2	; get text location
-		move.w	#23,d5			; set numbers of loops to 23
-		tst.b	($FFFFFF92).w		; is flag set?
-		beq.s	Options_Loop_Invinx	; if not, branch
-		lea	(Options_Invin1).l,a2	; get alternate text location	
-		
-Options_Loop_Invinx:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Invinx	; loop
-; ----------------------------------------------------------------------------
-		bsr.w	Options_MakeSpaceLine	; make an empty line
-		bsr.w	Options_MakeSpaceLine	; make an empty line
-; ----------------------------------------------------------------------------
-		lea	(Options_Debug1).l,a2	; get text location
-		move.w	#23,d5			; set numbers of loops to 23
-		btst	#0,($FFFFFFFB).w	; is flag set?
-		beq.s	Options_Loop_Debugx	; if yes, branch
-		lea	(Options_Debug2).l,a2	; get alternate text location	
-		
-Options_Loop_Debugx:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Debugx	; loop
-; ----------------------------------------------------------------------------
-		bsr.s	Options_MakeSpaceLine	; make an empty line
-		bsr.s	Options_MakeSpaceLine	; make an empty line
-; ----------------------------------------------------------------------------
-		lea	(Options_Extended2).l,a2 ; get text location
-		move.w	#23,d5			; set numbers of loops to 23
-		tst.b	($FFFFFF93).w		; is flag set?
-		beq.s	Options_Loop_Extendedx	; if not, branch
-		lea	(Options_Extended1).l,a2 ; get alternate text location	
-		
-Options_Loop_Extendedx:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Extendedx ; loop
-; ----------------------------------------------------------------------------
-		bsr.s	Options_MakeSpaceLine	; make an empty line
-		bsr.s	Options_MakeSpaceLine	; make an empty line
-; ----------------------------------------------------------------------------
-		lea	(Options_SonicArt1).l,a2 ; get text location
-		move.w	#23,d5			; set numbers of loops to 23
-		tst.b	($FFFFFF94).w		; is flag set?
-		beq.s	Options_Loop_SonicArtx	; if not, branch
-		lea	(Options_SonicArt2).l,a2	; get alternate text location	
-		
-Options_Loop_SonicArtx:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_SonicArtx ; loop
-; ----------------------------------------------------------------------------
-		bsr.s	Options_MakeSpaceLine	; make an empty line
-		bsr.s	Options_MakeSpaceLine	; make an empty line
-; ----------------------------------------------------------------------------
-		lea	(Options_Exit).l,a2	; get text location
-		move.w	#23,d5			; set numbers of loops to 23
-		
-Options_Loop_Exitx:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Exitx	; loop
-; ----------------------------------------------------------------------------
-		bsr.s	Options_MakeSpaceLine	; make an empty line
-		rts
-; ===========================================================================
+		lea	($FFFFCA00+(0*24)).w,a1		; set destination
+		lea	(OpText_Header1).l,a2		; set text location
+		bsr.w	Options_Write			; write text
+		lea	(OpText_Header2).l,a2		; set text location
+		bsr.w	Options_Write			; write text
+		lea	(OpText_Header1).l,a2		; set text location
+		bsr.w	Options_Write			; write text
 
-Options_MakeSpaceLine:
-		lea	(Options_Space).l,a2	; get text location
-		move.w	#23,d5			; set numbers of loops to 23
-		
-Options_Loop_Spacexx:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Spacexx	; loop
-		rts
-; ===========================================================================
-; ===========================================================================		
-		
-		
-		
-Options_LoadUp:
-		bra.w	Options_NoEntireText	; skip
-; ===========================================================================
 
-		moveq	#0,d5			; make sure d5 is empty
-		lea	($FFFFCA00).w,a1	; load destination location to a1
-		lea	(OptionsText).l,a2	; get text location
-		move.w	#503,d5			; set numbers of loops to 503
+		lea	($FFFFCA00+(4*24)).w,a1		; set destination
+		lea	(OpText_AirMove).l,a2		; set text location
+		bsr.w	Options_Write			; write text
+		lea	(OpText_OFF).l,a2		; use "OFF" text
+		tst.b	($FFFFFFBC).w			; is Air Move on B enabled?
+		beq.s	GOT_AMOB_Write			; if not, branch
+		lea	(OpText_ON).l,a2		; otherwise use "ON" text
+GOT_AMOB_Write:
+		bsr.w	Options_Write			; write text
 
-Options_TextLoop:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_TextLoop	; loop
-		rts				; return
-; ===========================================================================
-; ===========================================================================
 
-Options_NoEntireText:
-		moveq	#0,d0			; clear d0
-		move.b	($FFFFFF9A).w,d0	; get index number
-		move.w	Options_Index(pc,d0.w),d1 ; get current index
-		jmp	Options_Index(pc,d1.w)	; jump to set position
-; ===========================================================================
-Options_Index:	dc.w Options_HeaderText1-Options_Index
-		dc.w Options_HeaderText2-Options_Index
-		dc.w Options_SpaceLine-Options_Index
-		dc.w Options_SpaceLine-Options_Index
-		dc.w Options_AirMove-Options_Index
-		dc.w Options_AirMove2x-Options_Index
-		dc.w Options_InvinTime-Options_Index
-		dc.w Options_InvinTime2x-Options_Index
-		dc.w Options_Debug-Options_Index
-		dc.w Options_Debug2x-Options_Index
-		dc.w Options_Extended-Options_Index
-		dc.w Options_Extended2x-Options_Index
-		dc.w Options_SonicArt-Options_Index
-		dc.w Options_ExitText-Options_Index
-		dc.w Options_NoMore-Options_Index
-; ===========================================================================
+		lea	($FFFFCA00+(7*24)).w,a1		; set destination
+		lea	(OpText_Extended).l,a2		; set text location
+		bsr.s	Options_Write			; write text
+		lea	(OpText_OFF).l,a2		; use "OFF" text
+		tst.b	($FFFFFF93).w			; is Extended Camera disabled?
+		bne.s	GOT_ExtCam_Write		; if not, branch
+		lea	(OpText_ON).l,a2		; otherwise use "ON" text
+GOT_ExtCam_Write:
+		bsr.s	Options_Write			; write text
 
-Options_HeaderText1:
-		addq.w	#1,($FFFFFF96).w	; increase main counter
-		moveq	#0,d5			; make sure d5 is empty
-		lea	($FFFFCA00).w,a1	; load destination location to a1
-		lea	(Options_Header1).l,a2	; get text location
-		move.w	($FFFFFF96).w,d5	; set numbers of loops (this will make the "typing" effect)
-		
-Options_Loop_Header:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Header	; loop
 
-		lea	($FFFFCA30).w,a1	; load destination location to a1
-		lea	(Options_Header1).l,a2	; get text location
-		move.w	($FFFFFF96).w,d5	; set numbers of loops (this will make the "typing" effect)
-		
-Options_Loop_Headerxx:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Headerxx	; loop
-		
-		cmpi.w	#23,($FFFFFF96).w	; has char 71 been reached?
-		bgt.s	Options_DoNext1		; if yes, branch
-		rts				; otherwise return
+		lea	($FFFFCA00+(10*24)).w,a1	; set destination
+		lea	(OpText_SonicArt).l,a2		; set text location
+		bsr.s	Options_Write			; write text
+		lea	(OpText_S2B).l,a2		; use "S2B" text
+		tst.b	($FFFFFF94).w			; is art set to S3?
+		beq.s	GOT_SonArt_Write		; if not, branch
+		lea	(OpText_S3).l,a2		; otherwise use "ON" text
+GOT_SonArt_Write:
+		bsr.s	Options_Write			; write text
+
+
+		lea	($FFFFCA00+(13*24)).w,a1	; set destination
+		lea	(OpText_FourthOption).l,a2	; set text location
+		bsr.s	Options_Write			; write text
+		lea	(OpText_OFF).l,a2		; use "S2B" text
+		tst.b	($FFFFFF92).w			; is flag set?
+		beq.s	GOT_4th_Write			; if not, branch
+		lea	(OpText_ON).l,a2		; otherwise use "ON" text
+GOT_4th_Write:
+		bsr.s	Options_Write			; write text
+
+
+		lea	($FFFFCA00+(16*24)).w,a1	; set destination
+		lea	(OpText_SoundTest).l,a2		; set text location
+		bsr.s	Options_Write			; write text
+
+
+		lea	($FFFFCA00+(19*24)+6).w,a1	; set destination
+		lea	(OpText_Exit).l,a2		; set text location
+		bsr.s	Options_Write			; write text
+
+
+		move.b	#1,($FFFFFF9B).w		; set to "building-up-sequence" done
+		rts					; return
+; ---------------------------------------------------------------------------
+; ===========================================================================
 ; ---------------------------------------------------------------------------
 
-Options_DoNext1:
-		clr.w	($FFFFFF96).w
-		addq.b	#2,($FFFFFF9A).w	; go to next text
-		bra.w	OptionsTextLoad	; kind of return
-; ===========================================================================
+Options_Write:
+		move.b	(a2)+,d0	; get current char from a2
 
-Options_HeaderText2:
-		addq.w	#1,($FFFFFF96).w	; increase main counter
-		moveq	#0,d5			; make sure d5 is empty
-		lea	($FFFFCA18).w,a1	; load destination location to a1
-		lea	(Options_Header2).l,a2	; get text location
-		move.w	($FFFFFF96).w,d5	; set numbers of loops (this will make the "typing" effect)
-		
-Options_Loop_Headerxxx:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Headerxxx	; loop
-
-		lea	($FFFFCA30).w,a1	; load destination location to a1
-		lea	(Options_Header1).l,a2	; get text location
-		move.w	#23,d5			; set numbers of loops (this will make the "typing" effect)
-		
-Options_Loop_Headerxxxx:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Headerxxxx	; loop
-		
-		cmpi.w	#23,($FFFFFF96).w	; has char 71 been reached?
-		bgt.s	Options_Next1		; if yes, branch
-		rts				; otherwise return
+		tst.b	d0		; is current character $FF?
+		bpl.s	OW_NotFF	; if not, branch
+		rts			; otherwise, return
 ; ---------------------------------------------------------------------------
 
-Options_Next1:
-		addq.b	#2,($FFFFFF9A).w	; go to next text
-		bra.w	OptionsTextLoad	; kind of return
+OW_NotFF:
+		cmpi.b	#$20,d0		; is current character a space?
+		bne.s	OW_NotSpace	; if not, branch
+		move.b	#$F0,d0		; set correct value for space
+		bra.s	OW_DoWrite	; skip
+
+OW_NotSpace:
+		cmpi.b	#$3D,d0		; is current character a "="?
+		bne.s	OW_NotEqual	; if not, branch
+		move.b	#$0C,d0		; set correct value for "="
+		bra.s	OW_DoWrite	; skip
+
+OW_NotEqual:
+		subi.b	#50,d0		; otherwise it's a letter and has to be set to the correct value
+		cmpi.b	#9,d0		; is result a number?
+		bgt.s	OW_DoWrite	; if not, branch
+		addq.b	#2,d0		; otherwise add 2 again
+
+OW_DoWrite:
+		move.b	d0,(a1)+	; write output to a1
+
+		bra.s	Options_Write	; loop
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 
-Options_SpaceLine:
-		move.b	#$FF,d3			; set char to be set to $FF (space)
-		move.w	#23,d5			; set numbers of loops to 23
-		
-Options_Loop_Spacex:
-		move.b	d3,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Spacex	; loop
 
-		addq.b	#2,($FFFFFF9A).w	; go to next text
-		bra.w	OptionsTextLoad	; kind of return
 ; ===========================================================================
-
-Options_MainCode:
-		move.w	($FFFFFF98).w,d6	; get current number in $FFFFFF98
-		beq.s	Options_NoSpaces	; if it's 0, branch
-		move.b	#$FF,d5			; set char to be set to $FF (space)
-		
-Options_Loop_MakeFFs:
-		move.b	d5,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_MakeFFs	; loop
-
-Options_NoSpaces:
-		tst.w	($FFFFFF98).w		; is $FFFFFF98 empty?
-		beq.s	Options_FF98Empty	; if yes, branch		
-		subq.w	#1,($FFFFFF98).w	; otherwise decrease it, to load the next char
-
-Options_FF98Empty:
-		move.w	#23,d6			; set number of loop to 23
-		sub.w	($FFFFFF98).w,d6	; substract $FFFFFF98 from it
-		bne.s	Options_BSR_Return	; if the result is not 0, branch
-		move.w	#-1,($FFFFFF98).w	; set so it's getting skipped
-
-Options_BSR_Return:
-		rts				; return
-; ===========================================================================
-
-Options_MainCode2:
-		move.w	($FFFFFF9C).w,d6	; get current number in $FFFFFF9C
-		beq.s	Options_NoSpaces2	; if it's 0, branch
-		move.b	#$FF,d5			; set char to be set to $FF (space)
-		
-Options_Loop_MakeFFs2:
-		move.b	d5,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_MakeFFs2	; loop
-
-Options_NoSpaces2:
-		tst.w	($FFFFFF9C).w		; is $FFFFFF9C empty?
-		beq.s	Options_FF9CEmpty	; if yes, branch		
-		subq.w	#1,($FFFFFF9C).w	; otherwise decrease it, to load the next char
-
-Options_FF9CEmpty:
-		move.w	#23,d6			; set number of loop to 23
-		sub.w	($FFFFFF9C).w,d6	; substract $FFFFFF9C from it
-		bne.s	Options_BSR_Return2	; if the result is not 0, branch
-		move.w	#-1,($FFFFFF9C).w	; set so it's getting skipped
-
-Options_BSR_Return2:
-		rts				; return
-; ===========================================================================
-
-Options_RemoveLetters:
-		moveq	#0,d2
-		move.w	($FFFFFF9A).w,d2	; get the number $48 needs to be multiplicated
-		subq.w	#6,d2
-		mulu.w	#$24,d2			; d2 / 2 * $48 = d2 * $24
-		add.w	#$CA60,d2		; add another $CA00 to it
-		movea.w	d2,a6			; sign extension takes place automatically
-		cmp.b	#$FF,(a6)		; is the last byte of the calculated location $FF?
-		beq.s	Op_CheckOk		; if yes, branch
-		move.w	#-1,d2			; otherwise, set d2 to 1, for something which will be used later
-		
-Op_CheckOk:
-		move.l	a6,($FFFFCA7A).w
-		rts
-; ===========================================================================
-
-Options_AirMove:
-		lea	($FFFFCA60).w,a1	; reset the text location, just in case
-
-		bsr.s	Options_MainCode	; get default coding
-		beq.s	Options_AirMove_Return	; if returned result is -1, branch
-
-		lea	(Options_AirMove1).l,a2	; get text location
-		tst.b	($FFFFFFBC).w		; is flag set?
-		beq.s	Options_Loop_AirMove	; if not, branch
-		lea	(Options_AirMove2).l,a2	; get alternate text location	
-		
-Options_Loop_AirMove:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_AirMove	; loop
-		
-		move.w	#$FFFF,($FFFFCA78).w	; fix those two letters manually
-
-	;	bsr.s	Options_RemoveLetters
-	;	cmpi.w	#-1,d2
-	;	beq.s	Options_Next2
-		cmpi.b	#$FF,($FFFFCA6B).w	; is the first letter of the row still empty?
-		bne.s	Options_Next2		; if not, go on to next line
-
-Options_AirMove_Return:
-		rts				; return
+; ---------------------------------------------------------------------------
+; Options Text
 ; ---------------------------------------------------------------------------
 
-Options_Next2:
-		addq.b	#2,($FFFFFF9A).w	; increase routine counter
-		move.w	#10,($FFFFFF98).w	; reset char counter
-		move.w	#23,($FFFFFF9C).w	; reset char counter 2
-		bra.w	OptionsTextLoad		; go back
-; ===========================================================================
+OpText_Header1:
+		dc.b	"========================", $FF
+		even
 
-Options_AirMove2x:
-		lea	($FFFFCA60).w,a1	; reset the text location, just in case
-
-		bsr.w	Options_MainCode	; get default coding
-		beq.s	Options_AirMove_Return2	; if returned result is -1, branch
-
-		lea	(Options_AirMove1).l,a2	; get text location
-		tst.b	($FFFFFFBC).w		; is flag set?
-		beq.s	Options_Loop_AirMove2	; if not, branch
-		lea	(Options_AirMove2).l,a2	; get alternate text location	
-		
-Options_Loop_AirMove2:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_AirMove2	; loop
-		
-		move.w	#$FFFF,($FFFFCA78).w	; fix those two letters manually
-
-		cmpi.b	#$FF,($FFFFCA60).w	; is the first letter of the row still empty?
-		bne.s	Options_Next2x		; if not, go on to next line
-
-
-		lea	($FFFFCAA8).w,a1	; reset the text location, just in case
-
-		bsr.w	Options_MainCode2	; get default coding
-		beq.s	Options_AirMove_Return2	; if returned result is -1, branch
-
-		lea	(Options_Invin2).l,a2	; get text location
-		tst.b	($FFFFFF92).w		; is flag set?
-		beq.s	Options_Loop_Invin2	; if not, branch
-		lea	(Options_Invin1).l,a2	; get alternate text location	
-		
-Options_Loop_Invin2:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_Invin2	; loop
-		
-		move.w	#$FFFF,($FFFFCAC0).w	; fix those two letters manually
-
-
-Options_AirMove_Return2:
-		rts				; return
+OpText_Header2:
+		dc.b	"      SONIC ERAZOR      ", $FF
+		even
 ; ---------------------------------------------------------------------------
 
-Options_Next2x:
-		addq.b	#2,($FFFFFF9A).w	; increase routine counter
-		move.w	#23,($FFFFFF98).w	; reset char counter
-		bra.w	OptionsTextLoad		; go back
-; ===========================================================================
+OpText_AirMove:
+		dc.b	"AIR MOVE ON B        ", $FF
+		even
 
-Options_InvinTime:
-		lea	($FFFFCAA8).w,a1	; reset the text location, just in case
+OpText_Extended:
+		dc.b	"EXTENDED CAMERA      ", $FF
+		even
 
-		bsr.w	Options_MainCode2	; get default coding
-		beq.s	Options_Invin_Return	; if returned result is -1, branch
+OpText_SonicArt:
+		dc.b	"SONIC ART            ", $FF
+		even
 
-		lea	(Options_Invin2).l,a2	; get text location
-		tst.b	($FFFFFF92).w		; is flag set?
-		beq.s	Options_Loop_Invin	; if not, branch
-		lea	(Options_Invin1).l,a2	; get alternate text location	
-		
-Options_Loop_Invin:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_Invin	; loop
-		
-		move.w	#$FFFF,($FFFFCAC0).w	; fix those two letters manually
-
-		cmpi.b	#$FF,($FFFFCAB3).w	; is the first letter of the row still empty?
-		bne.s	Options_Next3		; if not, go on to next line
-
-Options_Invin_Return:
-		rts				; return
+OpText_FourthOption:
+		dc.b	"XXXXXXXXXXXXXXXXXXX  ", $FF
+		even
 ; ---------------------------------------------------------------------------
 
-Options_Next3:
-		addq.b	#2,($FFFFFF9A).w	; increase routine counter
-		move.w	#23,($FFFFFF98).w	; reset char counter
-		move.w	#10,($FFFFFF9C).w	; reset char counter 2
-		bra.w	OptionsTextLoad		; go back
-; ===========================================================================
-
-Options_InvinTime2x:
-		lea	($FFFFCAA8).w,a1	; reset the text location, just in case
-
-		bsr.w	Options_MainCode2	; get default coding
-		beq.s	Options_Invin_Return2	; if returned result is -1, branch
-
-		lea	(Options_Invin2).l,a2	; get text location
-		tst.b	($FFFFFF92).w		; is flag set?
-		beq.s	Options_Loop_Invin2x	; if not, branch
-		lea	(Options_Invin1).l,a2	; get alternate text location	
-		
-Options_Loop_Invin2x:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_Invin2x	; loop
-		
-		move.w	#$FFFF,($FFFFCAC0).w	; fix those two letters manually
-
-		cmpi.b	#$FF,($FFFFCAA8).w	; is the first letter of the row still empty?
-		bne.s	Options_Next3x		; if not, go on to next line
-
-		lea	($FFFFCAF0).w,a1	; reset the text location, just in case
-
-		bsr.w	Options_MainCode	; get default coding
-		beq.s	Options_Invin_Return2	; if returned result is -1, branch
-		
-		lea	(Options_Debug1).l,a2	; get text location
-		btst	#0,($FFFFFFFB).w	; is flag set?
-		beq.s	Options_Loop_Debugx2	; if yes, branch
-		lea	(Options_Debug2).l,a2	; get alternate text location	
-		
-Options_Loop_Debugx2:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_Debugx2	; loop
-
-		move.w	#$FFFF,($FFFFCB08).w	; fix those two letters manually
-
-Options_Invin_Return2:
-		rts				; return
+OpText_SoundTest:
+		dc.b	"       SOUND TEST       ", $FF
+		even
 ; ---------------------------------------------------------------------------
 
-Options_Next3x:
-		addq.b	#2,($FFFFFF9A).w	; increase routine counter
-		move.w	#23,($FFFFFF9C).w	; reset char counter 2
-		bra.w	OptionsTextLoad		; go back
-; ===========================================================================
-
-Options_Debug:
-		lea	($FFFFCAF0).w,a1	; reset the text location, just in case
-
-		bsr.w	Options_MainCode	; get default coding
-		beq.s	Options_Debug_Return	; if returned result is -1, branch
-		
-		lea	(Options_Debug1).l,a2	; get text location
-		btst	#0,($FFFFFFFB).w	; is flag set?
-		beq.s	Options_Loop_Debug	; if yes, branch
-		lea	(Options_Debug2).l,a2	; get alternate text location	
-		
-Options_Loop_Debug:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_Debug	; loop
-
-		move.w	#$FFFF,($FFFFCB08).w	; fix those two letters manually
-
-		cmpi.b	#$FF,($FFFFCAFB).w	; is the first letter of the row still empty?
-		bne.s	Options_Next4		; if not, go on to next line
-
-Options_Debug_Return:
-		rts
+OpText_Exit:	dc.b	"EXIT OPTIONS      ", $FF
+		even
 ; ---------------------------------------------------------------------------
 
-Options_Next4:
-		addq.b	#2,($FFFFFF9A).w	; increase routine counter
-		move.w	#23,($FFFFFF9C).w	; reset char counter
-		move.w	#10,($FFFFFF98).w	; reset char counter 2
-		bra.w	OptionsTextLoad		; go back
-; ===========================================================================
-
-Options_Debug2x:
-		lea	($FFFFCAF0).w,a1	; reset the text location, just in case
-
-		bsr.w	Options_MainCode	; get default coding
-		beq.s	Options_Debug_Return2x	; if returned result is -1, branch
-		
-		lea	(Options_Debug1).l,a2	; get text location
-		btst	#0,($FFFFFFFB).w	; is flag set?
-		beq.s	Options_Loop_Debug2x	; if yes, branch
-		lea	(Options_Debug2).l,a2	; get alternate text location	
-		
-Options_Loop_Debug2x:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_Debug2x	; loop
-
-		move.w	#$FFFF,($FFFFCB08).w	; fix those two letters manually
-
-		cmpi.b	#$FF,($FFFFCAF0).w	; is the first letter of the row still empty?
-		bne.s	Options_Next4x		; if not, go on to next line
-
-
-		lea	($FFFFCB38).w,a1	; reset the text location, just in case
-
-		bsr.w	Options_MainCode2	; get default coding
-		beq.s	Options_Debug_Return2x	; if returned result is -1, branch
-		
-		lea	(Options_Extended2).l,a2 ; get text location
-		tst.b	($FFFFFF93).w		; is flag set?
-		beq.s	Options_Loop_Extended2x	; if not, branch
-		lea	(Options_Extended1).l,a2 ; get alternate text location	
-		
-Options_Loop_Extended2x:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_Extended2x ; loop
-
-		move.w	#$FFFF,($FFFFCB50).w	; fix those two letters manually
-
-Options_Debug_Return2x:
-		rts
+OpText_ON:	dc.b	" ON", $FF
+OpText_OFF:	dc.b	"OFF", $FF
+OpText_S2B:	dc.b	"S2B", $FF
+OpText_S3:	dc.b	" S3", $FF
+		even
 ; ---------------------------------------------------------------------------
-
-Options_Next4x:
-		addq.b	#2,($FFFFFF9A).w	; increase routine counter
-		move.w	#23,($FFFFFF98).w	; reset char counter
-		bra.w	OptionsTextLoad		; go back
 ; ===========================================================================
 
-Options_Extended:
-		lea	($FFFFCB38).w,a1	; reset the text location, just in case
 
-		bsr.w	Options_MainCode2	; get default coding
-		beq.s	Options_Ext_Return	; if returned result is -1, branch
-		
-		lea	(Options_Extended2).l,a2 ; get text location
-		tst.b	($FFFFFF93).w		; is flag set?
-		beq.s	Options_Loop_Extended	; if not, branch
-		lea	(Options_Extended1).l,a2 ; get alternate text location	
-		
-Options_Loop_Extended:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_Extended ; loop
-
-		move.w	#$FFFF,($FFFFCB50).w	; fix those two letters manually
-
-		cmpi.b	#$FF,($FFFFCB43).w	; is the first letter of the row still empty?
-		bne.s	Options_Next5		; if not, go on to next line
-
-Options_Ext_Return:
-		rts
+; ===========================================================================
 ; ---------------------------------------------------------------------------
-
-Options_Next5:
-		addq.b	#2,($FFFFFF9A).w	; increase routine counter
-		move.w	#23,($FFFFFF98).w	; reset char counter
-		move.w	#10,($FFFFFF9C).w	; reset char counter 2
-		bra.w	OptionsTextLoad		; go back
-; ===========================================================================
-
-Options_Extended2x:
-		lea	($FFFFCB38).w,a1	; reset the text location, just in case
-
-		bsr.w	Options_MainCode2	; get default coding
-		beq.s	Options_Ext_Return2x	; if returned result is -1, branch
-		
-		lea	(Options_Extended2).l,a2 ; get text location
-		tst.b	($FFFFFF93).w		; is flag set?
-		beq.s	Options_Loop_Extendedx2	; if not, branch
-		lea	(Options_Extended1).l,a2 ; get alternate text location	
-		
-Options_Loop_Extendedx2:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_Extendedx2 ; loop
-
-		move.w	#$FFFF,($FFFFCB50).w	; fix those two letters manually
-
-		cmpi.b	#$FF,($FFFFCB38).w	; is the first letter of the row still empty?
-		bne.s	Options_Next5x		; if not, go on to next line
-
-		lea	($FFFFCB80).w,a1	; reset the text location, just in case
-
-		bsr.w	Options_MainCode	; get default coding
-		beq.s	Options_Ext_Return2x	; if returned result is -1, branch
-
-		lea	(Options_SonicArt1).l,a2 ; get text location
-		tst.b	($FFFFFF94).w		; is flag set?
-		beq.s	Options_Loop_SonicArt2x	; if not, branch
-		lea	(Options_SonicArt2).l,a2	; get alternate text location	
-		
-Options_Loop_SonicArt2x:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_SonicArt2x ; loop
-
-		move.w	#$FFFF,($FFFFCB98).w	; fix those two letters manually
-
-Options_Ext_Return2x:
-		rts
+Options_TextArt:
+		incbin	InfoScreen\Options_TextArt.bin
+		even
 ; ---------------------------------------------------------------------------
-
-Options_Next5x:
-		addq.b	#2,($FFFFFF9A).w	; increase routine counter
-		move.w	#12,($FFFFFF98).w	; reset char counter
-		bra.w	OptionsTextLoad		; go back
 ; ===========================================================================
-
-Options_SonicArt:
-		lea	($FFFFCB80).w,a1	; reset the text location, just in case
-
-		bsr.w	Options_MainCode	; get default coding
-		beq.s	Options_Son_Return	; if returned result is -1, branch
-
-		lea	(Options_SonicArt1).l,a2 ; get text location
-		tst.b	($FFFFFF94).w		; is flag set?
-		beq.s	Options_Loop_SonicArt	; if not, branch
-		lea	(Options_SonicArt2).l,a2	; get alternate text location	
-		
-Options_Loop_SonicArt:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d6,Options_Loop_SonicArt ; loop
-
-		move.w	#$FFFF,($FFFFCB98).w	; fix those two letters manually
-
-		cmpi.b	#$FF,($FFFFCB80).w	; is the first letter of the row still empty?
-		bne.s	Options_Next6		; if not, go on to next line
-
-Options_Son_Return:
-		rts
-; ---------------------------------------------------------------------------
-
-Options_Next6:
-		clr.w	($FFFFFF96).w
-		addq.b	#2,($FFFFFF9A).w	; increase routine counter
-		move.w	#23,($FFFFFF98).w	; reset char counter
-		bra.w	OptionsTextLoad		; go back
-; ===========================================================================
-
-Options_ExitText:
-		addq.w	#1,($FFFFFF96).w	; increase main counter
-		moveq	#0,d5			; make sure d5 is empty
-		lea	($FFFFCBCE).w,a1	; reset the text location, just in case
-		lea	(Options_Exit2).l,a2	; get text location
-		move.w	($FFFFFF96).w,d5	; set numbers of loops (this will make the "typing" effect)
-		
-Options_Loop_Exit:
-		move.b	(a2)+,(a1)+		; load current char to a1
-		dbf	d5,Options_Loop_Exit	; loop
-		
-		cmpi.w	#11,($FFFFFF96).w	; has char 71 been reached?
-		bgt.s	Options_Stop		; if yes, branch
-		rts				; otherwise return
-; ---------------------------------------------------------------------------
-
-Options_Stop:
-		move.b	#1,($FFFFFF9B).w
-		addq.b	#2,($FFFFFF9A).w	; increase routine counter
-
-Options_NoMore:
-		rts
-; ===========================================================================
-; ===========================================================================
-; ===========================================================================
-
-OptionsText:	dc.b	$0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C		; +HEADER
-		dc.b	$FF, $FF, $23, $1F, $1E, $19, $13, $FF, $15, $22, $11, $10, $1F, $22, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF		; +HEADER
-		dc.b	$0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C		; +HEADER
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$11, $19, $22, $FF, $1D, $1F, $26, $15, $FF, $1F, $1E, $FF, $12, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $1E		; AIR MOVE ON B
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$19, $1E, $26, $19, $1E, $FF, $24, $19, $1D, $15, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $1E		; INVIN TIME
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$14, $15, $12, $25, $17, $FF, $1D, $1F, $14, $15, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $1E		; DEBUG MODE
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$15, $28, $24, $15, $1E, $14, $15, $14, $FF, $13, $11, $1D, $15, $22, $11, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $1E		; EXTENDED CAMERA
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$23, $1F, $1E, $19, $13, $FF, $11, $22, $24, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $23, $02, $12		; SONIC ART
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; -space
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_HeaderText:
-		dc.b	$0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C		; +HEADER
-		dc.b	$FF, $FF, $23, $1F, $1E, $19, $13, $FF, $15, $22, $11, $10, $1F, $22, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF		; +HEADER
-		dc.b	$0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C		; +HEADER
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_Header1:
-		dc.b	$0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C, $0C		; +HEADER
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_Header2:
-		dc.b	$FF, $FF, $23, $1F, $1E, $19, $13, $FF, $15, $22, $11, $10, $1F, $22, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF		; +HEADER
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_Space:
-		dc.b	$FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF		; Space
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_AirMove1:
-		dc.b	$11, $19, $22, $FF, $1D, $1F, $26, $15, $FF, $1F, $1E, $FF, $12, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $16, $16		; AIR MOVE ON B (off)
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_AirMove2:
-		dc.b	$11, $19, $22, $FF, $1D, $1F, $26, $15, $FF, $1F, $1E, $FF, $12, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $1E		; AIR MOVE ON B (on)
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-options_Invin1:
-		dc.b	$19, $1E, $26, $19, $1E, $FF, $24, $19, $1D, $15, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $16, $16		; INVIN TIME (off)
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-options_Invin2:
-		dc.b	$19, $1E, $26, $19, $1E, $FF, $24, $19, $1D, $15, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $1E		; INVIN TIME (on)
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_Debug1:
-		dc.b	$14, $15, $12, $25, $17, $FF, $1D, $1F, $14, $15, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $16, $16		; DEBUG MODE (off)
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_Debug2:
-		dc.b	$14, $15, $12, $25, $17, $FF, $1D, $1F, $14, $15, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $1E		; DEBUG MODE (on)
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_Extended1:
-		dc.b	$15, $28, $24, $15, $1E, $14, $15, $14, $FF, $13, $11, $1D, $15, $22, $11, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $16, $16		; EXTENDED CAMERA (off)
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_Extended2:
-		dc.b	$15, $28, $24, $15, $1E, $14, $15, $14, $FF, $13, $11, $1D, $15, $22, $11, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $1F, $1E		; EXTENDED CAMERA (on)
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_SonicArt1:
-		dc.b	$23, $1F, $1E, $19, $13, $FF, $11, $22, $24, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $23, $02, $12		; SONIC ART (S2B)
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_SonicArt2:
-		dc.b	$23, $1F, $1E, $19, $13, $FF, $11, $22, $24, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $23, $03		; SONIC ART (S3)
-		even
-; -----------------------------------------------------------------------------------------------------------------------------------------------------
-Options_Exit:	dc.b	$FF, $FF, $FF, $FF, $FF, $FF	; it will continue to Options_Exit2
-Options_Exit2:	dc.b				      $15, $28, $19, $24, $FF, $1F, $20, $24, $19, $1F, $1E, $23, $FF, $FF, $FF, $FF, $FF, $FF		; EXIT OPTIONS
-		even
-; ======================================================================================================================================================

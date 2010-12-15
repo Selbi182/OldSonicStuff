@@ -1,15 +1,16 @@
 ; /=====================================================\
 ; º                    Sonic  ERaZor                    º
 ; \=====================================================/
-;
+
+; =======================================================
+;-------------------------------------------------------
 ; Leader/Programming:	Selbi
-;
 ; Music:		DalekSam
 ;			SOTI
 ;			EduardoKnuckles
-;
 ; Addi. Programming:	MarkeyJester
-
+; Beta Testing:		SonicVaan
+; -------------------------------------------------------
 ; =======================================================
 
 ; =====================
@@ -9760,17 +9761,17 @@ loc_6E98:
 ; ===========================================================================
 
 Resize_GHZ3boss:
-		cmpi.w	#$2700,($FFFFF700).w
+		cmpi.w	#$3680,($FFFFF700).w
 		bcc.s	loc_6EB0
 		subq.b	#2,($FFFFF742).w
 
 loc_6EB0:
-		cmpi.w	#$2960,($FFFFF700).w
+		cmpi.w	#$38E0,($FFFFF700).w
 		bcs.s	locret_6EE8
 		jsr	SingleObjLoad
 		bne.s	loc_6ED0
 		move.b	#$3D,0(a1)	; load GHZ boss	object
-		move.w	#$2A00,8(a1)
+		move.w	#$3980,8(a1)
 		move.w	#$400,$C(a1)
 
 loc_6ED0:
@@ -14952,7 +14953,7 @@ Obj4B_Index:	dc.w Obj4B_Main-Obj4B_Index
 Obj4B_Main:				; XREF: Obj4B_Index
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
 		bne.s	Obj4B_Main_Cont		; if not, branch
-		move.b	#60,($FFFFFFBA).w
+		move.b	#60,$30(a0)
 
 Obj4B_Main_Cont:
 		move.l	#Map_obj4B,4(a0)
@@ -15064,48 +15065,65 @@ Obj4B_Delete:				; XREF: Obj4B_Index
 
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
 		bne.w	Obj4B_NotSYZ1		; if not, branch
-		subq.b	#1,($FFFFFFBA).w
-		bpl.w	Obj4B_Return
-		tst.b	$28(a0)			; is subtype = 0?
-		beq.w	Obj4B_SetSS		; if yes, branch
-		cmpi.b	#1,$28(a0)		; if subtype = 1?
-		bne.s	Obj4B_ChkIf28Is2	; if not, branch
+		subq.b	#1,$30(a0)		; sub 1 from timer
+		bpl.w	Obj4B_Return		; if time is left, branch
 
-		move.b	#$C,($FFFFF600).w	; set screen mode to level ($C)
-		move.w	#1,($FFFFFE02).w	; restart level
-		move.b	#1,($FFFFFFDC).w	; make sure music will be played
-		move.w	#$000,($FFFFFE10).w	; set level to GHZ1
-		cmpi.w	#$7B0,($FFFFD008).w	; is Sonic past $7B0?
-		blt.s	Obj4B_ChkIf28Is2	; if not, branch
-		move.w	#$200,($FFFFFE10).w	; set level to MZ1
-		cmpi.w	#$9B0,($FFFFD008).w	; is Sonic past $9B0?
-		blt.s	Obj4B_ChkIf28Is2	; if not, branch
-		move.w	#$101,($FFFFFE10).w	; set level to LZ2
-		cmpi.w	#$BB0,($FFFFD008).w	; is Sonic past $BB0?
-		blt.s	Obj4B_ChkIf28Is2	; if not, branch
-		move.w	#$502,($FFFFFE10).w	; set level to FZ
-
-Obj4B_ChkIf28Is2:
-		cmpi.b	#2,$28(a0)		; is subtype = 2?
-		bne.s	Obj4B_ChkIf28Is3	; if not, branch
+Obj4B_ChkOptions:
+		cmpi.w	#$0100,$8(a0)
+		bgt.s	Obj4B_ChkIntro
 		move.b	#$24,($FFFFF600).w	; load options menu
 		move.b	#1,($FFFFFF9E).w
 		rts
 
-Obj4B_ChkIf28Is3:
-		cmpi.b	#3,$28(a0)		; is subtype = 3?
-		bne.s	Obj4B_ChkIf28Is4	; if not, branch
+Obj4B_ChkIntro:
+		cmpi.w	#$0200,$8(a0)
+		bne.s	Obj4B_ChkGHZ
+		move.w	#$001,($FFFFFE10).w	; set level to GHZ2
+		move.b	#$95,d0
+		jsr	PlaySound
+		bra.s	Obj4B_PlayLevel
+
+Obj4B_ChkGHZ:
+		cmpi.w	#$04A0,$8(a0)
+		bne.s	Obj4B_ChkSpecial
+		move.w	#$000,($FFFFFE10).w	; set level to GHZ1
+		bra.s	Obj4B_PlayLevel
+
+Obj4B_ChkSpecial:
+		cmpi.w	#$06AC,$8(a0)
+		bne.s	Obj4B_ChkMZ
+		move.b	#$10,($FFFFF600).w	; set to special stage
+		rts
+
+Obj4B_ChkMZ:
+		cmpi.w	#$08A0,$8(a0)
+		bne.s	Obj4B_ChkLZ2
+		move.w	#$200,($FFFFFE10).w	; set level to MZ1
+		bra.s	Obj4B_PlayLevel
+
+Obj4B_ChkLZ2:
+		cmpi.w	#$0AA0,$8(a0)
+		bne.s	Obj4B_ChkFZ
+		move.w	#$101,($FFFFFE10).w	; set level to LZ2
+		bra.s	Obj4B_PlayLevel
+
+Obj4B_ChkFZ:
+		cmpi.w	#$0CA0,$8(a0)
+		bne.s	Obj4B_ChkEnding
+		move.w	#$502,($FFFFFE10).w	; set level to FZ
+		bra.s	Obj4B_PlayLevel
+
+Obj4B_ChkEnding:
+		cmpi.w	#$0EDE,$8(a0)
+		bne.w	Obj4B_Return
 		move.b	#$18,($FFFFF600).w	; load ending sequence
 		rts
 
-Obj4B_ChkIf28Is4:
-		cmpi.b	#4,$28(a0)		; is subtype = 4?
-		bne.w	Obj4B_Return		; if not, branch
-		move.w	#$001,($FFFFFE10).w	; set level to GHZ2
+Obj4B_PlayLevel:
 		move.b	#$C,($FFFFF600).w	; set to level
 		move.w	#1,($FFFFFE02).w	; restart level
-		move.b	#$95,d0
-		jmp	PlaySound
+		move.b	#1,($FFFFFFDC).w	; make sure music will be played
+		rts
 ; ---------------------------------------------------------------------------
 
 Obj4B_NotSYZ1:
@@ -30188,8 +30206,6 @@ S_H_NoKillCheck:
 		move.b	#0,$1C(a0)
 		subq.b	#2,$24(a0)
 		move.w	#0,$30(a0)		; set invin time to 0
-		tst.b	($FFFFFF92).w		; has invin time been disabled?
-		bne.s	locret_13860		; if yes, branch
 		tst.b	($FFFFFF72).w
 		beq.s	S_H_NoGHZBoss
 		clr.b	($FFFFFF72).w
@@ -40263,8 +40279,6 @@ loc_1AFE6:				; XREF: Touch_Hurt
 
 Touch_Hurt:				; XREF: Touch_ChkHurt
 		nop
-		tst.b	($FFFFFF92).w		; has invin time been disabled?
-		bne.s	Touch_MakeHurt		; if yes, branch
 		tst.w	$30(a0)			; is invin time counter empty?
 		bne.s	loc_1AFE6		; if not, branch
 
@@ -44319,9 +44333,10 @@ byte_68D70:	dc.b 0,	0, 0, 0
 Level_GHZ2:	incbin	levels\ghz2.bin
 		even
 byte_68E3C:	dc.b 0,	0, 0, 0
-Level_GHZ3:	incbin	levels\ghz3.bin
+Level_GHZ3:	;incbin	levels\ghz3.bin
 		even
-Level_GHZbg:	incbin	levels\ghzbg.bin
+Level_GHZbg:	;incbin	levels\ghzbg.bin
+		include	"levels\ghzbg.asm"
 		even
 byte_68F84:	dc.b 0,	0, 0, 0
 byte_68F88:	dc.b 0,	0, 0, 0
@@ -44452,7 +44467,7 @@ ObjPos_GHZ1:;	incbin	objpos\ghz1.bin
 		even
 ObjPos_GHZ2:	incbin	objpos\ghz2.bin
 		even
-ObjPos_GHZ3:	incbin	objpos\ghz3.bin
+ObjPos_GHZ3:;	incbin	objpos\ghz3.bin
 		even
 ObjPos_LZ1:;	incbin	objpos\lz1.bin
 		even

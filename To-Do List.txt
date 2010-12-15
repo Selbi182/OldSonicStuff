@@ -5,19 +5,18 @@ To-Do:
 	- Be able to go back to the overworld once you enter a level, maybe by using a giant ring again.
 
 - Find new music for Night Hill Zone.
-- For the release, remove the debug mode.
-- There are some ugly pixels on the level select font which need to be removed.
+- There are some ugly pixels on the level select font for the InfoScreen which need to be removed.
 - Finding new Title Screen background art.
-- Finishing combination of GHZ 1 and 3.
-- Find 2 new options, which will replace debug mode and invin time.
+- Finishing combination of GHZ 1 and 3 (only boss part needs to be done).
+- Find a new option (right now it's marked as XXXXXXXXXXXXXXX in the options screen).
 - Fix LZ camera and don't allow to go back when you touch a lamppost.
-- Finish the Chapter/Info Screen stuff.
+- Finish the Chapter/Info-Screen stuff.
+- Add a sound test, maybe a custom game mode, maybe just included in the options screen.
 
 Bugs:
 - Restore music after death, if it isn't the normal music.
 
 Would be great:
-- Change Options Screen's text arrays into ASCII arrays. Reading bytes sucks.
 - Find a more accurate system for the palette-restoration from WhiteFlash.
 
 Ideas:
