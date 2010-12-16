@@ -68,10 +68,6 @@ Options_LoadText:
 		move.b	#$86,d0		; play Options screen music
 		jsr	PlaySound_Special
 
-LOADLS:
-		moveq	#2,d0
-		jsr	PalLoad2	; load level select pallet
-
 		movem.l	d0-a2,-(sp)		; backup d0 to a2
 		lea	(Pal_Sonic).l,a1	; set Sonic'S palette pointer
 		lea	($FFFFFBA0).l,a2	; set palette location
@@ -84,15 +80,15 @@ Options_SonPalLoop:
 		
 		moveq	#0,d0
 		lea	($FFFFCA00).w,a1	; set location for the text
-		move.b	#$FF,d0			; put over $FFs
+		move.b	#$F0,d0			; put over $F0s
 		move.w	#503,d1			; do it for all 504 chars
 
-Options_MakeFF:
+Options_MakeF0s:
 		move.b	d0,(a1)+		; put $FF into current spot
-		dbf	d1,Options_MakeFF	; loop
+		dbf	d1,Options_MakeF0s	; loop
 		clr.b	($FFFFFF95).w
 		clr.w	($FFFFFF96).w
-		move.w	#23,($FFFFFF98).w
+		clr.b	($FFFFFF98).w
 		clr.w	($FFFFFF9A).w
 		clr.w	($FFFFFF9C).w
 		
@@ -422,7 +418,13 @@ loc2_3598:				; XREF: Options_ChgLine
 ; ---------------------------------------------------------------------------
 
 GetOptionsText:
-		lea	($FFFFCA00+(0*24)).w,a1		; set destination
+		tst.b	($FFFFFF9B).w			; has start been pressed?
+		beq.w	GOT_StartUpWrite		; if not, continue start-up-sequence
+; ---------------------------------------------------------------------------
+
+		lea	($FFFFCA00).w,a1		; set destination
+		moveq	#0,d1				; use $FF as ending of the list
+
 		lea	(OpText_Header1).l,a2		; set text location
 		bsr.w	Options_Write			; write text
 		lea	(OpText_Header2).l,a2		; set text location
@@ -430,8 +432,8 @@ GetOptionsText:
 		lea	(OpText_Header1).l,a2		; set text location
 		bsr.w	Options_Write			; write text
 
+		adda.w	#(1*24),a1			; make one empty line
 
-		lea	($FFFFCA00+(4*24)).w,a1		; set destination
 		lea	(OpText_AirMove).l,a2		; set text location
 		bsr.w	Options_Write			; write text
 		lea	(OpText_OFF).l,a2		; use "OFF" text
@@ -441,69 +443,171 @@ GetOptionsText:
 GOT_AMOB_Write:
 		bsr.w	Options_Write			; write text
 
+		adda.w	#(2*24),a1			; make two empty lines
 
-		lea	($FFFFCA00+(7*24)).w,a1		; set destination
 		lea	(OpText_Extended).l,a2		; set text location
-		bsr.s	Options_Write			; write text
+		bsr.w	Options_Write			; write text
 		lea	(OpText_OFF).l,a2		; use "OFF" text
 		tst.b	($FFFFFF93).w			; is Extended Camera disabled?
 		bne.s	GOT_ExtCam_Write		; if not, branch
 		lea	(OpText_ON).l,a2		; otherwise use "ON" text
 GOT_ExtCam_Write:
-		bsr.s	Options_Write			; write text
+		bsr.w	Options_Write			; write text
 
+		adda.w	#(2*24),a1			; make two empty lines
 
-		lea	($FFFFCA00+(10*24)).w,a1	; set destination
 		lea	(OpText_SonicArt).l,a2		; set text location
-		bsr.s	Options_Write			; write text
+		bsr.w	Options_Write			; write text
 		lea	(OpText_S2B).l,a2		; use "S2B" text
 		tst.b	($FFFFFF94).w			; is art set to S3?
 		beq.s	GOT_SonArt_Write		; if not, branch
 		lea	(OpText_S3).l,a2		; otherwise use "ON" text
 GOT_SonArt_Write:
-		bsr.s	Options_Write			; write text
+		bsr.w	Options_Write			; write text
 
+		adda.w	#(2*24),a1			; make two empty lines
 
-		lea	($FFFFCA00+(13*24)).w,a1	; set destination
 		lea	(OpText_FourthOption).l,a2	; set text location
-		bsr.s	Options_Write			; write text
+		bsr.w	Options_Write			; write text
 		lea	(OpText_OFF).l,a2		; use "S2B" text
 		tst.b	($FFFFFF92).w			; is flag set?
 		beq.s	GOT_4th_Write			; if not, branch
 		lea	(OpText_ON).l,a2		; otherwise use "ON" text
 GOT_4th_Write:
-		bsr.s	Options_Write			; write text
+		bsr.w	Options_Write			; write text
 
+		adda.w	#(2*24),a1			; make two empty lines
 
-		lea	($FFFFCA00+(16*24)).w,a1	; set destination
 		lea	(OpText_SoundTest).l,a2		; set text location
-		bsr.s	Options_Write			; write text
+		bsr.w	Options_Write			; write text
 
+		adda.w	#(2*24),a1			; make two empty lines
 
-		lea	($FFFFCA00+(19*24)+6).w,a1	; set destination
 		lea	(OpText_Exit).l,a2		; set text location
-		bsr.s	Options_Write			; write text
+		bsr.w	Options_Write			; write text
 
+		rts					; return
 
-		move.b	#1,($FFFFFF9B).w		; set to "building-up-sequence" done
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to do the start up writing sequence.
+; ---------------------------------------------------------------------------
+
+GOT_StartUpWrite:
+		moveq	#0,d0				; clear d0
+		move.b	($FFFFFF98).w,d0		; move routine counter to d0
+		move.w	GOTSUP_Index(pc,d0.w),d1	; move the index to d1
+		jmp	GOTSUP_Index(pc,d1.w)		; find out the current position in the index
+
+; ===========================================================================
+GOTSUP_Index:	dc.w	GOTSUP_Header1-GOTSUP_Index
+		dc.w	GOTSUP_Header2-GOTSUP_Index
+		dc.w	GOTSUP_Options-GOTSUP_Index
+		dc.w	GOTSUP_SoundTest-GOTSUP_Index
+		dc.w	GOTSUP_Exit-GOTSUP_Index
+; ===========================================================================
+
+GOTSUP_Header1:
+		lea	($FFFFCA00+(0*24)).w,a1		; set destination
+		addq.b	#1,($FFFFFF96).w		; increase length counter
+		move.b	($FFFFFF96).w,d1		; write length counter into d1
+		lea	(OpText_Header1).l,a2		; set text location
+		bsr.w	Options_Write			; write text
+		lea	($FFFFCA00+(2*24)).w,a1		; set destination
+		move.b	($FFFFFF96).w,d1		; write length counter into d1
+		lea	(OpText_Header1).l,a2		; set text location
+		bsr.w	Options_Write			; write text
+
+		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
 		rts					; return
 ; ---------------------------------------------------------------------------
+
+GOTSUP_Header2:
+		lea	($FFFFCA00+(1*24)).w,a1		; set destination
+		addq.b	#1,($FFFFFF96).w		; increase length counter
+		move.b	($FFFFFF96).w,d1		; write length counter into d1
+		lea	(OpText_Header2).l,a2		; set text location
+		bsr.w	Options_Write			; write text
+
+		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
+		rts					; return
+; ---------------------------------------------------------------------------
+
+GOTSUP_Options:
+	move.b	#$FF,-1(a2)
+		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
+		rts					; return
+; ---------------------------------------------------------------------------
+
+GOTSUP_SoundTest:
+	move.b	#$FF,-1(a2)
+		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
+		rts					; return
+; ---------------------------------------------------------------------------
+
+GOTSUP_Exit:
+		lea	($FFFFCA00+(19*24)).w,a1	; set destination
+		addq.b	#1,($FFFFFF96).w		; increase length counter
+		move.b	($FFFFFF96).w,d1		; write length counter into d1
+		lea	(OpText_Exit).l,a2		; set text location
+		bsr.w	Options_Write			; write text
+
+		tst.b	-1(a2)				; is current entry $FF?
+		bpl.s	GOTSUPE_Return			; if not, branch
+		move.b	#1,($FFFFFF9B).w		; set to "building-up-sequence" done
+		jsr	OptionsTextLoad			; update text
+
+GOTSUPE_Return:
+		rts					; return
+
 ; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to check if the end of the list has been reached ($FF).
+; ---------------------------------------------------------------------------
+
+GOTSUP_CheckEnd:
+		tst.b	-1(a2)				; is current entry $FF?
+		bpl.s	GOTSUPCE_Return			; if not, branch
+		clr.b	($FFFFFF96).w			; clear counter
+		addq.b	#2,($FFFFFF98).w		; increase pointer
+
+GOTSUPCE_Return:
+		rts					; return
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to write the text given in the input (a2), into the given
+; location (a1). Write until $FF, unless a value has been given (d1).
 ; ---------------------------------------------------------------------------
 
 Options_Write:
 		move.b	(a2)+,d0	; get current char from a2
+
+		tst.b	d1		; is d1 set?
+		bne.s	OW_LimitGiven	; if yes, don't write until $FF, but instead with the input number given
 
 		tst.b	d0		; is current character $FF?
 		bpl.s	OW_NotFF	; if not, branch
 		rts			; otherwise, return
 ; ---------------------------------------------------------------------------
 
+OW_LimitGiven:
+		subq.b	#1,d1		; sub 1 from d1
+		bne.s	OW_NotFF	; if result isn't 0, contine writing
+		rts			; otherwise, return
+; ---------------------------------------------------------------------------
+
 OW_NotFF:
 		cmpi.b	#$20,d0		; is current character a space?
 		bne.s	OW_NotSpace	; if not, branch
-		move.b	#$F0,d0		; set correct value for space
-		bra.s	OW_DoWrite	; skip
+
+OW_SpaceLoop:
+		move.b	#$F0,(a1)+	; write a space char to a1
+		cmpi.b	#$20,(a2)+	; is next character a space as well?
+		beq.s	OW_SpaceLoop	; if yes, loop until not anymore
+		suba.w	#1,a2		; sub 1 from a2
+		bra.s	Options_Write	; loop
+
 
 OW_NotSpace:
 		cmpi.b	#$3D,d0		; is current character a "="?
@@ -519,6 +623,7 @@ OW_NotEqual:
 
 OW_DoWrite:
 		move.b	d0,(a1)+	; write output to a1
+		moveq	#0,d0		; clear d0
 
 		bra.s	Options_Write	; loop
 ; ---------------------------------------------------------------------------
@@ -561,7 +666,7 @@ OpText_SoundTest:
 		even
 ; ---------------------------------------------------------------------------
 
-OpText_Exit:	dc.b	"EXIT OPTIONS      ", $FF
+OpText_Exit:	dc.b	"      EXIT OPTIONS      ", $FF
 		even
 ; ---------------------------------------------------------------------------
 

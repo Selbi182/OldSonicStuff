@@ -10,7 +10,7 @@
 ;			EduardoKnuckles
 ; Addi. Programming:	MarkeyJester
 ; Beta Testing:		SonicVaan
-; -------------------------------------------------------
+; ------------------------------------------------------
 ; =======================================================
 
 ; =====================
@@ -1169,14 +1169,6 @@ PlaySound_Special:
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Unused sound/music subroutine
-; ---------------------------------------------------------------------------
-
-PlaySound_Unk:
-		move.b	d0,($FFFFF00C).w
-		rts	
-
-; ---------------------------------------------------------------------------
 ; Subroutine to	pause the game
 ; ---------------------------------------------------------------------------
 
@@ -1184,8 +1176,6 @@ PlaySound_Unk:
 
 
 PauseGame:				; XREF: Level_MainLoop; et al
-	;	move.b	#$E0,d0
-	;	jsr	PlaySound_Special
 		nop				; no operation
 		tst.b	($FFFFFE12).w		; do you have any lives	left?
 		beq.w	Unpause			; if not, branch
@@ -3446,6 +3436,11 @@ NoTSLoad:
 		lea	($C00000).l,a6
 		lea	($FFFFF708).w,a3
 		lea	($FFFFA440).w,a4
+		tst.b	($FFFFFE10).w		; is zone GHZ?
+		bne.s	@cont			; if not, branch
+		lea	($FFFFA6C0).w,a4
+
+@cont:
 		move.w	#$6000,d2
 		jsr	LoadTilesFromStart2
 		lea	($FF0000).l,a1
@@ -3915,18 +3910,6 @@ loc_3598:				; XREF: LevSel_ChgLine
 ; ---------------------------------------------------------------------------
 LevelMenuText:	incbin	misc\menutext.bin
 		even
-; ---------------------------------------------------------------------------
-; Music	playlist
-; ---------------------------------------------------------------------------
-MusicList1:	incbin	misc\muslist1.bin
-		even
-MusicList2:	incbin	misc\muslist2.bin
-		even
-MusicList3:	incbin	misc\muslist3.bin
-		even
-MusicList4:	incbin	misc\muslist4.bin
-		even
-; ===========================================================================
 
 ; ---------------------------------------------------------------------------
 ; Level
@@ -4058,16 +4041,16 @@ Level_WaterPal:
 		
 ; ---------------------------------
 Level_GetBgm:
-	;	tst.b	($FFFFFFDF).w
-	;	bne.s	Level_NoMusic
-		jsr	PlayLevelMusic	; play level music
-; ---------------------------------
+		cmpi.w	#$001,($FFFFFE10).w	; is level GHz2?
+		beq.s	Level_NoMusic		; if yes, don't play music
+		jsr	PlayLevelMusic		; play level music
 
 Level_NoMusic:
+; ---------------------------------
+
 		clr.b	($FFFFFF98).w
 		clr.b	($FFFFFF99).w
 		clr.w	($FFFFFFCE).w	; clear extended camera counter
-	;	move.b	#0,($FFFFFFDF).w
 		jsr	ClearEverySpecialFlag
 		cmpi.w	#$001,($FFFFFE10).w
 		beq.s	Level_NoTitleCard
@@ -4747,13 +4730,40 @@ byte_3FCF:	dc.b 0			; XREF: LZWaterSlides
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
+; Subroutine to play level music.
+; ---------------------------------------------------------------------------
+
+PlayLevelMusic:
+		lea	(MusicList).l,a1	; load Playlist into a1
+		bsr.s	CheckIfMainLevel	; get main level ID
+		move.b	-1(a1,d5.w),d0		; get music ID (-1 because we ignore GHZ2)
+		cmp.b	($FFFFFFDE).w,d0	; is last played music ID the same one as the one to be played?
+		beq.s	PLM_NoMusic		; if yes, don't restart music
+		jsr	PlaySound		; play music
+
+PLM_NoMusic:
+		rts				; return
+
+; End of function PlayLevelMusic
+
+; ---------------------------------------------------------------------------
+
+MusicList:
+		include	"misc\musiclist.asm"
+		even
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
 ; Subroutine to check if the current level is one of the main ones
-; and set "Fake Level ID" if result is true
-; (GHZ2, GHZ1, GHZ3, MZ1, LZ2, FZ)
+; and set "Fake Level ID" if result is true.
+; (GHZ2, GHZ1, GHZ3, MZ1, LZ2, FZ, SYZ1)
 ; ---------------------------------------------------------------------------
 
 CheckIfMainLevel:
-		moveq	#0,d5			; make sure d5 is empty
+		moveq	#0,d5			; make sure d5 is empty (it will stay like this when it's not a main level)
 		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ 2 (into cutscene)?
 		bne.s	CIML_NotGHZ2		; if not, branch
 		moveq	#1,d5			; tell the game, the current level is one of the main one
@@ -4790,94 +4800,11 @@ CIML_NotFZ:
 
 CIML_NotSYZ1:
 		rts
-; End of function PlayLevelMusic
-; ===========================================================================
+; End of function CheckIfMainLevel
 
+; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Subroutine to play special level music
-; Due the many use of it, it was smarter to jsr it
-; ---------------------------------------------------------------------------
-
-PlayLevelMusic:
-		tst.w	($FFFFFFF0).w
-		bmi.w	loc_3946	; change from bmi.s to bmi.w or you'll get an error
-		moveq	#0,d0			; clear d0
-		tst.b	($FFFFFFDC).w
-		bne.s	PLM_Special
-		tst.b	($FFFFFFDE).w		; special stage exit?
-		bne.s	PLM_Special		; if yes, play music
-		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
-		beq.s	PLM_Return		; if yes, don't play music
-		tst.b	($FFFFFFDF).w		; did sonic die?
-		bne.s	PLM_Death		; if yes, branch
-		bra.s	Play_LevelMusic		; otherwise play level music
-; ===========================================================================
-
-PLM_Death:
-		clr.b	($FFFFFFDF).w		; clear flag
-PLM_Return:
-		rts				; return
-; ===========================================================================
-
-PLM_Special:
-		clr.b	($FFFFFFDC).w
-		clr.b	($FFFFFFDE).w		; clear flag
-		bra.s	Level_DoMusic		; play level music
-; ===========================================================================
-
-Play_LevelMusic:
-		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
-		beq.s	PLM_Return		; if yes, don't play music
-		cmpi.b	#0,($FFFFFE10).w ; is zone GHZ?
-		beq.s	PLM_Return	; if yes, make music for every act
-		cmpi.w	#$201,($FFFFFE10).w
-		beq.s	Level_DoMusic
-	;	beq.s	Level_DoMusic	; if yes, make music for every act
-		cmpi.w	#$402,($FFFFFE10).w ; is zone SYZ3?
-		beq.s	Level_DoMusic	; if yes, make music for every act
-		cmpi.b	#5,($FFFFFE10).w ; is zone SBZ?
-		beq.s	Level_DoMusic	; if yes, make music for every act
-		cmpi.b	#3,($FFFFFE10).w ; is zone SLZ?
-		beq.s	Level_DoMusic	; if yes, make music for every act
-		move.b	($FFFFFE10).w,d0
-		lea	(MusicList1).l,a1 ; load Music Playlist for Acts 1
-		bra.w	Level_PlayBgm	; go to PlayBgm
-; ===========================================================================
-
-Level_DoMusic:
-		move.b	($FFFFFE10).w,d0
-
-		cmpi.b	#$0,($FFFFFE11).w	; is this act 1?
-		bne.s	Level_GetBgm2	; if not, branch
-		lea	(MusicList1).l,a1	; load Music Playlist for Acts 1
-		bra.s	Level_PlayBgm	; go to PlayBgm
- 
-Level_GetBgm2:
-		cmpi.b	#$1,($FFFFFE11).w	; is this act 2?
-		bne.s	Level_GetBgm3	; if not, branch
-		lea	(MusicList2).l,a1	; load Music Playlist for Acts 2
-		bra.s	Level_PlayBgm	; go to PlayBgm
- 
-Level_GetBgm3:
-		cmpi.b	#$2,($FFFFFE11).w	; is this act 3?
-		bne.s	Level_GetBgm4	; if not, branch
-		lea	(MusicList3).l,a1	; load Music Playlist for Acts 3
-		bra.s	Level_PlayBgm	; go to PlayBgm
- 
-Level_GetBgm4:
-		cmpi.b	#$3,($FFFFFE11).w	; is this act 4?
-		bne.s	Level_PlayBgm	; if not, branch
-		lea	(MusicList4).l,a1	; load Music Playlist for Acts 4
- 
-Level_PlayBgm:
-		move.b	(a1,d0.w),d0	; get d0-th entry from the playlist
-		jsr	PlaySound	; play music
-		rts
-; End of function PlayLevelMusic
-; ===========================================================================
-
-; ---------------------------------------------------------------------------
-; Subroutine to clear every special flag (e.g. cutscenes, custom bosses)
+; Subroutine to clear every special flag (e.g. cutscenes, custom bosses).
 ; ---------------------------------------------------------------------------
 
 ClearEverySpecialFlag:
@@ -4889,39 +4816,12 @@ ClearEverySpecialFlag:
 		clr.l	($FFFFFFB4).w	; $FFB4-$FFB7	(4)
 		clr.l	($FFFFFFB8).w	; $FFB8-$FFBB	(4)
 		clr.b	($FFFFFFBD).w	; $FFBD		(1)
-	;	clr.b	($FFFFFFDF).w	; $FFD0		(1) caused some errors
 		clr.b	($FFFFFFD1).w	; $FFD1		(1) needs to be splitted
 		clr.l	($FFFFFFD2).w	; $FFD2-$FFD5	(4)
 		clr.l	($FFFFFFD6).w	; $FFD6-$FFD9	(4)
 		rts
 ; End of function ClearEverySpecialFlag
 	
-; ===========================================================================
-
-	;	move.l	#0,($FFFFFFA0).w	; clear RAM adresses $FFA0-$FFA3 (4 flags)
-	;	move.l	#0,($FFFFFFA4).w	; $FFA4-$FFA7	(4)
-	;	move.l	#0,($FFFFFFA8).w	; $FFA8-$FFAB	(4)
-	;	move.l	#0,($FFFFFFAC).w	; $FFAC-$FFAF	(4)
-	;	move.l	#0,($FFFFFFB0).w	; $FFB0-$FFB3	(4)
-	;	move.l	#0,($FFFFFFB4).w	; $FFB4-$FFB7	(4)
-	;	move.l	#0,($FFFFFFB8).w	; $FFB8-$FFBB	(4)
-	;	move.l	#0,($FFFFFFBC).w	; $FFBC-$FFBF	(4)
-	;	move.b	#0,($FFFFFFDF).w	; $FFD0		(1) caused some errors
-	;	move.l	#0,($FFFFFFD1).w	; $FFD1-$FFD4	(4)
-	;	move.l	#0,($FFFFFFD5).w	; $FFD5-$FFD8	(4)
-	;	rts				; return
-
-; ===========================================================================
-	;	lea	($FFFFFFA0).w,a0	; load special flags into a0
-	;	moveq	#0,d0			; set the number we are going to use to 0
-	;	moveq	#41,d1			; repeat the process 41 times (in total, 42 times)
-
-;CESF_Loop:
-	;	move.l	d0,(a0)+		; clear current RAM adress
-	;	dbf	d0,CESF_Loop		; repeate 41 times
-	;	rts				; return
-; End of function ClearEverySpecialFlag
-; ===========================================================================
 
 ; ===============================================================================
 ; -------------------------------------------------------------------------------
@@ -5445,7 +5345,6 @@ SS_EndClrObjRamX:
 		clr.b	($FFFFFFB6).w
 		jsr	Sonic_ResetOnFloor
 
-		move.b	#1,($FFFFFFDE).w
 		clr.b	($FFFFFFBB).w
 		move.b	#$C,($FFFFF62A).w
 		jsr	DelayProgram
@@ -8597,6 +8496,11 @@ sub_6886:
 		lea	($FFFFF756).w,a2
 		lea	($FFFFF708).w,a3
 		lea	($FFFFA440).w,a4
+		tst.b	($FFFFFE10).w		; is zone GHZ?
+		bne.s	@cont			; if not, branch
+		lea	($FFFFA6C0).w,a4
+
+@cont:
 		move.w	#$6000,d2
 		jsr	sub_6D0A
 		lea	($FFFFF758).w,a2
@@ -8617,6 +8521,11 @@ LoadTilesAsYouMove:			; XREF: Demo_Time
 		lea	($FFFFFF32).w,a2
 		lea	($FFFFFF18).w,a3
 		lea	($FFFFA440).w,a4
+		tst.b	($FFFFFE10).w		; is zone GHZ?
+		bne.s	@cont			; if not, branch
+		lea	($FFFFA6C0).w,a4
+
+@cont:
 		move.w	#$6000,d2
 		jsr	sub_6D0A
 		lea	($FFFFFF34).w,a2
@@ -9361,6 +9270,11 @@ LoadTilesFromStart:			; CODE XREF: ROM:0000395A?p
 		bsr.s	LoadTilesFromStart2
 		lea	($FFFFF708).w,a3
 		lea	($FFFFA440).w,a4
+		tst.b	($FFFFFE10).w		; is zone GHZ?
+		bne.s	@cont			; if not, branch
+		lea	($FFFFA6C0).w,a4
+
+@cont:
 		move.w	#$6000,d2
 		tst.b	($FFFFFE10).w
 		beq.w	loc_7220
@@ -9575,8 +9489,13 @@ LevLoad_ClrRam:
 
 		lea	($FFFFA400).w,a3 ; RAM address for level layout
 		moveq	#0,d1
-		jsr	LevelLayoutLoad2 ; load	level layout into RAM
+		bsr.s	LevelLayoutLoad2 ; load	level layout into RAM
 		lea	($FFFFA440).w,a3 ; RAM address for background layout
+		tst.b	($FFFFFE10).w		; is zone GHZ?
+		bne.s	@cont			; if not, branch
+		lea	($FFFFA6C0).w,a3
+
+@cont:
 		moveq	#2,d1
 ; End of function LevelLayoutLoad
 
@@ -9739,15 +9658,18 @@ off_6E4A:	dc.w Resize_GHZ3main-off_6E4A
 		dc.w Resize_GHZ3end-off_6E4A
 ; ===========================================================================
 
+GHZ3Add = $2700
+
 Resize_GHZ3main:
-		move.w	#$410,($FFFFF726).w ; set lower	y-boundary
-		cmpi.w	#$2700,($FFFFF700).w ; has the camera reached $2700 on x-axis?
-		bcs.s	locret_6E96	; if not, branch
+		move.w	#$410,($FFFFF726).w	; set lower y-boundary
+		cmpi.w	#$2700,($FFFFF700).w	; has the camera reached $2700 on x-axis?
+		bcs.s	locret_6E96		; if not, branch
+
 		move.w	#$300,($FFFFF726).w ; set lower	y-boundary
-		cmpi.w	#$3E80,($FFFFF700).w ; has the camera reached $3E80 on x-axis?
+		cmpi.w	#$1780+GHZ3Add,($FFFFF700).w ; has the camera reached $1780 on x-axis?
 		bcs.s	locret_6E96	; if not, branch
 		move.w	#$400,($FFFFF726).w ; set lower	y-boundary
-		cmpi.w	#$4E00,($FFFFF700).w
+		cmpi.w	#$2700+GHZ3Add,($FFFFF700).w
 		bcc.w	loc_6E98
 		
 locret_6E96:
@@ -9761,17 +9683,17 @@ loc_6E98:
 ; ===========================================================================
 
 Resize_GHZ3boss:
-		cmpi.w	#$3680,($FFFFF700).w
+		cmpi.w	#$2700+GHZ3Add,($FFFFF700).w
 		bcc.s	loc_6EB0
 		subq.b	#2,($FFFFF742).w
 
 loc_6EB0:
-		cmpi.w	#$38E0,($FFFFF700).w
+		cmpi.w	#$2960+GHZ3Add,($FFFFF700).w
 		bcs.s	locret_6EE8
 		jsr	SingleObjLoad
 		bne.s	loc_6ED0
 		move.b	#$3D,0(a1)	; load GHZ boss	object
-		move.w	#$3980,8(a1)
+		move.w	#$2A00+GHZ3Add,8(a1)
 		move.w	#$400,$C(a1)
 
 loc_6ED0:
@@ -13324,6 +13246,10 @@ Map_obj29:
 ; Speed for the Crabmeat
 CMSpeed = $120
 ;===================================
+;If 1, Crabmeat has only one life
+CrabmeatOneHit = 0
+;===================================
+
 Obj1F:					; XREF: Obj_Index
 		moveq	#0,d0
 		move.b	$24(a0),d0
@@ -13348,7 +13274,11 @@ Obj1F_Main:				; XREF: Obj1F_Index
 		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
 		bne.s	Obj01_NotGHZ1_Main2	; if not, branch
 		move.b	#$F,$20(a0)		; use boss touch response
-		move.b	#24,$21(a0)		; set number of	hits to	12
+	if CrabmeatOneHit=1
+		move.b	#(1*2),$21(a0)		; set number of	hits to	1
+	else
+		move.b	#(12*2),$21(a0)		; set number of	hits to	12
+	endif
 		bra.s	Obj1F_NotGHZ1_Cont	; skip
 
 Obj01_NotGHZ1_Main2:
@@ -13472,7 +13402,7 @@ Obj1F_BossDelete:
 		move.b	#2,($FFFFFFD4).w		; set flag 4, 2
 		move.b	#0,($FFFFF7AA).w		; unlock screen
 		move.b	#2,($FFFFFFAA).w		; set flag 1, 2
-		move.w	#$5E1F,($FFFFF72A).w		; unlock screen
+		move.w	#$5060,($FFFFF72A).w		; unlock screen
 		move.w	#$002,($FFFFFE10).w		; change level ID to GHZ3
 		move.b	#$94,d0				; set normal GHZ music
 		jsr	PlaySound			; play it
@@ -13744,24 +13674,6 @@ Obj1F_Delete:				; XREF: Obj1F_Index
 ; Standart = 5 pixels
 CMBallsOnGroundDist = 5
 ;===================================
-;Bomb type
-; 0 - Exploding when touching ground
-; 1 - Staying on ground
-CMBombType = 0
-;===================================
-;Experiment 2
-; Balls are bouncing after touching
-; floor
-; 0 - Disabled
-; 1 - Enabled
-CMExperiment2 = 1
-;===================================
-;Experiment 3
-; Exploding balls are "booming"
-; 0 - Disabled
-; 1 - Enabled
-CMExperiment3 = 1
-;===================================
 
 Obj1F_BallMain:				; XREF: Obj1F_Index
 		addq.b	#2,$24(a0)
@@ -13784,17 +13696,14 @@ Obj1F_NotGHZ1:
 ; ===========================================================================
 
 Obj1F_BallMove:
+		cmpi.w	#$000,($FFFFFE10).w ; is current level GHZ 1?
+		bne.s	Obj1F_NotGHZ1_3		; if not, branch
 		tst.b	($FFFFFFD5).w
 		bne.w	Obj1F_Delete4
-	if CMExperiment2=1
+
+Obj1F_NotGHZ1_3:
 		subq.b	#1,$30(a0)
 		bls.w	Obj1F_Delete3
-	endif
-	if CMBombType=1
-		movea.l	$3C(a0),a1		; move flag for crabmeat to a1
-		cmpi.b	#$27,0(a1)		; has Crabmeat been destroyed?
-		beq.w	Obj1F_Delete3		; if yes, branch
-	endif
 		lea	(Ani_obj1F).l,a1	; load the animation for the balls
 		jsr	AnimateSprite		; animate them
 		jsr	ObjectFall		; move the ball down (which is actually unused now)
@@ -13805,11 +13714,7 @@ Obj1F_CheckBallOnGround:
 		sub.w	#CMBallsOnGroundDist,d1	; sub 5 pixels from it (otherwise it would be stuck in the ground)
 		tst.w	d1			; was this location passed by the ball?
 		bpl.s	Obj1F_BallNotOnGround	; if not, branch
-	if CMBombType=1
-		bra.s	Obj1F_StopBallsMoving	; otherwise, stop ball from moving
-	else
 		bra.s	Obj1F_DestroyBall	; destroy the ball
-	endif
 
 Obj1F_BallNotOnGround:
 		move.w	($FFFFF72E).w,d0	; load Y-limit of the act into d0
@@ -13840,7 +13745,7 @@ Obj1F_DestroyBall:
 		move.b	#$3F,0(a1)		; explosion object
 		move.w	8(a0),8(a1)		; set X-location
 		move.w	$C(a0),$C(a1)		; set Y-location
-	if CMExperiment2=1
+
 		cmpi.w	#$000,($FFFFFE10).w ; is current level GHZ 1?
 		bne.s	Obj1F_NotGHZ1_2
 		moveq	#0,d0
@@ -13867,13 +13772,9 @@ Obj1F_MoveLeft:
 Obj1F_MoveUp:
 		move.w	#-$450,$12(a0)		; move ball upwards
 		rts				; return
-	else
-		bra.s	Obj1F_Delete2		; delete ball object
-	endif
 ; ===========================================================================
 
 Obj1F_Delete3:
-	if CMExperiment3=1
 		jsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj1F_Delete2		; if it's in use, branch
 		move.b	#1,$30(a1)		; set flag
@@ -13881,14 +13782,6 @@ Obj1F_Delete3:
 		move.w	8(a0),8(a1)		; set X-location
 		move.w	$C(a0),$C(a1)		; set Y-location
 		bra.w	DeleteObject		; delete ball object
-	else
-		jsr	SingleObjLoad		; load from SingleObjLoad
-		bne.s	Obj1F_Delete2		; if it's in use, branch
-		move.b	#$3F,0(a1)		; explosion object
-		move.w	8(a0),8(a1)		; set X-location
-		move.w	$C(a0),$C(a1)		; set Y-location
-		bra.w	DeleteObject		; delete ball object
-	endif
 ; ===========================================================================
 
 Obj1F_Delete4:
@@ -27854,7 +27747,7 @@ Obj01_ChkS:
 		clr.b	($FFFFFFE7).w		; disable inhuman mode
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		beq.s	Obj01_S_MZ1		; if yes, branch
-		jsr	Play_LevelMusic		; reload normal music
+		jsr	PlayLevelMusic		; reload normal music
 		bra.w	Obj01_ChkInvin		; skip the rest
 
 Obj01_S_MZ1:
@@ -27922,37 +27815,8 @@ Obj01_ChkInvin:
 		bne.w	Obj01_RmvInvin	; change to bne.w
 		cmpi.w	#$C,($FFFFFE14).w
 		bcs.w	Obj01_RmvInvin	; change to bcs.w
-		moveq	#0,d0
-		move.b	($FFFFFE10).w,d0
- 
-		cmpi.b	#$0,($FFFFFE11).w	; is this act 1?
-		bne.s	Obj01_GetBgm2	; if not, branch
-		lea	(MusicList1).l,a1	; load Music Playlist for Acts 1
-		bra.s	Obj01_PlayMusic	; go to PlayMusic
- 
-Obj01_GetBgm2:
-		cmpi.b	#$1,($FFFFFE11).w	; is this act 2?
-		bne.s	Obj01_GetBgm3	; if not, branch
-		lea	(MusicList2).l,a1	; load Music Playlist for Acts 2
-		bra.s	Obj01_PlayMusic	; go to PlayMusic
- 
-Obj01_GetBgm3:
-		cmpi.b	#$2,($FFFFFE11).w	; is this act 3?
-		bne.s	Obj01_GetBgm4	; if not, branch
-		lea	(MusicList3).l,a1	; load Music Playlist for Acts 3
-		bra.s	Obj01_PlayMusic	; go to PlayMusic
- 
-Obj01_GetBgm4:
-		cmpi.b	#$3,($FFFFFE11).w	; is this act 4?
-		bne.s	Obj01_PlayMusic	; if not, branch
-		lea	(MusicList4).l,a1	; load Music Playlist for Acts 4
- 
-Obj01_PlayMusic:
-		move.b	(a1,d0.w),d0
-		jsr	(PlaySound).l	; play normal music
 
-
-; NineKode ends here.
+		jsr	PlayLevelMusic
 
 Obj01_RmvInvin:
 		move.b	#0,($FFFFFE2D).w ; cancel invincibility
@@ -31026,39 +30890,7 @@ locret_1408C:
 ResumeMusic:				; XREF: Obj64_Wobble; Sonic_Water; Obj0A_ReduceAir
 		cmpi.w	#$C,($FFFFFE14).w
  
-; Third section of the NineKode - Play correct music after the countdown (if you breathe)
- 
-		bhi.w	loc_140AC	; change to bhi.w!
- 
-		cmpi.b	#$0,($FFFFFE11).w	; is this act 1?
-		bne.s	Air_GetBgm2	; if not, branch
-		lea	(MusicList1).l,a1	; load Music Playlist for Acts 1
-		bra.s	Air_PlayMusic	; go to PlayMusic
- 
-Air_GetBgm2:
-		cmpi.b	#$1,($FFFFFE11).w	; is this act 2?
-		bne.s	Air_GetBgm3	; if not, branch
-		lea	(MusicList2).l,a1	; load Music Playlist for Acts 2
-		bra.s	Air_PlayMusic	; go to PlayMusic
- 
-Air_GetBgm3:
-		cmpi.b	#$2,($FFFFFE11).w	; is this act 3?
-		bne.s	Air_GetBgm4	; if not, branch
-		lea	(MusicList3).l,a1	; load Music Playlist for Acts 3
-		bra.s	Air_PlayMusic	; go to PlayMusic
- 
-Air_GetBgm4:
-		cmpi.b	#$3,($FFFFFE11).w	; is this act 4?
-		bne.s	Air_PlayMusic	; if not, branch
-		lea	(MusicList4).l,a1	; load Music Playlist for Acts 4
- 
-Air_PlayMusic:
-		move.b	1(a1),d0	; load entry $1 from the playlist
- 
-loc_140A6:
-		jsr	(PlaySound).l
- 
-; NineKode ends here
+		jsr	PlayLevelMusic
 
 loc_140AC:
 		move.w	#$1E,($FFFFFE14).w
@@ -35387,6 +35219,30 @@ Obj3D_MakeBall:				; XREF: Obj3D_ShipIndex
 		move.w	$38(a0),$C(a1)
 		move.l	a0,$34(a1)
 
+		jsr	SingleObjLoad2
+		bne.s	loc_17910
+		move.b	#$48,0(a1)	; load swinging	ball object
+		move.w	$30(a0),8(a1)
+		move.w	$38(a0),$C(a1)
+		move.l	a0,$34(a1)
+		move.b	#$40,$25(a1)
+
+		jsr	SingleObjLoad2
+		bne.s	loc_17910
+		move.b	#$48,0(a1)	; load swinging	ball object
+		move.w	$30(a0),8(a1)
+		move.w	$38(a0),$C(a1)
+		move.l	a0,$34(a1)
+		move.b	#$80,$25(a1)
+
+		jsr	SingleObjLoad2
+		bra.s	loc_17910
+		move.b	#$48,0(a1)	; load swinging	ball object
+		move.w	$30(a0),8(a1)
+		move.w	$38(a0),$C(a1)
+		move.l	a0,$34(a1)
+		move.b	#$90,$25(a1)
+
 loc_17910:
 	;	move.w	#$77,$3C(a0)
 
@@ -35401,7 +35257,7 @@ Obj3D_ShipMove:				; XREF: Obj3D_ShipIndex
 		addq.b	#2,$25(a0)
 		move.w	#$3F,$3C(a0)
 		move.w	#$400,$10(a0)	; move the ship	fast sideways
-		cmpi.w	#$2A00,$30(a0)
+		cmpi.w	#$2A00+GHZ3Add,$30(a0)
 		bne.s	Obj3D_Reverse
 		move.w	#$7F,$3C(a0)
 		move.w	#$100,$10(a0)	; move the ship	sideways
@@ -35493,7 +35349,7 @@ loc_179EE:
 loc_179F6:				; XREF: Obj3D_ShipIndex
 		move.w	#$400,$10(a0)
 		move.w	#-$40,$12(a0)
-		cmpi.w	#$2AC0,($FFFFF72A).w
+		cmpi.w	#$2AC0+GHZ3Add,($FFFFF72A).w
 		beq.s	loc_17A10
 		addq.w	#2,($FFFFF72A).w
 		bra.s	loc_17A16
@@ -35519,7 +35375,7 @@ Obj3D_FaceMain:				; XREF: Obj3D_Index
 		move.b	$25(a1),d0
 		subq.b	#4,d0
 		bne.s	loc_17A3E
-		cmpi.w	#$2A00,$30(a1)
+		cmpi.w	#$2A00+GHZ3Add,$30(a1)
 		bne.s	loc_17A46
 		moveq	#4,d1
 
@@ -35600,6 +35456,13 @@ Obj3D_Display:				; XREF: Obj3D_FaceDisp; Obj3D_FlameDisp
 ; ---------------------------------------------------------------------------
 
 Obj48:					; XREF: Obj_Index
+		tst.b	$25(a0)
+		beq.s	Obj48_Do
+		subq.b	#1,$25(a0)
+		rts
+; ---------------------------------------------------------------------------
+
+Obj48_Do:
 		moveq	#0,d0
 		move.b	$24(a0),d0
 		move.w	Obj48_Index(pc,d0.w),d1
@@ -40427,7 +40290,6 @@ Kill_NoGreyPal:
 		clr.w	($FFFFFE20).w		; clear rings
 		move.b	#70,($FFFFFFDD).w	; set delay for restart when sonic hits ground
 		clr.b	($FFFFFE1E).w		; stop time counter
-		move.b	#1,($FFFFFFDF).w	; make music not being restarted
 		move.b	#6,$24(a0)		; comment this out, and sonic can't die (the main line for the inhuman mode)
 		move.w	$C(a0),$38(a0)		; something with Y and bosses...
 	;	bset	#7,2(a0)		; make sonic being on the foreground (because of the new style disabled)
@@ -44299,7 +44161,7 @@ Art_RingFlash:	incbin	artunc\ringflash.bin	; ring flash that appears when you en
 ; ---------------------------------------------------------------------------
 Level_Index:	dc.w Level_GHZ1-Level_Index, Level_GHZbg-Level_Index, byte_68D70-Level_Index
 		dc.w Level_GHZ2-Level_Index, Level_GHZbg-Level_Index, byte_68E3C-Level_Index
-		dc.w Level_GHZ3-Level_Index, Level_GHZbg-Level_Index, byte_68F84-Level_Index
+		dc.w Level_GHZ1-Level_Index, Level_GHZbg-Level_Index, byte_68F84-Level_Index
 		dc.w byte_68F88-Level_Index, byte_68F88-Level_Index, byte_68F88-Level_Index
 		dc.w Level_LZ1-Level_Index, Level_LZbg-Level_Index, byte_69190-Level_Index
 		dc.w Level_LZ2-Level_Index, Level_LZbg-Level_Index, byte_6922E-Level_Index
@@ -44427,7 +44289,7 @@ Art_SGMC:	incbin artnem\sgmc.bin
 ; ---------------------------------------------------------------------------
 ObjPos_Index:	dc.w ObjPos_GHZ1-ObjPos_Index, ObjPos_Null-ObjPos_Index
 		dc.w ObjPos_GHZ2-ObjPos_Index, ObjPos_Null-ObjPos_Index
-		dc.w ObjPos_GHZ3-ObjPos_Index, ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_GHZ1-ObjPos_Index, ObjPos_Null-ObjPos_Index
 		dc.w ObjPos_GHZ1-ObjPos_Index, ObjPos_Null-ObjPos_Index
 		dc.w ObjPos_LZ1-ObjPos_Index, ObjPos_Null-ObjPos_Index
 		dc.w ObjPos_LZ2-ObjPos_Index, ObjPos_Null-ObjPos_Index
@@ -45226,6 +45088,8 @@ loc_72012:
 ; ===========================================================================
 
 loc_72024:
+		move.b	d7,($FFFFFFDE).w	; backup music ID
+
 		clr.b	$27(a6)
 		clr.b	$26(a6)
 

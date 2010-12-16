@@ -7,17 +7,17 @@ To-Do:
 - Find new music for Night Hill Zone.
 - There are some ugly pixels on the level select font for the InfoScreen which need to be removed.
 - Finding new Title Screen background art.
-- Finishing combination of GHZ 1 and 3 (only boss part needs to be done).
 - Find a new option (right now it's marked as XXXXXXXXXXXXXXX in the options screen).
 - Fix LZ camera and don't allow to go back when you touch a lamppost.
 - Finish the Chapter/Info-Screen stuff.
 - Add a sound test, maybe a custom game mode, maybe just included in the options screen.
 
 Bugs:
-- Restore music after death, if it isn't the normal music.
+  Right now I don't know any...
 
 Would be great:
 - Find a more accurate system for the palette-restoration from WhiteFlash.
+- For Camera Shaking I used an object... WHAT THE HELL WAS IT THINKING???
 
 Ideas:
 - Blood impact when being hit.
