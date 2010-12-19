@@ -89,7 +89,8 @@ Options_MakeF0s:
 		clr.b	($FFFFFF95).w
 		clr.w	($FFFFFF96).w
 		clr.b	($FFFFFF98).w
-		clr.w	($FFFFFF9A).w
+	;	clr.w	($FFFFFF9A).w
+		move.w	#21,($FFFFFF9A).w
 		clr.w	($FFFFFF9C).w
 		
 		lea	($FFFFCC00).w,a1
@@ -154,6 +155,12 @@ O_PalSkip_2:
 OptionsScreen_MainLoop:
 		move.b	#4,($FFFFF62A).w
 		jsr	DelayProgram
+
+		tst.w	($FFFFF614).w		; is timer empty?
+		bne.s	O_DontResetTimer	; if not, branch
+		move.w	#$618,($FFFFF614).w	; otherwise, reset it
+
+O_DontResetTimer:
 		jsr	OptionsControls
 		jsr	RunPLC_RAM
 		
@@ -162,18 +169,32 @@ OptionsScreen_MainLoop:
 		tst.l	($FFFFF680).w
 		bne.s	OptionsScreen_MainLoop
 
-		tst.b	($FFFFFF9B).w		; is building-up-sequence done?
+		tst.b	($FFFFFF9C).w		; is building-up-sequence done?
 		bne.s	Options_NoTextChange	; if yes, branch
 
 		tst.b	($FFFFF605).w
 		beq.s	Options_NoStart
-		move.b	#1,($FFFFFF9B).w
+		move.b	#1,($FFFFFF9C).w
 		jsr	OptionsTextLoad		; update text
 		bra.s	OptionsScreen_MainLoop	; if not, branch
 
 Options_NoStart:
+		move.w	($FFFFF614).w,d0	; get timer
+		cmpi.b	#6,($FFFFFF98).w	; check if ON/OFF are being written now
+		blt.s	Options_NoSlowDown	; if not, branch
+		cmpi.b	#$E,($FFFFFF98).w	; check if ON/OFF are being written now
+		bgt.s	Options_NoSlowDown	; if not, branch
+		andi.w	#7,d0			; and by 6
+		bne.s	Options_NoTextChange	; if result ain't 0, don't write text
+		bra.s	Options_StartUpWrite
+
+Options_NoSlowDown:
+		andi.w	#0,d0			; and by 0
+		bne.s	Options_NoTextChange	; if result ain't 0, don't write text
+
+Options_StartUpWrite:
 		jsr	OptionsTextLoad		; update text
-		tst.b	($FFFFFF9B).w	; is routine counter at $12 (Options_NoMore)?
+		tst.b	($FFFFFF9C).w	; is routine counter at $12 (Options_NoMore)?
 		bne.s	Options_NoTextChange	; if yes, branch
 		bra.s	OptionsScreen_MainLoop
 ; ---------------------------------------------------------------------------
@@ -187,7 +208,7 @@ Options_NoTextChange:
 
 Options_NoLR:
 		andi.b	#$F0,d1			; is A, B, C or Start pressed?
-		beq.s	OptionsScreen_MainLoop	; if not, branch
+		beq.w	OptionsScreen_MainLoop	; if not, branch
 
 Options_OK:
 		clr.b	($FFFFFF95).w
@@ -282,7 +303,7 @@ Options_Error:
 
 
 OptionsControls:				; XREF: OptionsScreen_MainLoop
-		tst.b	($FFFFFF9B).w	; is routine counter at $12 (Options_NoMore)?
+		tst.b	($FFFFFF9C).w	; is routine counter at $12 (Options_NoMore)?
 		bne.s	Options_AllowControl	; if yes, branch
 		rts
 
@@ -347,7 +368,6 @@ OptionsTextLoad:				; XREF: TitleScreen
 		move.w	#$E570,d3	; VRAM setting
 		moveq	#$14,d1		; number of lines of text
 
-
 loc2_34FE:				; XREF: OptionsTextLoad+26j
 		move.l	d4,4(a6)
 		jsr	Options_ChgLine
@@ -370,7 +390,7 @@ loc2_34FE:				; XREF: OptionsTextLoad+26j
 		move.l	d4,4(a6)
 
 Options_SetCorrectLocation:
-		tst.b	($FFFFFF9B).w		; is routine counter at $12 (Options_NoMore)?
+		tst.b	($FFFFFF9C).w		; is routine counter at $12 (Options_NoMore)?
 		bne.s	Options_Finished	; if yes, branch
 		move.w	#$E570,d3
 
@@ -418,7 +438,7 @@ loc2_3598:				; XREF: Options_ChgLine
 ; ---------------------------------------------------------------------------
 
 GetOptionsText:
-		tst.b	($FFFFFF9B).w			; has start been pressed?
+		tst.b	($FFFFFF9C).w			; has start been pressed?
 		beq.w	GOT_StartUpWrite		; if not, continue start-up-sequence
 ; ---------------------------------------------------------------------------
 
@@ -426,65 +446,53 @@ GetOptionsText:
 		moveq	#0,d1				; use $FF as ending of the list
 
 		lea	(OpText_Header1).l,a2		; set text location
-		bsr.w	Options_Write			; write text
+		bsr.w	OW_Loop				; write text
 		lea	(OpText_Header2).l,a2		; set text location
-		bsr.w	Options_Write			; write text
+		bsr.w	OW_Loop				; write text
 		lea	(OpText_Header1).l,a2		; set text location
-		bsr.w	Options_Write			; write text
+		bsr.w	OW_Loop				; write text
 
 		adda.w	#(1*24),a1			; make one empty line
 
 		lea	(OpText_AirMove).l,a2		; set text location
-		bsr.w	Options_Write			; write text
-		lea	(OpText_OFF).l,a2		; use "OFF" text
-		tst.b	($FFFFFFBC).w			; is Air Move on B enabled?
-		beq.s	GOT_AMOB_Write			; if not, branch
-		lea	(OpText_ON).l,a2		; otherwise use "ON" text
-GOT_AMOB_Write:
-		bsr.w	Options_Write			; write text
+		bsr.w	OW_Loop				; write text
+		moveq	#1,d2				; set d2 to 1
+		bsr.w	GOT_ChkOption			; check if option is ON or OFF
+		bsr.w	OW_Loop				; write text
 
 		adda.w	#(2*24),a1			; make two empty lines
 
 		lea	(OpText_Extended).l,a2		; set text location
-		bsr.w	Options_Write			; write text
-		lea	(OpText_OFF).l,a2		; use "OFF" text
-		tst.b	($FFFFFF93).w			; is Extended Camera disabled?
-		bne.s	GOT_ExtCam_Write		; if not, branch
-		lea	(OpText_ON).l,a2		; otherwise use "ON" text
-GOT_ExtCam_Write:
-		bsr.w	Options_Write			; write text
+		bsr.w	OW_Loop				; write text
+		moveq	#2,d2				; set d2 to 2
+		bsr.w	GOT_ChkOption			; check if option is ON or OFF
+		bsr.w	OW_Loop				; write text
 
 		adda.w	#(2*24),a1			; make two empty lines
 
 		lea	(OpText_SonicArt).l,a2		; set text location
-		bsr.w	Options_Write			; write text
-		lea	(OpText_S2B).l,a2		; use "S2B" text
-		tst.b	($FFFFFF94).w			; is art set to S3?
-		beq.s	GOT_SonArt_Write		; if not, branch
-		lea	(OpText_S3).l,a2		; otherwise use "ON" text
-GOT_SonArt_Write:
-		bsr.w	Options_Write			; write text
+		bsr.w	OW_Loop				; write text
+		moveq	#3,d2				; set d2 to 3
+		bsr.w	GOT_ChkOption			; check if option is ON or OFF
+		bsr.w	OW_Loop				; write text
 
 		adda.w	#(2*24),a1			; make two empty lines
 
 		lea	(OpText_FourthOption).l,a2	; set text location
-		bsr.w	Options_Write			; write text
-		lea	(OpText_OFF).l,a2		; use "S2B" text
-		tst.b	($FFFFFF92).w			; is flag set?
-		beq.s	GOT_4th_Write			; if not, branch
-		lea	(OpText_ON).l,a2		; otherwise use "ON" text
-GOT_4th_Write:
-		bsr.w	Options_Write			; write text
+		bsr.w	OW_Loop				; write text
+		moveq	#4,d2				; set d2 to 4
+		bsr.w	GOT_ChkOption			; check if option is ON or OFF
+		bsr.w	OW_Loop				; write text
 
 		adda.w	#(2*24),a1			; make two empty lines
 
 		lea	(OpText_SoundTest).l,a2		; set text location
-		bsr.w	Options_Write			; write text
+		bsr.w	OW_Loop				; write text
 
 		adda.w	#(2*24),a1			; make two empty lines
 
 		lea	(OpText_Exit).l,a2		; set text location
-		bsr.w	Options_Write			; write text
+		bsr.w	OW_Loop				; write text
 
 		rts					; return
 
@@ -500,23 +508,25 @@ GOT_StartUpWrite:
 		jmp	GOTSUP_Index(pc,d1.w)		; find out the current position in the index
 
 ; ===========================================================================
-GOTSUP_Index:	dc.w	GOTSUP_Header1-GOTSUP_Index
-		dc.w	GOTSUP_Header2-GOTSUP_Index
-		dc.w	GOTSUP_Options-GOTSUP_Index
-		dc.w	GOTSUP_SoundTest-GOTSUP_Index
-		dc.w	GOTSUP_Exit-GOTSUP_Index
+GOTSUP_Index:	dc.w	GOTSUP_Header1-GOTSUP_Index	; [$0] "=" Headers
+		dc.w	GOTSUP_Header2-GOTSUP_Index	; [$2] "SONIC ERAZOR" Header
+		dc.w	GOTSUP_Options-GOTSUP_Index	; [$4] The 4 options itself
+		dc.w	GOTSUP_ONOFF1-GOTSUP_Index	; [$6] Write "ON" or "OFF" text for Air Move on B
+		dc.w	GOTSUP_ONOFF2-GOTSUP_Index	; [$8] Write "ON" or "OFF" text for Extended Camera
+		dc.w	GOTSUP_ONOFF3-GOTSUP_Index	; [$A] Write "S2B" or "S3" text for Sonic Art
+		dc.w	GOTSUP_ONOFF4-GOTSUP_Index	; [$C] Write "ON" or "OFF" text for Fourh Option
+		dc.w	GOTSUP_ONOFF4-GOTSUP_Index	; [$E] Twice to give a little delay
+		dc.w	GOTSUP_SoundExit-GOTSUP_Index	; [$10] "SOUND TEST" and "EXIT OPTIONS"
 ; ===========================================================================
 
 GOTSUP_Header1:
 		lea	($FFFFCA00+(0*24)).w,a1		; set destination
-		addq.b	#1,($FFFFFF96).w		; increase length counter
-		move.b	($FFFFFF96).w,d1		; write length counter into d1
 		lea	(OpText_Header1).l,a2		; set text location
 		bsr.w	Options_Write			; write text
 		lea	($FFFFCA00+(2*24)).w,a1		; set destination
 		move.b	($FFFFFF96).w,d1		; write length counter into d1
 		lea	(OpText_Header1).l,a2		; set text location
-		bsr.w	Options_Write			; write text
+		bsr.w	OW_NoIncrease			; write text
 
 		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
 		rts					; return
@@ -524,8 +534,6 @@ GOTSUP_Header1:
 
 GOTSUP_Header2:
 		lea	($FFFFCA00+(1*24)).w,a1		; set destination
-		addq.b	#1,($FFFFFF96).w		; increase length counter
-		move.b	($FFFFFF96).w,d1		; write length counter into d1
 		lea	(OpText_Header2).l,a2		; set text location
 		bsr.w	Options_Write			; write text
 
@@ -534,27 +542,81 @@ GOTSUP_Header2:
 ; ---------------------------------------------------------------------------
 
 GOTSUP_Options:
-	move.b	#$FF,-1(a2)
-		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
-		rts					; return
-; ---------------------------------------------------------------------------
-
-GOTSUP_SoundTest:
-	move.b	#$FF,-1(a2)
-		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
-		rts					; return
-; ---------------------------------------------------------------------------
-
-GOTSUP_Exit:
-		lea	($FFFFCA00+(19*24)).w,a1	; set destination
-		addq.b	#1,($FFFFFF96).w		; increase length counter
-		move.b	($FFFFFF96).w,d1		; write length counter into d1
-		lea	(OpText_Exit).l,a2		; set text location
+		lea	($FFFFCA00+(4*24)).w,a1		; set destination
+		adda.w	($FFFFFF9A).w,a1
+		lea	(OpText_AirMove).l,a2		; set text location
 		bsr.w	Options_Write			; write text
+
+		lea	($FFFFCA00+(7*24)).w,a1		; set destination
+		adda.w	($FFFFFF9A).w,a1
+		lea	(OpText_Extended).l,a2		; set text location
+		bsr.w	OW_NoIncrease			; write text
+
+		lea	($FFFFCA00+(10*24)).w,a1	; set destination
+		adda.w	($FFFFFF9A).w,a1
+		lea	(OpText_SonicArt).l,a2		; set text location
+		bsr.w	OW_NoIncrease			; write text
+
+		lea	($FFFFCA00+(13*24)).w,a1	; set destination
+		adda.w	($FFFFFF9A).w,a1
+		lea	(OpText_FourthOption).l,a2	; set text location
+		bsr.w	OW_NoIncrease			; write text
+		
+		subq.w	#1,($FFFFFF9A).w
+
+		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
+		rts					; return
+; ---------------------------------------------------------------------------
+
+GOTSUP_ONOFF1:
+		moveq	#0,d1				; clear d1
+		moveq	#1,d2				; set d2 to 1
+		bsr.w	GOT_ChkOption			; check if option is ON or OFF
+		lea	($FFFFCA00+(4*24)+21).w,a1	; set destination
+		bsr.w	OW_Loop				; write text
+		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
+		rts					; return
+
+GOTSUP_ONOFF2:
+		moveq	#0,d1				; clear d1
+		moveq	#2,d2				; set d2 to 2
+		bsr.w	GOT_ChkOption			; check if option is ON or OFF
+		lea	($FFFFCA00+(7*24)+21).w,a1	; set destination
+		bsr.w	OW_Loop				; write text
+		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
+		rts					; return
+
+GOTSUP_ONOFF3:
+		moveq	#0,d1				; clear d1
+		moveq	#3,d2				; set d2 to 3
+		bsr.w	GOT_ChkOption			; check if option is ON or OFF
+		lea	($FFFFCA00+(10*24)+21).w,a1	; set destination
+		bsr.w	OW_Loop				; write text
+		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
+		rts					; return
+
+GOTSUP_ONOFF4:
+		moveq	#0,d1				; clear d1
+		moveq	#4,d2				; set d2 to 4
+		bsr.w	GOT_ChkOption			; check if option is ON or OFF
+		lea	($FFFFCA00+(13*24)+21).w,a1	; set destination
+		bsr.w	OW_Loop				; write text
+		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
+		rts					; return
+; ---------------------------------------------------------------------------
+
+GOTSUP_SoundExit:
+		lea	($FFFFCA00+(16*24)).w,a1	; set destination
+		lea	(OpText_SoundTest).l,a2		; set text location
+		bsr.w	Options_Write			; write text
+
+		lea	($FFFFCA00+(19*24)).w,a1	; set destination
+		lea	(OpText_Exit).l,a2		; set text location
+		bsr.w	OW_NoIncrease			; write text
 
 		tst.b	-1(a2)				; is current entry $FF?
 		bpl.s	GOTSUPE_Return			; if not, branch
-		move.b	#1,($FFFFFF9B).w		; set to "building-up-sequence" done
+		move.b	#1,($FFFFFF9C).w		; set to "building-up-sequence" done
 		jsr	OptionsTextLoad			; update text
 
 GOTSUPE_Return:
@@ -566,13 +628,13 @@ GOTSUPE_Return:
 ; ---------------------------------------------------------------------------
 
 GOTSUP_CheckEnd:
-		tst.b	-1(a2)				; is current entry $FF?
-		bpl.s	GOTSUPCE_Return			; if not, branch
-		clr.b	($FFFFFF96).w			; clear counter
-		addq.b	#2,($FFFFFF98).w		; increase pointer
+		tst.b	-1(a2)			; is current entry $FF?
+		bpl.s	GOTSUPCE_Return		; if not, branch
+		clr.b	($FFFFFF96).w		; clear counter
+		addq.b	#2,($FFFFFF98).w	; increase pointer
 
 GOTSUPCE_Return:
-		rts					; return
+		rts				; return
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -581,51 +643,106 @@ GOTSUPCE_Return:
 ; ---------------------------------------------------------------------------
 
 Options_Write:
-		move.b	(a2)+,d0	; get current char from a2
+		addq.b	#1,($FFFFFF96).w	; increase length counter
 
-		tst.b	d1		; is d1 set?
-		bne.s	OW_LimitGiven	; if yes, don't write until $FF, but instead with the input number given
+OW_NoIncrease:
+		move.b	($FFFFFF96).w,d1	; write length counter into d1
 
-		tst.b	d0		; is current character $FF?
-		bpl.s	OW_NotFF	; if not, branch
-		rts			; otherwise, return
+OW_Loop:
+		move.b	(a2)+,d0		; get current char from a2
+
+		tst.b	d1			; is d1 set?
+		bne.s	OW_LimitGiven		; if yes, don't write until $FF, but instead with the input number given
+
+		tst.b	d0			; is current character $FF or $FE?
+		bpl.s	OW_NotFF		; if not, branch
+		rts				; otherwise, return
 ; ---------------------------------------------------------------------------
 
 OW_LimitGiven:
-		subq.b	#1,d1		; sub 1 from d1
-		bne.s	OW_NotFF	; if result isn't 0, contine writing
-		rts			; otherwise, return
+		subq.b	#1,d1			; sub 1 from d1
+		bne.s	OW_NotFF		; if result isn't 0, contine writing
+		rts				; otherwise, return
 ; ---------------------------------------------------------------------------
 
 OW_NotFF:
-		cmpi.b	#$20,d0		; is current character a space?
-		bne.s	OW_NotSpace	; if not, branch
+		cmpi.b	#$20,d0			; is current character a space?
+		bne.s	OW_NotSpace		; if not, branch
+		cmpi.b	#4,($FFFFFF98).w	; are the options being written now?
+		bne.s	OW_SpaceLoop		; if not, branch
+		move.b	#$F0,d0			; set correct value for space
+		bra.s	OW_DoWrite		; skip
 
 OW_SpaceLoop:
-		move.b	#$F0,(a1)+	; write a space char to a1
-		cmpi.b	#$20,(a2)+	; is next character a space as well?
-		beq.s	OW_SpaceLoop	; if yes, loop until not anymore
-		suba.w	#1,a2		; sub 1 from a2
-		bra.s	Options_Write	; loop
-
+		move.b	#$F0,(a1)+		; write a space char to a1
+		cmpi.b	#$20,(a2)+		; is next character a space as well?
+		beq.s	OW_SpaceLoop		; if yes, loop until not anymore
+		suba.w	#1,a2			; sub 1 from a2
+		bra.s	OW_Loop			; loop
 
 OW_NotSpace:
-		cmpi.b	#$3D,d0		; is current character a "="?
-		bne.s	OW_NotEqual	; if not, branch
-		move.b	#$0C,d0		; set correct value for "="
-		bra.s	OW_DoWrite	; skip
+		cmpi.b	#$3D,d0			; is current character a "="?
+		bne.s	OW_NotEqual		; if not, branch
+		move.b	#$0C,d0			; set correct value for "="
+		bra.s	OW_DoWrite		; skip
 
 OW_NotEqual:
-		subi.b	#50,d0		; otherwise it's a letter and has to be set to the correct value
-		cmpi.b	#9,d0		; is result a number?
-		bgt.s	OW_DoWrite	; if not, branch
-		addq.b	#2,d0		; otherwise add 2 again
+		subi.b	#50,d0			; otherwise it's a letter and has to be set to the correct value
+		cmpi.b	#9,d0			; is result a number?
+		bgt.s	OW_DoWrite		; if not, branch
+		addq.b	#2,d0			; otherwise add 2 again
 
 OW_DoWrite:
-		move.b	d0,(a1)+	; write output to a1
-		moveq	#0,d0		; clear d0
+		move.b	d0,(a1)+		; write output to a1
+		moveq	#0,d0			; clear d0
 
-		bra.s	Options_Write	; loop
+		bra.s	OW_Loop			; loop
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to check if an option is ON or OFF and set result to a2.
+; ---------------------------------------------------------------------------
+
+GOT_ChkOption:
+		cmpi.b	#1,d2				; is d2 set to 1?
+		bne.s	GOTCO_ChkExtCam			; if not, branch
+		lea	(OpText_OFF).l,a2		; use "OFF" text
+		tst.b	($FFFFFFBC).w			; is Air Move on B enabled?
+		beq.s	GOTCO_Return			; if not, branch
+		lea	(OpText_ON).l,a2		; otherwise use "ON" text
+		rts					; return
+; ---------------------------------------------------------------------------
+
+GOTCO_ChkExtCam:
+		cmpi.b	#2,d2				; is d2 set to 2?
+		bne.s	GOTCO_ChkSonArt			; if not, branch
+		lea	(OpText_OFF).l,a2		; use "OFF" text
+		tst.b	($FFFFFF93).w			; is Extended Camera disabled?
+		bne.s	GOTCO_Return			; if not, branch
+		lea	(OpText_ON).l,a2		; otherwise use "ON" text
+		rts					; return
+; ---------------------------------------------------------------------------
+
+GOTCO_ChkSonArt:
+		cmpi.b	#3,d2				; is d2 set to 3?
+		bne.s	GOTCO_ChkFourthOption		; if not, branch
+		lea	(OpText_S2B).l,a2		; use "S2B" text
+		tst.b	($FFFFFF94).w			; is art set to S3?
+		beq.s	GOTCO_Return			; if not, branch
+		lea	(OpText_S3).l,a2		; otherwise use "ON" text
+		rts					; return
+; ---------------------------------------------------------------------------
+
+GOTCO_ChkFourthOption:
+		cmpi.b	#4,d2				; is d2 set to 4?
+		bne.s	GOTCO_Return			; if not, branch
+		lea	(OpText_OFF).l,a2		; use "OFF" text
+		tst.b	($FFFFFF92).w			; is flag set?
+		beq.s	GOTCO_Return			; if not, branch
+		lea	(OpText_ON).l,a2		; otherwise use "ON" text
+
+GOTCO_Return:
+		rts					; return
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 

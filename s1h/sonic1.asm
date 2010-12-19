@@ -4,12 +4,16 @@
 
 ; =======================================================
 ;-------------------------------------------------------
-; Leader/Programming:	Selbi
-; Music:		DalekSam
-;			SOTI
-;			EduardoKnuckles
-; Addi. Programming:	MarkeyJester
-; Beta Testing:		SonicVaan
+; Leader/Programming:		Selbi
+
+; Music:			DalekSam
+;				SOTI
+;				EduardoKnuckles
+
+; Addi. Programming and Art:	MarkeyJester
+
+; Beta Testing:			SonicVaan
+;				Irixion
 ; ------------------------------------------------------
 ; =======================================================
 
@@ -444,7 +448,7 @@ sub_5CA:				; XREF: sub_5BA
 		andi.w	#$F,d1
 		cmpi.w	#$A,d1
 		bcs.s	loc_5D8
-		addq.w	#7,d1
+		addq.w	#5,d1	; changed from 7
 
 loc_5D8:
 		addi.w	#$7C0,d1
@@ -467,7 +471,8 @@ ErrorWaitForC:				; XREF: loc_478
 
 ; ===========================================================================
 
-Art_Text:	incbin	artunc\menutext.bin	; text used in level select and debug mode
+Art_Text:	incbin	InfoScreen\Options_TextArt.bin	; text used in level select and debug mode
+		;incbin	artunc\menutext.bin
 		even
 
 ; ===========================================================================
@@ -3396,15 +3401,7 @@ Title_ClrObjRam:
 		move.l	#$62000002,($C00004).l
 		lea	(Nem_TitleTM).l,a0 ; load "TM" patterns
 		jsr	NemDec
-		lea	($C00000).l,a6
-		move.l	#$50000003,4(a6)
-		lea	(Art_Text).l,a5
-		move.w	#$28F,d1
 
-Title_LoadText:
-		move.w	(a5)+,(a6)
-		dbf	d1,Title_LoadText ; load uncompressed text patterns
-NoTSLoad:
 		move.b	#0,($FFFFFE30).w ; clear lamppost counter
 		move.w	#0,($FFFFFE08).w ; disable debug item placement	mode
 	if AutoDEMO=1
@@ -3474,7 +3471,7 @@ NoTSLoad:
 	else
 		move.b	#0,($FFFFFFFA).w ; disable debug mode
 	endif
-		move.w	#$FFFF,($FFFFF614).w ; run title screen for $FFFF (ori $178) frames
+		move.w	#$618,($FFFFF614).w ; run title screen for $618 frames
 		lea	($FFFFD080).w,a1
 		moveq	#0,d0
 		move.w	#7,d1
@@ -3544,48 +3541,8 @@ Title_RegionJ:				; XREF: Title_ChkRegion
 		lea	(LevelSelectCode_J).l,a0 ; load	J code
 
 Title_EnterCheat:			; XREF: Title_ChkRegion
-		move.w	($FFFFFFE4).w,d0
-		adda.w	d0,a0
-		move.b	($FFFFF605).w,d0 ; get button press
-		andi.b	#$F,d0		; read only up/down/left/right buttons
-		cmp.b	(a0),d0		; does button press match the cheat code?
-		bne.s	loc_3210	; if not, branch
-		addq.w	#1,($FFFFFFE4).w ; next	button press
-		tst.b	d0
-		bne.s	Title_CountC
-		lea	($FFFFFFE0).w,a0
-		move.w	($FFFFFFE6).w,d1
-		lsr.w	#1,d1
-		andi.w	#3,d1
-		beq.s	Title_PlayRing
-		tst.b	($FFFFFFF8).w
-		bpl.s	Title_PlayRing
-		moveq	#1,d1
-		move.b	d1,1(a0,d1.w)
-
-Title_PlayRing:
-		move.b	#1,(a0,d1.w)	; activate cheat
-		move.b	#$B5,d0		; play ring sound when code is entered
-		jsr	PlaySound_Special
-		bra.s	Title_CountC
-; ===========================================================================
-
-loc_3210:				; XREF: Title_EnterCheat
-		tst.b	d0
-		beq.s	Title_CountC
-		cmpi.w	#9,($FFFFFFE4).w
-		beq.s	Title_CountC
-		move.w	#0,($FFFFFFE4).w
-
-Title_CountC:
-		move.b	($FFFFF605).w,d0
-		andi.b	#$20,d0		; is C button pressed?
-		beq.s	loc_3230	; if not, branch
-		addq.w	#1,($FFFFFFE6).w ; increment C button counter
-
-loc_3230:
-	;	tst.w	($FFFFF614).w	; is time over?
-	;	beq.w	Demo		; if yes, play demo
+		tst.w	($FFFFF614).w	; is time over?
+		beq.w	StartGame	; if yes, start game
 
 PalLocation = $FFFFFB60
 
@@ -3615,6 +3572,7 @@ T_PalSkip_2:
 		cmpi.b	#$80,($FFFFF605).w 	; check if Start is pressed
 		bne.w	loc_317C		; if not, branch
 
+StartGame:
 		move.b	#1,($A130F1).l		; enable SRAM
 		tst.b	($20001B).l		; does SRAM exist?
 		beq.s	T_NoSRAM		; if not, branch
@@ -15815,7 +15773,7 @@ Obj0E_Animate:				; XREF: Obj0E_Index
 		rts	
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Object 0F - "PRESS START BUTTON" and "TM" from title screen
+; Object 0F - "PRESS START BUTTON" from title screen
 ; ---------------------------------------------------------------------------
 
 Obj0F:					; XREF: Obj_Index
@@ -15826,7 +15784,8 @@ Obj0F:					; XREF: Obj_Index
 		bra.w	DisplaySprite
 ; ===========================================================================
 Obj0F_Index:	dc.w Obj0F_Main-Obj0F_Index
-		dc.w Obj0F_PrsStart-Obj0F_Index
+		dc.w Obj0F_PrsStart1-Obj0F_Index
+		dc.w Obj0F_PrsStart2-Obj0F_Index
 		dc.w locret_A6F8-Obj0F_Index
 ; ===========================================================================
 
@@ -15836,22 +15795,30 @@ Obj0F_Main:				; XREF: Obj0F_Index
 		move.w	#$138,$A(a0)
 		move.l	#Map_obj0F,4(a0)
 		move.w	#$200,2(a0)
-		cmpi.b	#2,$1A(a0)	; is object "PRESS START"?
-		bcs.s	Obj0F_PrsStart	; if yes, branch
-		addq.b	#2,$24(a0)
-		cmpi.b	#3,$1A(a0)	; is the object	"TM"?
-		bne.s	locret_A6F8	; if not, branch
-		move.w	#$2510,2(a0)	; "TM" specific	code
-		move.w	#$170,8(a0)
-		move.w	#$FC,$A(a0)
+		move.b	#$3E,$30(a0)
 
 locret_A6F8:				; XREF: Obj0F_Index
 		rts	
 ; ===========================================================================
 
-Obj0F_PrsStart:				; XREF: Obj0F_Index
+Obj0F_PrsStart1:			; XREF: Obj0F_Index
+		addq.w	#6,$8(a0)	; move object across the screen
+		cmpi.w	#$170,8(a0)
+		blt.s	Obj0F_Animate
+		addq.b	#2,$24(a0)
+		bra.s	Obj0F_Animate
+; ---------------------------------------------------------------------------
+
+Obj0F_PrsStart2:			; XREF: Obj0F_Index
+		subq.w	#6,$8(a0)	; move object across the screen
+		cmpi.w	#$40,8(a0)
+		bgt.s	Obj0F_Animate
+		subq.b	#2,$24(a0)
+; ---------------------------------------------------------------------------
+
+Obj0F_Animate:
 		lea	(Ani_obj0F).l,a1
-		bra.w	AnimateSprite
+		bra.s	AnimateSprite
 ; ===========================================================================
 Ani_obj0E:
 		include	"_anim\obj0E.asm"
@@ -43035,7 +43002,7 @@ HudDb_XYLoop:
 		andi.w	#$F,d2
 		cmpi.w	#$A,d2
 		bcs.s	loc_1C8B2
-		addq.w	#7,d2
+		addq.w	#5,d2	; changed from 7
 
 loc_1C8B2:
 		lsl.w	#5,d2

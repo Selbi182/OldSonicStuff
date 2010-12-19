@@ -5,9 +5,8 @@ To-Do:
 	- Be able to go back to the overworld once you enter a level, maybe by using a giant ring again.
 
 - Find new music for Night Hill Zone.
-- There are some ugly pixels on the level select font for the InfoScreen which need to be removed.
 - Finding new Title Screen background art.
-- Find a new option (right now it's marked as XXXXXXXXXXXXXXX in the options screen).
+- Find a new option (right now it's marked as XXXXXXXXXXXXXXX in the options screen and does nothing).
 - Fix LZ camera and don't allow to go back when you touch a lamppost.
 - Finish the Chapter/Info-Screen stuff.
 - Add a sound test, maybe a custom game mode, maybe just included in the options screen.
