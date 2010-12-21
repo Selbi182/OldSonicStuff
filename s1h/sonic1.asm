@@ -57,7 +57,7 @@ NoTSBGArt = 0
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened
-DoorsAlwaysOpen = 1
+DoorsAlwaysOpen = 0
 ;=================================================
 
 ; ---------------------------------------------------------------------------
@@ -258,11 +258,9 @@ NoSRAM:
 
 MainGameLoop:
 		moveq	#0,d0
-		move.b	($FFFFF600).w,d0 ; load	Game Mode
-		move.w	d0,d1
-		lsr.b	#1,d1
-		add.w	d1,d0
-		jsr	GameModeArray(pc,d0.w) ; jump to apt location in ROM
+		move.b	($FFFFF600).w,d0
+		movea.l	GameModeArray(pc,d0.w),a1
+		jsr	(a1)
 		bra.s	MainGameLoop
 
 ; ===========================================================================
@@ -271,25 +269,18 @@ MainGameLoop:
 ; ---------------------------------------------------------------------------
 
 GameModeArray:
-		jmp	SegaScreen	; Sega Screen ($00)
-; ===========================================================================
-		jmp	TitleScreen	; Title	Screen ($04)
-; ===========================================================================
-		jmp	Level		; Demo Mode ($08)
-; ===========================================================================
-		jmp	Level		; Normal Level ($0C)
-; ===========================================================================
-		jmp	SpecialStage	; Special Stage	($10)
-; ===========================================================================
-		jmp	ContinueScreen	; Continue Screen ($14)
-; ===========================================================================
-		jmp	EndingSequence	; End of game sequence ($18)
-; ===========================================================================
-		jmp	Credits		; Credits ($1C)
-; ===========================================================================
-		jmp	InfoScreen	; Info Screen ($20)
-; ===========================================================================
-		jmp	OptionsScreen	; Options Screen ($24)
+; ===========================================================================	
+		dc.l	SegaScreen	; Sega Screen ($00)
+		dc.l	TitleScreen	; Title	Screen ($04)
+		dc.l	Level		; Demo Mode ($08)
+		dc.l	Level		; Normal Level ($0C)
+		dc.l	SpecialStage	; Special Stage	($10)
+		dc.l	ContinueScreen	; Continue Screen ($14)
+		dc.l	EndingSequence	; End of game sequence ($18)
+		dc.l	Credits		; Credits ($1C)
+		dc.l	InfoScreen	; Info Screen ($20)
+		dc.l	OptionsScreen	; Options Screen ($24)
+		dc.l	ChapterSplash	; Chapters Screen ($28)
 ; ===========================================================================	
 
 BusError:
@@ -471,7 +462,7 @@ ErrorWaitForC:				; XREF: loc_478
 
 ; ===========================================================================
 
-Art_Text:	incbin	InfoScreen\Options_TextArt.bin	; text used in level select and debug mode
+Art_Text:	incbin	Screens\OptionsScreen\Options_TextArt.bin	; text used in level select and debug mode
 		;incbin	artunc\menutext.bin
 		even
 
@@ -3577,7 +3568,9 @@ StartGame:
 		tst.b	($20001B).l		; does SRAM exist?
 		beq.s	T_NoSRAM		; if not, branch
 		move.b	#0,($A130F1).l		; disable SRAM
-		jmp	ODIGHZSplash		; jump to One Day in Green Hill Zone screen
+		move.b	#1,($FFFFFF7D).w
+		move.b	#$28,($FFFFF600).w	; set to Chapters Screen
+		rts				; return
 
 T_NoSRAM:
 		move.b	#0,($A130F1).l		; disable SRAM
@@ -5246,7 +5239,7 @@ SS_ChkEnd:
 		cmpi.b	#$10,($FFFFF600).w ; is	game mode $10 (special stage)?
 		beq.w	SS_MainLoop	; if yes, branch
 
-		bset	#2,($FFFFFF8B).w	; open third door in the level
+		bset	#1,($FFFFFF8B).w	; open second door
 
 		move.w	#60,($FFFFF614).w ; set	delay time to 1	second
 		move.w	#$3F,($FFFFF626).w
@@ -6025,7 +6018,7 @@ End_LoadSonic:
 		move.b	#1,($FFFFFE1D).w
 		move.b	#0,($FFFFFE1E).w
 
-		bset	#5,($FFFFFF8B).w	; unlock sixths and last door
+		bset	#4,($FFFFFF8B).w	; unlock door to the credits
 
 		move.w	#1800,($FFFFF614).w
 		move.b	#$18,($FFFFF62A).w
@@ -14784,12 +14777,6 @@ Obj37_Delete:				; XREF: Obj37_Index
 ; ---------------------------------------------------------------------------
 
 Obj4B:					; XREF: Obj_Index
-	;	cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
-	;	bra.s	Obj4B_NotGHZ2X		; if not, branch
-	;	rts				; otherwise, don't display ring
-; ===========================================================================
-
-;Obj4B_NotGHZ2X:
 		moveq	#0,d0
 		move.b	$24(a0),d0
 		move.w	Obj4B_Index(pc,d0.w),d1
@@ -14890,7 +14877,6 @@ Obj4B_NoCapsule:
 		jsr	WhiteFlash4		; make white flash
 		clr.w	($FFFFFE20).w	; clear rings
 		clr.l	($FFFFFE26).w	; clear score
-	;	move.w	#0,($FFFFFE20).w
 
 Obj4B_NotGHZ2:
 		clr.b	($FFFFFFE7).w
@@ -14932,13 +14918,13 @@ Obj4B_ChkIntro:
 		move.w	#$001,($FFFFFE10).w	; set level to GHZ2
 		move.b	#$95,d0
 		jsr	PlaySound
-		bra.s	Obj4B_PlayLevel
+		bra.w	Obj4B_PlayLevel
 
 Obj4B_ChkGHZ:
 		cmpi.w	#$04A0,$8(a0)
 		bne.s	Obj4B_ChkSpecial
 		move.w	#$000,($FFFFFE10).w	; set level to GHZ1
-		bra.s	Obj4B_PlayLevel
+		bra.w	Obj4B_PlayLevel
 
 Obj4B_ChkSpecial:
 		cmpi.w	#$06AC,$8(a0)
@@ -14950,12 +14936,36 @@ Obj4B_ChkMZ:
 		cmpi.w	#$08A0,$8(a0)
 		bne.s	Obj4B_ChkLZ2
 		move.w	#$200,($FFFFFE10).w	; set level to MZ1
+
+		move.b	#1,($A130F1).l
+		cmpi.b	#1,($200001).l
+		bne.s	Obj4B_MZ_NoChapter
+		move.b	#2,($200001).l
+		move.b	#0,($A130F1).l
+		move.b	#$28,($FFFFF600).w
+		rts
+
+Obj4B_MZ_NoChapter:
+		move.b	#0,($A130F1).l
+
 		bra.s	Obj4B_PlayLevel
 
 Obj4B_ChkLZ2:
 		cmpi.w	#$0AA0,$8(a0)
 		bne.s	Obj4B_ChkFZ
 		move.w	#$101,($FFFFFE10).w	; set level to LZ2
+
+		move.b	#1,($A130F1).l
+		cmpi.b	#2,($200001).l
+		bne.s	Obj4B_LZ_NoChapter
+		move.b	#3,($200001).l
+		move.b	#0,($A130F1).l
+		move.b	#$28,($FFFFF600).w
+		rts
+
+Obj4B_LZ_NoChapter:
+		move.b	#0,($A130F1).l
+
 		bra.s	Obj4B_PlayLevel
 
 Obj4B_ChkFZ:
@@ -14973,7 +14983,6 @@ Obj4B_ChkEnding:
 Obj4B_PlayLevel:
 		move.b	#$C,($FFFFF600).w	; set to level
 		move.w	#1,($FFFFFE02).w	; restart level
-		move.b	#1,($FFFFFFDC).w	; make sure music will be played
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -21497,50 +21506,34 @@ loc_EC86:
 		addq.b	#2,$24(a0)
 
 ; ---------------------------------------------------------------------------
-; Subroutine to	set up bonuses at the end of an	act
+; Subroutine unlock the doors in SYZ1 after you finish a normal level.
+
+; About: ($FFFFFF8B).w
+; Bit 0 = GHZ | Special Stage
+; Bit 1 = Special Stage | MZ
+; Bit 2 = MZ | LZ
+; Bit 3 = LZ | FZ
+; Bit 4 = FZ | Ending Sequence and credits
 ; ---------------------------------------------------------------------------
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
 
 GotThroughAct:				; XREF: Obj3E_EndAct
-		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
-		bne.s	GTA_ChkMZ1		; if not, branch
-		bset	#0,($FFFFFF8B).w	; unlock first door (second door is GHZ3)
-
-GTA_ChkMZ1:
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		bne.s	GTA_ChkLZ2		; if not, branch
-		bset	#3,($FFFFFF8B).w	; unlock fourth door (third door is special stage)
+		bset	#2,($FFFFFF8B).w	; unlock third door
 
 GTA_ChkLZ2:
 		cmpi.w	#$101,($FFFFFE10).w	; is level LZ2?
-		bne.s	GTA_ChkFZ		; if not, branch
-		bset	#4,($FFFFFF8B).w	; unlock fifths door
-
-GTA_ChkFZ:
-		cmpi.w	#$502,($FFFFFE10).w	; is level LZ2?
 		bne.s	GTA_NoDoor		; if not, branch
-		bset	#5,($FFFFFF8B).w	; unlock sixths door
+		bset	#3,($FFFFFF8B).w	; unlock fourth door
 
 GTA_NoDoor:
-		move.b	#$20,($FFFFF600).w	; set to level
-		rts
-
-		bsr.s	NextLevelX		; set to SYZ1
-
-		jsr	CheckIfMainLevel
-		tst.b	d5
-		bne.s	locret_ECEE
-		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
-		beq.s	locret_ECEE		; if yes, branch
-		cmpi.b	#2,($FFFFFE11).w	; is act 3 or 4?
-		bge.s	locret_ECEE		; if yes, branch
-		move.w	#$E0,d0			; set sound $E0
-		jsr	(PlaySound_Special).l	; fade out music
+		move.b	#$20,($FFFFF600).w	; set to Info Screen
 
 locret_ECEE:
-		rts	
+		rts				; return
 ; End of function GotThroughAct
 
 ; ===========================================================================
@@ -28557,22 +28550,21 @@ loc_13336:
 ; ===========================================================================
 
 Boundary_Bottom:
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1?
+		beq.w	Boundary_Bottom_locret	; if yes, branch
+
 		move.w	($FFFFF726).w,d0
 		move.w	($FFFFF72E).w,d1
 		cmp.w	d0,d1
 		blt.s	Boundary_Bottom_locret	
 		cmpi.w	#$001,($FFFFFE10).w ; is level GHZ2 ?
 		bne.s	BB_NotGHZ2
-	;	jmp	Obj3A_NextLevel
-	;	move.w	#1,($FFFFFE02).w ; restart the level
-	;	move.w	#$000,($FFFFFE10).w ; set level	to GHZ1
-	;	move.b	#$0C,($FFFFF600).w ; set screen mode to $0C (level)
-	;	jmp	PlayLevel
 		clr.b	($FFFFFFB8).w
 		clr.b	($FFFFFFB7).w
-	;	clr.b	($FFFFFFB9).w
 		clr.b	($FFFFFFB6).w
 		rts
+; ===========================================================================
+
 BB_NotGHZ2:
 		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
 		bne.s	BB_NotGHZ1		; if not, branch
@@ -28600,7 +28592,6 @@ BB_NotGHZ1:
 		clr.b	($FFFFFE30).w	; clear	lamppost counter
 		move.w	#1,($FFFFFE02).w ; restart the level
 		move.w	#$502,($FFFFFE10).w ; set level	to FZ
-	;	move.w	#$103,($FFFFFE10).w ; set level	to SBZ3	(LZ4)
 	
 Boundary_Bottom_locret:
 		rts
@@ -39663,7 +39654,7 @@ Obj3E_ChkOpened:
 		bset	#1,($FFFFD022).w
 
 Obj3E_DoOpen:
-		bset	#1,($FFFFFF8B).w	; unlock second door
+		bset	#0,($FFFFFF8B).w	; unlock first door
 
 		move.b	#2,$1A(a0)	; use frame number 2 (destroyed	prison)
 		rts	
@@ -46927,10 +46918,10 @@ SegaPCM:	incbin	sound\segapcm.bin
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-		include "Screen/SelbiSplash.asm"
-		include "Screen/ODIGHZ/ODIGHZ.asm"
-		include "OptionsScreen.asm"
-		include "InfoScreen.asm"
+		include "Screens/SelbiSplash/SelbiSplash.asm"
+		include "Screens/ChapterScreens/Chapters.asm"
+		include "Screens/OptionsScreen/OptionsScreen.asm"
+		include "Screens/InfoScreen/InfoScreen.asm"
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 

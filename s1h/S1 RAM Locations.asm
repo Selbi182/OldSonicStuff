@@ -20,7 +20,7 @@
     ($FFFFFF7A).w
     ($FFFFFF7B).w
     ($FFFFFF7C).w
-    ($FFFFFF7D).w
+ ;  ($FFFFFF7D).w
     ($FFFFFF7E).w
     ($FFFFFF7F).w
 

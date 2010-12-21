@@ -8,15 +8,16 @@ To-Do:
 - Finding new Title Screen background art.
 - Find a new option (right now it's marked as XXXXXXXXXXXXXXX in the options screen and does nothing).
 - Fix LZ camera and don't allow to go back when you touch a lamppost.
-- Finish the Chapter/Info-Screen stuff.
+- Set the times when Info Screen should be displayed.
 - Add a sound test, maybe a custom game mode, maybe just included in the options screen.
+- Somehow display a "Special Stage, Act 2" title card when entering it.
 
 Bugs:
   Right now I don't know any...
 
 Would be great:
 - Find a more accurate system for the palette-restoration from WhiteFlash.
-- For Camera Shaking I used an object... WHAT THE HELL WAS IT THINKING???
+- For Camera Shaking I used an object... WHAT THE HELL WAS I THINKING???
 
 Ideas:
 - Blood impact when being hit.
