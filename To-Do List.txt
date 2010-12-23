@@ -8,9 +8,9 @@ To-Do:
 - Finding new Title Screen background art.
 - Find a new option (right now it's marked as XXXXXXXXXXXXXXX in the options screen and does nothing).
 - Fix LZ camera and don't allow to go back when you touch a lamppost.
-- Set the times when Info Screen should be displayed.
-- Add a sound test, maybe a custom game mode, maybe just included in the options screen.
-- Somehow display a "Special Stage, Act 2" title card when entering it.
+- After defeating crabmeat, load title card again to show the GHZ title card (which is Act 2).
+- Somehow display a "Special Stage, Act 3" title card when entering it.
+- When ending sequence is being loaded, there's a BIG delay, which causes the music to get stuck for a short time. The delay isn't a problem, but the music is.
 
 Bugs:
   Right now I don't know any...

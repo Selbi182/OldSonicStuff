@@ -92,6 +92,7 @@ Options_MakeF0s:
 	;	clr.w	($FFFFFF9A).w
 		move.w	#21,($FFFFFF9A).w
 		clr.w	($FFFFFF9C).w
+		move.b	#$81,($FFFFFF84).w
 		
 		lea	($FFFFCC00).w,a1
 		moveq	#0,d0
@@ -201,6 +202,14 @@ Options_StartUpWrite:
 
 Options_NoTextChange:
 		move.b	($FFFFF605).w,d1	; get button presses
+		cmpi.w	#16,($FFFFFF82).w	; is selected line SOUND TEST?
+		bne.s	Options_NotSndTst	; if not, branch
+		andi.b	#$6C,d1			; is left, right, A or C pressed?
+	;	bne.s	Options_OK		; if yes, branch
+		bne.s	Options_OK_NoSound	; if yes, branch
+		bra.w	OptionsScreen_MainLoop	; otherwise return
+
+Options_NotSndTst:
 		cmpi.w	#19,($FFFFFF82).w	; is selected line EXIT?
 		beq.s	Options_NoLR		; if yes, don't check for Left/Right buttons
 		andi.b	#$C,d1			; is left/right	pressed?
@@ -213,6 +222,8 @@ Options_NoLR:
 Options_OK:
 		move.w	#$D9,d0
 		jsr	PlaySound_Special
+
+Options_OK_NoSound:
 		moveq	#0,d0
 		move.w	($FFFFFF82).w,d0
 ; ===========================================================================
@@ -252,7 +263,41 @@ Options_Not10:
 Options_Not13:
 		cmpi.w	#16,d0		; have you selected item 16 (SOUND TEST)?
 		bne.s	Options_Not16	; if not, check for next numbers
-	;	move.b	#$28,($FFFFF600).w	; set game mode to sound test (doesn't exist yet)
+		
+; ---------------------------------------------------------------------------
+		btst	#5,($FFFFF605).w	; has C been pressed?
+		beq.s	OptSndTst_NotC		; if not, branch
+		move.b	($FFFFFF84).w,d0	; move sound test ID to d0
+		jsr	PlaySound_Special	; play music
+
+OptSndTst_NotC:
+		btst	#2,($FFFFF605).w	; has left been pressed?
+		beq.s	OptSndTst_NotLeft	; if not, branch
+		subq.b	#1,($FFFFFF84).w	; decrease sound test ID by 1
+		cmpi.b	#$7F,($FFFFFF84).w	; is ID now $7F?
+		bne.s	OptSndTst_NotLeft	; if not, branch
+		move.b	#$DF,($FFFFFF84).w	; set ID to $DF
+
+OptSndTst_NotLeft:
+		btst	#3,($FFFFF605).w	; has right been pressed?
+		beq.s	OptSndTst_NotRight	; if not, branch
+		addq.b	#1,($FFFFFF84).w	; increase sound test ID by 1
+		cmpi.b	#$E0,($FFFFFF84).w	; is ID now $E0?
+		bne.s	OptSndTst_NotRight	; if not, branch
+		move.b	#$80,($FFFFFF84).w	; set ID to $80
+
+OptSndTst_NotRight:
+		btst	#6,($FFFFF605).w	; has A been pressed?
+		beq.s	OptSndTst_NotA		; if not, branch
+		addi.b	#$10,($FFFFFF84).w	; increase sound test ID by $10
+		cmpi.b	#$E0,($FFFFFF84).w	; is ID over or at $E0 now?
+		blt.s	OptSndTst_NotA		; if not, branch
+		subi.b	#$60,($FFFFFF84).w	; restart on the other side
+
+OptSndTst_NotA:
+; ---------------------------------------------------------------------------
+
+		jsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
 
@@ -272,7 +317,6 @@ Options_Not16:
 		move.b	#$FF,$1(a1)		; make sure SRAM will be created
 		move.b	($FFFFFFBC).w,$3(a1)	; backup air move flag
 		move.b	($FFFFFF92).w,$5(a1)	; backup invin time flag
-		move.b	($FFFFFFFB).w,$7(a1)	; backup debug flag
 		move.b	($FFFFFF93).w,$9(a1)	; backup extended camera flag
 		move.b	($FFFFFF94).w,$B(a1)	; backup art style flag
 		move.b	#$FF,$1B(a1)		; make sure SRAM will be created at the correct size
@@ -486,8 +530,29 @@ GetOptionsText:
 
 		adda.w	#(2*24),a1			; make two empty lines
 
+; ---------------------------------------------------------------------------
 		lea	(OpText_SoundTest).l,a2		; set text location
 		bsr.w	OW_Loop				; write text
+
+		move.b	($FFFFFF84).w,d0		; get sound test ID
+		lsr.b	#4,d0				; swap first and second short
+		andi.b	#$0F,d0				; clear first short
+		cmpi.b	#9,d0				; is result greater than 9?
+		ble.s	GOT_Snd_Skip1			; if not, branch
+		addi.b	#5,d0				; skip the special chars (!, ?, etc.)
+
+GOT_Snd_Skip1:
+		move.b	d0,-4(a1)			; set result to first digit ("8" 1)
+
+		move.b	($FFFFFF84).w,d0		; get sound test ID
+		andi.b	#$0F,d0				; clear first short
+		cmpi.b	#9,d0				; is result greater than 9?
+		ble.s	GOT_Snd_Skip2			; if not, branch
+		addi.b	#5,d0				; skip the special chars (!, ?, etc.)
+
+GOT_Snd_Skip2:
+		move.b	d0,-3(a1)			; set result to second digit (8 "1")
+; ---------------------------------------------------------------------------
 
 		adda.w	#(2*24),a1			; make two empty lines
 
@@ -666,7 +731,7 @@ OW_LimitGiven:
 ; ---------------------------------------------------------------------------
 
 OW_NotFF:
-		cmpi.b	#$20,d0			; is current character a space?
+		cmpi.b	#' ',d0			; is current character a space?
 		bne.s	OW_NotSpace		; if not, branch
 		cmpi.b	#4,($FFFFFF98).w	; are the options being written now?
 		bne.s	OW_SpaceLoop		; if not, branch
@@ -675,18 +740,37 @@ OW_NotFF:
 
 OW_SpaceLoop:
 		move.b	#$F0,(a1)+		; write a space char to a1
-		cmpi.b	#$20,(a2)+		; is next character a space as well?
+		cmpi.b	#' ',(a2)+		; is next character a space as well?
 		beq.s	OW_SpaceLoop		; if yes, loop until not anymore
 		suba.w	#1,a2			; sub 1 from a2
 		bra.s	OW_Loop			; loop
 
 OW_NotSpace:
-		cmpi.b	#$3D,d0			; is current character a "="?
+		cmpi.b	#'<',d0			; is current character a "<"?
+		bne.s	OW_NotLeftArrow		; if not, branch
+		move.b	#$0D,d0			; set correct value for "<"
+		bra.s	OW_DoWrite		; skip
+
+OW_NotLeftArrow:
+		cmpi.b	#'>',d0			; is current character a ">"?
+		bne.s	OW_NotRightArrow	; if not, branch
+		move.b	#$0E,d0			; set correct value for ">"
+		bra.s	OW_DoWrite		; skip
+
+OW_NotRightArrow:
+		cmpi.b	#'=',d0			; is current character a "="?
 		bne.s	OW_NotEqual		; if not, branch
 		move.b	#$0C,d0			; set correct value for "="
 		bra.s	OW_DoWrite		; skip
 
 OW_NotEqual:
+		cmpi.b	#'$',d0			; is current character a "$"?
+		bne.s	OW_NotDollar		; if not, branch
+	;	move.b	#$0B,d0			; set correct value for "$"
+		move.b	#$21,d0			; set correct value for "$"
+		bra.s	OW_DoWrite		; skip
+
+OW_NotDollar:
 		subi.b	#50,d0			; otherwise it's a letter and has to be set to the correct value
 		cmpi.b	#9,d0			; is result a number?
 		bgt.s	OW_DoWrite		; if not, branch
@@ -753,44 +837,44 @@ GOTCO_Return:
 ; ---------------------------------------------------------------------------
 
 OpText_Header1:
-		dc.b	"========================", $FF
+		dc.b	'========================', $FF
 		even
 
 OpText_Header2:
-		dc.b	"      SONIC ERAZOR      ", $FF
+		dc.b	'      SONIC ERAZOR      ', $FF
 		even
 ; ---------------------------------------------------------------------------
 
 OpText_AirMove:
-		dc.b	"AIR MOVE ON B        ", $FF
+		dc.b	'AIR MOVE ON B        ', $FF
 		even
 
 OpText_Extended:
-		dc.b	"EXTENDED CAMERA      ", $FF
+		dc.b	'EXTENDED CAMERA      ', $FF
 		even
 
 OpText_SonicArt:
-		dc.b	"SONIC ART            ", $FF
+		dc.b	'SONIC ART            ', $FF
 		even
 
 OpText_FourthOption:
-		dc.b	"XXXXXXXXXXXXXXXXXXX  ", $FF
+		dc.b	'XXXXXXXXXXXXXXXXXXX  ', $FF
 		even
 ; ---------------------------------------------------------------------------
 
 OpText_SoundTest:
-		dc.b	"       SOUND TEST       ", $FF
+		dc.b	'SOUND TEST       < $81 >', $FF
 		even
 ; ---------------------------------------------------------------------------
 
-OpText_Exit:	dc.b	"      EXIT OPTIONS      ", $FF
+OpText_Exit:	dc.b	'      EXIT OPTIONS      ', $FF
 		even
 ; ---------------------------------------------------------------------------
 
-OpText_ON:	dc.b	" ON", $FF
-OpText_OFF:	dc.b	"OFF", $FF
-OpText_S2B:	dc.b	"S2B", $FF
-OpText_S3:	dc.b	" S3", $FF
+OpText_ON:	dc.b	' ON', $FF
+OpText_OFF:	dc.b	'OFF', $FF
+OpText_S2B:	dc.b	'S2B', $FF
+OpText_S3:	dc.b	' S3', $FF
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================

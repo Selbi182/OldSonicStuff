@@ -53,20 +53,9 @@ Info_LoadText:
 		moveq	#$21,d1
 		moveq	#$15,d2
 		jsr	ShowVDPGraphics
-		move.b	#$21,($FFFFD040).w
-	;	moveq	#2,d0		; load Info screen pallet
-	;	jsr	PalLoad1
-	;	move.b	#$86,d0		; play Info screen music
-	;	jsr	PlaySound_Special
-
-LOADIS:
-	;	jsr	Pal_FadeTo
 
 		moveq	#$14,d0
 		jsr	PalLoad2	; load level select pallet
-
-	;	moveq	#$15,d0
-	;	jsr	PalLoad2	; load level select pallet
 
 		clr.b	($FFFFFF95).w
 		clr.w	($FFFFFF96).w
@@ -74,8 +63,9 @@ LOADIS:
 		clr.w	($FFFFFF9A).w
 		clr.w	($FFFFFF9C).w
 
-		jsr	CheckIfMainLevel
-		move.b	d5,($FFFFFF9C).w
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	($200007).l,($FFFFFF9C).w	; get number for text
+		move.b	#0,($A130F1).l		; disable SRAM
 		
 		lea	($FFFFCA00).w,a1	; set location for the text
 		moveq	#0,d0
@@ -156,6 +146,12 @@ Info_NoTextChange:
 		rts
 
 Info_NoIntro:
+		cmpi.b	#6,($FFFFFF9C).w	; is this the ending sequence?
+		bne.s	Info_NoEnding		; if not, branch
+		move.b	#$18,($FFFFF600).w	; set to ending sequence ($18)
+		rts
+
+Info_NoEnding:
 		clr.b	($FFFFFF95).w
 		clr.w	($FFFFFF96).w
 		clr.w	($FFFFFF98).w
@@ -347,32 +343,16 @@ Info_NoNumber2XX:
 ; ===========================================================================
 
 Info_SetMainText:
-		lea	(InfoText_1).l,a2	; get text location 1
-		cmpi.b	#2,($FFFFFF9C).w	; is set number 2?
-		bne.s	Info_Main_Not2		; if not, branch
-		lea	(InfoText_2).l,a2	; get text location 2
-
-Info_Main_Not2:
-		cmpi.b	#3,($FFFFFF9C).w	; is set number 3?
-		bne.s	Info_Main_Not3		; if not, branch
-		lea	(InfoText_3).l,a2	; get text location 3
-
-Info_Main_Not3:
-		cmpi.b	#4,($FFFFFF9C).w	; is set number 4?
-		bne.s	Info_Main_Not4		; if not, branch
-		lea	(InfoText_4).l,a2	; get text location 4
-
-Info_Main_Not4:
-		cmpi.b	#5,($FFFFFF9C).w	; is set number 5?
-		bne.s	Info_Main_Not5		; if not, branch
-		lea	(InfoText_5).l,a2	; get text location 5
-
-Info_Main_Not5:
-		rts				; return with a text location
+		moveq	#0,d0			; clear d0
+		lea	(InfoText_1).l,a2	; get text location 1 (which is also the start of the text locations in general)
+		move.b	($FFFFFF9C).w,d0 	; get text ID
+		subq.b	#1,d0			; sub 1 from it, because we want to use 0 as base, not 1
+		mulu.w	#422,d0			; multiply it by 422 (number of chars for a single block of text including the $FF)
+		adda.w	d0,a2			; add result to text location (a2)
+		rts				; return
+; ===========================================================================
 ; ===========================================================================
 
-
-		
 Info_LoadUp:
 		moveq	#0,d0			; clear d0
 		move.b	($FFFFFF9A).w,d0	; get index number
@@ -626,7 +606,7 @@ Info_ContinueX:		dc.b	'                            '
 			dc.b	'                              '
 			dc.b	' PRESS START TO CONTINUE... '
 			even
-; ===========================================================================
+; ---------------------------------------------------------------------------
 
 Info_HeaderText1:	dc.b	'=======              ======='
 			even
@@ -637,7 +617,8 @@ Info_HeaderText2:	dc.b	'============================'
 Info_HeaderText3:	dc.b	'SONIC ERAZORX'
 			even
 ; ---------------------------------------------------------------------------
-InfoText_1:
+
+InfoText_1:	; text after intro cutscene
 		dc.b	'ONE DAY SONIC DECIDED TO  GO'
 		dc.b	'BACK  TO  GREEN HILL ZONE TO'
 		dc.b	' SEE IF EVERYTHING IS OKAY. '
@@ -652,88 +633,119 @@ InfoText_1:
 		dc.b	'                            '
 		dc.b	'NOW HE HAS TO USE  THE RINGS'
 		dc.b	'THERE TO FIND BACK TO EGGMAN'
-		dc.b	'       TO STOP HIM...       '
-		dc.b	$FF	; this $FF tells the game, the end of the list has been reached.
+		dc.b	'    TO STOP HIM AGAIN...    '
+		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
-InfoText_2:
+
+InfoText_2:	; text after beating Green Hill Zone
 		dc.b	'SONIC WENT THROUGH  THE ZONE'
 		dc.b	'AND FACED EVEN MORE METALLIC'
 		dc.b	'ENEMIES, ALL WANTING TO KILL'
 		dc.b	'    HIM WITH EXPLOSIONS.    '
 		dc.b	'                            '
-		dc.b	' AT THE END OF THE ZONE, HE '
-		dc.b	' FACED CRABMEAT WITH A HUGE '
-		dc.b	' AMOUNT OF EXPLOSIVE BALLS. '
-		dc.b	'                            '
-		dc.b	'BEING IN A BIG SHOCK,  SONIC'
-		dc.b	'WANTED TO CHECK  IF THE REAL'
-		dc.b	' GHZ IS  EXPLOSIVE AS WELL. '
-		dc.b	'                            '
+		dc.b	' AFTER A MADNESS FIGHT WITH '
+		dc.b	' A SPECIAL CRABMEAT,  SONIC '
+		dc.b	'  CONTINUED HIS WAY TO THE  '
+		dc.b	' GREEN HILL ZONE, HOPING IT '
+		dc.b	' IS NOT  EXPLODING AS WELL. '
 		dc.b	'   SAD BUT TRUE, THAT WAS   '
-		dc.b	'    EXCACTLY THE CASE...    '
+		dc.b	'     EXCACTLY THE CASE.     '
+		dc.b	'                            '
+		dc.b	'BACK IN SYZ,  A RING BLOCKED'
+		dc.b	' HIS WAY TO MARBLE ZONE.... '
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
-InfoText_3:
-		dc.b	' AFTER RUSHING  THROUGH THE '
-		dc.b	'EXPLODING ZONE,  SONIC FACED'
-		dc.b	'     ROBOTNIK... AGAIN.     '
+
+InfoText_3:	; text after beating Special Stage
+		dc.b	'  SONIC WAS RAGING AND YOU  '
+		dc.b	'    PROBABLY DO AS WELL.    '
 		dc.b	'                            '
-		dc.b	'A FEW MINUTES  LATER HE FLED'
-		dc.b	' CRYING INTO AN  EXPLOSION. '
+		dc.b	'SORRY FOR ANY DAMAGE TO YOUR'
+		dc.b	'      BRAIN, HONESTLY.      '
 		dc.b	'                            '
-		dc.b	' ROBOTNIK HOWEVER  PLACED A '
-		dc.b	'TRAP TO SEND SONIC TO A DAMN'
-		dc.b	'   HARD SPECIAL STAGE, HE   '
-		dc.b	'     NEEDED TO  FINISH.     '
+		dc.b	' ANYWAY,  AFTER BEATING THE '
+		dc.b	'SPECIAL STAGE OF HELL, SONIC'
+		dc.b	' WAS FINALLY  ABLE TO GO TO '
+		dc.b	'  MARBLE ZONE, THINKING IT  '
+		dc.b	'   WILL BE EASY  TO BEAT.   '
 		dc.b	'                            '
-		dc.b	'  WITH THE EMERALD HE WENT  '
-		dc.b	'  TO MZ FOR MORE HINTS....  '
+		dc.b	' LITTLE DID HE KNOW, IT HAD '
+		dc.b	'AN EVIL CHALLANGE AS WELL...'
+		dc.b	'                            '
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
-InfoText_4:
-		dc.b	'THE NEXT QUEST WAS TO FINISH'
-		dc.b	' A KIND OF PUZZLE INVOLVING '
-		dc.b	'     THE  INHUMAN MODE.     '
+
+InfoText_4:	; text after beating Marble Zone
 		dc.b	'                            '
-		dc.b	' THIS MADE SONIC LOSE A LOT '
-		dc.b	'OF HIS HARD COLLECTED RINGS.'
 		dc.b	'                            '
-		dc.b	'THIS LOST SENT HIM DIRECTLY '
-		dc.b	' TO THE INFAMOUS UNDERWATER '
-		dc.b	'      LABYRINTH  ZONE.      '
 		dc.b	'                            '
-		dc.b	'HE WAS ALSO TOO POOR  TO PAY'
-		dc.b	' HIS CAMERA MAN,  SO GET TO '
-		dc.b	'   KNOW A NEW FEATURE....   '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	' NEED TO THINK OF A TEXT... '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
-InfoText_5:
+
+InfoText_5:	; text after beating Labyrinth Zone
 		dc.b	'  AFTER ESCAPING THE WEIRD  '
-		dc.b	' LABYRINTH ZONE, HE DECIDED '
-		dc.b	'TO SKIP THE ENTIRE GAME  AND'
-		dc.b	'KICK EGGMAN DIRECTLY  IN THE'
-		dc.b	'           FACE.            '
+		dc.b	' LABYRINTH ZONE,  SONIC WAS '
+		dc.b	'  FINALLY ABLE TO KICK THE  '
+		dc.b	'  REAL EGGMAN IN THE BUTT.  '
 		dc.b	'                            '
-		dc.b	' SO HE WENT TO  SCRAP BRAIN '
-		dc.b	'    AND SEARCHED FOR THE    '
-		dc.b	'       FINAL  BATTLE.       '
 		dc.b	'                            '
-		dc.b	'HOWEVER,  HE DID NOT KNOW IT'
-		dc.b	' WAS FILLED WITH EXPLOSIONS '
-		dc.b	'          AS WELL.          '
 		dc.b	'                            '
-		dc.b	'  HOW WILL EVERYTHING END?  '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	' NEED TO THINK OF A TEXT... '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
+
+InfoText_6:	; text after jumping in the ring for the Ending Sequence
+		dc.b	'   THE WORLD IS  RESCUED,   '
+		dc.b	'  SONIC ONCE AGAIN STOPPED  '
+		dc.b	' ROBOTNIK  FROM TAKING OVER '
+		dc.b	'         THE WORLD.         '
+		dc.b	'                            '
+		dc.b	' SO SONIC DECIDED TO MAKE A '
+		dc.b	'QUICK RUN THROUGH THE  GREEN'
+		dc.b	'HILL ZONE AGAIN,  SURROUNDED'
+		dc.b	'  BY TONS OF ANIMALS WHICH  '
+		dc.b	' SEEM TO LIKE  TO JUMP INTO '
+		dc.b	'     BOTTOMLESS PITS...     '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'    THAT SAID,  HOW WILL    '
+		dc.b	' EVERYTHING END WITH SONIC? '
+		dc.b	$FF
+		even
+; ---------------------------------------------------------------------------
+
 Info_Continue:
 		dc.b	' PRESS START TO CONTINUE...'
-		dc.b	$FF	; this $FF tells the game, the end of the list has been reached.	
+		dc.b	$FF
 		even
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
+
 ; ===========================================================================
 Info_FontArt:	incbin	Screens\InfoScreen\InfoScreen_Font.bin
 		even

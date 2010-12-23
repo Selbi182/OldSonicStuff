@@ -38,10 +38,6 @@ align macro
 DebugModeDefault = 1
 DontAllowDebug = 0
 ;=================================================
-;Speed of HUD.
-; 6 = Default
-HUDSpeed = 6
-;=================================================
 ;Enable Demo Recording. (In RAM at $FFFFD200)
 ;Also disables Stars and Shields
 ; 0 - Disabled
@@ -239,7 +235,7 @@ GameClrRAM:
 		beq.s	NoSRAM			; if not, branch
 		move.b	$3(a1),($FFFFFFBC).w
 		move.b	$5(a1),($FFFFFF92).w
-		move.b	$7(a1),($FFFFFFFB).w
+		move.b	$7(a1),($FFFFFF9C).w
 		move.b	$9(a1),($FFFFFF93).w
 		move.b	$B(a1),($FFFFFF94).w
 		movep.w	$D(a1),d0
@@ -269,19 +265,21 @@ MainGameLoop:
 ; ---------------------------------------------------------------------------
 
 GameModeArray:
-; ===========================================================================	
-		dc.l	SegaScreen	; Sega Screen ($00)
-		dc.l	TitleScreen	; Title	Screen ($04)
-		dc.l	Level		; Demo Mode ($08)
-		dc.l	Level		; Normal Level ($0C)
-		dc.l	SpecialStage	; Special Stage	($10)
-		dc.l	ContinueScreen	; Continue Screen ($14)
-		dc.l	EndingSequence	; End of game sequence ($18)
-		dc.l	Credits		; Credits ($1C)
-		dc.l	InfoScreen	; Info Screen ($20)
-		dc.l	OptionsScreen	; Options Screen ($24)
-		dc.l	ChapterSplash	; Chapters Screen ($28)
-; ===========================================================================	
+; ===========================================================================
+; ---------------------------------------------------------------------------
+		dc.l	SegaScreen	; Sega Screen		($00)
+		dc.l	TitleScreen	; Title	Screen		($04)
+		dc.l	Level		; Demo Mode		($08)
+		dc.l	Level		; Normal Level		($0C)
+		dc.l	SpecialStage	; Special Stage		($10)
+		dc.l	ContinueScreen	; Continue Screen	($14)
+		dc.l	EndingSequence	; Ending Sequence	($18)
+		dc.l	Credits		; Credits		($1C)
+		dc.l	InfoScreen	; Info Screen		($20)
+		dc.l	OptionsScreen	; Options Screen	($24)
+		dc.l	ChapterSplash	; Chapters Screen	($28)
+; ---------------------------------------------------------------------------
+; ===========================================================================
 
 BusError:
 		move.b	#2,($FFFFFC44).w
@@ -3533,7 +3531,7 @@ Title_RegionJ:				; XREF: Title_ChkRegion
 
 Title_EnterCheat:			; XREF: Title_ChkRegion
 		tst.w	($FFFFF614).w	; is time over?
-		beq.w	StartGame	; if yes, start game
+		beq.s	StartGame	; if yes, start game
 
 PalLocation = $FFFFFB60
 
@@ -3577,7 +3575,7 @@ T_NoSRAM:
 
 		move.b	#$95,d0
 		jsr	PlaySound
-		move.w	#$001,($FFFFFE10).w	; load GHZ2		
+		move.w	#$001,($FFFFFE10).w	; load GHZ2
 ; ===========================================================================
 
 PlayLevelX:
@@ -4686,7 +4684,7 @@ byte_3FCF:	dc.b 0			; XREF: LZWaterSlides
 
 PlayLevelMusic:
 		lea	(MusicList).l,a1	; load Playlist into a1
-		bsr.s	CheckIfMainLevel	; get main level ID
+		bsr.s	CheckIfMainLevel	; get main level ID and load it into d5
 		move.b	-1(a1,d5.w),d0		; get music ID (-1 because we ignore GHZ2)
 		cmp.b	($FFFFFFDE).w,d0	; is last played music ID the same one as the one to be played?
 		beq.s	PLM_NoMusic		; if yes, don't restart music
@@ -5238,9 +5236,6 @@ SS_NoPauseGame:
 SS_ChkEnd:
 		cmpi.b	#$10,($FFFFF600).w ; is	game mode $10 (special stage)?
 		beq.w	SS_MainLoop	; if yes, branch
-
-		bset	#1,($FFFFFF8B).w	; open second door
-
 		move.w	#60,($FFFFF614).w ; set	delay time to 1	second
 		move.w	#$3F,($FFFFF626).w
 		clr.w	($FFFFF794).w
@@ -5273,12 +5268,16 @@ SS_EndClrObjRamX:
 		move.l	d0,(a1)+
 		dbf	d1,SS_EndClrObjRamX ; clear object RAM
 
-		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
-		move.b	#$C,($FFFFF600).w	; set to level
-		move.w	#1,($FFFFFE02).w	; restart level
 		move.w	($FFFFFF70).w,d0	; restore the rings you had before entering special stage to d0
 		add.w	($FFFFFE20).w,d0	; add your new collected rings to it
 		move.w	d0,($FFFFFE20).w	; move result to rings counter
+
+		bset	#1,($FFFFFF8B).w	; open second door
+
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	#3,($200007).l		; set number for text to 3
+		move.b	#0,($A130F1).l		; disable SRAM
+		move.b	#$20,($FFFFF600).w	; set to info screen
 
 		clr.b	($FFFFFFE7).w	; make sonic mortal
 		clr.b	($FFFFFFE1).w	; make sonic not being on the foreground
@@ -5913,8 +5912,8 @@ Map_obj80:
 ; ---------------------------------------------------------------------------
 
 EndingSequence:				; XREF: GameModeArray
-		move.b	#$E4,d0
-		jsr	PlaySound_Special ; stop music
+	;	move.b	#$E4,d0
+	;	jsr	PlaySound_Special ; stop music
 		jsr	Pal_FadeFrom
 		lea	($FFFFD000).w,a1
 		moveq	#0,d0
@@ -5985,8 +5984,8 @@ End_LoadData:
 		jsr	KosDec
 		moveq	#3,d0
 		jsr	PalLoad1	; load Sonic's pallet
-		move.w	#$8B,d0
-		jsr	PlaySound	; play ending sequence music
+	;	move.w	#$8B,d0
+	;	jsr	PlaySound	; play ending sequence music
 		btst	#6,($FFFFF604).w ; is button A pressed?
 		beq.s	End_LoadSonic	; if not, branch
 		move.b	#1,($FFFFFFFA).w ; enable debug	mode
@@ -6017,9 +6016,6 @@ End_LoadSonic:
 		move.b	#1,($FFFFFE1F).w
 		move.b	#1,($FFFFFE1D).w
 		move.b	#0,($FFFFFE1E).w
-
-		bset	#4,($FFFFFF8B).w	; unlock door to the credits
-
 		move.w	#1800,($FFFFF614).w
 		move.b	#$18,($FFFFF62A).w
 		jsr	DelayProgram
@@ -14901,7 +14897,7 @@ Obj4B_Delete:				; XREF: Obj4B_Index
 		bsr.w	Obj4B_Animate		; still animate ring
 
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
-		bne.w	Obj4B_NotSYZ1		; if not, branch
+		bne.w	Obj4B_ChkGHZ2		; if not, branch
 		subq.b	#1,$30(a0)		; sub 1 from timer
 		bpl.w	Obj4B_Return		; if time is left, branch
 
@@ -14948,7 +14944,7 @@ Obj4B_ChkMZ:
 Obj4B_MZ_NoChapter:
 		move.b	#0,($A130F1).l
 
-		bra.s	Obj4B_PlayLevel
+		bra.w	Obj4B_PlayLevel
 
 Obj4B_ChkLZ2:
 		cmpi.w	#$0AA0,$8(a0)
@@ -14977,8 +14973,12 @@ Obj4B_ChkFZ:
 Obj4B_ChkEnding:
 		cmpi.w	#$0EDE,$8(a0)
 		bne.w	Obj4B_Return
-		move.b	#$18,($FFFFF600).w	; load ending sequence
-		rts
+		move.b	#$20,($FFFFF600).w	; load info screen
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	#6,($200007).l		; set number for text to 6
+		move.b	#0,($A130F1).l		; disable SRAM
+		move.b	#$9D,d0
+		jmp	PlaySound
 
 Obj4B_PlayLevel:
 		move.b	#$C,($FFFFF600).w	; set to level
@@ -14986,15 +14986,9 @@ Obj4B_PlayLevel:
 		rts
 ; ---------------------------------------------------------------------------
 
-Obj4B_NotSYZ1:
-		cmpi.w	#$001,($FFFFFE10).w
-		beq.s	Obj4B_GHZ2
-		cmpi.w	#$000,($FFFFFE10).w
-		beq.s	Obj4B_GHZ1
-		cmpi.w	#$001,($FFFFFE10).w
-		bra.s	Obj4B_SetSS
-
-Obj4B_GHZ2:
+Obj4B_ChkGHZ2:
+		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
+		bne.s	Obj4B_SetSS		; if not, branch
 		subq.b	#1,($FFFFFFBA).w
 		bpl.s	Obj4B_Return
 		clr.b	($FFFFFFB8).w
@@ -15012,17 +15006,11 @@ Obj4B_GHZ2:
 		rts
 
 Obj4B_NoSRAM:
-		move.b	#$20,($FFFFF600).w
+		move.b	#1,($200007).l		; set number for text to 1
+		move.b	#0,($A130F1).l		; disable SRAM
+		move.b	#$20,($FFFFF600).w	; set screen mode to info screen
 		rts
-
-Obj4B_GHZ1:
-		subq.b	#1,($FFFFFFBA).w
-		bpl.s	Obj4B_Return
-		clr.b	($FFFFFFB8).w
-		clr.b	($FFFFFFB7).w
-		clr.b	($FFFFFFB6).w
-		move.b	#$10,($FFFFF600).w
-		rts
+; ---------------------------------------------------------------------------
 
 Obj4B_SetSS:
 		move.w	($FFFFFE20).w,($FFFFFF70).w	; copy your rings to $FF70
@@ -18235,6 +18223,9 @@ Obj34_Delete:
 		bra.w	Obj34_JustDelete	; skip
 
 @NoDemo:
+
+HUDSpeed = 6
+
 		move.b	#$21,($FFFFD040).w		; load HUD object
 		move.b	#1,($FFFFD070).w		; set to SCORE
 		move.w	#HudSpeed,($FFFFD072).w		; set X-speed
@@ -21523,11 +21514,18 @@ GotThroughAct:				; XREF: Obj3E_EndAct
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		bne.s	GTA_ChkLZ2		; if not, branch
 		bset	#2,($FFFFFF8B).w	; unlock third door
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	#4,($200007).l		; set number for text to 4
+		move.b	#0,($A130F1).l		; disable SRAM
 
 GTA_ChkLZ2:
 		cmpi.w	#$101,($FFFFFE10).w	; is level LZ2?
 		bne.s	GTA_NoDoor		; if not, branch
 		bset	#3,($FFFFFF8B).w	; unlock fourth door
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	#5,($200007).l		; set number for text to 5
+		move.b	#0,($A130F1).l		; disable SRAM
+
 
 GTA_NoDoor:
 		move.b	#$20,($FFFFF600).w	; set to Info Screen
@@ -29046,8 +29044,6 @@ DD_End:
 Sonic_SuperPeelOut:
 		tst.b	($FFFFFF99).w
 		beq.w	SPO_End
-
-SPO_Do:
 		tst.b	($FFFFFEBC).w		; already peelouting?
 		bne.s	SPO_CheckDelay		; if set, branch
 		tst.b	($FFFFFF98).w		; is intro peelout being performed?
@@ -29060,7 +29056,7 @@ SPO_Do:
 
 SPO_Simulated:
 		move.b	#$20,$1C(a0)		; set Peelout anim
-		move.w	#$D6,d0			; set peelout sound
+		move.w	#$D2,d0			; set peelout sound
 		jsr	(PlaySound_Special).l	; play peelout sound
 		addq.l	#4,sp			; increment stack ptr
 		move.b	#1,($FFFFFEBC).w	; set peelout flag
@@ -29081,7 +29077,7 @@ SPO_CheckDelay:
 		beq.w	SPO_SlowPeelout		; if yes, do slow Peelout
 		cmpi.b	#$27,$1C(a0)		; is SPO anim #3 being showed?
 		beq.w	SPO_FastPeelout		; if yes, do fast Peelout
-		move.w	#$D5,d0			; stop the SPO charge sound
+		move.w	#$D6,d0			; stop the SPO charge sound
 		jsr	(PlaySound_Special).w	; play it
 		clr.w	$3C(a0)			; set charge count 1 to 0
 		clr.w	$3A(a0)			; set charge count 2 to 0
@@ -29121,7 +29117,7 @@ SPO_No:
 SPO_PlaySound:
 		clr.b	($FFFFFFAF).w		; clear camera shift flag
 		move.b	#0,($FFFFD1DC).w	; clear spindash dust animation
-		move.w	#$BC,d0			; peelout release sound
+		move.w	#$D3,d0			; peelout release sound
 		jsr	(PlaySound_Special).l	; play it!
 ; ---------------------------------------------------------------------------
 
@@ -38999,7 +38995,13 @@ loc_1A248:
 		bcs.s	loc_1A260
 		tst.b	1(a0)
 		bmi.s	loc_1A260
-		move.b	#$18,($FFFFF600).w
+
+		bset	#4,($FFFFFF8B).w	; unlock door to the credits
+		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
+		move.b	#$C,($FFFFF600).w	; set game mdoe to level
+		move.w	#1,($FFFFFE02).w	; restart level
+
+	;	move.b	#$18,($FFFFF600).w	; set game mode to ending sequence
 		bra.w	Obj85_Delete
 ; ===========================================================================
 
@@ -39781,14 +39783,11 @@ Obj3E_FindObj28:
 		adda.w	d2,a1		; next object RAM
 		dbf	d0,Obj3E_FindObj28 ; repeat $3E	times
 
-		move.b	#$20,($FFFFF600).w
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	#2,($200007).l		; set number for text to 2
+		move.b	#0,($A130F1).l		; disable SRAM
+		move.b	#$20,($FFFFF600).w	; run info screen
 		rts
-
-		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
-		move.b	#$C,($FFFFF600).w	; set to level
-		move.w	#1,($FFFFFE02).w	; restart level
-		clr.b	($FFFFFE30).w		; clear	lamppost counter
-		rts				; return
 ; ===========================================================================
 
 Obj3E_Obj28Found:
@@ -40999,7 +40998,7 @@ Obj09_Main:				; XREF: Obj09_Index
 		move.w	#$780,2(a0)
 		move.b	#4,1(a0)
 		move.b	#0,$18(a0)
-		move.b	#2,$1C(a0)
+		move.b	#2,$1C(a0)	; use rolling animation
 		bset	#2,$22(a0)
 		bset	#1,$22(a0)
 		clr.b	($FFFFFFAE).w
@@ -46795,6 +46794,8 @@ SoundIndex:	dc.l SoundA0, SoundA1, SoundA2
 		dc.l SoundD1, SoundD2, SoundD3
 		dc.l SoundD4, SoundD5, SoundD6
 		dc.l SoundD7, SoundD8, SoundD9
+		dc.l SoundDA, SoundDB, SoundDC
+		dc.l SoundDD, SoundDE, SoundDF
 SoundD0Index:	dc.l SoundD0
 SoundA0:;	incbin	sound\soundA0.bin
 		incbin	sound\sound00.bin
@@ -46863,7 +46864,7 @@ SoundBF:	incbin	sound\soundBF.bin
 		even
 SoundC0:	incbin	sound\soundC0.bin
 		even
-SoundC1:	incbin	sound\soundC4.bin ; destroy sound
+SoundC1:	incbin	sound\soundC4.bin
 		even
 SoundC2:	incbin	sound\soundC2.bin
 		even
@@ -46903,7 +46904,7 @@ SoundD3:	incbin	sound\soundD3.bin
 		even
 SoundD4:	incbin	sound\soundD4.bin
 		even
-SoundD5:	dc.b	$00, $0F, $01, $01,  $80, $05,  $00, $0A, $00, $06, $EF, $00, $80, $01, $F2
+SoundD5:	incbin	sound\soundD5.bin
 		even
 SoundD6:	incbin	sound\soundD6.bin
 		even
@@ -46913,6 +46914,19 @@ SoundD8:	incbin	sound\soundD8.bin
 		even
 SoundD9:	incbin	sound\soundD9.bin
 		even
+SoundDA:	incbin	sound\soundNULL.bin
+		even
+SoundDB:	incbin	sound\soundNULL.bin
+		even
+SoundDC:	incbin	sound\soundNULL.bin
+		even
+SoundDD:	incbin	sound\soundNULL.bin
+		even
+SoundDE:	incbin	sound\soundNULL.bin
+		even
+SoundDF:	incbin	sound\soundNULL.bin
+		even
+
 SegaPCM:	incbin	sound\segapcm.bin
 		even
 
@@ -46933,16 +46947,16 @@ SegaPCM:	incbin	sound\segapcm.bin
 
 AlignValue =	$0B0000
 
-Bank1:		align	AlignValue+$00000+$8000
+		align	AlignValue+$00000+$8000
 		incbin	sound\Driver\S1HLDACBank1.bin
 
-Bank2:		align	AlignValue+$10000+$8000
+		align	AlignValue+$10000+$8000
 		incbin	sound\Driver\S1HLDACBank2.bin
 
-Bank3:		align	AlignValue+$20000+$8000
+		align	AlignValue+$20000+$8000
 		incbin	sound\Driver\S1HLDACBank3.bin
 
-Bank4:		align	AlignValue+$30000+$8000
+		align	AlignValue+$30000+$8000
 		incbin	sound\Driver\S1HLDACBank4.bin
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
