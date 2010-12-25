@@ -625,7 +625,7 @@ InfoText_1:	; text after intro cutscene
 		dc.b	'                            '
 		dc.b	'AS SOON AS HE GOT THERE,  HE'
 		dc.b	'WAS ATTACKED BY AN EVIL GREY'
-		dc.b	'   METALLIC  BUZZ BOMBER.   '
+		dc.b	'   METALLIC  BUZZ BOMBER!   '
 		dc.b	'                            '
 		dc.b	'     SONIC ESCAPED HIM.     '
 		dc.b	'HOWEVER,  THE RING HE JUMPED'
@@ -642,7 +642,7 @@ InfoText_2:	; text after beating Green Hill Zone
 		dc.b	'SONIC WENT THROUGH  THE ZONE'
 		dc.b	'AND FACED EVEN MORE METALLIC'
 		dc.b	'ENEMIES, ALL WANTING TO KILL'
-		dc.b	'    HIM WITH EXPLOSIONS.    '
+		dc.b	'    HIM WITH EXPLOSIONS!    '
 		dc.b	'                            '
 		dc.b	' AFTER A MADNESS FIGHT WITH '
 		dc.b	' A SPECIAL CRABMEAT,  SONIC '
@@ -671,9 +671,9 @@ InfoText_3:	; text after beating Special Stage
 		dc.b	'  MARBLE ZONE, THINKING IT  '
 		dc.b	'   WILL BE EASY  TO BEAT.   '
 		dc.b	'                            '
+		dc.b	'                            '
 		dc.b	' LITTLE DID HE KNOW, IT HAD '
 		dc.b	'AN EVIL CHALLANGE AS WELL...'
-		dc.b	'                            '
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
@@ -702,7 +702,7 @@ InfoText_5:	; text after beating Labyrinth Zone
 		dc.b	'  AFTER ESCAPING THE WEIRD  '
 		dc.b	' LABYRINTH ZONE,  SONIC WAS '
 		dc.b	'  FINALLY ABLE TO KICK THE  '
-		dc.b	'  REAL EGGMAN IN THE BUTT.  '
+		dc.b	'  REAL EGGMAN IN THE BUTT!  '
 		dc.b	'                            '
 		dc.b	'                            '
 		dc.b	'                            '

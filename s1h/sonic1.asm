@@ -231,8 +231,8 @@ GameClrRAM:
 		moveq	#0,d0			; clear d0
 		move.b	#1,($A130F1).l		; enable SRAM
 		lea	($200000).l,a1		; base of SRAM
-		tst.b	$1B(a1)			; does SRAM exist?
-		beq.s	NoSRAM			; if not, branch
+		cmpi.b	#$B6,$1B(a1)		; does SRAM exist?
+		bne.s	NoSRAM			; if not, branch
 		move.b	$3(a1),($FFFFFFBC).w
 		move.b	$5(a1),($FFFFFF92).w
 		move.b	$7(a1),($FFFFFF9C).w
@@ -1185,6 +1185,9 @@ loc_13BE:
 		bne.s	PG_ChkHUD		; if not, branch
 		jsr	ClearEverySpecialFlag	; clear flags
 		move.b	#$20,($FFFFF600).w	; set screen mode to $20 (Info Screen)
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	#1,($200007).l		; set number for text to 1
+		move.b	#0,($A130F1).l		; disable SRAM
 		clr.b	($FFFFFFE7).w		; make sure Sonic is not inhuman
 		rts
 ; ===========================================================================
@@ -1200,7 +1203,7 @@ PG_NotGHZ2:
 		tst.b	($FFFFFFB5).w		; is flag set?
 		bne.s	loc_13CA		; if yes, branch
 		move.b	#1,($FFFFFFB5).w	; set flag
-	;	move.b	#1,($FFFFF003).w	; pause music
+		move.b	#1,($FFFFF003).w	; pause music
 
 Pal_MakeBlackWhite:
 		lea	($FFFFFB00).w,a3	; backup palette
@@ -3563,8 +3566,8 @@ T_PalSkip_2:
 
 StartGame:
 		move.b	#1,($A130F1).l		; enable SRAM
-		tst.b	($20001B).l		; does SRAM exist?
-		beq.s	T_NoSRAM		; if not, branch
+		cmpi.b	#$B6,($20001B).l	; does SRAM exist?
+		bne.s	T_NoSRAM		; if not, branch
 		move.b	#0,($A130F1).l		; disable SRAM
 		move.b	#1,($FFFFFF7D).w
 		move.b	#$28,($FFFFF600).w	; set to Chapters Screen
@@ -3867,7 +3870,7 @@ LevelMenuText:	incbin	misc\menutext.bin
 Level:					; XREF: GameModeArray
 		bset	#7,($FFFFF600).w ; add $80 to screen mode (for pre level sequence)
 		jsr	ClearPLC
-		jsr	Pal_FadeFrom	
+		jsr	Pal_FadeFrom
 		tst.w	($FFFFFFF0).w
 		bmi.w	Level_ClrRam
 		move	#$2700,sr
@@ -3897,7 +3900,7 @@ loc_37FC:
 		move.l	($FFFFFE26).w,d0	; move rings to d0
 		movep.l	d0,$11(a1)		; backup rings
 		move.b	($FFFFFF8B).w,$19(a1)	; otherwise update check value
-		move.b	#$FF,$1B(a1)		; make sure SRAM will be created at the correct size
+		move.b	#$B6,$1B(a1)		; set "SRAM exists" flag
 		move.b	#0,($A130F1).l		; disable SRAM
 
 Level_NoSRAM:
@@ -3973,8 +3976,6 @@ Level_ClrVars3:
 Level_LoadPal:
 		move.w	#$1E,($FFFFFE14).w
 		move	#$2300,sr
-		moveq	#3,d0
-		jsr	PalLoad2	; load Sonic's pallet line
 		cmpi.b	#1,($FFFFFE10).w ; is level LZ?
 		bne.s	Level_GetBgm	; if not, branch
 		moveq	#$F,d0		; pallet number	$0F (LZ)
@@ -4008,6 +4009,8 @@ Level_NoMusic:
 ; ===========================================================================
 
 Level_NoTitleCard:
+		moveq	#3,d0
+		jsr	PalLoad2	; load Sonic's pallet line
 		moveq	#2,d0
 		jsr	(LoadPLC).l	; load explosion patterns
 
@@ -4190,7 +4193,9 @@ L_ML_NoPalCycle:
 		jsr	ChangeRingFrame
 
 		cmpi.w	#$000,($FFFFFE10).w	; is level GHZ1?
-		beq.s	L_ML_NoSAL		; if not, branch
+		beq.s	L_ML_NoSAL		; if yes, branch
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1?
+		beq.s	L_ML_NoSAL		; if yes, branch
 		jsr	SignpostArtLoad
 
 L_ML_NoSAL:
@@ -5168,6 +5173,7 @@ SS_ClrNemRam:
 		jsr	DeformBgLayer
 		clr.b	($FFFFF64E).w
 		clr.w	($FFFFFE02).w
+		clr.b	($FFFFFE57).w
 
 		moveq	#$A,d0
 		jsr	PalLoad1	; load special stage pallet
@@ -14996,8 +15002,8 @@ Obj4B_ChkGHZ2:
 		clr.b	($FFFFFFB6).w
 
 		move.b	#1,($A130F1).l		; enable SRAM
-		tst.b	($20001B).l		; does SRAM exist?
-		beq.s	Obj4B_NoSRAM		; if not, branch
+		cmpi.b	#$B6,($20001B).l	; does SRAM exist?
+		bne.s	Obj4B_NoSRAM		; if not, branch
 		move.b	#0,($A130F1).l		; disable SRAM
 
 		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
@@ -18098,7 +18104,7 @@ Obj34_NoMainLevel:
 Obj34_MakeSprite:
 		move.b	d0,$1A(a1)		; display frame	number d0
 		move.l	#Map_obj34,4(a1)
-	;	move.w	#$8580,2(a1)
+		move.w	#$8580,2(a1)
 		move.w	#$855C,2(a1)
 		move.b	#$78,$19(a1)
 		move.b	#0,1(a1)
@@ -18106,6 +18112,11 @@ Obj34_MakeSprite:
 		move.w	#0,$1E(a1)	; set time delay to 1 second (60)
 		lea	$40(a1),a1	; next object
 		dbf	d1,Obj34_Loop	; repeat sequence another 3 times
+		movem.l	d0-a7,-(sp)
+		moveq	#3,d0
+		jsr	PalLoad2	; load Sonic's pallet line
+		movem.l	(sp)+,d0-a7
+
 
 Obj34_ChkPos:				; XREF: Obj34_Index
 		moveq	#8,d1		; set horizontal speed ($10)
@@ -40498,6 +40509,8 @@ SS_AniWallsRings:			; XREF: SS_ShowLayout
 		lea	($FF400C).l,a1
 		moveq	#0,d0
 		move.b	($FFFFF780).w,d0
+	;	add.b	($FFFFFFB0).w,d0
+	;	addq.b	#1,($FFFFFFB0).w
 		lsr.b	#2,d0
 		andi.w	#$F,d0
 		moveq	#$23,d1
@@ -40810,7 +40823,8 @@ SS_LayoutIndex:
 ; ---------------------------------------------------------------------------
 ; Special stage	start locations
 ; ---------------------------------------------------------------------------
-SS_StartLoc:	incbin	misc\sloc_ss.bin
+SS_StartLoc:	include	"misc\sloc_ss.asm"
+	;	incbin	misc\sloc_ss.bin
 		even
 
 ; ---------------------------------------------------------------------------
@@ -41554,19 +41568,13 @@ Obj09_ChkEmer:
 		cmpi.b	#$40,d4
 		bhi.s	Obj09_ChkGhost
 		jsr	SS_RemoveCollectedItem
-		bne.s	Obj09_GetEmer
-		move.b	#5,(a2)
 		move.l	a1,4(a2)
+		move.b	#5,(a2)
+		addq.b	#1,($FFFFFE57).w ; add 1 to number of emeralds
 
-Obj09_GetEmer:
 		cmpi.b	#6,($FFFFFE57).w ; do you have all the emeralds?
 		beq.s	Obj09_NoEmer	; if yes, branch
-		subi.b	#$3B,d4
-		moveq	#0,d0
-		move.b	($FFFFFE57).w,d0
-		lea	($FFFFFE58).w,a2
-		move.b	d4,(a2,d0.w)
-		addq.b	#1,($FFFFFE57).w ; add 1 to number of emeralds
+		move.b	#1,(a2)
 
 Obj09_NoEmer:
 		move.w	#$93,d0
@@ -41674,15 +41682,18 @@ Obj09_GoalNotSolid:
 		movem.l	d0-a6,-(sp)		; backup to stack
 		jsr	Pal_MakeWhite		; make white flash
 		movem.l (sp)+,d0-a6		; restore from stack
-		move.w	#$03D0,($FFFFD008).w	; set Sonic's X-position
+		move.w	#$03E8,($FFFFD008).w	; set Sonic's X-position
 		move.w	#$02E0,($FFFFD00C).w	; set Sonic's Y-position
-		move.w	#0,($FFFFF780).w	; flip special stage again
-		move.b	#0,($FF1B27).l		; make sure there is no pink glass block 1
-		move.b	#0,($FF1AB9).l		; make sure there is no pink glass block 2
-		move.b	#0,($FF1CA6).l		; make sure there is no yellow glass block
-		move.b	#$2C,($FF1D2B).l	; place block
-		move.b	#$2C,($FF1DAB).l	; place block
-		move.b	#$2C,($FF1E2B).l	; place block
+
+		clr.w	($FFFFF780).w		; flip special stage again
+	;	move.w	#$801,($FFFFF780).w	; flip special stage again
+
+		move.b	#0,($FF1B28).l		; make sure there is no pink glass block 1
+	;	move.b	#0,($FF1ABA).l		; make sure there is no pink glass block 2
+		move.b	#0,($FF1CA7).l		; make sure there is no yellow glass block
+		move.b	#$2C,($FF1D2C).l	; place block
+		move.b	#$2C,($FF1DAC).l	; place block
+		move.b	#$2C,($FF1E2C).l	; place block
 
 		lea	($FF1020).l,a1		; load SS blocks (layout?) into a1
 		moveq	#$3F,d1			; set normal loop
@@ -41817,7 +41828,7 @@ Obj09_GOAL:
 		move.w	#$C3,d0			; play giant ring sound
 		clr.b	($FFFFFF9F).w		; make R block usable again
 
-		move.w	#$03D0,d1		; set Sonic's X-position, when he didn't pass any checkpoints yet
+		move.w	#$03E8,d1		; set Sonic's X-position, when he didn't pass any checkpoints yet
 		move.w	#$02E0,d2		; set Sonic's Y-position, when he didn't pass any checkpoints yet
 		tst.w	($FFFFFF86).w		; did he pass a checkpoint ytt?
 		beq.s	Obj09_CPTeleEnd		; if not, branch
@@ -41830,9 +41841,9 @@ Obj09_CPTeleEnd:
 		clr.w	$10(a0)			; clear X-speed
 		clr.w	$12(a0)			; clear Y-speed
 		clr.w	($FFFFF780).w		; set rotation to 0
-		move.b	#$30,($FF1B27).l	; restore pink glass block 1
-		move.b	#$30,($FF1AB9).l	; restore pink glass block 2
-		move.b	#$2F,($FF1CA6).l	; restore yellow glass block
+		move.b	#$30,($FF1B28).l	; restore pink glass block 1
+	;	move.b	#$30,($FF1ABA).l	; restore pink glass block 2
+		move.b	#$2F,($FF1CA7).l	; restore yellow glass block
 		jsr	WhiteFlash2
 
 Obj09_NotSS1x:

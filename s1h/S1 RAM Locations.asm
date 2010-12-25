@@ -75,7 +75,7 @@
  ;  ($FFFFFFAE).w
  ;  ($FFFFFFAF).w
   
-    ($FFFFFFB0).w
+ ;  ($FFFFFFB0).w
  ;  ($FFFFFFB1).w
  ;  ($FFFFFFB2).w
  ;  ($FFFFFFB3).w

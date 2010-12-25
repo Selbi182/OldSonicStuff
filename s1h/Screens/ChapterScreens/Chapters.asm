@@ -21,7 +21,6 @@ ChapterSplash_VDP:
 		move.w	#$8720,(a6)
 		clr.b	($FFFFF64E).w
 		jsr	ClearScreen			; Clear screen
-	;	move.b	#2,($FFFFFFA0).w
 		
 ChapterSplash_Art:
 		move.l	#$40000000,($C00004).l		; Load art
@@ -87,9 +86,7 @@ ChapterSplash_PalLoop:
 ChapterSplash_Music:
 		move.b	#$E4,d0
 		jsr	PlaySound_Special		; Stop music
-	;	move.w	#ChapterSplash_MusicID,d0		; Play music
-	;	jsr	PlaySound
-		
+
 ChapterSplash_SetWait:
 		move.w	#ChapterSplash_Wait,($FFFFF614).w	; Wait time
 		jsr	Pal_FadeTo			; Fade palette in
@@ -121,25 +118,28 @@ Chapter_PlayLevel:
 		move.w	#1,($FFFFFE02).w	; restart level
 		clr.b	($FFFFFF7D).w
 		rts
-		
+
+; =====================================================================================================================
 ; ---------------------------------------------------------------------------------------------------------------------
 Art_Chapter1:	incbin	"Screens/ChapterScreens/Tiles_Chapter1.bin"
 		even
 Map_Chapter1:	incbin	"Screens/ChapterScreens/Maps_Chapter1.bin"
-		even			
+		even
 Pal_Chapter1:	incbin	"Screens/ChapterScreens/Palette_Chapter1.bin"
 		even
-
+; ---------------------------------------------------------------------------------------------------------------------
 Art_Chapter2:	incbin	"Screens/ChapterScreens/Tiles_Chapter2.bin"
 		even
 Map_Chapter2:	incbin	"Screens/ChapterScreens/Maps_Chapter2.bin"
-		even			
+		even
 Pal_Chapter2:	incbin	"Screens/ChapterScreens/Palette_Chapter2.bin"
 		even
-
+; ---------------------------------------------------------------------------------------------------------------------
 Art_Chapter3:	incbin	"Screens/ChapterScreens/Tiles_Chapter3.bin"
 		even
 Map_Chapter3:	incbin	"Screens/ChapterScreens/Maps_Chapter3.bin"
-		even			
+		even	
 Pal_Chapter3:	incbin	"Screens/ChapterScreens/Palette_Chapter3.bin"
 		even
+; ---------------------------------------------------------------------------------------------------------------------
+; =====================================================================================================================
