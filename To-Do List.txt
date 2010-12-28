@@ -1,15 +1,9 @@
 To-Do:
-- Finishing Overworld:
-	- Finding a good solution to display level names over tubes.
-	- Rewrite story, since a lot doesn't make sense with the overworld anymore.
-	- Be able to go back to the overworld once you enter a level, maybe by using a giant ring again.
-
+- Implent the signs for the level names. They will look like this: http://oi56.tinypic.com/2uesjt1.jpg
 - Find new music for Night Hill Zone.
 - Finding new Title Screen background art.
 - Find a new option (right now it's marked as XXXXXXXXXXXXXXX in the options screen and does nothing).
-- Fix LZ camera and don't allow to go back when you touch a lamppost.
-- Somehow display a "Special Stage, Act 2" title card when entering it.
-- When ending sequence is being loaded, there's a BIG delay, which causes the music to get stuck for a short time. The delay isn't a problem, but the music is.
+- Redo the credits text (it would be better to just make a complete new credits system though).
 
 Bugs:
   Right now I don't know any...
@@ -22,6 +16,5 @@ Ideas:
 - Blood impact when being hit.
 - Challenge: Race against Sonic's shadow. (i.e. Rayman - Candy Chateau)
 - Demo Mode. (Basically a walkthrough, but in the game itself.)
-- Pre-Credits Text. (See "Credits.txt")
 - Add explosions to the title screen.
 - Easy Mode with "Hard Part Skipper".

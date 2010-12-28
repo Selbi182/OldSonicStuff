@@ -192,34 +192,12 @@ PLC_SLZ2:	dc.w 0
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Spring Yard
 ; ---------------------------------------------------------------------------
-PLC_SYZ:	dc.w 4
+PLC_SYZ:	dc.w 0
 		dc.l Nem_SYZ		; SYZ main patterns
-		dc.w 0
-		dc.l Nem_Crabmeat	; crabmeat enemy
-		dc.w $8000
-		dc.l Nem_Buzz		; buzz bomber enemy
-		dc.w $8880
-		dc.l Nem_Yadrin		; yadrin enemy
-		dc.w $8F60
-		dc.l Nem_Roller		; roller enemy
-		dc.w $9700
-PLC_SYZ2:	dc.w 7
-		dc.l Nem_Bumper		; bumper
-		dc.w $7000
-		dc.l Nem_SyzSpike1	; large	spikeball
-		dc.w $72C0
-		dc.l Nem_SyzSpike2	; small	spikeball
-		dc.w $7740
-		dc.l Nem_Cater		; caterkiller enemy
-		dc.w $9FE0
-		dc.l Nem_LzSwitch	; switch
-		dc.w $A1E0
-		dc.l Nem_Spikes		; spikes
-		dc.w $A360
+		dc.w $0000
+PLC_SYZ2:	dc.w 0
 		dc.l Nem_HSpring	; horizontal spring
 		dc.w $A460
-		dc.l Nem_VSpring	; vertical spring
-		dc.w $A660
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Scrap Brain
 ; ---------------------------------------------------------------------------
@@ -317,8 +295,8 @@ PLC_Warp:	dc.w 0
 PLC_SpeStage:	dc.w $10
 		dc.l Nem_SSBgCloud	; bubble and cloud background
 		dc.w 0
-		dc.l Nem_SSBgFish	; bird and fish	background
-		dc.w $A20
+		dc.l Nem_TitleCard	; title cards
+		dc.w $0A20
 		dc.l Nem_SSWalls	; walls
 		dc.w $2840
 		dc.l Nem_Bumper		; bumper

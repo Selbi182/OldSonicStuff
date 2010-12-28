@@ -28,7 +28,7 @@ align macro
 ;--------------------------------------------------------
 ; Assembly Options (NOTE: There are more spread around
 ; the disassembly! Search for " = " (without the quotes)
-; to find them.
+; to find them.)
 ;--------------------------------------------------------
 ;=================================================
 ;Debug Mode enabled by default.
@@ -1100,6 +1100,31 @@ loc_134A:
 		dbf	d1,loc_134A
 		rts	
 ; End of function ClearScreen
+
+; ---------------------------------------------------------------------------
+; Subroutine to	clear the entire VRAM
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
+
+ClearVRAM:
+		move	#$2700,sr		; disable IRQ's
+		lea	($C00000).l,a5		; load VDP data port address to a5
+		lea	$04(a5),a6		; load VDP address port address to a6
+		move.w	#$8F01,(a6)		; set increment mode to 1 byte
+		move.l	#$94FF93FF,(a6)		; set repeat times (number of bytes)
+		move.w	#$9780,(a6)		; set source (no source location)
+		move.l	#$40000080,(a6)		; set destination
+		move.w	#$0000,(a5)		; set value to write
+
+WaitForVDP:
+		move.w	(a6),d1			; load VDP value
+		btst	#$01,d1			; has DMA finished?
+		bne.s	WaitForVDP		; if not, branch
+		move.w	#$8F02,(a6)		; set increment mode to 2 bytes
+		move	#$2300,sr		; enable IRQ's
+		rts				; return
+; End of function ClearVRAM
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to	load the sound driver
@@ -2630,7 +2655,12 @@ loc_1EF4:
 		move.b	#$12,($FFFFF62A).w
 		jsr	DelayProgram
 		bsr.s	Pal_WhiteToBlack
+
+		tst.b	($FFFFFFD6).w	; is a W-block being touched in the special stage?
+		bne.s	PMW_NoPLC	; if yes, skip this routine
 		jsr	RunPLC_RAM
+
+PMW_NoPLC:
 		dbf	d4,loc_1EF4
 		rts	
 ; End of function Pal_MakeWhite
@@ -3870,6 +3900,7 @@ LevelMenuText:	incbin	misc\menutext.bin
 Level:					; XREF: GameModeArray
 		bset	#7,($FFFFF600).w ; add $80 to screen mode (for pre level sequence)
 		jsr	ClearPLC
+	;	jsr	ClearVRAM	; custom subroutine to clear VRAM
 		jsr	Pal_FadeFrom
 		tst.w	($FFFFFFF0).w
 		bmi.w	Level_ClrRam
@@ -5181,6 +5212,7 @@ SS_ClrNemRam:
 		move.l	#0,($FFFFF700).w
 		move.l	#0,($FFFFF704).w
 		move.b	#9,($FFFFD000).w ; load	special	stage Sonic object
+		move.b	#$34,($FFFFD080).w ; load title	card object
 		jsr	PalCycle_SS
 		clr.w	($FFFFF780).w	; set stage angle to "upright"
 		move.w	#0,($FFFFF782).w ; no rotation speed
@@ -5205,6 +5237,8 @@ SS_ClrNemRam:
 		move.b	#1,($FFFFFFFA).w ; enable debug	mode
 
 SS_NoDebug:
+	;	addq.b	#2,($FFFFD0A4).w ; make	title card move
+
 		move.w	($FFFFF60C).w,d0
 		ori.b	#$40,d0
 		move.w	d0,($C00004).l
@@ -5215,8 +5249,6 @@ SS_NoDebug:
 ; ---------------------------------------------------------------------------
 
 SS_MainLoop:
-	;	cmpi.b	#1,($FFFFFE16).w	; is current special stage number = 1?
-	;	bne.s	SS_NoSkip		; if not, branch
 		btst	#7,($FFFFF605).w	; is Start button pressed?
 		beq.w	SS_NoSkip		; if not, branch
 		cmpi.b	#4,($FFFFD024).w	; is special stage exiting routine being run?
@@ -5319,61 +5351,6 @@ SS_EndClrObjRamX:
 
 
 SS_BGLoad:				; XREF: SpecialStage
-		bra.w	SS_LoadCloudsAndBubbles		; don't load fish and birds to get extra space
-		
-; ===========================================================================
-		lea	($FF0000).l,a1
-		lea	(Eni_SSBg1).l,a0 ; load	mappings for the birds and fish
-		move.w	#$4051,d0
-		jsr	EniDec
-		move.l	#$50000001,d3
-		lea	($FF0080).l,a2
-		moveq	#6,d7
-
-loc_48BE:
-		move.l	d3,d0
-		moveq	#3,d6
-		moveq	#0,d4
-		cmpi.w	#3,d7
-		bcc.s	loc_48CC
-		moveq	#1,d4
-
-loc_48CC:
-		moveq	#7,d5
-
-loc_48CE:
-		movea.l	a2,a1
-		eori.b	#1,d4
-		bne.s	loc_48E2
-		cmpi.w	#6,d7
-		bne.s	loc_48F2
-		lea	($FF0000).l,a1
-
-loc_48E2:
-		movem.l	d0-d4,-(sp)
-		moveq	#7,d1
-		moveq	#7,d2
-		jsr	ShowVDPGraphics
-		movem.l	(sp)+,d0-d4
-
-loc_48F2:
-		addi.l	#$100000,d0
-		dbf	d5,loc_48CE
-		addi.l	#$3800000,d0
-		eori.b	#1,d4
-		dbf	d6,loc_48CC
-		addi.l	#$10000000,d3
-		bpl.s	loc_491C
-		swap	d3
-		addi.l	#$C000,d3
-		swap	d3
-
-loc_491C:
-		adda.w	#$80,a2
-		dbf	d7,loc_48BE
-; ===========================================================================
-
-SS_LoadCloudsAndBubbles:
 		lea	($FF0000).l,a1
 		lea	(Eni_SSBg2).l,a0 ; load	mappings for the clouds
 		move.w	#$4000,d0
@@ -5975,6 +5952,8 @@ End_ClrRam3:
 		move.w	#$601,($FFFFFE10).w ; set level	number to 0601 (no flowers)
 
 End_LoadData:
+		move.b	#4,($FFFFF62A).w
+		jsr	DelayProgram
 		moveq	#$1C,d0
 		jsr	RunPLC_ROM	; load ending sequence patterns
 		jsr	Hud_Base
@@ -6002,7 +5981,8 @@ End_LoadSonic:
 		move.b	#1,($FFFFF7CC).w ; lock	controls
 		move.w	#$400,($FFFFF602).w ; move Sonic to the	left
 		move.w	#$F800,($FFFFD014).w ; set Sonic's speed
-		move.b	#$21,($FFFFD040).w ; load HUD object
+		move.b	#4,($FFFFF62A).w
+		jsr	DelayProgram
 		jsr	ObjPosLoad
 		jsr	ObjectsLoad
 		jsr	BuildSprites
@@ -14931,6 +14911,7 @@ Obj4B_ChkGHZ:
 Obj4B_ChkSpecial:
 		cmpi.w	#$06AC,$8(a0)
 		bne.s	Obj4B_ChkMZ
+		move.w	#$300,($FFFFFE10).w	; use correct title card
 		move.b	#$10,($FFFFF600).w	; set to special stage
 		rts
 
@@ -18062,13 +18043,7 @@ Obj34_CheckFZ:
 Obj34_LoadConfig:
 		lea	(Obj34_ConData).l,a3
 		lsl.w	#4,d0
-	;	cmpi.w	#$502,($FFFFFE10).w ; check if level is	FZ
-	;	beq.s	Obj34_NoLevelNumber
-	;	cmpi.b	#0,($FFFFFE10).w
-	;	beq.s	Obj34_NoLevelNumber
 		adda.w	d0,a3		; comment this line out to disable "ACT" and level number
-
-Obj34_NoLevelNumber:
 		lea	(Obj34_ItemData).l,a2
 		moveq	#3,d1
 
@@ -18077,6 +18052,7 @@ Obj34_Loop:
 		move.w	(a3),8(a1)	; load start x-position
 		move.w	(a3)+,$32(a1)	; load finish x-position
 		move.w	(a3)+,$30(a1)	; load main x-position
+		move.w	#100,$3C(a1)
 		addq.b	#1,$3E(a0)
 		move.b	$3E(a0),$3F(a1)	; set ID
 		move.w	(a2)+,$A(a1)
@@ -18088,6 +18064,12 @@ Obj34_Loop:
 Obj34_ActNumber:
 		cmpi.b	#7,d0			; is act number on the loading schedule right now?
 		bne.s	Obj34_MakeSprite	; if not, branch
+		cmpi.w	#$300,($FFFFFE10).w	; is level special stage?
+		bne.s	Obj34_NotSpecial1	; if not, branch
+		move.b	#8,d0			; set to act 2
+		bra.s	Obj34_MakeSprite	; skip
+
+Obj34_NotSpecial1:
 		jsr	CheckIfMainLevel	; check for main level and get ID
 		tst.b	d5			; check ID
 		beq.s	Obj34_NoMainLevel	; if result is 0, branch (we are not in a main level)
@@ -18096,7 +18078,7 @@ Obj34_ActNumber:
 		bra.s	Obj34_MakeSprite	; skip
 
 Obj34_NoMainLevel:
-		add.b	($FFFFFE11).w,d0	; add act number to frame (7 = Act 1, 8 = Act 2, 9 = Act 3)
+		add.b	($FFFFFE11).w,d0	; add act number to frame (7=Act1, 8=Act2, 9=Act3)
 		cmpi.b	#3,($FFFFFE11).w	; is current act ID = 4 (LZ 4)?
 		bne.s	Obj34_MakeSprite	; if not, branch
 		subq.b	#1,d0			; make it display like Act 3
@@ -18104,8 +18086,12 @@ Obj34_NoMainLevel:
 Obj34_MakeSprite:
 		move.b	d0,$1A(a1)		; display frame	number d0
 		move.l	#Map_obj34,4(a1)
-		move.w	#$8580,2(a1)
 		move.w	#$855C,2(a1)
+		cmpi.w	#$300,($FFFFFE10).w	; is current level the special stage?
+		bne.s	Obj34_NotSpecial2	; if not, branch
+		move.w	#$8051,2(a1)		; if yes, use alternate tile offset
+
+Obj34_NotSpecial2:
 		move.b	#$78,$19(a1)
 		move.b	#0,1(a1)
 		move.b	#0,$18(a1)
@@ -18117,12 +18103,11 @@ Obj34_MakeSprite:
 		jsr	PalLoad2	; load Sonic's pallet line
 		movem.l	(sp)+,d0-a7
 
-
 Obj34_ChkPos:				; XREF: Obj34_Index
-		moveq	#8,d1		; set horizontal speed ($10)
+		moveq	#8,d1		; set horizontal speed
 		move.w	$30(a0),d0
 		cmp.w	8(a0),d0	; has item reached the target position?
-		beq.s	loc_C3C8	; if yes, branch
+		beq.s	Obj34_TargetOK	; if yes, branch
 		bge.s	Obj34_Move
 		neg.w	d1
 
@@ -18137,6 +18122,20 @@ loc_C3C8:
 		bra.w	Obj34_Display
 ; ===========================================================================
 
+Obj34_TargetOK:
+		cmpi.w	#$300,($FFFFFE10).w
+		bne.s	loc_C3C8
+		cmpi.b	#1,$3F(a0)
+		bne.s	loc_C3C8
+		subq.w	#1,$3C(a0)
+		bpl.s	loc_C3C8
+		addq.b	#2,$24(a0)
+		addq.b	#2,$24+$40(a0)
+		addq.b	#2,$24+$80(a0)
+		addq.b	#2,$24+$C0(a0)
+		bra.s	loc_C3C8
+; ===========================================================================
+
 locret_C3D8:
 		rts	
 ; ===========================================================================
@@ -18146,10 +18145,7 @@ Obj34_Wait:				; XREF: Obj34_Index
 		bne.s	Obj34_NotGHZ1
 		cmpi.w	#$0800,($FFFFF700).w ; has the camera reached $0A00 on x-axis?
 		bcc.s	Obj34_ChkPos2	; if yes, branch
-	;	tst.b	($FFFFFFBB).w
-	;	bne.s	Obj34_ChkPos2
 		bra.w	Obj34_Display
-; ===========================================================================
 
 Obj34_NotGHZ1:
 		tst.w	$1E(a0)		; is time remaining zero?
@@ -18224,7 +18220,7 @@ Obj34_ChangeArt:			; XREF: Obj34_ChkPos2
 
 Obj34_Delete:
 		tst.w	($FFFFFFF0).w		; is demo mode on?
-		beq.s	@NoDemo			; if not, branch
+		beq.s	Obj34_NoDemo		; if not, branch
 		move.b	#$4F,($FFFFD040).w	; load DEMO object
 		movem.l	d0-a6,-(sp)
 		move.l	#$59400003,($C00004).l	; set VRAM location
@@ -18233,9 +18229,11 @@ Obj34_Delete:
 		movem.l	(sp)+,d0-a6
 		bra.w	Obj34_JustDelete	; skip
 
-@NoDemo:
-
 HUDSpeed = 6
+
+Obj34_NoDemo:
+		cmpi.w	#$300,($FFFFFE10).w		; is level SLZ1 (special stage)?
+		beq.s	Obj34_JustDelete		; if yes, branch
 
 		move.b	#$21,($FFFFD040).w		; load HUD object
 		move.b	#1,($FFFFD070).w		; set to SCORE
@@ -18270,14 +18268,14 @@ Obj34_JustDelete:
 ; ===========================================================================
 
 Obj34_Display:
-		cmpi.w	#$400,($FFFFFE10).w		; is current level SYZ1?
-		bne.s	Obj34_DoDisplay			; if not, branch
-		cmpi.b	#3,$3F(a0)			; is current object the Act Number?
-		bne.s	Obj34_DoDisplay			; if not, branch
-		rts					; otherwise don't display act number
+		cmpi.w	#$400,($FFFFFE10).w	; is current level SYZ1?
+		bne.s	Obj34_DoDisplay		; if not, branch
+		cmpi.b	#3,$3F(a0)		; is current object the Act Number?
+		bne.s	Obj34_DoDisplay		; if not, branch
+		rts				; otherwise don't display act number
 
 Obj34_DoDisplay:
-		jmp	DisplaySprite			; display sprite
+		jmp	DisplaySprite		; display sprite
 
 ; ===========================================================================
 Obj34_ItemData:
@@ -18306,19 +18304,15 @@ Obj34_ItemData:
 ; 4 bytes per item (YYYY XXXX)
 ; 4 items per level (GREEN HILL, ZONE, ACT X, oval)
 ; ---------------------------------------------------------------------------
-Obj34_ConData:	dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ
+
+Obj34_ConData:
+		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ
 		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; LZ
 		dc.w 0,$120, $FFEC,$13C, $414,$154, $214,$154 ; MZ
 		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; SLZ
 		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; SLZ
 		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; SBZ
 		dc.w 0,$130, $FFFC,$13C, $414,$154, $214,$154 ; FZ
-		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
-		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
-		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
-		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
-		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
-		dc.w 0,$120, $FFFC,$13C, $414,$154, $214,$154 ; GHZ2
 		even
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -40222,9 +40216,9 @@ Pal_Backup_LoopXXX:
 		move.w	(a3)+,(a4)+		; set palette
 		dbf	d3,Pal_Backup_LoopXXX	; loop (backup)
 
-		lea	($FFFFFB20).w,a1 	; get palette
+		lea	($FFFFFA80).w,a1 	; get palette
 		moveq	#0,d3			; clear d3
-		move.b	#$2F,d3			; set d3 to $2F (+1 for the first run)
+		move.b	#$CF,d3			; set d3 to $2F (+1 for the first run)
 
 Pal_MBW_LoopXX:
 		moveq	#0,d0			; clear d0
@@ -41011,7 +41005,7 @@ Obj09_Main:				; XREF: Obj09_Index
 @cont:
 		move.w	#$780,2(a0)
 		move.b	#4,1(a0)
-		move.b	#0,$18(a0)
+		move.b	#1,$18(a0)
 		move.b	#2,$1C(a0)	; use rolling animation
 		bset	#2,$22(a0)
 		bset	#1,$22(a0)
@@ -41673,15 +41667,15 @@ Obj09_ReplaceNormal:
 Obj09_NoReplace2:
 		addq.w	#1,a1			; go to next block
 		dbf	d2,Obj09_GoalLoop	; loop
-		lea	$40(a1),a1		; unkown
+		lea	$40(a1),a1		; increase pointer by $40
 		dbf	d1,Obj09_GoalLoop2	; loop
 
 Obj09_GoalNotSolid:
-		clr.b	($FFFFFFD6).w		; clear flag for this operation
 		moveq	#0,d4			; clear d4
-		movem.l	d0-a6,-(sp)		; backup to stack
+		movem.l	d0-a7,-(sp)		; backup to stack
 		jsr	Pal_MakeWhite		; make white flash
-		movem.l (sp)+,d0-a6		; restore from stack
+		movem.l (sp)+,d0-a7		; restore from stack
+		clr.b	($FFFFFFD6).w		; clear flag for this operation
 		move.w	#$03E8,($FFFFD008).w	; set Sonic's X-position
 		move.w	#$02E0,($FFFFD00C).w	; set Sonic's Y-position
 
@@ -43734,10 +43728,6 @@ Map_SSWalls:
 ; Compressed graphics - special stage
 ; ---------------------------------------------------------------------------
 Nem_SSWalls:	incbin	artnem\sswalls.bin	; special stage walls
-		even
-Eni_SSBg1:	incbin	mapeni\ssbg1.bin	; special stage background (mappings)
-		even
-Nem_SSBgFish:	incbin	artnem\ssbg1.bin	; special stage birds and fish background
 		even
 Eni_SSBg2:	incbin	mapeni\ssbg2.bin	; special stage background (mappings)
 		even
