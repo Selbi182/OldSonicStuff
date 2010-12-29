@@ -1,16 +1,17 @@
 To-Do:
-- Implent the signs for the level names. They will look like this: http://oi56.tinypic.com/2uesjt1.jpg
-- Find new music for Night Hill Zone.
+- Find new music for Night Hill Place.
 - Finding new Title Screen background art.
 - Find a new option (right now it's marked as XXXXXXXXXXXXXXX in the options screen and does nothing).
 - Redo the credits text (it would be better to just make a complete new credits system though).
+- Make a $ in the style of my current font (for the sound test in the options menu).
+- Doing Info Screen Textes for MZ and LZ.
 
 Bugs:
-  Right now I don't know any...
+- The Sonic 3 art is sometimes broken.
 
 Would be great:
 - Find a more accurate system for the palette-restoration from WhiteFlash.
-- For Camera Shaking I used an object... WHAT THE HELL WAS I THINKING???
+- For Camera Shaking I used an object... WHAT THE HELL WAS I THINKING??? This should be replaced by something... normal.
 
 Ideas:
 - Blood impact when being hit.

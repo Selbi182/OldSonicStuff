@@ -192,61 +192,25 @@ PLC_SLZ2:	dc.w 0
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Spring Yard
 ; ---------------------------------------------------------------------------
-PLC_SYZ:	dc.w 0
+PLC_SYZ:	dc.w 1
 		dc.l Nem_SYZ		; SYZ main patterns
 		dc.w $0000
+		dc.l Nem_LevelSigns	; level signs
+		dc.w $6E40
 PLC_SYZ2:	dc.w 0
 		dc.l Nem_HSpring	; horizontal spring
 		dc.w $A460
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Scrap Brain
 ; ---------------------------------------------------------------------------
-PLC_SBZ:	dc.w $B
+PLC_SBZ:	dc.w 1
 		dc.l Nem_SBZ		; SBZ main patterns
 		dc.w 0
-		dc.l Nem_Stomper	; moving platform and stomper
-		dc.w $5800
 		dc.l Nem_SbzDoor1	; door
 		dc.w $5D00
-		dc.l Nem_Girder		; girder
-		dc.w $5E00
-		dc.l Nem_BallHog	; ball hog enemy
-		dc.w $6040
-		dc.l Nem_SbzWheel1	; spot on large	wheel
-		dc.w $6880
-		dc.l Nem_SbzWheel2	; wheel	that grabs Sonic
-		dc.w $6900
-		dc.l Nem_SyzSpike1	; large	spikeball
-		dc.w $7220
-		dc.l Nem_Cutter		; pizza	cutter
-		dc.w $76A0
-		dc.l Nem_FlamePipe	; flaming pipe
-		dc.w $7B20
-		dc.l Nem_SbzFloor	; collapsing floor
-		dc.w $7EA0
-		dc.l Nem_SbzBlock	; vanishing block
-		dc.w $9860
-PLC_SBZ2:	dc.w $C
-		dc.l Nem_Cater		; caterkiller enemy
-		dc.w $5600
-		dc.l Nem_Bomb		; bomb enemy
-		dc.w $8000
-		dc.l Nem_Orbinaut	; orbinaut enemy
-		dc.w $8520
-		dc.l Nem_SlideFloor	; floor	that slides away
-		dc.w $8C00
-		dc.l Nem_SbzDoor2	; horizontal door
-		dc.w $8DE0
+PLC_SBZ2:	dc.w 3
 		dc.l Nem_Electric	; electric orb
 		dc.w $8FC0
-		dc.l Nem_TrapDoor	; trapdoor
-		dc.w $9240
-		dc.l Nem_SbzFloor	; collapsing floor
-		dc.w $7F20
-		dc.l Nem_SpinPform	; small	spinning platform
-		dc.w $9BE0
-		dc.l Nem_LzSwitch	; switch
-		dc.w $A1E0
 		dc.l Nem_Spikes		; spikes
 		dc.w $A360
 		dc.l Nem_HSpring	; horizontal spring

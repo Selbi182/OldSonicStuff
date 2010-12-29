@@ -1267,20 +1267,19 @@ Pal_MBW_Loop:
 loc_13CA:
 		move.b	#5,($FFFFF62A).w	; stop system
 		jsr	DelayProgram		; stop system
-	;	tst.b	($FFFFFFE1).w		; is slow-motion cheat on?
-	;	beq.s	Pause_ChkStart		; if not, branch
 		btst	#6,($FFFFF605).w 	; is button A pressed?
 		beq.s	Pause_ChkBC		; if not, branch
-		move.b	#4,($FFFFF600).w 	; set game mode to 4 (title screen)
-		nop				; no operation
+		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
+		move.b	#$C,($FFFFF600).w	; set to level
+		move.w	#1,($FFFFFE02).w	; restart level
 		bra.s	loc_1404		; skip to loc_1404
 ; ===========================================================================
 
 Pause_ChkBC:
-		btst	#4,($FFFFF604).w 	; is button B pressed?
-		bne.w	Pause_SlowMo		; if yes, branch
-		btst	#5,($FFFFF605).w 	; is button C pressed?
-		bne.w	Pause_SlowMo		; if yes, branch
+	;	btst	#4,($FFFFF604).w 	; is button B held?
+	;	bne.s	Pause_SlowMo		; if yes, branch
+	;	btst	#5,($FFFFF605).w 	; is button C pressed?
+	;	bne.s	Pause_SlowMo		; if yes, branch
 
 Pause_ChkStart:	
 		btst	#7,($FFFFF605).w 	; is Start button pressed?
@@ -2997,16 +2996,7 @@ Pal_Sega2:	incbin	pallet\sega2.bin
 
 
 PalLoad1:
-		move.b	$FFFFFE11,d1
 		lea	(PalPointers).l,a1
-		tst.b	d1
-		beq.s	PalLoad1_Continue
-		lea	(PalPointers2).l,a1
-		cmpi.b	#1,d1
-		beq.s	PalLoad1_Continue
-		lea	(PalPointers3).l,a1
-
-PalLoad1_Continue:
 		lsl.w	#3,d0
 		adda.w	d0,a1
 		movea.l	(a1)+,a2
@@ -3025,16 +3015,7 @@ loc_2110:
 	
 
 PalLoad2:
-		move.b	$FFFFFE11,d1
 		lea	(PalPointers).l,a1
-		tst.b	d1
-		beq.s	PalLoad2_Continue
-		lea	(PalPointers2).l,a1
-		cmpi.b	#1,d1
-		beq.s	PalLoad2_Continue
-		lea	(PalPointers3).l,a1
-
-PalLoad2_Continue:
 		lsl.w	#3,d0
 		adda.w	d0,a1
 		movea.l	(a1)+,a2
@@ -3055,16 +3036,7 @@ loc_2128:
 
 
 PalLoad3_Water:
-		move.b	$FFFFFE11,d1
 		lea	(PalPointers).l,a1
-		tst.b	d1
-		beq.s	PalLoad3_Continue
-		lea	(PalPointers2).l,a1
-		cmpi.b	#1,d1
-		beq.s	PalLoad3_Continue
-		lea	(PalPointers3).l,a1
-
-PalLoad3_Continue:
 		lsl.w	#3,d0
 		adda.w	d0,a1
 		movea.l	(a1)+,a2
@@ -3083,16 +3055,7 @@ loc_2144:
 
 
 PalLoad4_Water:
-		move.b	$FFFFFE11,d1
 		lea	(PalPointers).l,a1
-		tst.b	d1
-		beq.s	PalLoad4_Continue
-		lea	(PalPointers2).l,a1
-		cmpi.b	#1,d1
-		beq.s	PalLoad4_Continue
-		lea	(PalPointers3).l,a1
-
-PalLoad4_Continue:
 		lsl.w	#3,d0
 		adda.w	d0,a1
 		movea.l	(a1)+,a2
@@ -3112,12 +3075,6 @@ loc_2160:
 ; ---------------------------------------------------------------------------
 PalPointers:
          include "_inc\Pallet pointers.asm"
-
-PalPointers2:
-         include "_inc\Pallet pointers2.asm"
-
-PalPointers3:
-         include "_inc\Pallet pointers3.asm"
 
 ; ---------------------------------------------------------------------------
 ; Pallet data
@@ -9378,18 +9335,15 @@ MainLoadBlockLoad:			; XREF: Level; EndingSequence
 		move.w	(a2)+,d0
 		move.w	(a2),d0
 		andi.w	#$FF,d0
-		cmpi.w	#$103,($FFFFFE10).w ; is level SBZ3 (LZ4) ?
-		bne.s	MLB_ChkSBZPal	; if not, branch
-		moveq	#$C,d0		; use SB3 pallet
 
-MLB_ChkSBZPal:
-		cmpi.w	#$501,($FFFFFE10).w ; is level SBZ2?
-		beq.s	MLB_UsePal0E	; if yes, branch
+		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
+		bne.s	MLB_NotGHZ2		; if not, branch
+		moveq	#7,d0			; use GHZ2 pallet
+
+MLB_NotGHZ2:
 		cmpi.w	#$502,($FFFFFE10).w ; is level FZ?
 		bne.s	MLB_NormalPal	; if not, branch
-
-MLB_UsePal0E:
-		moveq	#$E,d0		; use SBZ2/FZ pallet
+		moveq	#$E,d0		; use FZ pallet
 
 MLB_NormalPal:
 		jsr	PalLoad1	; load pallet (based on	d0)
@@ -14782,22 +14736,6 @@ Obj4B_Main_Cont:
 		move.b	#$40,$19(a0)
 		tst.b	1(a0)
 		bpl.s	Obj4B_Animate
-		cmpi.b	#6,($FFFFFE57).w ; do you have 6 emeralds?
-		beq.w	Obj4B_6Em	; if yes, branch
-		cmpi.b	#1,($FFFFFFE7).w	; has sonic destroyed a S monitor?
-		beq.s	Obj4B_Okay	; if yes, display the ring always
-		cmpi.w	#50,($FFFFFE20).w ; do you have	at least 50 rings?
-		bra.s	Obj4B_Okay	; if yes, branch
-		rts	
-; ===========================================================================
-
-Obj4B_6Em:
-		addi.w	#50,($FFFFFE20).w	; add 50 rings to the number of rings you have
-		ori.b	#1,($FFFFFE1D).w	; update the ring counter
-		move.w	#$C3,d0			; play giant ring sound
-		jsr	(PlaySound_Special).l
-		jmp	Obj7C_Delete
-; ===========================================================================
 
 Obj4B_Okay:				; XREF: Obj4B_Main
 		addq.b	#2,$24(a0)
@@ -26812,23 +26750,21 @@ Map_obj65:
 ; ---------------------------------------------------------------------------
 
 Obj05:
-Spindash_dust:
-Sprite_1DD20:				; DATA XREF: ROM:0001600Co
 		moveq	#0,d0
 		move.b	$24(a0),d0
 		move	off_1DD2E(pc,d0.w),d1
 		jmp	off_1DD2E(pc,d1.w)
 ; ===========================================================================
-off_1DD2E:	dc loc_1DD36-off_1DD2E; 0 ; DATA XREF: h+6DBAo h+6DBCo ...
-		dc loc_1DD90-off_1DD2E; 1
-		dc loc_1DE46-off_1DD2E; 2
-		dc loc_1DE4A-off_1DD2E; 3
+off_1DD2E:	dc.w loc_1DD36-off_1DD2E
+		dc.w loc_1DD90-off_1DD2E
+		dc.w loc_1DE46-off_1DD2E; 2
+		dc.w loc_1DE4A-off_1DD2E; 3
 ; ===========================================================================
 
 loc_1DD36:				; DATA XREF: h+6DBAo
 		addq.b	#2,$24(a0)
 		move.l	#MapUnc_1DF5E,4(a0)
-		or.b	#4,1(a0)
+		ori.b	#4,1(a0)
 		move.b	#1,$18(a0)
 		move.b	#$10,$19(a0)
 		move	#$7A0,2(a0)
@@ -27142,11 +27078,12 @@ word_1E0EA:	dc 0
 word_1E0EC:	dc 1
 	dc $F0BA
 	even
-; ===========================================================================
 
+; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 02 - ERaZor Banner
 ; ---------------------------------------------------------------------------
+
 Obj02:
 		moveq	#0,d0			; clear d0
 		move.b	$24(a0),d0		; move routine counter to d0
@@ -27158,7 +27095,7 @@ Obj02_Index:	dc.w Obj02_Setup-Obj02_Index	; Set up the object (art etc.)	[$0]
 ; ===========================================================================
 
 Obj02_Setup:
-		addq.b	#2,$24(a0)		; set to Obj08_FixLoc
+		addq.b	#2,$24(a0)		; set to "Obj02_Display"
 		move.l	#Map_Obj02,4(a0)	; load mappings
 		move.b	#0,$18(a0)		; set priority
 		move.b	#0,1(a0)		; set render flag
@@ -27177,10 +27114,78 @@ Obj02_Display:
 ; ===========================================================================
 
 ; ---------------------------------------------------------------------------
-; Sprite mappings - Shadow object
+; Sprite mappings - ERaZor Banner
 ; ---------------------------------------------------------------------------
 Map_Obj02:
 		include	"_maps\ERaZor.asm"
+; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Object 03 - Level Signs in SYZ
+; ---------------------------------------------------------------------------
+
+Obj03:
+		moveq	#0,d0			; clear d0
+		move.b	$24(a0),d0		; move routine counter to d0
+		move.w	Obj03_Index(pc,d0.w),d1 ; move the index to d1
+		jmp	Obj03_Index(pc,d1.w)	; find out the current position in the index
+; ===========================================================================
+Obj03_Index:	dc.w Obj03_Setup-Obj03_Index	; Set up the object (art etc.)	[$0]
+		dc.w Obj03_Display-Obj03_Index	; Display Sprite (Sign)		[$2]
+; ===========================================================================
+
+Obj03_Setup:
+		addq.b	#2,$24(a0)		; set to "Obj03_Display"
+		move.l	#Map_Obj03,4(a0)	; load mappings
+		move.b	#4,$18(a0)		; set priority
+		move.b	#4,1(a0)		; set render flag
+		move.b	#$56,$19(a0)		; set display width
+		move.w	#$0372,2(a0)		; set art, use first palette line
+		subi.w	#$10,8(a0)		; fix X-pos
+		move.b	$28(a0),$1A(a0)		; set frame to subtype ID
+
+Obj03_Display:
+		jsr	DisplaySprite		; display sprite
+		move.w	8(a0),d0
+		andi.w	#$FF80,d0
+		move.w	($FFFFF700).w,d1
+		subi.w	#$80,d1
+		andi.w	#$FF80,d1
+		sub.w	d1,d0
+		cmpi.w	#$280,d0
+		bhi.w	DeleteObject		; if object is not on screen, delete it
+		rts				; return
+; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Sprite mappings - Level Signs
+; ---------------------------------------------------------------------------
+Map_Obj03:
+		include	"_maps\LevelSigns.asm"
+; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Object 04 - Blank
+; ---------------------------------------------------------------------------
+
+Obj04:
+		rts	; return
+; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Object 06 - Blank
+; ---------------------------------------------------------------------------
+
+Obj06:
+		rts	; return
+; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Object 07 - Blank
+; ---------------------------------------------------------------------------
+
+Obj07:
+		rts	; return
 ; ===========================================================================
 
 ; ---------------------------------------------------------------------------
@@ -43851,11 +43856,9 @@ Nem_MzUnkBlock:	incbin	artnem\xxxmzblo.bin	; MZ unused background block
 ; ---------------------------------------------------------------------------
 Nem_Bumper:	incbin	artnem\syzbumpe.bin	; SYZ bumper
 		even
-Nem_SyzSpike2:	incbin	artnem\syzsspik.bin	; SYZ small spikeball
-		even
 Nem_LzSwitch:	incbin	artnem\switch.bin	; LZ/SYZ/SBZ switch
 		even
-Nem_SyzSpike1:	incbin	artnem\syzlspik.bin	; SYZ/SBZ large spikeball
+Nem_LevelSigns:	incbin	artnem\LevelSigns.bin	; SYZ level signs
 		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - SBZ stuff

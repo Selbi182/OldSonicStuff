@@ -1,8 +1,8 @@
 ; ---------------------------------------------------------------------------
 ; Object pointers
 ; ---------------------------------------------------------------------------
-	dc.l Obj01, Obj02,	ObjectFall, ObjectFall
-	dc.l Spindash_dust, ObjectFall, ObjectFall, Obj08
+	dc.l Obj01, Obj02, Obj03, Obj04
+	dc.l Obj05, Obj06, Obj07, Obj08
 	dc.l Obj09, Obj0A, Obj0B, Obj0C
 	dc.l Obj0D, Obj0E, Obj0F, Obj10
 	dc.l Obj11, Obj12, Obj13, Obj14
