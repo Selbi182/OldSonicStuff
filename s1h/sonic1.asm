@@ -234,15 +234,45 @@ GameClrRAM:
 		cmpi.b	#$B6,$1B(a1)		; does SRAM exist?
 		bne.s	NoSRAM			; if not, branch
 		move.b	$3(a1),($FFFFFFBC).w
+		bpl.s	@cont1
+		clr.b	($FFFFFFBC).w
+
+@cont1:
 		move.b	$5(a1),($FFFFFF92).w
+		bpl.s	@cont2
+		clr.b	($FFFFFF92).w
+
+@cont2:
 		move.b	$7(a1),($FFFFFF9C).w
+		bpl.s	@cont3
+		clr.b	($FFFFFF9C).w
+
+@cont3:
 		move.b	$9(a1),($FFFFFF93).w
+		bpl.s	@cont4
+		clr.b	($FFFFFF93).w
+
+@cont4:
 		move.b	$B(a1),($FFFFFF94).w
+		bpl.s	@cont5
+		clr.b	($FFFFFFBC).w
+
+@cont5:
 		movep.w	$D(a1),d0
 		move.w	d0,($FFFFFE20).w
+		bpl.s	@cont6
+		clr.w	($FFFFFE20).w
+
+@cont6:
 		movep.l	$11(a1),d0
 		move.l	d0,($FFFFFE26).w
+		bpl.s	@cont7
+		clr.l	($FFFFFE26).w
+
+@cont7:
 		move.b	$19(a1),($FFFFFF8B).w	; otherwise update check value
+		bpl.s	NoSRAM
+		clr.b	($FFFFFF8B).w
 
 NoSRAM:
 		move.b	#0,($A130F1).l		; disable SRAM
@@ -4758,6 +4788,7 @@ ClearEverySpecialFlag:
 		clr.l	($FFFFFFB4).w	; $FFB4-$FFB7	(4)
 		clr.l	($FFFFFFB8).w	; $FFB8-$FFBB	(4)
 		clr.b	($FFFFFFBD).w	; $FFBD		(1)
+		clr.b	($FFFFFFBF).w	; $FFBF		(1)
 		clr.b	($FFFFFFD1).w	; $FFD1		(1) needs to be splitted
 		clr.l	($FFFFFFD2).w	; $FFD2-$FFD5	(4)
 		clr.l	($FFFFFFD6).w	; $FFD6-$FFD9	(4)
@@ -5937,7 +5968,7 @@ End_LoadSonic:
 		bset	#0,($FFFFD022).w ; make	Sonic face left
 		move.b	#1,($FFFFF7CC).w ; lock	controls
 		move.w	#$400,($FFFFF602).w ; move Sonic to the	left
-		move.w	#$F800,($FFFFD014).w ; set Sonic's speed
+		move.w	#-$800,($FFFFD014).w ; set Sonic's speed
 		move.b	#4,($FFFFF62A).w
 		jsr	DelayProgram
 		jsr	ObjPosLoad
@@ -6043,6 +6074,7 @@ loc_5334:
 
 
 End_MoveSonic:				; XREF: End_MainLoop
+		move.b	#1,($FFFFF7CC).w ; lock	controls
 		move.b	($FFFFF7D7).w,d0
 		bne.s	End_MoveSonic2
 		cmpi.w	#$90,($FFFFD008).w ; has Sonic passed $90 on y-axis?
@@ -9341,6 +9373,11 @@ MainLoadBlockLoad:			; XREF: Level; EndingSequence
 		moveq	#7,d0			; use GHZ2 pallet
 
 MLB_NotGHZ2:
+		cmpi.w	#$002,($FFFFFE10).w	; is level GHZ3?
+		bne.s	MLB_NotGHZ3		; if not, branch
+		moveq	#$C,d0			; use GHZ3 pallet
+
+MLB_NotGHZ3:
 		cmpi.w	#$502,($FFFFFE10).w ; is level FZ?
 		bne.s	MLB_NormalPal	; if not, branch
 		moveq	#$E,d0		; use FZ pallet
@@ -9724,7 +9761,7 @@ Resize_MZx:	dc.w Resize_MZ1-Resize_MZx
 ; ===========================================================================
 
 Resize_MZ1:
-		move.w	#$500,($FFFFF726).w
+		move.w	#$520,($FFFFF726).w
 		rts
 		moveq	#0,d0
 		move.b	($FFFFF742).w,d0
@@ -12603,6 +12640,11 @@ Obj27_Display:
 ; Object 3F - explosion	from a destroyed boss, bomb or cannonball
 ; ---------------------------------------------------------------------------
 
+Obj3F_SoundType = 1
+; If 1, the sound will be EXTREME!!!
+; If 0, it will be the normal and boring sound...
+; ---------------------------------------------------------------------------
+
 Obj3F:					; XREF: Obj_Index
 		moveq	#0,d0
 		move.b	$24(a0),d0
@@ -12649,8 +12691,13 @@ Obj3F_NoCamShake:
 		rts			; return (don't play sound)
 
 Obj3F_PlaySound:
+	if Obj3F_SoundType=1
 		move.w	#$C4,d0
-		jmp	(PlaySound_Special).l ;	play exploding bomb sound
+		jmp	(PlaySound_Special).l ;	play extreme exploding sound
+	else
+		move.w	#$D7,d0
+		jmp	(PlaySound_Special).l ;	play exploding sound
+	endif
 ; ===========================================================================
 Ani_obj1E:
 		include	"_anim\obj1E.asm"
@@ -13807,6 +13854,8 @@ Obj22_SOLFail:
 Obj22_Return:
 		rts				; return
 ; ===========================================================================
+; ===========================================================================
+; ===========================================================================
 
 Obj22_NotGHZ2:
 		tst.b	($FFFFFFB1).w		; is inhuman crush timer filled?
@@ -14522,8 +14571,8 @@ Obj37_Loop:
 		bne.w	Obj37_ResetCounter
 
 Obj37_MakeRings:			; XREF: Obj37_CountRings
-		tst.b	$30(a0)
-		bne.s	Obj37_Normal2
+		tst.b	$30(a0)		; is object set to load an explosion, rather than rings?
+		bne.s	Obj37_Normal2	; if yes, branch
 		move.b	#$37,0(a1)	; load bouncing	ring object
 		addq.b	#2,$24(a1)
 		move.b	#8,$16(a1)
@@ -14537,17 +14586,13 @@ Obj37_MakeRings:			; XREF: Obj37_CountRings
 Obj37_Normal2:
 		move.b	#$1F,0(a1)	; load left fireball
 		move.b	#6,$24(a1)
-	;	move.b	#$23,0(a1)	; load bouncing	ring object
-	;	addq.b	#2,$24(a1)
-	;	move.b	#8,$16(a1)
-	;	move.b	#8,$17(a1)
 		move.w	8(a0),8(a1)
 		move.w	$C(a0),$C(a1)
-	;	move.l	#Map_obj23,4(a1)
-	;	move.w	#$2444,2(a1)
 		move.l	#Map_obj1F,4(a1)
 		move.w	#$400,2(a1)
 		move.b	#1,$28(a1)
+		move.w	#$C4,d0
+		jsr	(PlaySound_Special).l ;	play exploding bomb sound
 		bra.s	Obj37_ContXX
 
 Obj37_ContX:
@@ -15960,8 +16005,6 @@ BossDefeated3:
 		andi.b	#7,d0
 		bne.s	locret_178A22XX
 		move.b	#1,($FFFFFFA3).w
-		move.w	#$D7,d0
-		jsr	(PlaySound_Special).l ;	play exploding bomb sound
 		jsr	SingleObjLoad
 		bne.s	locret_178A22XX
 		move.b	#$3F,0(a1)	; load explosion object
@@ -20167,6 +20210,10 @@ loc_DC56:
 		bclr	#5,$22(a1)
 		move.w	#$CC,d0
 		jsr	(PlaySound_Special).l ;	play spring sound
+
+		cmpi.b	#$18,($FFFFF600).w	; is this the ending sequence?
+		bne.s	Obj41_AniLR		; if not, branch
+		bset	#0,($FFFFD022).w	; make	Sonic face left
 
 Obj41_AniLR:				; XREF: Obj41_Index
 		lea	(Ani_obj41).l,a1
@@ -38618,8 +38665,8 @@ Obj85_LoadBoss:				; XREF: Obj85_Main
 		dbf	d1,Obj85_Loop
 
 loc_19E20:
-		move.w	#$E0,d0		; set song $9E
-		jsr	PlaySound_Special	; play FZ boss music
+		move.w	#$E0,d0			; set song $E0
+		jsr	PlaySound_Special	; fade out music
 
 		lea	$36(a0),a2
 		jsr	SingleObjLoad
@@ -39400,7 +39447,7 @@ Obj86_Generator:			; XREF: Obj86_Index
 ; ===========================================================================
 
 loc_1A850:
-		move.b	#0,$1C(a0)
+	;	move.b	#0,$1C(a0)
 		tst.b	$29(a0)
 		beq.s	loc_1A86C
 		addq.b	#2,$24(a0)

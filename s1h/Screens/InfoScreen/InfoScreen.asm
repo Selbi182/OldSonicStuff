@@ -347,8 +347,35 @@ Info_SetMainText:
 		lea	(InfoText_1).l,a2	; get text location 1 (which is also the start of the text locations in general)
 		move.b	($FFFFFF9C).w,d0 	; get text ID
 		subq.b	#1,d0			; sub 1 from it, because we want to use 0 as base, not 1
+		move.w	d0,d1			; copy to d1 (for H-scroll)
 		mulu.w	#422,d0			; multiply it by 422 (number of chars for a single block of text including the $FF)
 		adda.w	d0,a2			; add result to text location (a2)
+
+		lea	(ScrollText_1).l,a3	; load start address of scroll text
+		mulu.w	#16,d1			; multiply it by 15 (number of entries)
+		adda.w	d1,a3			; add result to scroll location (a3)
+		lea	($FFFFCCE0).w,a4	; load H-scroll buffer address (start at line 7, where the main text begins)
+		moveq	#14,d2			; set repeat times (15 lines)
+
+ISMT_NextLine:
+		tst.b	(a3)+			; test next byte
+		bne.s	ISMT_DoCentering	; if it's 1, branch
+		lea	$20(a4),a4		; increase a4 by $20
+		bra.s	ISMT_NoCenter		; skip
+
+ISMT_DoCentering:
+		moveq	#4,d1			; set d1 to 4
+		move.l	d1,(a4)+		; write to scroll buffer (line 1)
+		move.l	d1,(a4)+		; write to scroll buffer (line 2)
+		move.l	d1,(a4)+		; write to scroll buffer (line 3)
+		move.l	d1,(a4)+		; write to scroll buffer (line 4)
+		move.l	d1,(a4)+		; write to scroll buffer (line 5)
+		move.l	d1,(a4)+		; write to scroll buffer (line 6)
+		move.l	d1,(a4)+		; write to scroll buffer (line 7)
+		move.l	d1,(a4)+		; write to scroll buffer (line 8)
+
+ISMT_NoCenter:
+		dbf	d2,ISMT_NextLine	; repeat til all lines are set
 		rts				; return
 ; ===========================================================================
 ; ===========================================================================
@@ -619,19 +646,19 @@ Info_HeaderText3:	dc.b	'SONIC ERAZORX'
 ; ---------------------------------------------------------------------------
 
 InfoText_1:	; text after intro cutscene
-		dc.b	'ONE DAY SONIC DECIDED TO  GO'
-		dc.b	'BACK  TO  GREEN HILL ZONE TO'
+		dc.b	'ONE DAY SONIC DECIDED TO GO '
+		dc.b	' BACK TO GREEN HILL ZONE TO '
 		dc.b	' SEE IF EVERYTHING IS OKAY. '
 		dc.b	'                            '
-		dc.b	'AS SOON AS HE GOT THERE,  HE'
+		dc.b	'AS SOON AS HE GOT THERE, HE '
 		dc.b	'WAS ATTACKED BY AN EVIL GREY'
-		dc.b	'   METALLIC  BUZZ BOMBER!   '
+		dc.b	'   METALLIC BUZZ BOMBER!    '
 		dc.b	'                            '
 		dc.b	'     SONIC ESCAPED HIM.     '
-		dc.b	'HOWEVER,  THE RING HE JUMPED'
-		dc.b	'IN SENT HIM TO  SPRING YARD.'
+		dc.b	'HOWEVER, THE RING HE JUMPED '
+		dc.b	'IN SENT HIM TO SPRING YARD. '
 		dc.b	'                            '
-		dc.b	'NOW HE HAS TO USE  THE RINGS'
+		dc.b	'NOW HE HAS TO USE THE RINGS '
 		dc.b	'THERE TO FIND BACK TO EGGMAN'
 		dc.b	'    TO STOP HIM AGAIN...    '
 		dc.b	$FF
@@ -639,37 +666,37 @@ InfoText_1:	; text after intro cutscene
 ; ---------------------------------------------------------------------------
 
 InfoText_2:	; text after beating Green Hill Zone
-		dc.b	'SONIC WENT THROUGH  THE ZONE'
+		dc.b	'SONIC WENT THROUGH THE ZONE '
 		dc.b	'AND FACED EVEN MORE METALLIC'
 		dc.b	'ENEMIES, ALL WANTING TO KILL'
 		dc.b	'    HIM WITH EXPLOSIONS!    '
 		dc.b	'                            '
 		dc.b	' AFTER A MADNESS FIGHT WITH '
-		dc.b	' A SPECIAL CRABMEAT,  SONIC '
+		dc.b	' A SPECIAL CRABMEAT, SONIC  '
 		dc.b	'  CONTINUED HIS WAY TO THE  '
 		dc.b	' GREEN HILL ZONE, HOPING IT '
-		dc.b	' IS NOT  EXPLODING AS WELL. '
+		dc.b	' IS NOT EXPLODING AS WELL.  '
 		dc.b	'   SAD BUT TRUE, THAT WAS   '
 		dc.b	'     EXCACTLY THE CASE.     '
 		dc.b	'                            '
-		dc.b	'BACK IN SYZ,  A RING BLOCKED'
-		dc.b	' HIS WAY TO MARBLE ZONE.... '
+		dc.b	'BACK IN SYZ, A RING BLOCKED '
+		dc.b	' HIS WAY TO MARBLE ZONE...  '
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
 
 InfoText_3:	; text after beating Special Stage
 		dc.b	'  SONIC WAS RAGING AND YOU  '
-		dc.b	'    PROBABLY DO AS WELL.    '
+		dc.b	'   ARE PROBABLY AS WELL.    '
 		dc.b	'                            '
 		dc.b	'SORRY FOR ANY DAMAGE TO YOUR'
 		dc.b	'      BRAIN, HONESTLY.      '
 		dc.b	'                            '
-		dc.b	' ANYWAY,  AFTER BEATING THE '
+		dc.b	' ANYWAY, AFTER BEATING THE  '
 		dc.b	'SPECIAL STAGE OF HELL, SONIC'
-		dc.b	' WAS FINALLY  ABLE TO GO TO '
+		dc.b	' WAS FINALLY ABLE TO GO TO  '
 		dc.b	'  MARBLE ZONE, THINKING IT  '
-		dc.b	'   WILL BE EASY  TO BEAT.   '
+		dc.b	'   WILL BE EASY TO BEAT.    '
 		dc.b	'                            '
 		dc.b	'                            '
 		dc.b	' LITTLE DID HE KNOW, IT HAD '
@@ -700,7 +727,7 @@ InfoText_4:	; text after beating Marble Zone
 
 InfoText_5:	; text after beating Labyrinth Zone
 		dc.b	'  AFTER ESCAPING THE WEIRD  '
-		dc.b	' LABYRINTH ZONE,  SONIC WAS '
+		dc.b	' LABYRINTH ZONE, SONIC WAS  '
 		dc.b	'  FINALLY ABLE TO KICK THE  '
 		dc.b	'  REAL EGGMAN IN THE BUTT!  '
 		dc.b	'                            '
@@ -719,20 +746,20 @@ InfoText_5:	; text after beating Labyrinth Zone
 ; ---------------------------------------------------------------------------
 
 InfoText_6:	; text after jumping in the ring for the Ending Sequence
-		dc.b	'   THE WORLD IS  RESCUED,   '
+		dc.b	'   THE WORLD IS RESCUED,    '
 		dc.b	'  SONIC ONCE AGAIN STOPPED  '
-		dc.b	' ROBOTNIK  FROM TAKING OVER '
+		dc.b	' ROBOTNIK FROM TAKING OVER  '
 		dc.b	'         THE WORLD.         '
 		dc.b	'                            '
 		dc.b	' SO SONIC DECIDED TO MAKE A '
-		dc.b	'QUICK RUN THROUGH THE  GREEN'
-		dc.b	'HILL ZONE AGAIN,  SURROUNDED'
+		dc.b	'QUICK RUN THROUGH THE GREEN '
+		dc.b	'HILL ZONE AGAIN, SURROUNDED '
 		dc.b	'  BY TONS OF ANIMALS WHICH  '
-		dc.b	' SEEM TO LIKE  TO JUMP INTO '
+		dc.b	' SEEM TO LIKE TO JUMP INTO  '
 		dc.b	'     BOTTOMLESS PITS...     '
 		dc.b	'                            '
 		dc.b	'                            '
-		dc.b	'    THAT SAID,  HOW WILL    '
+		dc.b	'    THAT SAID, HOW WILL     '
 		dc.b	' EVERYTHING END WITH SONIC? '
 		dc.b	$FF
 		even
@@ -744,7 +771,47 @@ Info_Continue:
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
+; ---------------------------------------------------------------------------
+; Scroll positions
+; ---------------------------------------------------------------------------
 
+ScrollText_1:	dc.b	1, 0, 0, 0
+		dc.b	1, 0, 1, 0
+		dc.b	0, 1, 1, 0
+		dc.b	1, 0, 0
+		even
+
+ScrollText_2:	dc.b	1, 0, 0, 0
+		dc.b	0, 0, 1, 0
+		dc.b	0, 1, 0, 0
+		dc.b	0, 1, 1
+		even
+
+ScrollText_3:	dc.b	0, 1, 0, 0
+		dc.b	0, 0, 1, 0
+		dc.b	1, 0, 1, 0
+		dc.b	0, 0, 0
+		even
+
+ScrollText_4:	dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0
+		even
+
+ScrollText_5:	dc.b	0, 1, 0, 0
+		dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0
+		even
+
+ScrollText_6:	dc.b	1, 0, 1, 0
+		dc.b	0, 0, 1, 1
+		dc.b	0, 1, 0, 0
+		dc.b	0, 1, 0
+		even
+; ---------------------------------------------------------------------------
+; ===========================================================================
 
 ; ===========================================================================
 Info_FontArt:	incbin	Screens\InfoScreen\InfoScreen_Font.bin

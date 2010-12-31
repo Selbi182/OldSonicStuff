@@ -771,6 +771,12 @@ OW_NotEqual:
 		bra.s	OW_DoWrite		; skip
 
 OW_NotDollar:
+		cmpi.b	#'!',d0			; is current character a "!"?
+		bne.s	OW_NotExclam		; if not, branch
+		move.b	#$0A,d0			; set correct value for "!"
+		bra.s	OW_DoWrite		; skip
+
+OW_NotExclam:
 		subi.b	#50,d0			; otherwise it's a letter and has to be set to the correct value
 		cmpi.b	#9,d0			; is result a number?
 		bgt.s	OW_DoWrite		; if not, branch
@@ -779,8 +785,7 @@ OW_NotDollar:
 OW_DoWrite:
 		move.b	d0,(a1)+		; write output to a1
 		moveq	#0,d0			; clear d0
-
-		bra.s	OW_Loop			; loop
+		bra.w	OW_Loop			; loop
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -841,7 +846,7 @@ OpText_Header1:
 		even
 
 OpText_Header2:
-		dc.b	'      SONIC ERAZOR      ', $FF
+		dc.b	'      OPTIONS MENU      ', $FF
 		even
 ; ---------------------------------------------------------------------------
 

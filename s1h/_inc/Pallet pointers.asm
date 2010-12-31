@@ -37,7 +37,7 @@
 	dc.l Pal_LZWater2
 	dc.w $FB00
 	dc.w $1F
-	dc.l Pal_Null
+	dc.l Pal_GHZ3
 	dc.w $FB20
 	dc.w $17
 	dc.l Pal_Null
