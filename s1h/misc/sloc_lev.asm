@@ -5,7 +5,7 @@
 
 		dc.w	$0010, $0020	; GHZ 1
 		dc.w	$0000, $0160	; GHZ 2
-		dc.w	$2222, $0410	; GHZ 3
+		dc.w	$2222, $04AC	; GHZ 3
 		dc.w	$0080, $00A8	; GHZ 4
 
 		dc.w	$0078, $006E	; LZ 1
@@ -34,7 +34,7 @@
 		dc.w	$0080, $00A8	; Null
 
 		dc.w	$0620, $016B	; Unkown
-		dc.w	$0EE0, $016C	; Ending Sequence
+		dc.w	$0EE0, $026C	; Ending Sequence
 		dc.w	$0080, $00A8	; Null
 		dc.w	$0080, $00A8	; Null
 		even

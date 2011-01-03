@@ -1,22 +1,38 @@
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - index
 ; ---------------------------------------------------------------------------
-	dc.w PLC_Main-ArtLoadCues, PLC_Main2-ArtLoadCues
-	dc.w PLC_Explode-ArtLoadCues, PLC_GameOver-ArtLoadCues
-	dc.w PLC_GHZ-ArtLoadCues, PLC_GHZ2-ArtLoadCues
-	dc.w PLC_LZ-ArtLoadCues, PLC_LZ2-ArtLoadCues
-	dc.w PLC_MZ-ArtLoadCues, PLC_MZ2-ArtLoadCues
-	dc.w PLC_SLZ-ArtLoadCues, PLC_SLZ2-ArtLoadCues
-	dc.w PLC_SYZ-ArtLoadCues, PLC_SYZ2-ArtLoadCues
-	dc.w PLC_SBZ-ArtLoadCues, PLC_SBZ2-ArtLoadCues
-	dc.w PLC_TitleCard-ArtLoadCues,	PLC_Boss-ArtLoadCues
-	dc.w PLC_Signpost-ArtLoadCues, PLC_Warp-ArtLoadCues
-	dc.w PLC_SpeStage-ArtLoadCues, PLC_GHZAnimals-ArtLoadCues
-	dc.w PLC_LZAnimals-ArtLoadCues,	PLC_MZAnimals-ArtLoadCues
-	dc.w PLC_SLZAnimals-ArtLoadCues, PLC_SYZAnimals-ArtLoadCues
-	dc.w PLC_SBZAnimals-ArtLoadCues, PLC_SpeStResult-ArtLoadCues
-	dc.w PLC_Ending-ArtLoadCues, PLC_TryAgain-ArtLoadCues
-	dc.w PLC_EggmanSBZ2-ArtLoadCues, PLC_FZBoss-ArtLoadCues
+	dc.w PLC_Main-ArtLoadCues	; $00
+	dc.w PLC_Main2-ArtLoadCues	; $01
+	dc.w PLC_Explode-ArtLoadCues	; $02
+	dc.w PLC_GameOver-ArtLoadCues	; $03
+	dc.w PLC_GHZ-ArtLoadCues	; $04
+	dc.w PLC_GHZ2-ArtLoadCues	; $05
+	dc.w PLC_LZ-ArtLoadCues		; $06
+	dc.w PLC_LZ2-ArtLoadCues	; $07
+	dc.w PLC_MZ-ArtLoadCues		; $08
+	dc.w PLC_MZ2-ArtLoadCues	; $09
+	dc.w PLC_SLZ-ArtLoadCues	; $0A
+	dc.w PLC_SLZ2-ArtLoadCues	; $0B
+	dc.w PLC_SYZ-ArtLoadCues	; $0C
+	dc.w PLC_SYZ2-ArtLoadCues	; $0D
+	dc.w PLC_SBZ-ArtLoadCues	; $0E
+	dc.w PLC_SBZ2-ArtLoadCues	; $0F
+	dc.w PLC_TitleCard-ArtLoadCues	; $10
+	dc.w PLC_Boss-ArtLoadCues	; $11
+	dc.w PLC_Signpost-ArtLoadCues	; $12
+	dc.w PLC_Warp-ArtLoadCues	; $13
+	dc.w PLC_SpeStage-ArtLoadCues	; $14
+	dc.w PLC_GHZAnimals-ArtLoadCues	; $15
+	dc.w PLC_LZAnimals-ArtLoadCues	; $16
+	dc.w PLC_MZAnimals-ArtLoadCues	; $17
+	dc.w PLC_SLZAnimals-ArtLoadCues	; $18
+	dc.w PLC_SYZAnimals-ArtLoadCues	; $19
+	dc.w PLC_SBZAnimals-ArtLoadCues	; $1A
+	dc.w PLC_SpeStResult-ArtLoadCues; $1B
+	dc.w PLC_Ending-ArtLoadCues	; $1C
+	dc.w PLC_TryAgain-ArtLoadCues	; $1D
+	dc.w PLC_EggmanSBZ2-ArtLoadCues	; $1E
+	dc.w PLC_FZBoss-ArtLoadCues	; $1F
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - standard block 1
 ; ---------------------------------------------------------------------------
@@ -412,3 +428,4 @@ PLC_FZBoss:	dc.w 4
 		dc.l Nem_Exhaust	; exhaust flame
 		dc.w $A540
 		even
+; ---------------------------------------------------------------------------

@@ -4,11 +4,11 @@
 
 InfoScreen:				; XREF: GameModeArray
 	;	move.b	#$E4,d0
-	;	jsr	PlaySound_Special ; stop music
+	;	bsr	PlaySound_Special ; stop music
 		jsr	ClearPLC
 		jsr	Pal_FadeFrom
 		move	#$2700,sr
-	;	jsr	SoundDriverLoad
+	;	bsr	SoundDriverLoad
 		lea	($C00004).l,a6
 		move.w	#$8004,(a6)
 		move.w	#$8230,(a6)
@@ -113,14 +113,14 @@ InfoScreen_MainLoop:
 		andi.b	#$80,d1
 		beq.s	Info_NoStart
 		move.b	#1,($FFFFFF9B).w
-		jsr	InfoTextLoad		; update text
+		bsr	InfoTextLoad		; update text
 		bra.s	InfoScreen_MainLoop	; if not, branch
 ; ===========================================================================
 
 Info_NoStart:
 		subq.b	#1,($FFFFFF95).w	; sub 1 from delay
 		bpl.s	Info_NoTextChange	; if time remains, branch (comment out to remove delay entirly)
-		jsr	InfoTextLoad		; update text
+		bsr	InfoTextLoad		; update text
 		move.b	#1,($FFFFFF95).w	; reset delay timer
 		cmpi.b	#6,($FFFFFF9A).w
 		beq.s	@cont
@@ -170,7 +170,7 @@ Info_NoEnding:
 
 
 InfoTextLoad:				; XREF: TitleScreen
-		jsr	GetInfoText
+		bsr	GetInfoText
 		lea	($FFFFCA00).w,a1		
 		lea	($C00000).l,a6
 		move.l	#$620C0003,d4	; screen position (text)
@@ -180,7 +180,7 @@ InfoTextLoad:				; XREF: TitleScreen
 
 loc3_34FE:				; XREF: InfoTextLoad+26j
 		move.l	d4,4(a6)
-		jsr	Info_ChgLine
+		bsr	Info_ChgLine
 		addi.l	#$800000,d4
 		dbf	d1,loc3_34FE
 		moveq	#0,d0
@@ -201,7 +201,7 @@ loc3_34FE:				; XREF: InfoTextLoad+26j
 		move.l	d4,4(a6)
 
 		lea	($FFFFCC32).w,a1	; set location
-		jsr	Info_ChgLine
+		bsr	Info_ChgLine
 		move.w	#$C680,d3
 
 loc3_3550:

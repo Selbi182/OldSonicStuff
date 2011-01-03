@@ -162,7 +162,7 @@ OptionsScreen_MainLoop:
 		move.w	#$618,($FFFFF614).w	; otherwise, reset it
 
 O_DontResetTimer:
-		jsr	OptionsControls
+		bsr	OptionsControls
 		jsr	RunPLC_RAM
 		
 		bsr.s	Options_PalCycle
@@ -176,7 +176,7 @@ O_DontResetTimer:
 		tst.b	($FFFFF605).w
 		beq.s	Options_NoStart
 		move.b	#1,($FFFFFF9C).w
-		jsr	OptionsTextLoad		; update text
+		bsr	OptionsTextLoad		; update text
 		bra.s	OptionsScreen_MainLoop	; if not, branch
 
 Options_NoStart:
@@ -194,7 +194,7 @@ Options_NoSlowDown:
 		bne.s	Options_NoTextChange	; if result ain't 0, don't write text
 
 Options_StartUpWrite:
-		jsr	OptionsTextLoad		; update text
+		bsr	OptionsTextLoad		; update text
 		tst.b	($FFFFFF9C).w	; is routine counter at $12 (Options_NoMore)?
 		bne.s	Options_NoTextChange	; if yes, branch
 		bra.s	OptionsScreen_MainLoop
@@ -232,7 +232,7 @@ Options_Check4:
 		cmpi.w	#4,d0		; have you selected item 4 (AIR MOVE ON B)?
 		bne.s	Options_Not4	; if not, check for next numbers
 		bchg	#0,($FFFFFFBC).w	; enable/disable air move
-		jsr	OptionsTextLoad
+		bsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
 
@@ -240,7 +240,7 @@ Options_Not4:
 		cmpi.w	#7,d0		; have you selected item 7 (EXTENDED CAMERA)?
 		bne.s	Options_Not7	; if not, check for next numbers
 		bchg	#0,($FFFFFF93).w	; enable/disable extended camera
-		jsr	OptionsTextLoad
+		bsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
 
@@ -248,7 +248,7 @@ Options_Not7:
 		cmpi.w	#10,d0		; have you selected item 10 (SONIC ART)?
 		bne.s	Options_Not10	; if not, check for next numbers
 		bchg	#0,($FFFFFF94).w	; change art style flag
-		jsr	OptionsTextLoad
+		bsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
 
@@ -256,7 +256,7 @@ Options_Not10:
 		cmpi.w	#13,d0		; have you selected item 13 (FOURTH OPTION)?
 		bne.s	Options_Not13	; if not, check for next numbers
 		bchg	#0,($FFFFFF92).w	; enable/disable fourth option
-		jsr	OptionsTextLoad
+		bsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
 
@@ -297,7 +297,7 @@ OptSndTst_NotRight:
 OptSndTst_NotA:
 ; ---------------------------------------------------------------------------
 
-		jsr	OptionsTextLoad
+		bsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
 
@@ -383,7 +383,7 @@ Options_Down:
 
 Options_Refresh:
 		move.w	d0,($FFFFFF82).w ; set new selection
-		jsr	OptionsTextLoad	; refresh text
+		bsr	OptionsTextLoad	; refresh text
 		rts
 ; ===========================================================================
 
@@ -391,7 +391,7 @@ Options_SndTest:				; XREF: OptionsControls
 		move.b	($FFFFF605).w,d1
 		andi.b	#$C,d1		; is left/right	pressed?
 		beq.s	Options_NoMove	; if not, branch
-		jsr	OptionsTextLoad	; refresh text
+		bsr	OptionsTextLoad	; refresh text
 
 Options_NoMove:
 		rts	
@@ -405,7 +405,7 @@ Options_NoMove:
 
 
 OptionsTextLoad:				; XREF: TitleScreen
-		jsr	GetOptionsText
+		bsr	GetOptionsText
 		lea	($FFFFCA00).w,a1		
 		lea	($C00000).l,a6
 		move.l	#$62100003,d4	; screen position (text)
@@ -414,7 +414,7 @@ OptionsTextLoad:				; XREF: TitleScreen
 
 loc2_34FE:				; XREF: OptionsTextLoad+26j
 		move.l	d4,4(a6)
-		jsr	Options_ChgLine
+		bsr	Options_ChgLine
 		addi.l	#$800000,d4
 		dbf	d1,loc2_34FE
 		moveq	#0,d0
@@ -444,7 +444,7 @@ Options_Finished:
 		mulu.w	#24,d5			; multiply it by 24 (number of characters per line)
 		adda.w	d5,a1			; add result to pointer
 		
-		jsr	Options_ChgLine
+		bsr	Options_ChgLine
 		move.w	#$E570,d3
 		cmpi.w	#$14,($FFFFFF82).w
 		bne.s	loc2_3550
@@ -682,7 +682,7 @@ GOTSUP_SoundExit:
 		tst.b	-1(a2)				; is current entry $FF?
 		bpl.s	GOTSUPE_Return			; if not, branch
 		move.b	#1,($FFFFFF9C).w		; set to "building-up-sequence" done
-		jsr	OptionsTextLoad			; update text
+		bsr	OptionsTextLoad			; update text
 
 GOTSUPE_Return:
 		rts					; return

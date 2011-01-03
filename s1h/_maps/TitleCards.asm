@@ -72,18 +72,17 @@ byte_CAA8:	dc.b $B	;  SPRING YARD | SPRING YARD
 		dc.b $F8, 5, 0, $3A, $2C	; R
 		dc.b $F8, 5, 0, $0C, $3C	; D
 
-byte_CADC:	dc.b $B	;  SCRAP BRAIN | SCRAP BRAIN
-		dc.b $F8, 5, 0, $3E, $A4	; S
-		dc.b $F8, 5, 0, 8, $B4		; C
+byte_CADC:	dc.b $A	;  SCRAP BRAIN | GREEN HILL
+		dc.b $F8, 5, 0, $18, $B4	; G
 		dc.b $F8, 5, 0, $3A, $C4	; R
-		dc.b $F8, 5, 0, 0, $D4		; A
-		dc.b $F8, 5, 0, $36, $E4	; P
-		dc.b $F8, 0, 0, $56, $F4	; Space
-		dc.b $F8, 5, 0, 4, $4		; B
-		dc.b $F8, 5, 0, $3A, $14	; R
-		dc.b $F8, 5, 0, 0, $24		; A
-		dc.b $F8, 1, 0, $20, $34	; I
-		dc.b $F8, 5, 0, $2E, $3C	; N
+		dc.b $F8, 5, 0, $10, $D4	; E
+		dc.b $F8, 5, 0, $10, $E4	; E
+		dc.b $F8, 5, 0, $2E, $F4	; N
+		dc.b $F8, 0, 0, $56, $4	; Space
+		dc.b $F8, 5, 0, $1C, $14	; H
+		dc.b $F8, 1, 0, $20, $24	; I
+		dc.b $F8, 5, 0, $26, $2C	; L
+		dc.b $F8, 5, 0, $26, $3C	; L
 
 byte_CB10:	dc.b 5			; ZONE
 		dc.b $F8, 5, 0, $36, $D2	;P
