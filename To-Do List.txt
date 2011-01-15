@@ -3,7 +3,6 @@ To-Do:
 - Finding new Title Screen background art.
 - Find a new option (right now it's marked as XXXXXXXXXXXXXXX in the options screen and does nothing).
 - Redo the credits text (it would be better to just make a complete new credits system though).
-- Make a $ in the style of my current font (for the sound test in the options menu).
 - Doing Info Screen Textes for MZ and LZ.
 
 Bugs:

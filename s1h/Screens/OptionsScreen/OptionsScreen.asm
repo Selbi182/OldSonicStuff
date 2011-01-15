@@ -735,7 +735,7 @@ OW_NotFF:
 		bne.s	OW_NotSpace		; if not, branch
 		cmpi.b	#4,($FFFFFF98).w	; are the options being written now?
 		bne.s	OW_SpaceLoop		; if not, branch
-		move.b	#$F0,d0			; set correct value for space
+		move.b	#$29,d0			; set correct value for space
 		bra.s	OW_DoWrite		; skip
 
 OW_SpaceLoop:
@@ -766,8 +766,7 @@ OW_NotRightArrow:
 OW_NotEqual:
 		cmpi.b	#'$',d0			; is current character a "$"?
 		bne.s	OW_NotDollar		; if not, branch
-	;	move.b	#$0B,d0			; set correct value for "$"
-		move.b	#$21,d0			; set correct value for "$"
+		move.b	#$0B,d0			; set correct value for "$"
 		bra.s	OW_DoWrite		; skip
 
 OW_NotDollar:
@@ -868,7 +867,7 @@ OpText_FourthOption:
 ; ---------------------------------------------------------------------------
 
 OpText_SoundTest:
-		dc.b	'SOUND TEST       < $81 >', $FF
+		dc.b	'SOUND TEST        < 81 >', $FF
 		even
 ; ---------------------------------------------------------------------------
 

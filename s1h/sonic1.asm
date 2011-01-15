@@ -1348,21 +1348,23 @@ Pause_SlowMo:
 
 
 ShowVDPGraphics:			; XREF: SegaScreen; TitleScreen; SS_BGLoad
-		lea	($C00000).l,a6
-		move.l	#$800000,d4
+		lea	($C00000).l,a6		; load VDP data port address to a6
+		lea	($C00004).l,a4		; load VDP address port address to a4
+		move.l	#$800000,d4		; prepare line add value
 
-loc_142C:
-		move.l	d0,4(a6)
-		move.w	d1,d3
+MapScreen_Row:
+		move.l	d0,(a4)			; set VDP to VRam write mode
+		move.w	d1,d3			; reload number of columns
 
-loc_1432:
-		move.w	(a1)+,(a6)
-		dbf	d3,loc_1432
-		add.l	d4,d0
-		dbf	d2,loc_142C
-		rts	
+MapScreen_Column:
+		move.w	(a1)+,(a6)		; dump map to VDP map slot
+		dbf	d3,MapScreen_Column	; repeat til columns have dumped
+		add.l	d4,d0			; increae to next row on VRam
+		dbf	d2,MapScreen_Row	; repeat til all rows have dumped
+		rts				; return
 ; End of function ShowVDPGraphics
 
+; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Subroutine for queueing VDP commands (seems to only queue transfers to VRAM),
 ; to be issued the next time ProcessDMAQueue is called.
@@ -2493,6 +2495,7 @@ Pal_ToBlack:
 		move.w	d1,(a0)+
 		dbf	d0,Pal_ToBlack	; fill pallet with $000	(black)
 
+PFT_NoBlack:
 		move.w	#$15,d4
 
 loc_1DCE:
@@ -19332,19 +19335,15 @@ ObjectFall:
 
 
 SpeedToPos:
-		move.l	8(a0),d2
-		move.l	$C(a0),d3
-		move.w	$10(a0),d0	; load horizontal speed
-		ext.l	d0
-		asl.l	#8,d0		; multiply speed by $100
-		add.l	d0,d2		; add to x-axis	position
-		move.w	$12(a0),d0	; load vertical	speed
-		ext.l	d0
-		asl.l	#8,d0		; multiply by $100
-		add.l	d0,d3		; add to y-axis	position
-		move.l	d2,8(a0)	; update x-axis	position
-		move.l	d3,$C(a0)	; update y-axis	position
-		rts	
+		move.w	$10(a0),d0	; load X speed
+		ext.l	d0		; extend incase it's negative
+		asl.l	#$08,d0		; multiply by 100
+		add.l	d0,$08(a0)	; add to X position
+		move.w	$12(a0),d0	; load Y speed
+		ext.l	d0		; extend incase it's negative
+		asl.l	#$08,d0		; multiply by 100
+		add.l	d0,$0C(a0)	; add to Y position
+		rts			; return
 ; End of function SpeedToPos
 
 ; ---------------------------------------------------------------------------
@@ -19446,31 +19445,29 @@ loc_D672:
 		andi.w	#$C,d0
 		beq.s	loc_D6DE
 		movea.l	BldSpr_ScrPos(pc,d0.w),a1
-		moveq	#0,d0
+		moveq	#0,d0		; MJ: Shorter/quicker code
 		move.b	$19(a0),d0
+		move.w	d0,d1
 		move.w	8(a0),d3
 		sub.w	(a1),d3
-		move.w	d3,d1
-		add.w	d0,d1
-		bmi.w	loc_D726
-		move.w	d3,d1
-		sub.w	d0,d1
-		cmpi.w	#$140,d1
-		bge.s	loc_D726
+		add.w	d3,d0
+		add.w	d1,d1
+		addi.w	#$140,d1
+		cmp.w	d1,d0
+		bhi.s	loc_D726
 		addi.w	#$80,d3
 		btst	#4,d4
 		beq.s	loc_D6E8
-		moveq	#0,d0
+		moveq	#0,d0		; MJ: Shorter/quicker code
 		move.b	$16(a0),d0
+		move.w	d0,d1
 		move.w	$C(a0),d2
 		sub.w	4(a1),d2
-		move.w	d2,d1
-		add.w	d0,d1
-		bmi.s	loc_D726
-		move.w	d2,d1
-		sub.w	d0,d1
-		cmpi.w	#$E0,d1
-		bge.s	loc_D726
+		add.w	d2,d0
+		add.w	d1,d1
+		addi.w	#$E0,d1
+		cmp.w	d1,d0
+		bhi.s	loc_D726
 		addi.w	#$80,d2
 		bra.s	loc_D700
 ; ===========================================================================
