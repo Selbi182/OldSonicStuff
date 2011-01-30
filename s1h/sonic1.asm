@@ -307,7 +307,7 @@ GameModeArray:
 		dc.l	Credits		; Credits		($1C)
 		dc.l	InfoScreen	; Info Screen		($20)
 		dc.l	OptionsScreen	; Options Screen	($24)
-		dc.l	ChapterSplash	; Chapters Screen	($28)
+		dc.l	ChapterScreen	; Chapters Screen	($28)
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 
@@ -3585,16 +3585,16 @@ T_PalSkip_2:
 		bne.w	loc_317C		; if not, branch
 
 StartGame:
-		move.b	#1,($A130F1).l		; enable SRAM
-		cmpi.b	#$B6,($20001B).l	; does SRAM exist?
-		bne.s	T_NoSRAM		; if not, branch
-		move.b	#0,($A130F1).l		; disable SRAM
-		move.b	#1,($FFFFFF7D).w
+	;	move.b	#1,($A130F1).l		; enable SRAM
+	;	cmpi.b	#$B6,($20001B).l	; does SRAM exist?
+	;	bne.s	T_NoSRAM		; if not, branch
+	;	move.b	#1,($FFFFFF7D).w
 		move.b	#$28,($FFFFF600).w	; set to Chapters Screen
+	;	move.b	#0,($A130F1).l		; disable SRAM
 		rts				; return
 
-T_NoSRAM:
-		move.b	#0,($A130F1).l		; disable SRAM
+;T_NoSRAM:
+	;	move.b	#0,($A130F1).l		; disable SRAM
 
 		move.b	#$95,d0
 		bsr	PlaySound
@@ -4724,7 +4724,13 @@ PLM_NoMusic:
 ; ---------------------------------------------------------------------------
 
 MusicList:
-		include	"misc\musiclist.asm"
+		dc.b	$95	; Night Hill Place
+		dc.b	$94	; Green Hill Place
+		dc.b	$89	; Special Stage (Unused)
+		dc.b	$83	; Ruined Place
+		dc.b	$82	; Labyrinth Place
+		dc.b	$8D	; Finalor Place
+		dc.b	$85	; Spring Yard Place (Overworld)
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
@@ -4739,6 +4745,7 @@ MusicList:
 
 CheckIfMainLevel:
 		move.l	a1,-(sp)		; backup a1
+
 		moveq	#-1,d5			; set d5 to -1 (it'll be 0)
 		lea	(MainLevelArray).l,a1	; set level array index to a1
 
@@ -4747,6 +4754,7 @@ CIML_Loop:
 		move.w	(a1)+,d3		; get next level ID and load it into d3
 		cmp.w	($FFFFFE10).w,d3	; does it match with the current ID?
 		bne.s	CIML_Loop		; if not, loop
+
 		move.l	(sp)+,a1		; restore a1
 		rts				; otherwise return
 ; End of function CheckIfMainLevel
@@ -4756,11 +4764,11 @@ CIML_Loop:
 MainLevelArray:
 		dc.w	$000	; Night Hill Place
 		dc.w	$002	; Green Hill Place
-		dc.w	$300	; Special Stage
+		dc.w	$300	; Special Stage (Yes, it uses SLZ's ID)
 		dc.w	$200	; Ruined Place
 		dc.w	$101	; Labyrinth Place
 		dc.w	$502	; Finalor Place
-		dc.w	$400	; Spring Yard Place
+		dc.w	$400	; Spring Yard Place (Overworld)
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
@@ -14841,6 +14849,8 @@ Obj4B_Delete:				; XREF: Obj4B_Index
 		bne.w	Obj4B_ChkGHZ2		; if not, branch
 		subq.b	#1,$30(a0)		; sub 1 from timer
 		bpl.w	Obj4B_Return		; if time is left, branch
+		
+		move.b	#1,($FFFFFF7D).w
 
 Obj4B_ChkOptions:
 		cmpi.w	#$0100,$8(a0)
@@ -14866,50 +14876,29 @@ Obj4B_ChkGHZ:
 Obj4B_ChkSpecial:
 		cmpi.w	#$06AC,$8(a0)
 		bne.s	Obj4B_ChkMZ
-		move.w	#$300,($FFFFFE10).w	; use correct title card
-		move.b	#$10,($FFFFF600).w	; set to special stage
+		move.w	#$300,($FFFFFE10).w	; set level to Special Stage
+		bsr	MakeChapterScreen
 		rts
 
 Obj4B_ChkMZ:
 		cmpi.w	#$08A0,$8(a0)
 		bne.s	Obj4B_ChkLZ2
 		move.w	#$200,($FFFFFE10).w	; set level to MZ1
-
-		move.b	#1,($A130F1).l
-		cmpi.b	#1,($200001).l
-		bne.s	Obj4B_MZ_NoChapter
-		move.b	#2,($200001).l
-		move.b	#0,($A130F1).l
-		move.b	#$28,($FFFFF600).w
-		rts
-
-Obj4B_MZ_NoChapter:
-		move.b	#0,($A130F1).l
-
+		bsr	MakeChapterScreen
 		bra.w	Obj4B_PlayLevel
 
 Obj4B_ChkLZ2:
 		cmpi.w	#$0AA0,$8(a0)
 		bne.s	Obj4B_ChkFZ
 		move.w	#$101,($FFFFFE10).w	; set level to LZ2
-
-		move.b	#1,($A130F1).l
-		cmpi.b	#2,($200001).l
-		bne.s	Obj4B_LZ_NoChapter
-		move.b	#3,($200001).l
-		move.b	#0,($A130F1).l
-		move.b	#$28,($FFFFF600).w
-		rts
-
-Obj4B_LZ_NoChapter:
-		move.b	#0,($A130F1).l
-
+		bsr	MakeChapterScreen
 		bra.s	Obj4B_PlayLevel
 
 Obj4B_ChkFZ:
 		cmpi.w	#$0CA0,$8(a0)
 		bne.s	Obj4B_ChkEnding
 		move.w	#$502,($FFFFFE10).w	; set level to FZ
+		bsr	MakeChapterScreen
 		bra.s	Obj4B_PlayLevel
 
 Obj4B_ChkEnding:
@@ -14923,8 +14912,12 @@ Obj4B_ChkEnding:
 		jmp	PlaySound
 
 Obj4B_PlayLevel:
+		cmpi.b	#$28,($FFFFF600).w
+		beq.s	Obj4B_SYZ_Return
 		move.b	#$C,($FFFFF600).w	; set to level
 		move.w	#1,($FFFFFE02).w	; restart level
+
+Obj4B_SYZ_Return:
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -14961,6 +14954,16 @@ Obj4B_SetSS:
 
 Obj4B_Return:
 		rts
+; ===========================================================================
+
+MakeChapterScreen:
+		move.b	#1,($A130F1).l
+		jsr	CheckIfMainLevel
+		move.b	d5,($200001).l
+		move.b	#$28,($FFFFF600).w
+		move.b	#0,($A130F1).l
+		rts
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 7C - flash effect when	you collect the	giant ring
@@ -27142,8 +27145,12 @@ Obj02_Display:
 ; ---------------------------------------------------------------------------
 Map_Obj02:
 		include	"_maps\ERaZor.asm"
+
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 
+
+; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 03 - Level Signs in SYZ
 ; ---------------------------------------------------------------------------
@@ -27186,32 +27193,82 @@ Obj03_Display:
 ; ---------------------------------------------------------------------------
 Map_Obj03:
 		include	"_maps\LevelSigns.asm"
-; ===========================================================================
 
 ; ---------------------------------------------------------------------------
-; Object 04 - Blank
+; ===========================================================================
+
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Object 04 - Chapter Numbers
 ; ---------------------------------------------------------------------------
 
 Obj04:
-		rts	; return
+		moveq	#0,d0			; clear d0
+		move.b	$24(a0),d0		; move routine counter to d0
+		move.w	Obj04_Index(pc,d0.w),d1 ; move the index to d1
+		jmp	Obj04_Index(pc,d1.w)	; find out the current position in the index
+; ===========================================================================
+Obj04_Index:	dc.w Obj04_Setup-Obj02_Index	; Set up the object (art etc.)	[$0]
+		dc.w Obj04_Display-Obj02_Index	; Display Sprite		[$2]
 ; ===========================================================================
 
+Obj04_Setup:
+		addq.b	#2,$24(a0)		; set to "Obj04_Display"
+		move.l	#Map_Obj04,4(a0)	; load mappings
+		move.b	#0,$18(a0)		; set priority
+		move.b	#0,1(a0)		; set render flag
+		move.w	#$0100,2(a0)		; set art tile, use first palette line
+		move.w	#$120,8(a0)		; set X-position
+		move.w	#$117,$A(a0)		; set Y-position
+
+Obj04_Display:
+		jmp	DisplaySprite		; jump to DisplaySprite
+; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Sprite mappings - Chapter Numbers
+; ---------------------------------------------------------------------------
+
+Map_Obj04:
+		dc.w Maps04_I-Map_Obj04
+		dc.w Maps04_V-Map_Obj04
+
+Maps04_I:	dc.b 1
+		dc.b $E0, 6, 0, 0, $F8
+
+Maps04_V:	dc.b 1
+		dc.b $E0, 6, 0, 0, $F8
+
+		even
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
+
+; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 06 - Blank
 ; ---------------------------------------------------------------------------
 
 Obj06:
 		rts	; return
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 
+
+; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 07 - Blank
 ; ---------------------------------------------------------------------------
 
 Obj07:
 		rts	; return
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 
+
+
+; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Afterimage creating routine
 ; ---------------------------------------------------------------------------
