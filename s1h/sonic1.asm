@@ -14956,13 +14956,34 @@ Obj4B_Return:
 		rts
 ; ===========================================================================
 
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
 MakeChapterScreen:
 		move.b	#1,($A130F1).l
 		jsr	CheckIfMainLevel
+		cmp.b	($200001).l,d5
+		bgt.s	MCS_DoChapter
+		cmpi.w	#$300,($FFFFFE10).w
+		bne.s	MCS_NotSpecial
+		move.b	#$10,($FFFFF600).w
+		move.b	#0,($A130F1).l
+		rts
+
+MCS_NotSpecial:
+		move.b	#$C,($FFFFF600).w
+		move.w	#1,($FFFFFE02).w
+		move.b	#0,($A130F1).l
+		rts
+
+MCS_DoChapter:
 		move.b	d5,($200001).l
 		move.b	#$28,($FFFFF600).w
 		move.b	#0,($A130F1).l
 		rts
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -27209,8 +27230,8 @@ Obj04:
 		move.w	Obj04_Index(pc,d0.w),d1 ; move the index to d1
 		jmp	Obj04_Index(pc,d1.w)	; find out the current position in the index
 ; ===========================================================================
-Obj04_Index:	dc.w Obj04_Setup-Obj02_Index	; Set up the object (art etc.)	[$0]
-		dc.w Obj04_Display-Obj02_Index	; Display Sprite		[$2]
+Obj04_Index:	dc.w Obj04_Setup-Obj04_Index	; Set up the object (art etc.)	[$0]
+		dc.w Obj04_Display-Obj04_Index	; Display Sprite		[$2]
 ; ===========================================================================
 
 Obj04_Setup:
@@ -27219,8 +27240,9 @@ Obj04_Setup:
 		move.b	#0,$18(a0)		; set priority
 		move.b	#0,1(a0)		; set render flag
 		move.w	#$0100,2(a0)		; set art tile, use first palette line
-		move.w	#$120,8(a0)		; set X-position
-		move.w	#$117,$A(a0)		; set Y-position
+		move.w	#$123,8(a0)		; set X-position
+		move.w	#$C5,$A(a0)		; set Y-position
+		move.b	($FFFFFFA0).w,$1A(a0)	; set chapter number to frame
 
 Obj04_Display:
 		jmp	DisplaySprite		; jump to DisplaySprite
@@ -27231,16 +27253,7 @@ Obj04_Display:
 ; ---------------------------------------------------------------------------
 
 Map_Obj04:
-		dc.w Maps04_I-Map_Obj04
-		dc.w Maps04_V-Map_Obj04
-
-Maps04_I:	dc.b 1
-		dc.b $E0, 6, 0, 0, $F8
-
-Maps04_V:	dc.b 1
-		dc.b $E0, 6, 0, 0, $F8
-
-		even
+		include	"Screens/ChapterScreens/Maps_Numbers.asm"
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 

@@ -22,8 +22,20 @@ ChapterScreen:
 		clr.b	($FFFFF64E).w
 		jsr	ClearScreen			; Clear screen
 
+		lea	($FFFFD000).w,a1
+		moveq	#0,d0
+		move.w	#$7FF,d1
+
+CS_ClrObjRam:
+		move.l	d0,(a1)+
+		dbf	d1,CS_ClrObjRam
+
 		move.b	#1,($A130F1).l			; enable SRAM
 		move.b	($200001).l,($FFFFFFA0).w	; get current chaper number
+		bpl.s	@cont
+		move.b	#0,($FFFFFFA0).w
+
+@cont:
 		move.b	#0,($A130F1).l			; disable SRAM
 
 		tst.b	($FFFFFFA0).w			; is chapter ID 0?
@@ -81,12 +93,13 @@ CS_PalLoop1:
 		move.l	#$60000000,($C00004).l
 		lea	($C00000).l,a6
 		lea	(Art_Numbers).l,a1
-		move.w	#5,d1
+		move.w	#$E,d1
 		jsr	LoadTiles
 
-		move.b	#4,($FFFFD200).w
-		
+		move.b	#4,($FFFFD000).w
+
 		jsr	ObjectsLoad
+		jsr	BuildSprites
 
 ; ---------------------------------------------------------------------------
 
@@ -147,6 +160,8 @@ CS_Loop:
 		move.w	#$001,($FFFFFE10).w
 
 @cont:
+		jsr	ObjectsLoad
+		jsr	BuildSprites
 		move.b	#4,($FFFFF62A).w
 		jsr	DelayProgram
 		tst.w	($FFFFF614).w		; test wait time
