@@ -11,7 +11,7 @@ Object Def: objdef\s1obj
 
 256x256 Tiles: ..\map256\ghz.bin
 
-FG Layout: ..\levels\ghz1.bin
+FG Layout: ..\levels\ghz1xxxx.bin
 BG Layout: ..\levels\ghzbg.bin
 
 Objects:       ..\objpos\ghz1.bin

@@ -89,7 +89,6 @@ Options_MakeF0s:
 		clr.b	($FFFFFF95).w
 		clr.w	($FFFFFF96).w
 		clr.b	($FFFFFF98).w
-	;	clr.w	($FFFFFF9A).w
 		move.w	#21,($FFFFFF9A).w
 		clr.w	($FFFFFF9C).w
 		move.b	#$81,($FFFFFF84).w
@@ -110,7 +109,7 @@ Options_ClrScroll:
 
 Options_ClrVram:
 		move.l	d0,(a6)
-		dbf	d1,Options_ClrVram ; fill	VRAM with 0
+		dbf	d1,Options_ClrVram	; fill	VRAM with 0
 		move.w	#19,($FFFFFF82).w	; set position to 4
 
 		jsr	Pal_FadeTo
@@ -253,9 +252,9 @@ Options_Not7:
 ; ===========================================================================
 
 Options_Not10:
-		cmpi.w	#13,d0		; have you selected item 13 (FOURTH OPTION)?
+		cmpi.w	#13,d0		; have you selected item 13 (HARD PART SKIPPER)?
 		bne.s	Options_Not13	; if not, check for next numbers
-		bchg	#0,($FFFFFF92).w	; enable/disable fourth option
+		bchg	#0,($FFFFFF92).w	; enable/disable hard part skipper
 		bsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
@@ -314,12 +313,11 @@ Options_Not16:
 		moveq	#0,d0			; clear d0
 		move.b	#1,($A130F1).l		; enable SRAM
 		lea	($200000).l,a1		; base of SRAM
-		move.b	#$FF,$1(a1)		; make sure SRAM will be created
 		move.b	($FFFFFFBC).w,$3(a1)	; backup air move flag
 		move.b	($FFFFFF92).w,$5(a1)	; backup invin time flag
 		move.b	($FFFFFF93).w,$9(a1)	; backup extended camera flag
 		move.b	($FFFFFF94).w,$B(a1)	; backup art style flag
-		move.b	#$FF,$1B(a1)		; make sure SRAM will be created at the correct size
+		move.b	#$B6,$1B(a1)		; make sure SRAM will be created at the correct size
 		move.b	#0,($A130F1).l		; disable SRAM
 
 		tst.b	($FFFFFF9E).w
@@ -522,7 +520,7 @@ GetOptionsText:
 
 		adda.w	#(2*24),a1			; make two empty lines
 
-		lea	(OpText_FourthOption).l,a2	; set text location
+		lea	(OpText_HardPartSkipper).l,a2	; set text location
 		bsr.w	OW_Loop				; write text
 		moveq	#4,d2				; set d2 to 4
 		bsr.w	GOT_ChkOption			; check if option is ON or OFF
@@ -581,7 +579,8 @@ GOTSUP_Index:	dc.w	GOTSUP_Header1-GOTSUP_Index	; [$0] "=" Headers
 		dc.w	GOTSUP_ONOFF3-GOTSUP_Index	; [$A] Write "S2B" or "S3" text for Sonic Art
 		dc.w	GOTSUP_ONOFF4-GOTSUP_Index	; [$C] Write "ON" or "OFF" text for Fourh Option
 		dc.w	GOTSUP_ONOFF4-GOTSUP_Index	; [$E] Twice to give a little delay
-		dc.w	GOTSUP_SoundExit-GOTSUP_Index	; [$10] "SOUND TEST" and "EXIT OPTIONS"
+		dc.w	GOTSUP_SoundTest-GOTSUP_Index	; [$10] Write "SOUND TEST"
+		dc.w	GOTSUP_ExitOptions-GOTSUP_Index	; [$12] Write "EXIT OPTIONS"
 ; ===========================================================================
 
 GOTSUP_Header1:
@@ -624,7 +623,7 @@ GOTSUP_Options:
 
 		lea	($FFFFCA00+(13*24)).w,a1	; set destination
 		adda.w	($FFFFFF9A).w,a1
-		lea	(OpText_FourthOption).l,a2	; set text location
+		lea	(OpText_HardPartSkipper).l,a2	; set text location
 		bsr.w	OW_NoIncrease			; write text
 		
 		subq.w	#1,($FFFFFF9A).w
@@ -670,14 +669,19 @@ GOTSUP_ONOFF4:
 		rts					; return
 ; ---------------------------------------------------------------------------
 
-GOTSUP_SoundExit:
+GOTSUP_SoundTest:
 		lea	($FFFFCA00+(16*24)).w,a1	; set destination
 		lea	(OpText_SoundTest).l,a2		; set text location
 		bsr.w	Options_Write			; write text
 
+		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
+		rts
+; ---------------------------------------------------------------------------
+
+GOTSUP_ExitOptions:
 		lea	($FFFFCA00+(19*24)).w,a1	; set destination
 		lea	(OpText_Exit).l,a2		; set text location
-		bsr.w	OW_NoIncrease			; write text
+		bsr.w	Options_Write			; write text
 
 		tst.b	-1(a2)				; is current entry $FF?
 		bpl.s	GOTSUPE_Return			; if not, branch
@@ -813,7 +817,7 @@ GOTCO_ChkExtCam:
 
 GOTCO_ChkSonArt:
 		cmpi.b	#3,d2				; is d2 set to 3?
-		bne.s	GOTCO_ChkFourthOption		; if not, branch
+		bne.s	GOTCO_ChkHardPartSkipper	; if not, branch
 		lea	(OpText_S2B).l,a2		; use "S2B" text
 		tst.b	($FFFFFF94).w			; is art set to S3?
 		beq.s	GOTCO_Return			; if not, branch
@@ -821,7 +825,7 @@ GOTCO_ChkSonArt:
 		rts					; return
 ; ---------------------------------------------------------------------------
 
-GOTCO_ChkFourthOption:
+GOTCO_ChkHardPartSkipper:
 		cmpi.b	#4,d2				; is d2 set to 4?
 		bne.s	GOTCO_Return			; if not, branch
 		lea	(OpText_OFF).l,a2		; use "OFF" text
@@ -861,8 +865,8 @@ OpText_SonicArt:
 		dc.b	'SONIC ART            ', $FF
 		even
 
-OpText_FourthOption:
-		dc.b	'XXXXXXXXXXXXXXXXXXX  ', $FF
+OpText_HardPartSkipper:
+		dc.b	'HARD PART SKIPPER    ', $FF
 		even
 ; ---------------------------------------------------------------------------
 

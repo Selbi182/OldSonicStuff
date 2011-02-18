@@ -1,20 +1,14 @@
 To-Do:
 - Find new music for Night Hill Place.
 - Finding new Title Screen background art.
-- Find a new option (right now it's marked as XXXXXXXXXXXXXXX in the options screen and does nothing).
 - Redo the credits text (it would be better to just make a complete new credits system though).
 - Doing Info Screen Textes for MZ and LZ.
+- Finishing Hard Part Skipper.
+- Doing a Tutorial/Demo Mode. (Basically a walkthrough, but in the game itself. Actually, I already started working on this, but the gay demo mode system only does shit. -._-.)
 
 Bugs:
-- The Sonic 3 art is sometimes broken.
+- The Sonic 3 animations look weird sometimes.
 
 Would be great:
 - Find a more accurate system for the palette-restoration from WhiteFlash.
 - For Camera Shaking I used an object... WHAT THE HELL WAS I THINKING??? This should be replaced by something... normal.
-
-Ideas:
-- Blood impact when being hit.
-- Challenge: Race against Sonic's shadow. (i.e. Rayman - Candy Chateau)
-- Demo Mode. (Basically a walkthrough, but in the game itself.)
-- Add explosions to the title screen.
-- Easy Mode with "Hard Part Skipper".

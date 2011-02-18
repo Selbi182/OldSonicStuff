@@ -27260,14 +27260,92 @@ Map_Obj04:
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Object 06 - Blank
+; Object 06 - Hard Part Skipper
 ; ---------------------------------------------------------------------------
 
 Obj06:
-		rts	; return
+		tst.b	($FFFFFF92).w		; is hard part skipper disabled?
+		beq.w	DeleteObject		; if yes, delete object instantly
+
+		moveq	#0,d0			; clear d0
+		move.b	$24(a0),d0		; move routine counter to d0
+		move.w	Obj06_Index(pc,d0.w),d1 ; move the index to d1
+		jmp	Obj06_Index(pc,d1.w)	; find out the current position in the index
+; ===========================================================================
+Obj06_Index:	dc.w Obj06_Setup-Obj06_Index	; Set up the object (art etc.)	[$0]
+		dc.w Obj06_ChkDist-Obj06_Index	; Check distance		[$2]
+; ===========================================================================
+
+Obj06_Setup:
+		addq.b	#2,$24(a0)		; set to "Obj06_Display"
+		move.l	#Map_Obj06,4(a0)	; load mappings
+		move.b	#4,$18(a0)		; set priority
+		move.b	#4,1(a0)		; set render flag
+		move.b	#$56,$19(a0)		; set display width
+		move.w	#$07B2,2(a0)		; set art pointer, use palette line 1
+
+Obj06_ChkDist:
+		move.b	($FFFFF603).w,d0	; get button presses
+		andi.b	#$70,d0			; is ABC pressed?
+		beq.s	Obj06_Display		; if not, branch
+		move.w	($FFFFD008).w,d0	; get Sonic's X-pos
+		sub.w	$8(a0),d0		; substract the X-pos from the current object from it
+		addi.w	#$10,d0			; add $10 to it
+		cmpi.w	#$20,d0			; is Sonic within $10 pixels of that object?
+		bhi.s	Obj06_Display		; if not, branch
+		move.w	($FFFFD00C).w,d0	; get Sonic's X-pos
+		sub.w	$C(a0),d0		; substract the X-pos from the current object from it
+		addi.w	#$10,d0			; add $10 to it
+		cmpi.w	#$20,d0			; is Sonic within $10 pixels of that object?
+		bhi.s	Obj06_Display		; if not, branch
+
+		jsr	CheckIfMainLevel	; get level ID
+		lsl.w	#2,d5			; multiply it by 4
+		lea	(Obj06_Locations).l,a1	; get location
+		adda.w	d5,a1			; add result to it
+		move.w	0(a1),($FFFFD008).w	; move X-pos to Sonic's one
+		move.w	2(a1),($FFFFD00C).w	; move Y-pos to Sonic's one
+		clr.w	($FFFFD010).w		; clear Sonic's X-speed
+		clr.w	($FFFFD012).w		; clear Sonic's Y-speed
+		clr.w	($FFFFD014).w		; clear Sonic's interia
+
+		move.w	#$C3,d0			; set giant ring sound
+		jsr	PlaySound_Special	; play it
+		jsr	WhiteFlash2		; make a white flash
+		jsr	FixLevel		; instantly move the camera
+
+Obj06_Display:
+		bsr	DisplaySprite		; display sprite
+		move.w	8(a0),d0		; get X-pos
+		andi.w	#$FF80,d0		; keep it in multiples of 80 pixels
+		move.w	($FFFFF700).w,d1	; load horizontal camera position
+		subi.w	#$80,d1			; substract $80
+		andi.w	#$FF80,d1		; keep it in multiples of 80 pixels again
+		sub.w	d1,d0			; substract result from X-pos
+		cmpi.w	#$280,d0		; has object gone out of screen?
+		bhi.w	DeleteObject		; if yes, delete object
+		rts				; return
+; ---------------------------------------------------------------------------
+
+Obj06_Locations:	;XXXX   YYYY
+		dc.w	$18EA, $036C	; Night Hill Place
+		dc.w	$FFFF, $FFFF	; Green Hill Place	(Unused)
+		dc.w	$FFFF, $FFFF	; Special Stage		(Unused)
+		dc.w	$17C0, $028F	; Ruined Place
+		dc.w	$DEAD, $BEEF	; Labyrinth Place
+		dc.w	$FFFF, $FFFF	; Finalor Place		(Unused)
+		dc.w	$FFFF, $FFFF	; Spring Yard Place	(Unused)
+
+; ---------------------------------------------------------------------------
+
+Map_Obj06:
+		include	"_maps\obj06.asm"
+
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 
+
+; ===========================================================================
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -28958,6 +29036,7 @@ Sonic_HomingAttack:
 		lea	($FFFFD800).w,a1	; set a1 to level object RAM
 		moveq	#$5F,d2			; set d2 to $5F ($D800 to $F000 = $60 objects)
 
+; -------------------------------------------------------------------------------
 SH_ObjectLoop:
 		lea	(SH_Objects).l,a2	; (re)set a2 to objects to be checked
 
@@ -29020,7 +29099,7 @@ SH_YPositive:
 
 		cmp.w	($FFFFFF8C).w,d3	; is stored X-distance smaller than distance of current enemy?
 		blt.s	SH_NoEnemy		; if yes, branch
-		cmp.w	($FFFFFF8E).w,d4	; is stored X-distance smaller than distance of current enemy?
+		cmp.w	($FFFFFF8E).w,d4	; is stored Y-distance smaller than distance of current enemy?
 		blt.s	SH_NoEnemy		; if yes, branch
 		move.w	d3,($FFFFFF8C).w	; store X-pos
 		move.w	d4,($FFFFFF8E).w	; store Y-pos
@@ -29029,6 +29108,7 @@ SH_YPositive:
 SH_NoEnemy:
 		adda.l	#$40,a1			; increase pointer by $40 (next object)
 		dbf	d2,SH_ObjectLoop	; loop
+; -------------------------------------------------------------------------------
 
 		tst.w	($FFFFFF8C).w		; was any enemy found?
 		beq.s	SH_Return		; if not, use normal jumpdash
@@ -44262,8 +44342,7 @@ Level_Index:	dc.w Level_GHZ1-Level_Index, Level_GHZbg-Level_Index, byte_68D70-Le
 		dc.w byte_6A320-Level_Index, byte_6A320-Level_Index, byte_6A320-Level_Index
 		dc.w byte_6A320-Level_Index, byte_6A320-Level_Index, byte_6A320-Level_Index
 
-Level_GHZ1:	;incbin	levels\ghz1.bin
-		include	"levels\ghz1.asm"
+Level_GHZ1:	incbin	levels\ghz1.bin
 		even
 byte_68D70:	dc.b 0,	0, 0, 0
 Level_GHZ2:	incbin	levels\ghz2.bin
@@ -44271,8 +44350,7 @@ Level_GHZ2:	incbin	levels\ghz2.bin
 byte_68E3C:	dc.b 0,	0, 0, 0
 Level_GHZ3:	;incbin	levels\ghz3.bin
 		even
-Level_GHZbg:	;incbin	levels\ghzbg.bin
-		include	"levels\ghzbg.asm"
+Level_GHZbg:	incbin	levels\ghzbg.bin
 		even
 byte_68F84:	dc.b 0,	0, 0, 0
 byte_68F88:	dc.b 0,	0, 0, 0
@@ -44282,8 +44360,7 @@ Level_LZ1:	;incbin	levels\lz1.bin
 Level_LZbg:	incbin	levels\lzbg.bin
 		even
 byte_69190:	dc.b 0,	0, 0, 0
-Level_LZ2:	;incbin	levels\lz2.bin
-		include	"levels\lz2.asm"
+Level_LZ2:	incbin	levels\lz2.bin
 		even
 byte_6922E:	dc.b 0,	0, 0, 0
 Level_LZ3:	;incbin	levels\lz3.bin
@@ -44398,8 +44475,7 @@ ObjPos_Index:	dc.w ObjPos_GHZ1-ObjPos_Index, ObjPos_Null-ObjPos_Index
 		dc.w ObjPos_SBZ1pf5-ObjPos_Index, ObjPos_SBZ1pf6-ObjPos_Index
 		dc.w ObjPos_SBZ1pf1-ObjPos_Index, ObjPos_SBZ1pf2-ObjPos_Index
 		dc.b $FF, $FF, 0, 0, 0,	0
-ObjPos_GHZ1:;	incbin	objpos\ghz1.bin
-		include	"objpos\ghz1.asm"
+ObjPos_GHZ1:	incbin	objpos\ghz1.bin
 		even
 ObjPos_GHZ2:	incbin	objpos\ghz2.bin
 		even
@@ -44407,8 +44483,7 @@ ObjPos_GHZ3:;	incbin	objpos\ghz3.bin
 		even
 ObjPos_LZ1:;	incbin	objpos\lz1.bin
 		even
-ObjPos_LZ2:;	incbin	objpos\lz2.bin
-		include	"objpos\lz2.asm"
+ObjPos_LZ2:	incbin	objpos\lz2.bin
 		even
 ObjPos_LZ3:;	incbin	objpos\lz3.bin
 		even

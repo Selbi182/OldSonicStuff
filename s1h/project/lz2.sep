@@ -30,13 +30,13 @@ Palettes-
 
    Start index:       16
    Number of entries: 48
-   File:              ..\pallet\lz.bin
+   File:              ..\pallet\lz2.bin
 
   Palette 3-
 
    Start index:       64
    Number of entries: 64
-   File:              ..\pallet\lz_uw.bin
+   File:              ..\pallet\lz_uw2.bin
 
 Angle Array:             ..\collide\anglemap.bin
 Collision Array:         ..\collide\carray_n.bin
