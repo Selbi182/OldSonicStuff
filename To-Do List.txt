@@ -1,7 +1,7 @@
 To-Do:
+- Doing a new font for credits.
 - Find new music for Night Hill Place.
 - Finding new Title Screen background art.
-- Redo the credits text (it would be better to just make a complete new credits system though).
 - Doing Info Screen Textes for MZ and LZ.
 - Finishing Hard Part Skipper.
 - Doing a Tutorial/Demo Mode. (Basically a walkthrough, but in the game itself. Actually, I already started working on this, but the gay demo mode system only does shit. -._-.)
@@ -10,5 +10,4 @@ Bugs:
 - The Sonic 3 animations look weird sometimes.
 
 Would be great:
-- Find a more accurate system for the palette-restoration from WhiteFlash.
 - For Camera Shaking I used an object... WHAT THE HELL WAS I THINKING??? This should be replaced by something... normal.

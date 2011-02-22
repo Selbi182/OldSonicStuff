@@ -53,7 +53,7 @@ NoTSBGArt = 0
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened
-DoorsAlwaysOpen = 0
+DoorsAlwaysOpen = 1
 ;=================================================
 
 ; ---------------------------------------------------------------------------
@@ -308,6 +308,7 @@ GameModeArray:
 		dc.l	InfoScreen	; Info Screen		($20)
 		dc.l	OptionsScreen	; Options Screen	($24)
 		dc.l	ChapterScreen	; Chapters Screen	($28)
+		dc.l	CreditsJest	; Markey's Credits	($2C)
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 
@@ -6015,7 +6016,8 @@ End_MainLoop:
 		bsr	ChangeRingFrame
 		cmpi.b	#$18,($FFFFF600).w ; is	scene number $18 (ending)?
 		beq.s	loc_52DA	; if yes, branch
-		move.b	#$1C,($FFFFF600).w ; set scene to $1C (credits)
+	;	move.b	#$1C,($FFFFF600).w ; set scene to $1C (credits)
+		move.b	#$2C,($FFFFF600).w ; set scene to $2C (new credits)
 		move.b	#$97,d0
 		bsr	PlaySound_Special ; play credits music
 		move.w	#0,($FFFFFFF4).w ; set credits index number to 0
@@ -47129,6 +47131,7 @@ SegaPCM:	incbin	sound\segapcm.bin
 		include "Screens/OptionsScreen/OptionsScreen.asm"
 		include "Screens/InfoScreen/InfoScreen.asm"
 ; ---------------------------------------------------------------------------
+		include	"Credits/Credits.asm"
 ; ===========================================================================
 
 ; ===========================================================================
