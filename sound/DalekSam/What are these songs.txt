@@ -1,0 +1,8 @@
+KEN.asm		--> Intro Cutscene
+MTZ3.asm	--> LZ1
+MM4_GBTitle.asm --> SLZ1
+whee.asm	--> SYZ1
+MANDRILL.asm	--> SBZ
+STAGSelbi.asm	--> SLZ3
+WFZNew.asm	--> Inhuman Mode
+Ending.asm	--> Title Screen
