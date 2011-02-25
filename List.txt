@@ -1,8 +1,6 @@
 To-Do:
-- Doing a new font for credits.
-- Find new music for Night Hill Place.
-- Finding new Title Screen background art.
-- Doing Info Screen Textes for MZ and LZ.
+- Finding a new font for the credits.
+- Finding new music for Night Hill Place.
 - Finishing Hard Part Skipper.
 - Doing a Tutorial/Demo Mode. (Basically a walkthrough, but in the game itself. Actually, I already started working on this, but the gay demo mode system only does shit. -._-.)
 

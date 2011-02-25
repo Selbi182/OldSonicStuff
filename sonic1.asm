@@ -3432,9 +3432,9 @@ Title_ClrObjRam:
 		move.l	#$60000001,($C00004).l
 		lea	(Nem_TitleSonic).l,a0 ;	load Sonic title screen	patterns
 		bsr	NemDec
-		move.l	#$62000002,($C00004).l
-		lea	(Nem_TitleTM).l,a0 ; load "TM" patterns
-		bsr	NemDec
+	;	move.l	#$62000002,($C00004).l
+	;	lea	(Nem_TitleTM).l,a0 ; load "TM" patterns
+	;	bsr	NemDec
 
 		move.b	#0,($FFFFFE30).w ; clear lamppost counter
 		move.w	#0,($FFFFFE08).w ; disable debug item placement	mode
@@ -7172,110 +7172,62 @@ Deform_GHZ_9:				; CODE XREF: Deform_GHZ+F4?j
 
 
 Deform_TS:				; XREF: Deform_Index
-		bra.s	DTS_Original
+		lea	($FFFFCC00).w,a1	; set a1 to horizontal scroll buffer
 
-		lea	($FFFFCC00).w,a1
-		move.w	($FFFFF710).w,d0
-		addi.w	#0,d0
-		move.w	($FFFFF700).w,d2
-		addi.w	#-$50,d2
-		sub.w	d0,d2
-		ext.l	d2
-		asl.l	#8,d2
-		divs.w	#$68,d2
-		ext.l	d2
-		asl.l	#8,d2
-		moveq	#0,d3
-		move.w	d0,d3
-		move.w	#$E0,d1
-		add.w	d4,d1
+		move.w	($FFFFF700).w,d0	; load screen's X position
+		neg.w	d0			; negate (positive to negative)
+		asr.w	#$02,d0			; divide by 2 (Slow down the scroll position)
+		move.w	#$000F,d1		; set number of scan lines to dump (minus 1 for dbf)
+DeformLoop1:
+		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
+		dbf	d1,DeformLoop1		; repeat d1 number of scanlines
 
+		move.w	($FFFFF700).w,d0	; load screen's X position
+		neg.w	d0			; negate (positive to negative)
+		asr.w	#$03,d0			; divide by 2 (Slow down the scroll position)
+		move.w	#$000F,d1		; set number of scan lines to dump (minus 1 for dbf)
+DeformLoop2:
+		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
+		dbf	d1,DeformLoop2		; repeat d1 number of scanlines
+
+		move.w	($FFFFF700).w,d0	; load screen's X position
+		neg.w	d0			; negate (positive to negative)
+		asr.w	#$04,d0			; divide by 2 (Slow down the scroll position)
+		move.w	#$000F,d1		; set number of scan lines to dump (minus 1 for dbf)
+DeformLoop3:
+		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
+		dbf	d1,DeformLoop3		; repeat d1 number of scanlines
+
+
+
+		move.w	($FFFFF700).w,d0	; load screen's X position
+		neg.w	d0			; negate (positive to negative)
+		asr.w	#$06,d0			; divide by 2 (Slow down the scroll position)
+		move.w	#$002F,d1		; set number of scan lines to dump (minus 1 for dbf)
+DeformLoop4:
+		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
+		dbf	d1,DeformLoop4		; repeat d1 number of scanlines
+
+
+		move.w	($FFFFF700).w,d0	; set d0 to camera position
+		ext.l	d0			; extend to long
+		lsl.l	#8,d0			; multiply it by $100
+		lsl.l	#1,d0			; multiply it by 2
+		neg.l	d0			; negate it
+		move.w	#$80,d2			; set loops to $80 (yes $80, not $7F)
 DTS_Loop:
-		move.w	d3,d0
-		neg.w	d0
-		move.l	d0,(a1)+
-		swap	d3
-		add.l	d2,d3
-		swap	d3
-		dbf	d1,DTS_Loop
-		rts
-
-; ---------------------------------------------------------------------------
-
-DTS_Original:
-		move.w	($FFFFF73A).w,d4
-		ext.l	d4
-		asl.l	#5,d4
-		move.l	d4,d1
-		asl.l	#1,d4
-		add.l	d1,d4
-		moveq	#0,d5
+		move.w	d3,d1			; get deformation speed for the current line
+		move.l	d1,(a1)+		; set it to scroll buffer
+		add.l	d0,d3			; increase speed for next row
+		swap	d3			; swap it
 		
-		lea	($FFFFCC00).w,a1
-		move.w	($FFFFF704).w,d0
-		andi.w	#$7FF,d0
-		lsr.w	#5,d0
-		neg.w	d0
-		addi.w	#$26,d0		; other deformation start point
-		move.w	d0,($FFFFF714).w
-		move.w	d0,d4
-		bsr.w	ScrollBlock1
-		move.w	($FFFFF70C).w,($FFFFF618).w
-		move.w	#$55,d1		; where water deformation starts
-		sub.w	d4,d1
-		move.w	($FFFFF700).w,d0
-		cmpi.b	#4,($FFFFF600).w
-		bne.s	FirstCode
-		moveq	#0,d0
+		dbf	d2,DTS_Loop		; loop
 
-FirstCode:
-		neg.w	d0
-		swap	d0
-		move.w	($FFFFF708).w,d0
-		neg.w	d0
-
-SecondCode:
-		move.l	d0,(a1)+
-		dbf	d1,SecondCode
-		move.w	#$31,d1
-		move.w	($FFFFF710).w,d0
-		neg.w	d0
-
-ThirdCode:
-		move.l	d0,(a1)+
-		dbf	d1,ThirdCode
-		move.w	($FFFFF710).w,d0
-		addi.w	#0,d0
-		move.w	($FFFFF700).w,d2
-		addi.w	#-$200,d2
-		sub.w	d0,d2
-		ext.l	d2
-		asl.l	#8,d2
-		divs.w	#$68,d2
-		ext.l	d2
-		asl.l	#8,d2
-		moveq	#0,d3
-		move.w	d0,d3
-		move.w	#$47,d1
-		add.w	d4,d1
-
-FourthCode:
-		move.w	d3,d0
-		neg.w	d0
-		move.l	d0,(a1)+
-		swap	d3
-		add.l	d2,d3
-		swap	d3
-		dbf	d1,FourthCode
-		rts	
+		rts				; return
 ; End of function Deform_TS
 
+; ===========================================================================
 
-
- 
-; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
- 
- 
 Deform_LZ:
 	;	bra.s	Deform_LZ_Extended
 	; original code, takes MUCH less RAM than the extended code
@@ -43914,8 +43866,6 @@ Nem_TitleFg:	incbin	artnem\titlefor.bin	; title screen foreground
 		even
 Nem_TitleSonic:	incbin	artnem\titleson.bin	; Sonic on title screen
 		even
-Nem_TitleTM:	incbin	artnem\titletm.bin	; TM on title screen
-		even
 Eni_JapNames:;	incbin	mapeni\japcreds.bin	; Japanese credits (mappings)
 		even
 Nem_JapNames:;	incbin	artnem\japcreds.bin	; Japanese credits
@@ -43950,25 +43900,30 @@ Art_Dust:	incbin	artunc\spindust.bin	; spindash dust art
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - various
 ; ---------------------------------------------------------------------------
-Nem_Smoke:	incbin	artnem\xxxsmoke.bin	; unused smoke
+Nem_ERaZor:	incbin	artnem\ERaZor.bin	; ERaZor banner art
 		even
-Nem_SyzSparkle:	incbin	artnem\xxxstars.bin	; unused stars
+Nem_Null:	incbin	artnem\null.bin		; just a file with one blank tile
 		even
 Nem_Shield:	incbin	artnem\shield.bin	; shield
 		even
 Nem_Stars:	incbin	artnem\invstars.bin	; invincibility stars
 		even
-Nem_LzSonic:	incbin	artnem\xxxlzson.bin	; unused LZ Sonic holding his breath
+; ---------------------------------------------------------------------------
+; Compressed graphics - animals
+; ---------------------------------------------------------------------------
+Nem_Rabbit:	incbin	artnem\rabbit.bin	; rabbit
 		even
-Nem_UnkFire:	incbin	artnem\xxxfire.bin	; unused fireball
+Nem_Chicken:	incbin	artnem\chicken.bin	; chicken
 		even
-Nem_Warp:	incbin	artnem\xxxflash.bin	; unused entry to special stage flash
+Nem_BlackBird:	incbin	artnem\blackbrd.bin	; blackbird
 		even
-Nem_Goggle:	incbin	artnem\xxxgoggl.bin	; unused goggles
+Nem_Seal:	incbin	artnem\seal.bin		; seal
 		even
-Nem_ERaZor:	incbin	artnem\ERaZor.bin	; ERaZor banner art
+Nem_Pig:	incbin	artnem\pig.bin		; pig
 		even
-Nem_Null:	incbin	artnem\null.bin		; just a file with one blank tile
+Nem_Flicky:	incbin	artnem\flicky.bin	; flicky
+		even
+Nem_Squirrel:	incbin	artnem\squirrel.bin	; squirrel
 		even
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - walls of the special stage
@@ -43988,23 +43943,9 @@ Nem_SSGOAL:	incbin	artnem\ssgoal.bin	; special stage GOAL block
 		even
 Nem_SSRBlock:	incbin	artnem\ssr.bin		; special stage R block
 		even
-Nem_SS1UpBlock:	incbin	artnem\ss1up.bin	; special stage 1UP block
-		even
 Nem_SSEmStars:	incbin	artnem\ssemstar.bin	; special stage stars from a collected emerald
 		even
 Nem_SSRedWhite:	incbin	artnem\ssredwhi.bin	; special stage red/white block
-		even
-Nem_SSZone1:	incbin	artnem\sszone1.bin	; special stage ZONE1 block
-		even
-Nem_SSZone2:	incbin	artnem\sszone2.bin	; ZONE2 block
-		even
-Nem_SSZone3:	incbin	artnem\sszone3.bin	; ZONE3 block
-		even
-Nem_SSZone4:	incbin	artnem\sszone4.bin	; ZONE4 block
-		even
-Nem_SSZone5:	incbin	artnem\sszone5.bin	; ZONE5 block
-		even
-Nem_SSZone6:	incbin	artnem\sszone6.bin	; ZONE6 block
 		even
 Nem_SSUpDown:	incbin	artnem\ssupdown.bin	; special stage UP/DOWN block
 		even
@@ -44027,13 +43968,9 @@ Nem_Swing:	incbin	artnem\ghzswing.bin	; GHZ swinging platform
 		even
 Nem_Bridge:	incbin	artnem\ghzbridg.bin	; GHZ bridge
 		even
-Nem_GhzUnkBlock:incbin	artnem\xxxghzbl.bin	; unused GHZ block
-		even
 Nem_Ball:	incbin	artnem\ghzball.bin	; GHZ giant ball
 		even
 Nem_Spikes:	incbin	artnem\spikes.bin	; spikes
-		even
-Nem_GhzLog:	incbin	artnem\xxxghzlo.bin	; unused GHZ log
 		even
 Nem_SpikePole:	incbin	artnem\ghzlog.bin	; GHZ spiked log
 		even
@@ -44087,15 +44024,11 @@ Nem_MzSwitch:	incbin	artnem\mzswitch.bin	; MZ switch
 		even
 Nem_MzGlass:	incbin	artnem\mzglassy.bin	; MZ green glassy block
 		even
-Nem_GhzGrass:	incbin	artnem\xxxgrass.bin	; unused grass (GHZ or MZ?)
-		even
 Nem_MzFire:	incbin	artnem\mzfire.bin	; MZ fireballs
 		even
 Nem_Lava:	incbin	artnem\mzlava.bin	; MZ lava
 		even
 Nem_MzBlock:	incbin	artnem\mzblock.bin	; MZ green pushable block
-		even
-Nem_MzUnkBlock:	incbin	artnem\xxxmzblo.bin	; MZ unused background block
 		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - SYZ stuff
@@ -44146,8 +44079,6 @@ Nem_Crabmeat:	incbin	artnem\crabmeat.bin	; crabmeat
 		even
 Nem_Buzz:	incbin	artnem\buzzbomb.bin	; buzz bomber
 		even
-Nem_UnkExplode:	incbin	artnem\xxxexplo.bin	; unused explosion
-		even
 Nem_Burrobot:	incbin	artnem\burrobot.bin	; burrobot
 		even
 Nem_Chopper:	incbin	artnem\chopper.bin	; chopper
@@ -44163,8 +44094,6 @@ Nem_Newtron:	incbin	artnem\newtron.bin	; newtron
 Nem_Yadrin:	incbin	artnem\yadrin.bin	; yadrin
 		even
 Nem_Basaran:	incbin	artnem\basaran.bin	; basaran
-		even
-Nem_Splats:	incbin	artnem\splats.bin	; splats
 		even
 Nem_Bomb:	incbin	artnem\bomb.bin		; bomb
 		even
@@ -44215,23 +44144,6 @@ Nem_DEMO:	incbin	artnem\Art_DEMO.bin	; DEMO
 Nem_ContSonic:	incbin	artnem\cntsonic.bin	; Sonic on continue screen
 		even
 Nem_MiniSonic:	incbin	artnem\cntother.bin	; mini Sonic and text on continue screen
-		even
-; ---------------------------------------------------------------------------
-; Compressed graphics - animals
-; ---------------------------------------------------------------------------
-Nem_Rabbit:	incbin	artnem\rabbit.bin	; rabbit
-		even
-Nem_Chicken:	incbin	artnem\chicken.bin	; chicken
-		even
-Nem_BlackBird:	incbin	artnem\blackbrd.bin	; blackbird
-		even
-Nem_Seal:	incbin	artnem\seal.bin		; seal
-		even
-Nem_Pig:	incbin	artnem\pig.bin		; pig
-		even
-Nem_Flicky:	incbin	artnem\flicky.bin	; flicky
-		even
-Nem_Squirrel:	incbin	artnem\squirrel.bin	; squirrel
 		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - primary patterns and block mappings
@@ -44306,8 +44218,6 @@ Nem_EndEm:	incbin	artnem\endemera.bin	; ending sequence chaos emeralds
 Nem_EndSonic:	incbin	artnem\endsonic.bin	; ending sequence Sonic
 		even
 Nem_TryAgain:	incbin	artnem\tryagain.bin	; ending "try again" screen
-		even
-Nem_EndEggman:	incbin	artnem\xxxend.bin	; unused boss sequence on ending
 		even
 Kos_EndFlowers:	incbin	artkos\flowers.bin	; ending sequence animated flowers
 		even

@@ -134,7 +134,7 @@ PLC_LZ:		dc.w $B
 		dc.w $7980
 		dc.l Nem_Burrobot	; burrobot enemy
 		dc.w $94C0
-PLC_LZ2:	dc.w $C
+PLC_LZ2:	dc.w $B
 		dc.l Nem_LzPole		; pole that breaks
 		dc.w $7BC0
 		dc.l Nem_LzDoor2	; large	horizontal door
@@ -143,8 +143,6 @@ PLC_LZ2:	dc.w $C
 		dc.w $7EC0
 		dc.l Nem_Gargoyle	; gargoyle head
 		dc.w $5D20
-		dc.l Nem_LzSonic	; Sonic	holding	his breath
-		dc.w $8800
 		dc.l Nem_LzPlatfm	; rising platform
 		dc.w $89E0
 		dc.l Nem_Orbinaut	; orbinaut enemy
@@ -272,7 +270,7 @@ PLC_Warp:	dc.w 0
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - special stage
 ; ---------------------------------------------------------------------------
-PLC_SpeStage:	dc.w $10
+PLC_SpeStage:	dc.w 9
 		dc.l Nem_SSBgCloud	; bubble and cloud background
 		dc.w 0
 		dc.l Nem_TitleCard	; title cards
@@ -287,8 +285,6 @@ PLC_SpeStage:	dc.w $10
 		dc.w $4C60
 		dc.l Nem_SSRBlock	; R block
 		dc.w $5E00
-		dc.l Nem_SS1UpBlock	; 1UP block
-		dc.w $6E00
 		dc.l Nem_SSEmStars	; emerald collection stars
 		dc.w $7E00
 		dc.l Nem_SSRedWhite	; red and white	block
@@ -301,42 +297,24 @@ PLC_SpeStage:	dc.w $10
 		dc.w $BE00
 		dc.l Nem_SSEmerald	; emeralds
 		dc.w $EE00
-		dc.l Nem_SSZone1	; ZONE 1 block
-		dc.w $F2E0
-		dc.l Nem_SSZone2	; ZONE 2 block
-		dc.w $F400
-		dc.l Nem_SSZone3	; ZONE 3 block
-		dc.w $F520
-		dc.l Nem_SSZone4	; ZONE 4 block
-		dc.w $F2E0
-		dc.l Nem_SSZone5	; ZONE 5 block
-		dc.w $F400
-		dc.l Nem_SSZone6	; ZONE 6 block
-		dc.w $F520
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - GHZ animals
 ; ---------------------------------------------------------------------------
-PLC_GHZAnimals:	dc.w 1
-		dc.l Nem_Rabbit		; rabbit
+PLC_GHZAnimals:	dc.w 0
+		dc.l Nem_Null
 		dc.w $B000
-		dc.l Nem_Flicky		; flicky
-		dc.w $B240
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - LZ animals
 ; ---------------------------------------------------------------------------
-PLC_LZAnimals:	dc.w 1
-		dc.l Nem_BlackBird	; blackbird
+PLC_LZAnimals:	dc.w 0
+		dc.l Nem_Null
 		dc.w $B000
-		dc.l Nem_Seal		; seal
-		dc.w $B240
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - MZ animals
 ; ---------------------------------------------------------------------------
-PLC_MZAnimals:	dc.w 1
-		dc.l Nem_Squirrel	; squirrel
+PLC_MZAnimals:	dc.w 0
+		dc.l Nem_Null
 		dc.w $B000
-		dc.l Nem_Seal		; seal
-		dc.w $B240
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - SLZ animals
 ; ---------------------------------------------------------------------------
