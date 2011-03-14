@@ -9,7 +9,7 @@
 
  ;  ($FFFFFF70).w
  ;  ($FFFFFF71).w
-    ($FFFFFF72).w
+ ;  ($FFFFFF72).w
     ($FFFFFF73).w
     ($FFFFFF74).w
     ($FFFFFF75).w
@@ -34,15 +34,15 @@
  ;  ($FFFFFF87).w
  ;  ($FFFFFF88).w
  ;  ($FFFFFF89).w
- ;  ($FFFFFF8A).w
+    ($FFFFFF8A).w
  ;  ($FFFFFF8B).w
  ;  ($FFFFFF8C).w
  ;  ($FFFFFF8D).w
  ;  ($FFFFFF8E).w
  ;  ($FFFFFF8F).w
 
- ;  ($FFFFFF90).w
- ;  ($FFFFFF91).w
+    ($FFFFFF90).w
+    ($FFFFFF91).w
  ;  ($FFFFFF92).w
  ;  ($FFFFFF93).w
  ;  ($FFFFFF94).w
@@ -52,7 +52,7 @@
  ;  ($FFFFFF98).w
  ;  ($FFFFFF99).w
  ;  ($FFFFFF9A).w
- ;  ($FFFFFF9B).w
+    ($FFFFFF9B).w
  ;  ($FFFFFF9C).w
  ;  ($FFFFFF9D).w
  ;  ($FFFFFF9E).w
@@ -65,8 +65,8 @@
  ;  ($FFFFFFA4).w
  ;  ($FFFFFFA5).w
  ;  ($FFFFFFA6).w
- ;  ($FFFFFFA7).w
- ;  ($FFFFFFA8).w
+    ($FFFFFFA7).w
+    ($FFFFFFA8).w
  ;  ($FFFFFFA9).w
  ;  ($FFFFFFAA).w
  ;  ($FFFFFFAB).w
@@ -75,7 +75,7 @@
  ;  ($FFFFFFAE).w
  ;  ($FFFFFFAF).w
   
- ;  ($FFFFFFB0).w
+    ($FFFFFFB0).w
  ;  ($FFFFFFB1).w
  ;  ($FFFFFFB2).w
  ;  ($FFFFFFB3).w
@@ -90,22 +90,22 @@
  ;  ($FFFFFFBC).w
  ;  ($FFFFFFBD).w
  ;  ($FFFFFFBE).w
- ;  ($FFFFFFBF).w
+    ($FFFFFFBF).w
   
  ;S ($FFFFFFC0).w
  ;S ($FFFFFFC1).w
- ;  ($FFFFFFC2).w
- ;  ($FFFFFFC3).w
- ;  ($FFFFFFC4).w
- ;  ($FFFFFFC5).w
- ;  ($FFFFFFC6).w
- ;  ($FFFFFFC7).w
- ;  ($FFFFFFC8).w
- ;  ($FFFFFFC9).w
- ;  ($FFFFFFCA).w
- ;  ($FFFFFFCB).w
- ;  ($FFFFFFCC).w
- ;  ($FFFFFFCD).w
+    ($FFFFFFC2).w
+    ($FFFFFFC3).w
+    ($FFFFFFC4).w
+    ($FFFFFFC5).w
+    ($FFFFFFC6).w
+    ($FFFFFFC7).w
+    ($FFFFFFC8).w
+    ($FFFFFFC9).w
+    ($FFFFFFCA).w
+    ($FFFFFFCB).w
+    ($FFFFFFCC).w
+    ($FFFFFFCD).w
  ;  ($FFFFFFCE).w
  ;  ($FFFFFFCF).w
   
@@ -124,7 +124,7 @@
  ;  ($FFFFFFDC).w
  ;  ($FFFFFFDD).w
  ;  ($FFFFFFDE).w
- ;  ($FFFFFFDF).w
+    ($FFFFFFDF).w
 
  ;S ($FFFFFFE0).w
  ;S ($FFFFFFE1).w
@@ -133,11 +133,11 @@
  ;S ($FFFFFFE4).w
  ;S ($FFFFFFE5).w
  ;S ($FFFFFFE6).w
- ;S ($FFFFFFE7).w
+ ;  ($FFFFFFE7).w
  ;  ($FFFFFFE8).w
     ($FFFFFFE9).w
  ;S ($FFFFFFEA).w
- ;S ($FFFFFFEB).w
+ ;  ($FFFFFFEB).w
  ;S ($FFFFFFEC).w
  ;S ($FFFFFFED).w
  ;S ($FFFFFFEE).w
@@ -149,10 +149,10 @@
  ;S ($FFFFFFF3).w
  ;S ($FFFFFFF4).w
  ;S ($FFFFFFF5).w
- ;S ($FFFFFFF6).w
- ;S ($FFFFFFF7).w
+ ;  ($FFFFFFF6).w
+    ($FFFFFFF7).w
  ;  ($FFFFFFF8).w
- ;S ($FFFFFFF9).w
+    ($FFFFFFF9).w
  ;S ($FFFFFFFA).w
  ;S ($FFFFFFFB).w
  ;  ($FFFFFFFC).w

@@ -270,7 +270,7 @@ PLC_Warp:	dc.w 0
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - special stage
 ; ---------------------------------------------------------------------------
-PLC_SpeStage:	dc.w 9
+PLC_SpeStage:	dc.w $C
 		dc.l Nem_SSBgCloud	; bubble and cloud background
 		dc.w 0
 		dc.l Nem_TitleCard	; title cards

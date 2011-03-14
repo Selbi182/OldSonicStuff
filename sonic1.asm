@@ -6,11 +6,11 @@
 ;-------------------------------------------------------
 ; Leader/Programming:		Selbi
 
+; Addi. Programming and Art:	MarkeyJester
+
 ; Music:			DalekSam
 ;				SOTI
 ;				EduardoKnuckles
-
-; Addi. Programming and Art:	MarkeyJester
 
 ; Beta Testing:			SonicVaan
 ;				Irixion
@@ -45,11 +45,6 @@ DontAllowDebug = 0
 RecordDemo = 0
 AutoDEMO = 0
 ;=================================================
-;No Background on Title Screen.
-; 0 - Show Art
-; 1 - Don't show art
-NoTSBGArt = 0
-;=================================================
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened
@@ -63,7 +58,7 @@ DoorsAlwaysOpen = 1
 StartOfRom:
 		dc.l $FFFE00, EntryPoint, BusError, AddressError
 		dc.l IllegalInstr, ZeroDivide, ChkInstr, TrapvInstr
-		dc.l PrivilegeViol, Trace, -Line1010Emu,	Line1111Emu
+		dc.l PrivilegeViol, Trace, -Line1010Emu, Line1111Emu
 		dc.l ErrorExcept, ErrorExcept, ErrorExcept, ErrorExcept
 		dc.l ErrorExcept, ErrorExcept, ErrorExcept, ErrorExcept
 		dc.l ErrorExcept, ErrorExcept, ErrorExcept, ErrorExcept
@@ -78,22 +73,21 @@ StartOfRom:
 		dc.l ErrorTrap,	ErrorTrap, ErrorTrap, ErrorTrap
 		dc.l ErrorTrap,	ErrorTrap, ErrorTrap, ErrorTrap
 
-
 Console:	dc.b 'SEGA MEGA DRIVE ' ; Hardware system ID
 
 Date:		dc.b '(C)SELBI 2010   ' ; Release date
 Title_Local:	dc.b 'Sonic ERaZor                                    ' ; Domestic name
 Title_Int:	dc.b 'Sonic ERaZor                                    ' ; International name
-Serial:		dc.b 'GM 00001337-00' 	; Serial/version number
+Serial:		dc.b 'SP 18201337-00' 	; Serial/version number
 
 Checksum:	dc.w 0
 		dc.b 'J               '	; I/O support
 
-RomStartLoc:	dc.l StartOfRom	; ROM start
-RomEndLoc:	dc.l EndOfRom-1	; ROM end
+RomStartLoc:	dc.l StartOfRom		; ROM start
+RomEndLoc:	dc.l EndOfRom-1		; ROM end
 
-RamStartLoc:	dc.l $FF0000	; RAM start
-RamEndLoc:	dc.l $FFFFFF	; RAM end
+RamStartLoc:	dc.l $FF0000		; RAM start
+RamEndLoc:	dc.l $FFFFFF		; RAM end
 
 SRAMSupport:	dc.l $5241F820		; create SRAM
 		dc.l $200000		; SRAM start
@@ -3447,7 +3441,6 @@ Title_ClrObjRam:
 		move.w	#0,($FFFFFE10).w ; set level to	GHZ (00)
 		move.w	#0,($FFFFF634).w ; disable pallet cycling
 
-	if NoTSBGArt=0
 		bsr	LevelSizeLoad
 		bsr	DeformBgLayer
 		lea	($FFFFB000).w,a1
@@ -3458,7 +3451,6 @@ Title_ClrObjRam:
 		lea	($FF0000).l,a1
 		bsr	KosDec
 		bsr	LevelLayoutLoad
-	endif
 
 		bsr	Pal_FadeFrom
 		move	#$2700,sr
@@ -3494,10 +3486,6 @@ Title_ClrObjRam:
 		moveq	#1,d0		; load title screen pallet
 		bsr	PalLoad1
 
-	if NoTSBGArt=1
-		clr.w	($FFFFFBC0).w		; set background colour to black
-	endif
-
 		move.b	#$8A,d0		; play title screen music
 		bsr	PlaySound_Special
 	if DebugModeDefault=1
@@ -3506,6 +3494,7 @@ Title_ClrObjRam:
 		move.b	#0,($FFFFFFFA).w ; disable debug mode
 	endif
 		move.w	#$618,($FFFFF614).w ; run title screen for $618 frames
+	;	move.w	#$FFFF,($FFFFF614).w
 		lea	($FFFFD080).w,a1
 		moveq	#0,d0
 		move.w	#7,d1
@@ -3545,36 +3534,18 @@ Title_SonPalLoop:
 		move.w	d0,($C00004).l
 		bsr	Pal_FadeTo
 
-loc_317C:
+; ===========================================================================
+
+Title_MainLoop:
+		add.w	#5,($FFFFD008).w ; move	Sonic to the right
 		move.b	#4,($FFFFF62A).w
 		bsr	DelayProgram
 		jsr	ObjectsLoad
 		bsr	DeformBgLayer
 		jsr	BuildSprites
-	if NoTSBGArt=0
 		bsr	PalCycle_Title
-	endif
 		bsr	RunPLC_RAM
-		move.w	($FFFFD008).w,d0
-		add.w	#5,d0 		; set speed
-		move.w	d0,($FFFFD008).w ; move	Sonic to the right
-		cmpi.w	#$1C00,d0	; has Sonic object passed x-position $1C00?
-		bra.s	Title_ChkRegion	; if not, branch
-		move.b	#0,($FFFFF600).w ; go to Sega screen
-		rts
-; ===========================================================================
 
-Title_ChkRegion:
-		tst.b	($FFFFFFF8).w	; check	if the machine is US or	Japanese
-		bpl.s	Title_RegionJ	; if Japanese, branch
-		lea	(LevelSelectCode_US).l,a0 ; load US code
-		bra.s	Title_EnterCheat
-; ===========================================================================
-
-Title_RegionJ:				; XREF: Title_ChkRegion
-		lea	(LevelSelectCode_J).l,a0 ; load	J code
-
-Title_EnterCheat:			; XREF: Title_ChkRegion
 		tst.w	($FFFFF614).w	; is time over?
 		beq.s	StartGame	; if yes, start game
 
@@ -3604,7 +3575,7 @@ T_PalSkip_1:
 
 T_PalSkip_2:	
 		cmpi.b	#$80,($FFFFF605).w 	; check if Start is pressed
-		bne.w	loc_317C		; if not, branch
+		bne.w	Title_MainLoop		; if not, branch
 
 StartGame:
 	;	move.b	#1,($A130F1).l		; enable SRAM
@@ -4001,6 +3972,9 @@ Level_ClrVars3:
 		move.w	($FFFFF624).w,(a6)
 		clr.w	($FFFFC800).w
 		move.l	#$FFFFC800,($FFFFC8FC).w
+
+		move.b	#$10,($FFFFD4C0).w	; load camera shaking object
+
 		cmpi.b	#1,($FFFFFE10).w ; is level LZ?
 		bne.s	Level_LoadPal	; if not, branch
 		move.w	#$8014,(a6)
@@ -4746,7 +4720,7 @@ PLM_NoMusic:
 ; ---------------------------------------------------------------------------
 
 MusicList:
-		dc.b	$95	; Night Hill Place
+		dc.b	$9A	; Night Hill Place
 		dc.b	$94	; Green Hill Place
 		dc.b	$89	; Special Stage (Unused)
 		dc.b	$83	; Ruined Place
@@ -7006,8 +6980,8 @@ loc_628E:
 		move.w	($FFFFF71C).w,($FFFFF61E).w
 
 
-Deform_CameraShaking:
-		tst.b	($FFFFFFBF).w		; test if flag in Obj10 was being set
+Deform_Cameraing:
+		tst.b	($FFFFD4C0+$30).w	; test if flag in Obj10 was being set
 		beq.s	Deform_NoCamShake	; if not, don't shake the camera
 		cmpi.w	#$601,($FFFFFE10).w	; is this the ending sequence?
 		beq.s	Deform_NoCamShake	; if yes, don't make the shaking
@@ -7193,10 +7167,19 @@ DeformLoop2:
 		move.w	($FFFFF700).w,d0	; load screen's X position
 		neg.w	d0			; negate (positive to negative)
 		asr.w	#$04,d0			; divide by 2 (Slow down the scroll position)
-		move.w	#$000F,d1		; set number of scan lines to dump (minus 1 for dbf)
+		move.w	#$0007,d1		; set number of scan lines to dump (minus 1 for dbf)
 DeformLoop3:
 		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
 		dbf	d1,DeformLoop3		; repeat d1 number of scanlines
+
+		move.w	($FFFFF700).w,d0	; load screen's X position
+		neg.w	d0			; negate (positive to negative)
+		asr.w	#$05,d0			; divide by 2 (Slow down the scroll position)
+		move.w	#$0007,d1		; set number of scan lines to dump (minus 1 for dbf)
+DeformLoop3x:
+		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
+		dbf	d1,DeformLoop3x		; repeat d1 number of scanlines
+
 
 
 
@@ -12580,9 +12563,7 @@ Obj27_Main:				; XREF: Obj27_Index
 		
 		bsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj27_NoCamShake	; if SingleObjLoad is already in use, don't load obejct
-		move.b	#$10,0(a1)		; load cam shaking object (Object $10)
-		move.b	#10,$28(a1)		; set to "repeat 10 times"
-		move.b	#1,$30(a1)		; disable sound
+		move.b	#10,($FFFFD4E8).w	
 
 Obj27_NoCamShake:
 	;	tst.w	($FFFFFE20).w 	; do you have any rings?
@@ -12660,9 +12641,7 @@ Obj3F_NotHarmful:
 		bne.s	Obj3F_NoCamShake
 		bsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj3F_NoCamShake	; if SingleObjLoad is already in use, don't load obejct
-		move.b	#$10,0(a1)		; load cam shaking object (Object $10)
-		move.b	#10,$28(a1)		; set to "repeat 10 times"
-		move.b	#1,$30(a1)		; disable sound
+		move.b	#10,($FFFFD4E8).w
 
 Obj3F_NoCamShake:
 		tst.b	($FFFFFFA3).w	; was object created by a crabmeat?
@@ -13285,9 +13264,7 @@ Obj1F_Timesup:
 
 		bsr	SingleObjLoad			; load from SingleObjLoad
 		bne.s	Obj1F_NoCamShake		; if SingleObjLoad is already in use, don't load object
-		move.b	#$10,0(a1)			; load cam shaking object (Object $10)
-		move.b	#$F0,$28(a1)			; set to "repeat 10 times"
-		move.b	#1,$30(a1)			; disable sound		
+		move.b	#$F0,($FFFFD4E8).w
 
 Obj1F_NoCamShake:
 	;	move.w	($FFFFF700).w,($FFFFF728).w	; lock screen
@@ -15580,9 +15557,7 @@ Obj2E_ChkGoggles: ;Power
 		move.b	#1,($FFFFFFB1).w
 		bsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj2E_ChkEnd		; if SingleObjLoad is already in use, don't load obejct
-		move.b	#$10,0(a1)		; load cam shaking object (Object $10)
-		move.w	#5,$28(a1)		; set to "repeat 10 times"
-	;	move.b	#1,$30(a1)		; disable sound
+		move.b	#5,($FFFFD4E8).w
 		bra.s	Obj2E_ChkEnd
 ; ===========================================================================
 		cmpi.w	#$200,($FFFFFE10).w ; is level MZ1?
@@ -17142,9 +17117,7 @@ loc_B8A8:				; XREF: Obj31_Type00
 		bpl.s	Obj31_Restart
 		bsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj31_NoCamShake	; if SingleObjLoad is already in use, don't load obejct
-		move.b	#$10,0(a1)		; load cam shaking object (Object $10)
-		move.b	#10,$28(a1)		; set to "repeat 10 times"
-		move.b	#1,$30(a1)		; disable sound
+		move.b	#10,($FFFFD4E8).w
 
 Obj31_NoCamShake:
 		move.w	#$BD,d0
@@ -17202,9 +17175,7 @@ loc_B938:				; XREF: Obj31_Type01
 		bpl.s	loc_B97C
 		bsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj31_NoCamShake2	; if SingleObjLoad is already in use, don't load obejct
-		move.b	#$10,0(a1)		; load cam shaking object (Object $10)
-		move.b	#10,$28(a1)		; set to "repeat 10 times"
-		move.b	#1,$30(a1)		; disable sound
+		move.b	#10,($FFFFD4E8).w
 
 Obj31_NoCamShake2:
 		move.w	#$BD,d0
@@ -35452,6 +35423,8 @@ loc_17976:
 loc_1797A:				; XREF: Obj3D_ShipIndex
 		subq.w	#1,$3C(a0)
 		bmi.s	loc_17984
+		addq.w	#3,$8(a0)	; move eggman to the right
+		bset	#0,$22(a0)
 		bra.w	BossDefeated
 ; ===========================================================================
 
@@ -35466,7 +35439,12 @@ loc_17984:
 		move.b	#1,($FFFFF7A7).w
 
 locret_179AA:
-		rts	
+		move.w	#$94,d0
+		jsr	(PlaySound).l	; play GHZ music
+		move.w	#$2AC0+GHZ3Add,($FFFFF72A).w
+		moveq	#$12,d0
+		jsr	LoadPLC2	; load signpost	patterns
+		jmp	DeleteObject
 ; ===========================================================================
 
 loc_179AC:				; XREF: Obj3D_ShipIndex
@@ -35564,6 +35542,8 @@ loc_17A5A:
 		subq.b	#2,d0
 		bne.s	Obj3D_FaceDisp
 		move.b	#6,$1C(a0)
+		cmpi.w	#$2AC0+GHZ3Add,($FFFFF72A).w
+		beq.s	Obj3D_FaceDel
 		tst.b	1(a0)
 		bpl.s	Obj3D_FaceDel
 
@@ -38903,9 +38883,7 @@ loc_19EC6:
 
 		jsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	loc_19F10		; if SingleObjLoad is already in use, don't load obejct
-		move.b	#$10,0(a1)		; load cam shaking object (Object $10)
-		move.w	#$FF,$28(a1)		; set to "repeat 10 times"
-		move.b	#1,$30(a1)		; disable sound
+		move.b	#$FF,($FFFFD4E8).w
 
 loc_19F10:
 		tst.w	$32(a0)
@@ -42153,9 +42131,11 @@ Obj09_NoGlass:
 
 ; ===========================================================================
 
+; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 10 - Camera shaking
 ; ---------------------------------------------------------------------------
+
 Obj10:
 		moveq	#0,d0			; clear d0
 		move.b	$24(a0),d0		; move routine counter to d0
@@ -42164,39 +42144,25 @@ Obj10:
 ; ===========================================================================
 Obj10_Index:	dc.w Obj10_SetFlag-Obj10_Index		; set the flag, which is being used in the deformation code	[$0]
 		dc.w Obj10_CheckTime-Obj10_Index	; check if the counter is empty, and if it, delete object	[$2]
-		dc.w Obj10_DeleteObject-Obj10_Index	; delete object							[$4]
 ; ===========================================================================
 
 Obj10_SetFlag:
 		addq.b	#2,$24(a0)		; set to Obj10_CheckFlag
-		move.b	#1,($FFFFFFBF).w	; set flag
-		tst.b	$30(a0)			; was object set to play no sound?
-		bne.s	Obj10_NoSound		; if yes, brnach
-		move.w	#$B7,d0			; set rumbling sound
-		jsr	(PlaySound_Special).l	; play it
-
-Obj10_NoSound:
-		rts				; return
-; ===========================================================================
 
 Obj10_CheckTime:
-; Note, while this process, the camera moving is being made in the deformation routine.
-		addq.b	#1,$29(a0)		; increase times counter
-		moveq	#0,d1			; make sure d1 is empty
-		move.b	$29(a0),d1		; move counter to d1
-		cmp.b	$28(a0),d1		; check if times counter = max allowed times
-		bmi.s	Obj10_SetDelete		; if equal, set to delete objec
+		move.b	#0,$30(a0)
+		tst.b	$28(a0)
+		beq.s	Obj10_NoCamShake
+		subq.b	#1,$28(a0)
+		beq.s	Obj10_NoCamShake
+		move.b	#1,$30(a0)
+
+Obj10_NoCamShake:
 		rts				; return
+
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 
-Obj10_SetDelete:
-		addq.b	#2,$24(a0)		; set to "delete"
-		rts				; return
-; ===========================================================================
-
-Obj10_DeleteObject:
-		clr.b	($FFFFFFBF).w		; clear flag
-		jmp	DeleteObject		; delete camera shaking object
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -46911,7 +46877,7 @@ Music98:	incbin	sound\EK\bosspinch.bin
 		even
 Music99:	include	"sound\EK\m41-MZ3.asm"
 		even
-Music9A:        incbin	sound\music9A.bin
+Music9A:        incbin	sound\musicMarkey1.bin
 		even
 Music9B:	include	"sound\DalekSam\STAGSelbi.asm"
 		even
