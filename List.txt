@@ -1,10 +1,10 @@
 To-Do (MUST be done in order to release this hack):
 - Finding a new font for the credits.
-- Finding new music for Night Hill Place or at least improve the current one.
+- Make all songs being in the same style (in terms of loudness, voices, etc.).
 - Finishing Hard Part Skipper (Finding art for it and a good point where to put it in Labyrinth Zone, since that level is ridiculous hard 99% of the time).
 
 Bugs:
-- The Sonic 3 animations look weird sometimes.
+- The angeled Sonic 3 running animations look weird.
 
 Would be great:
 - Doing a Tutorial/Demo Mode. (Basically a walkthrough, but in the game itself. Actually, I already started working on this, but the gay demo mode system only does shit. -._-.)

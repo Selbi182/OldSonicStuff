@@ -3537,7 +3537,7 @@ Title_SonPalLoop:
 ; ===========================================================================
 
 Title_MainLoop:
-		add.w	#5,($FFFFD008).w ; move	Sonic to the right
+		add.w	#3,($FFFFD008).w ; move	Sonic to the right
 		move.b	#4,($FFFFF62A).w
 		bsr	DelayProgram
 		jsr	ObjectsLoad
@@ -7150,7 +7150,7 @@ Deform_TS:				; XREF: Deform_Index
 
 		move.w	($FFFFF700).w,d0	; load screen's X position
 		neg.w	d0			; negate (positive to negative)
-		asr.w	#$02,d0			; divide by 2 (Slow down the scroll position)
+		asr.w	#$01,d0			; divide by 2 (Slow down the scroll position)
 		move.w	#$000F,d1		; set number of scan lines to dump (minus 1 for dbf)
 DeformLoop1:
 		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
@@ -7158,7 +7158,7 @@ DeformLoop1:
 
 		move.w	($FFFFF700).w,d0	; load screen's X position
 		neg.w	d0			; negate (positive to negative)
-		asr.w	#$03,d0			; divide by 2 (Slow down the scroll position)
+		asr.w	#$02,d0			; divide by 2 (Slow down the scroll position)
 		move.w	#$000F,d1		; set number of scan lines to dump (minus 1 for dbf)
 DeformLoop2:
 		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
@@ -7166,7 +7166,7 @@ DeformLoop2:
 
 		move.w	($FFFFF700).w,d0	; load screen's X position
 		neg.w	d0			; negate (positive to negative)
-		asr.w	#$04,d0			; divide by 2 (Slow down the scroll position)
+		asr.w	#$03,d0			; divide by 2 (Slow down the scroll position)
 		move.w	#$0007,d1		; set number of scan lines to dump (minus 1 for dbf)
 DeformLoop3:
 		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
@@ -7174,28 +7174,35 @@ DeformLoop3:
 
 		move.w	($FFFFF700).w,d0	; load screen's X position
 		neg.w	d0			; negate (positive to negative)
-		asr.w	#$05,d0			; divide by 2 (Slow down the scroll position)
+		asr.w	#$04,d0			; divide by 2 (Slow down the scroll position)
 		move.w	#$0007,d1		; set number of scan lines to dump (minus 1 for dbf)
 DeformLoop3x:
 		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
 		dbf	d1,DeformLoop3x		; repeat d1 number of scanlines
 
+		move.w	($FFFFF700).w,d0	; load screen's X position
+		neg.w	d0			; negate (positive to negative)
+		asr.w	#$05,d0			; divide by 2 (Slow down the scroll position)
+		move.w	#$000F,d1		; set number of scan lines to dump (minus 1 for dbf)
+DeformLoop4:
+		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
+		dbf	d1,DeformLoop4		; repeat d1 number of scanlines
 
 
 
 		move.w	($FFFFF700).w,d0	; load screen's X position
 		neg.w	d0			; negate (positive to negative)
 		asr.w	#$06,d0			; divide by 2 (Slow down the scroll position)
-		move.w	#$002F,d1		; set number of scan lines to dump (minus 1 for dbf)
-DeformLoop4:
+		move.w	#$001F,d1		; set number of scan lines to dump (minus 1 for dbf)
+DeformLoop5:
 		move.l	d0,(a1)+		; dump both the FG and BG scanline position to buffer
-		dbf	d1,DeformLoop4		; repeat d1 number of scanlines
+		dbf	d1,DeformLoop5		; repeat d1 number of scanlines
 
 
 		move.w	($FFFFF700).w,d0	; set d0 to camera position
 		ext.l	d0			; extend to long
 		lsl.l	#8,d0			; multiply it by $100
-		lsl.l	#1,d0			; multiply it by 2
+		lsl.l	#2,d0			; multiply it by 4
 		neg.l	d0			; negate it
 		move.w	#$80,d2			; set loops to $80 (yes $80, not $7F)
 DTS_Loop:
@@ -7203,16 +7210,14 @@ DTS_Loop:
 		move.l	d1,(a1)+		; set it to scroll buffer
 		add.l	d0,d3			; increase speed for next row
 		swap	d3			; swap it
-		
 		dbf	d2,DTS_Loop		; loop
-
 		rts				; return
 ; End of function Deform_TS
 
 ; ===========================================================================
 
 Deform_LZ:
-	;	bra.s	Deform_LZ_Extended
+		bra.s	Deform_LZ_Extended
 	; original code, takes MUCH less RAM than the extended code
 		move.w	($FFFFF73A).w,d4
 		ext.l	d4
@@ -9638,6 +9643,9 @@ Resize_LZ2:
 
 @cont:
 		move.w	#$800,($FFFFF726).w
+		cmpi.w	#$0350,($FFFFF700).w
+		blt.s	@contxx
+		move.w	#$6C9,($FFFFF726).w
 		rts
 
 @contx:
@@ -15337,6 +15345,11 @@ Obj2E_Move:				; XREF: Obj2E_Index
 		bne.s	Obj2E_Original		; if yes, branch
 		cmpi.b	#7,$1C(a0)		; is that a S monitor?
 		beq.s	Obj2E_Original		; if yes, use original stuff
+		cmpi.b	#8,$1C(a0)		; is the P-monitor?
+		bne.s	@cont			; if not, branch
+		move.b	#1,($FFFFFF73).w	; re-enable spindash ability
+
+@cont:
 		btst	#1,($FFFFD022).w	; is Sonic on the ground?
 		beq.s	Obj2E_Start		; if yes, branch
 		subq.b	#1,$30(a0)		; sub 1 from maximun delay
@@ -15553,6 +15566,14 @@ Obj2E_NotGHZ2:
 Obj2E_ChkGoggles: ;Power
 		cmpi.b	#8,d0		; does monitor contain goggles?
 		bne.s	Obj2E_ChkEnd	; if not, branch
+
+		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
+		bne.s	Obj2E_Goggles_NotMZ	; if not, branch
+		move.w	#$D1,d0			; set spinadsh sound
+		jmp	(PlaySound).l		; play spindash sound
+; ===========================================================================
+
+Obj2E_Goggles_NotMZ:
 		move.b	#50,($FFFFFFD2).w ; make current displayed rings falling
 		move.b	#1,($FFFFFFB1).w
 		bsr	SingleObjLoad		; load from SingleObjLoad
@@ -15560,6 +15581,7 @@ Obj2E_ChkGoggles: ;Power
 		move.b	#5,($FFFFD4E8).w
 		bra.s	Obj2E_ChkEnd
 ; ===========================================================================
+
 		cmpi.w	#$200,($FFFFFE10).w ; is level MZ1?
 		beq.s	Obj2E_MZ1	; if yes, branch
 		move.b	#1,($FFFFFFE1).w ; enable goggle view through function
@@ -18875,7 +18897,7 @@ Obj36_Upright:				; XREF: Obj36_Solid
 		btst	#3,$22(a0)
 		bne.s	Obj36_Hurt
 		tst.w	d4
-		bpl.s	Obj36_Display
+		bpl.w	Obj36_Display
 
 Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
 		tst.b	($FFFFFE2D).w	; is Sonic invincible?
@@ -18886,6 +18908,13 @@ Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
 		bne.s	Obj36_NotInhuman2	; if not, branch
 		move.w	#$12DD,($FFFFD008).w	; teleport Sonic on X-axis
 		move.w	#$008C,($FFFFD00C).w	; teleport Sonic on Y-axis
+		tst.b	($FFFFFF73).w
+		beq.s	@cont
+		move.w	#$14E1,($FFFFD008).w	; teleport Sonic on X-axis
+		move.w	#$04CC,($FFFFD00C).w	; teleport Sonic on Y-axis
+
+
+@cont:
 		clr.w	($FFFFD010).w		; clear X-speed
 		clr.w	($FFFFD012).w		; clear Y-speed
 		move.w	#$C3,d0			; set giant ring sound
@@ -28920,6 +28949,12 @@ WF_Return:
 ; ---------------------------------------------------------------------------
 
 Sonic_JumpDash:
+		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
+		bne.s	JD_NotMZ		; if not, branch
+		tst.b	($FFFFFFE7).w		; is inhuman mode on?
+		bne.w	JD_End			; if yes, branch
+
+JD_NotMZ:
 		tst.b	($FFFFFFE5).w		; was AirFreeze flag set?
 		bne.w	JD_End			; if yes, branch
 		move.b	($FFFFF603).w,d0	; is ABC pressed? (part 1)
@@ -29220,6 +29255,12 @@ DD_End:
 ; ---------------------------------------------------------------------------
 
 Sonic_SuperPeelOut:
+		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
+		bne.s	SPO_NotMZ		; if not, branch
+		tst.b	($FFFFFFE7).w		; is inhuman mode on?
+		bne.w	SPO_End			; if yes, branch
+
+SPO_NotMZ:
 		tst.b	($FFFFFF99).w
 		beq.w	SPO_End
 		tst.b	($FFFFFEBC).w		; already peelouting?
@@ -29333,7 +29374,16 @@ SPO_End:
 ; ---------------------------------------------------------------------------
 ; Subroutine allowing Sonic to perform a Spindash
 ; ---------------------------------------------------------------------------
+
 Sonic_Spindash:
+		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
+		bne.s	Spdsh_NotMZ		; if not, branch
+		tst.b	($FFFFFF73).w
+		bne.s	Spdsh_NotMZ
+		tst.b	($FFFFFFE7).w		; is inhuman mode on?
+		bne.w	locret2_1AC8C		; if yes, branch
+
+Spdsh_NotMZ:
 		tst.b	$39(a0)			; already spindashing?
 		bne.s	loc2_1AC8E		; if set, branch
 		cmpi.b	#8,$1C(a0)		; is anim duck
@@ -47057,8 +47107,7 @@ SegaPCM:	incbin	sound\segapcm.bin
 		include "Screens/ChapterScreens/Chapters.asm"
 		include "Screens/OptionsScreen/OptionsScreen.asm"
 		include "Screens/InfoScreen/InfoScreen.asm"
-; ---------------------------------------------------------------------------
-		include	"Credits/Credits.asm"
+		include	"Screens/CreditsScreen/Credits.asm"
 ; ===========================================================================
 
 ; ===========================================================================
