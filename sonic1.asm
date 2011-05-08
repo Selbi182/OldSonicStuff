@@ -35,8 +35,8 @@ align macro
 ;Don't allow debug mode, not even with Game Genie.
 ; 0 - No
 ; 1 - Yes
-DebugModeDefault = 1
-DontAllowDebug = 0
+DebugModeDefault = 0
+DontAllowDebug = 1
 ;=================================================
 ;Enable Demo Recording. (In RAM at $FFFFD200)
 ;Also disables Stars and Shields
@@ -4720,7 +4720,7 @@ PLM_NoMusic:
 ; ---------------------------------------------------------------------------
 
 MusicList:
-		dc.b	$9A	; Night Hill Place
+		dc.b	$81	; Night Hill Place
 		dc.b	$94	; Green Hill Place
 		dc.b	$89	; Special Stage (Unused)
 		dc.b	$83	; Ruined Place
@@ -8004,7 +8004,7 @@ SV_NotGHZ2:
 		bra.s	SV_NotLZ2_2
 
 @cont:
-		add.w	#$85,d0
+		add.w	#$65,d0
 
 SV_NotLZ2_2:
 		sub.w	($FFFFF704).w,d0
@@ -9644,7 +9644,7 @@ Resize_LZ2:
 @cont:
 		move.w	#$800,($FFFFF726).w
 		cmpi.w	#$0350,($FFFFF700).w
-		blt.s	@contxx
+		bra.s	@contxx
 		move.w	#$6C9,($FFFFF726).w
 		rts
 
@@ -27291,8 +27291,9 @@ Obj06_Setup:
 
 Obj06_ChkDist:
 		move.b	($FFFFF603).w,d0	; get button presses
-		andi.b	#$70,d0			; is ABC pressed?
-		beq.s	Obj06_Display		; if not, branch
+		andi.b	#$70,d0			; sort out any non ABC button presses
+		cmpi.b	#$70,d0			; is A, B and C pressed?
+		bne.s	Obj06_Display		; if not, branch
 		move.w	($FFFFD008).w,d0	; get Sonic's X-pos
 		sub.w	$8(a0),d0		; substract the X-pos from the current object from it
 		addi.w	#$10,d0			; add $10 to it
@@ -27317,7 +27318,7 @@ Obj06_ChkDist:
 		move.w	#$C3,d0			; set giant ring sound
 		jsr	PlaySound_Special	; play it
 		jsr	WhiteFlash2		; make a white flash
-		jsr	FixLevel		; instantly move the camera
+	;	jsr	FixLevel		; instantly move the camera
 
 Obj06_Display:
 		bsr	DisplaySprite		; display sprite
@@ -27337,7 +27338,7 @@ Obj06_Locations:	;XXXX   YYYY
 		dc.w	$FFFF, $FFFF	; Green Hill Place	(Unused)
 		dc.w	$FFFF, $FFFF	; Special Stage		(Unused)
 		dc.w	$17C0, $028F	; Ruined Place
-		dc.w	$DEAD, $BEEF	; Labyrinth Place
+		dc.w	$038F, $002E	; Labyrinth Place
 		dc.w	$FFFF, $FFFF	; Finalor Place		(Unused)
 		dc.w	$FFFF, $FFFF	; Spring Yard Place	(Unused)
 
@@ -28884,7 +28885,7 @@ FixLevel:
 		move.w	d0,($FFFFF700).w	; put result into X-camera location
 		move.w	($FFFFD00C).w,d0	; load Sonic's Y-location into d0
 		subi.w	#112,d0			; substract 112 pixels from it (half of 224, vertical screen size)
-		move.w	d0,($FFFFF704).w	; put result into X-camera location
+		move.w	d0,($FFFFF704).w	; put result into Y-camera location
 
 		movem.l	d0-a6,-(sp)		; backup all data and address registers
 		jsr	DeformBgLayer		; fix the background position
@@ -46877,7 +46878,7 @@ Kos_Z80:
 ; ===========================================================================
 		include	"sound\Driver\s1smps2asm_inc.asm"
 ; ===========================================================================
-Music81:	include	"sound\EK\Battletoads - Surf City.asm"
+Music81:	include	"sound\DalekSam\hockenhiem.asm"
 		even
 Music82:	include "sound\DalekSam\MTZ3.asm"
 		even

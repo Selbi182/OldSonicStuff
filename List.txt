@@ -1,7 +1,8 @@
 To-Do (MUST be done in order to release this hack):
+- Finishing MZ's foreground art.
 - Finding a new font for the credits.
-- Make all songs being in the same style (in terms of loudness, voices, etc.).
-- Finishing Hard Part Skipper (Finding art for it and a good point where to put it in Labyrinth Zone, since that level is ridiculous hard 99% of the time).
+- Finding new music for NHP or improve the current one.
+- Creating art for the Hard Part Skipper.
 
 Bugs:
 - The angeled Sonic 3 running animations look weird.
