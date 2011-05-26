@@ -1,8 +1,6 @@
 To-Do (MUST be done in order to release this hack):
 - Finishing MZ's foreground art.
 - Finding a new font for the credits.
-- Finding new music for NHP or improve the current one.
-- Creating art for the Hard Part Skipper.
 
 Bugs:
 - The angeled Sonic 3 running animations look weird.

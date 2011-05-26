@@ -1,0 +1,3 @@
+[i]"Months of sleepless nights, lots of raging and realising how much it sucks to fuck up your source, forcing you to use a damn old backup, resulting into instant rage-quit for weeks."[/i] -Selbi, on the development of Sonic ERaZor v3.0
+
+That quote would pretty much sum up everything you need to know for the development of the third public release for this hack.

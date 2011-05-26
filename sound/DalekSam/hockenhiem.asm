@@ -546,17 +546,25 @@ hockenhiem_FM2_p4:
     smpsModSet			$08, $03, $E7, $D7
 	smpsFMvoice	$1
 	dc.b		$bf,$8
+	smpsAlterVol		$02 
 	dc.b		$bf
+	smpsAlterVol		$02 ;4
 	dc.b		$bf
+	smpsAlterVol		$02 ;6
 	dc.b		$bf
+	smpsAlterVol		$02 ;8
 	dc.b		$bf
+	smpsAlterVol		$02 ;A
 	dc.b		$bf
+	smpsAlterVol		$02 ;C
 	dc.b		$bf
+	smpsAlterVol		$02 ;E
 	dc.b		$bf
 	smpsReturn
 
 hockenhiem_FM2_p5:
     smpsModSet			$08, $03, $04, $04
+	smpsAlterVol		$F2
 	dc.b		$af,$20
 	dc.b		$b1
 	smpsReturn
@@ -661,6 +669,7 @@ hockenhiem_FM2_pd:
 hockenhiem_FM2_pe:
 	dc.b		$80,$4
 	smpsFMvoice	$2
+	smpsAlterVol		$04	
 	dc.b		$b8,$2
 	dc.b		$c4
 	dc.b		$b8
@@ -796,6 +805,7 @@ hockenhiem_FM2_p12:
 	dc.b		$c1,$2
 	dc.b		$c1
 	dc.b		$80,$1c
+	smpsAlterVol		$FB
 	smpsReturn
 
 ; Pattern data for FM3
@@ -1449,182 +1459,9 @@ hockenhiem_PSG3_p12:
 	smpsPSGvoice	$1
 	dc.b		$82
 	smpsReturn
-
+	
 ; Pattern data for DAC
-hockenhiem_DAC_p13:
-	dc.b		$b1,$2
-	dc.b		$b1
-	dc.b		$b1
-	dc.b		$b1
-	dc.b		$b1
-	dc.b		$b1
-	dc.b		$b1
-	dc.b		$b1
-	smpsReturn
-
-hockenhiem_DAC_p0:
-	dc.b		$aa,$8
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	smpsReturn
-
-hockenhiem_DAC_p1:
-	dc.b		$b2,$8
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1,$2
-	dc.b		$b1
-	dc.b		$b1
-	dc.b		$b1
-	smpsReturn
-
-hockenhiem_DAC_p2:
-	dc.b		$aa,$8
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	smpsReturn
-
-hockenhiem_DAC_p3:
-	dc.b		$b2,$8
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2,$4
-	dc.b		$8c,$1
-	dc.b		$8c
-	dc.b		$8c,$2
-	dc.b		$b1
-	dc.b		$b1
-	dc.b		$98
-	dc.b		$99
-	smpsReturn
-
-hockenhiem_DAC_p6:
-	dc.b		$b2,$8
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	smpsReturn
-
-hockenhiem_DAC_p7:
-	dc.b		$b1,$4
-	dc.b		$b2
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b2,$2
-	dc.b		$8c,$1
-	dc.b		$8c
-	dc.b		$b1,$2
-	dc.b		$b1
-	dc.b		$97
-	dc.b		$97
-	dc.b		$b1
-	dc.b		$b1
-	dc.b		$99
-	dc.b		$99
-	smpsReturn
-
-hockenhiem_DAC_p8:
-	dc.b		$b1,$4
-	dc.b		$b2
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b2,$2
-	dc.b		$8c,$1
-	dc.b		$8c
-	dc.b		$8c,$2
-	dc.b		$b1
-	dc.b		$97
-	dc.b		$97
-	dc.b		$98
-	dc.b		$b1
-	dc.b		$99
-	dc.b		$99
-	smpsReturn
-
-hockenhiem_DAC_pa:
-	dc.b		$b2,$10
-	dc.b		$b2
-	dc.b		$b2
-	dc.b		$b2,$8
-	dc.b		$b1
-	smpsReturn
-
-hockenhiem_DAC_pd:
-	dc.b		$b2,$8
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2,$c
-	dc.b		$b1,$2
-	dc.b		$b1
-	dc.b		$8c
-	dc.b		$8c
-	dc.b		$b1
-	dc.b		$b1
-	dc.b		$99
-	dc.b		$99
-	dc.b		$99
-	dc.b		$99
-	smpsReturn
-
-hockenhiem_DAC_p11:
-	dc.b		$b2,$8
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$b1
-	dc.b		$b2,$4
-	dc.b		$8c,$1
-	dc.b		$8c
-	dc.b		$8c,$2
-	dc.b		$b1
-	dc.b		$b2
-	dc.b		$98
-	dc.b		$99
-	smpsReturn
-
-hockenhiem_DAC_p12:
-	dc.b		$b2,$8
-	dc.b		$b2
-	dc.b		$b2
-	dc.b		$b1
-	smpsReturn
+	include	"sound\DalekSam\hockenhiem_DAC.asm"
 
 hockenhiem_Voices:
 	dc.b	$38,$dc,$f4,$36,$8,$1b,$13,$1a,$1b,$e,$0,$8,$a,$0,$5,$5

@@ -10,8 +10,8 @@
  ;  ($FFFFFF70).w
  ;  ($FFFFFF71).w
  ;  ($FFFFFF72).w
-    ($FFFFFF73).w
-    ($FFFFFF74).w
+ ;  ($FFFFFF73).w
+ ;  ($FFFFFF74).w
     ($FFFFFF75).w
     ($FFFFFF76).w
     ($FFFFFF77).w

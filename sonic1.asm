@@ -26838,7 +26838,7 @@ loc_1DD90:				; DATA XREF: h+6DBAo
 off_1DDA4:	dc loc_1DE28-off_1DDA4; 0 ; DATA XREF: h+6E30o h+6E32o ...
 		dc loc_1DDAC-off_1DDA4; 1
 		dc loc_1DDCC-off_1DDA4; 2
-		dc loc_1DE20-off_1DDA4; 3
+		dc loc_1DE28-off_1DDA4; 3
 ; ===========================================================================
 
 loc_1DDAC:				; DATA XREF: h+6E30o
@@ -26852,8 +26852,6 @@ loc_1DDAC:				; DATA XREF: h+6E30o
 ; ===========================================================================
 
 loc_1DDCC:				; DATA XREF: h+6E30o
-;		cmp.b	#$C,$28(a2)
-;		bcs.s	loc_1DE3E
 		cmp.b	#4,$24(a2)
 		bcc.s	loc_1DE3E
 		
@@ -26887,7 +26885,6 @@ loc_1DE06:				; CODE XREF: h+6E8Aj
 
 ; ===========================================================================
 
-loc_1DE20:				; DATA XREF: h+6E30o
 loc_1DE28:				; CODE XREF: h+6E42j h+6E56j ...
 		lea	(off_1DF38).l,a1
 		jsr	AnimateSprite
@@ -26907,16 +26904,16 @@ loc_1DE46:				; DATA XREF: h+6DBAo
 
 
 loc_1DE4A:
-	movea.w	$3E(a0),a2
-	moveq	#$10,d1
-	cmp.b	#$D,$1C(a2)
-	beq.s	loc_1DE64
-	moveq	#$6,d1
-	cmp.b	#$3,$21(a2)
-	beq.s	loc_1DE64
-	move.b	#2,$24(a0)
-	move.b	#0,$32(a0)
-	rts
+		movea.w	$3E(a0),a2
+		moveq	#$10,d1
+		cmp.b	#$D,$1C(a2)
+		beq.s	loc_1DE64
+		moveq	#$6,d1
+		cmp.b	#$3,$21(a2)
+		beq.s	loc_1DE64
+		move.b	#2,$24(a0)
+		move.b	#0,$32(a0)
+		rts
 ; ===========================================================================
 
 loc_1DE64:				; CODE XREF: h+6EE0j
@@ -26965,7 +26962,7 @@ loc_1DEE4:				; CODE XREF: h+6EC0p h+6F6Cp
 		move	(a2)+,d5
 		subq	#1,d5
 		bmi.w	locret_1DF36
-		move $3C(a0),d4
+		move 	$3C(a0),d4
 
 loc_1DF0A:				; CODE XREF: h+6FBEj
 		moveq	#0,d1
@@ -26982,7 +26979,6 @@ loc_1DF0A:				; CODE XREF: h+6FBEj
 		add	d3,d4
 		jsr	(QueueDMATransfer).l
 		dbf	d5,loc_1DF0A
-    rts
 
 locret_1DF36:				; CODE XREF: h+6F7Aj h+6F90j
 		rts	
@@ -27287,10 +27283,33 @@ Obj06_Setup:
 		move.b	#4,$18(a0)		; set priority
 		move.b	#4,1(a0)		; set render flag
 		move.b	#$56,$19(a0)		; set display width
-		move.w	#$07B2,2(a0)		; set art pointer, use palette line 1
+		move.w	#$07A2,2(a0)		; set art pointer, use palette line 1
+		subi.w	#8,$C(a0)		; move it a little bit upwards
+		move.b	#0,$30(a0)
+		move.l	a0,-(sp)
+		move.l	#$74400003,($C00004).l	; set VRAM location
+		lea	(Nem_HardPS).l,a0	; set art location
+		jsr	NemDec			; load art from nemesis
+		move.l	(sp)+,a0
 
 Obj06_ChkDist:
-		move.b	($FFFFF603).w,d0	; get button presses
+		cmpi.b	#2,($FFFFD1DC).w
+		bne.s	revertspindash
+		move.b	#1,$30(a0)
+		rts
+
+revertspindash:
+		tst.b	$30(a0)
+		beq.s	contin
+		move.b	#0,$30(a0)
+		move.l	a0,-(sp)
+		move.l	#$74400003,($C00004).l	; set VRAM location
+		lea	(Nem_HardPS).l,a0	; set art location
+		jsr	NemDec			; load art from nemesis
+		move.l	(sp)+,a0
+
+contin:
+		move.b	($FFFFF602).w,d0	; get button presses
 		andi.b	#$70,d0			; sort out any non ABC button presses
 		cmpi.b	#$70,d0			; is A, B and C pressed?
 		bne.s	Obj06_Display		; if not, branch
@@ -27345,7 +27364,7 @@ Obj06_Locations:	;XXXX   YYYY
 ; ---------------------------------------------------------------------------
 
 Map_Obj06:
-		include	"_maps\obj06.asm"
+		include	"_maps\HardPartSkipper.asm"
 
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
@@ -44154,6 +44173,8 @@ Nem_BigFlash:	incbin	artnem\rngflash.bin	; flash from giant ring
 Nem_Bonus:	incbin	artnem\bonus.bin	; hidden bonuses at end of a level
 		even
 Nem_DEMO:	incbin	artnem\Art_DEMO.bin	; DEMO
+		even
+Nem_HardPS:	incbin	artnem\HardPartSkipper.bin ; Hard Part Skipper
 		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - continue screen
