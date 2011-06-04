@@ -1,6 +1,7 @@
 To-Do (MUST be done in order to release this hack):
 - Finishing MZ's foreground art.
 - Finding a new font for the credits.
+- Add Fail-O-Meter to Hard Part Skipper.
 
 Bugs:
 - The angeled Sonic 3 running animations look weird.

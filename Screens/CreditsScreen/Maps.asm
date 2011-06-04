@@ -43,6 +43,7 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
+
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
 	dc.b	"  WITH  ADDITIONAL  ",$FF
@@ -59,6 +60,7 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
+
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
 	dc.b	"    MUSIC CREATED   ",$FF
@@ -66,30 +68,98 @@ StartText:
 	dc.b	"         BY         ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
 	dc.b	"      DALEKSAM      ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"        SOTI        ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"  EDUARDO KNUCKLES  ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	"  BETA TESTING AND  ",$FF
+	dc.b	"    MUSIC CREATED   ",$FF
 	dc.b	"                    ",$FF
-	dc.b	" SPECIAL THANKS  TO ",$FF
+	dc.b	"         BY         ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"        SOTI        ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+
+	dc.b	$0D						; Number of lines
+	dc.b	"                    ",$FF
+	dc.b	"    MUSIC CREATED   ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"         BY         ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"  EDUARDO KNUCKLES  ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+
+
+	dc.b	$0D						; Number of lines
+	dc.b	"                    ",$FF
+	dc.b	"    BETA TESTING    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"      SONICVAAN     ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+
+	dc.b	$0D						; Number of lines
+	dc.b	"                    ",$FF
+	dc.b	"    BETA TESTING    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
 	dc.b	"       IRIXION      ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+
+
+	dc.b	$0D						; Number of lines
+	dc.b	"                    ",$FF
+	dc.b	" SPECIAL THANKS  TO ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"  THE SSRG IRC CHAT ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"    ON BADNIKNET    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+
+
 
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF

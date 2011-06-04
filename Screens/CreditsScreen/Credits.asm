@@ -18,7 +18,7 @@ CreditsJest:
 
 		lea	($00FF0000).l,a1			; set destination
 		lea	(Map_Credits).l,a0			; set mappings location
-		move.w	#1781,d1				; set number of loops
+		move.w	#(295*$A)+11,d1				; set number of loops (10 blocks)
 
 CJ_MapsLoop:
 		move.b	(a0)+,(a1)+				; load data
@@ -148,7 +148,7 @@ CJML_RunLetter:
 ; ---------------------------------------------------------------------------
 
 CJML_ScrollIn:
-		cmpi.b	#6,($FFFFFF91).w
+		cmpi.b	#10,($FFFFFF91).w
 		bne.s	CJML_NoramlScreen
 
 CJML_FinalLoop:

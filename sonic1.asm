@@ -4056,6 +4056,10 @@ loc_3946:
 		lea	(Nem_HSpring).l,a0
 		bsr	NemDec
 
+		move.l	#$74400003,($C00004).l
+		lea	(Nem_HardPS).l,a0
+		bsr	NemDec
+		
 		bsr	LoadTilesFromStart
 		jsr	FloorLog_Unk
 		bsr	ColIndexLoad
@@ -6756,6 +6760,12 @@ EndingStLocArray:
 LevSz_ChkLamp:				; XREF: LevelSizeLoad
 		tst.b	($FFFFFE30).w	; have any lampposts been hit?
 		beq.s	LevSz_StartLoc	; if not, branch
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ?
+		bne.s 	@cont			; if not, branch
+		clr.b	($FFFFFE30).w
+		bra.s	LevSz_StartLoc
+
+@cont:
 		jsr	obj79_LoadInfo
 		move.w	($FFFFD008).w,d1
 		move.w	($FFFFD00C).w,d0
@@ -12634,8 +12644,12 @@ Obj3F_Main:				; XREF: Obj3F_Index
 		bne.s	Obj3F_NotHarmful	; if yes, branch
 		tst.b	$30(a0)
 		bne.s	Obj3F_NotHarmful
+		cmpi.w	#$001,($FFFFFE10).w
+		beq.s	@cont
 		tst.b	($FFFFFFAA).w
 		bne.s	Obj3F_NotHarmful
+
+@cont:
 		move.b	#$84,$20(a0)
 		moveq	#1,d0		; add 100 ...
 		jsr	AddPoints	; ... points
@@ -15728,16 +15742,13 @@ Obj0E_Move:				; XREF: Obj0E_Index
 Obj0E_Display:
 		bra.w	DisplaySprite
 ; ===========================================================================
-		rts	
-; ===========================================================================
 
 Obj0E_Animate:				; XREF: Obj0E_Index
 		lea	(Ani_obj0E).l,a1
 		bsr	AnimateSprite
 		bra.w	DisplaySprite
 ; ===========================================================================
-		rts	
-; ===========================================================================
+
 ; ---------------------------------------------------------------------------
 ; Object 0F - "PRESS START BUTTON" from title screen
 ; ---------------------------------------------------------------------------
@@ -15943,15 +15954,8 @@ Obj2B_ChgAni:
 		move.w	$C(a0),$C(a1)
 
 Obj2B_NotInhumanCrush:
-		bsr	BossDefeated3		
+		bsr	BossDefeated3
 		move.b	#1,$1C(a0)	; use fast animation
-		subi.w	#$C0,d0
-		cmp.w	$C(a0),d0
-		bcc.s	locret_ABB6
-		move.b	#0,$1C(a0)	; use slow animation	
-		tst.w	$12(a0)		; is Chopper at	its highest point?
-		bmi.s	locret_ABB6	; if not, branch	
-		move.b	#2,$1C(a0)	; use stationary animation
 	
 locret_ABB6:
 		rts	
@@ -21507,23 +21511,27 @@ loc_EC86:
 
 
 GotThroughAct:				; XREF: Obj3E_EndAct
+		move.b	#1,($A130F1).l		; enable SRAM
+
+		cmpi.w	#$002,($FFFFFE10).w	; is level GHZ3?
+		bne.s	GTA_ChkMZ1		; if not, branch
+		bset	#0,($FFFFFF8B).w	; unlock first door
+		move.b	#2,($200007).l		; set number for text to 2
+
+GTA_ChkMZ1:
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		bne.s	GTA_ChkLZ2		; if not, branch
 		bset	#2,($FFFFFF8B).w	; unlock third door
-		move.b	#1,($A130F1).l		; enable SRAM
 		move.b	#4,($200007).l		; set number for text to 4
-		move.b	#0,($A130F1).l		; disable SRAM
 
 GTA_ChkLZ2:
 		cmpi.w	#$101,($FFFFFE10).w	; is level LZ2?
 		bne.s	GTA_NoDoor		; if not, branch
 		bset	#3,($FFFFFF8B).w	; unlock fourth door
-		move.b	#1,($A130F1).l		; enable SRAM
 		move.b	#5,($200007).l		; set number for text to 5
-		move.b	#0,($A130F1).l		; disable SRAM
-
 
 GTA_NoDoor:
+		move.b	#0,($A130F1).l		; disable SRAM
 		move.b	#$20,($FFFFF600).w	; set to Info Screen
 
 locret_ECEE:
@@ -27284,7 +27292,7 @@ Obj06_Setup:
 		move.b	#4,1(a0)		; set render flag
 		move.b	#$56,$19(a0)		; set display width
 		move.w	#$07A2,2(a0)		; set art pointer, use palette line 1
-		subi.w	#8,$C(a0)		; move it a little bit upwards
+	;	subi.w	#$D,$C(a0)		; move it a little bit upwards
 		move.b	#0,$30(a0)
 		move.l	a0,-(sp)
 		move.l	#$74400003,($C00004).l	; set VRAM location
@@ -35514,6 +35522,7 @@ locret_179AA:
 		move.w	#$2AC0+GHZ3Add,($FFFFF72A).w
 		moveq	#$12,d0
 		jsr	LoadPLC2	; load signpost	patterns
+		move.b	#1,($FFFFFF91).w
 		jmp	DeleteObject
 ; ===========================================================================
 
@@ -35612,13 +35621,17 @@ loc_17A5A:
 		subq.b	#2,d0
 		bne.s	Obj3D_FaceDisp
 		move.b	#6,$1C(a0)
-		cmpi.w	#$2AC0+GHZ3Add,($FFFFF72A).w
-		beq.s	Obj3D_FaceDel
 		tst.b	1(a0)
 		bpl.s	Obj3D_FaceDel
 
 Obj3D_FaceDisp:
+		tst.b	($FFFFFF91).w
+		bne.s	absdjasd
 		bra.s	Obj3D_Display
+; ===========================================================================
+
+absdjasd:
+		rts
 ; ===========================================================================
 
 Obj3D_FaceDel:
