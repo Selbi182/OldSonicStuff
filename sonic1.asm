@@ -19,7 +19,7 @@
 
 ; =====================
 ;Align macro for ASM68k
-; DON'T MODIFY IT!!!
+; DON'T TOUCH IT!!!
 align macro
      cnop 0,\1
      endm
@@ -48,7 +48,7 @@ AutoDEMO = 0
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened
-DoorsAlwaysOpen = 1
+DoorsAlwaysOpen = 0
 ;=================================================
 
 ; ---------------------------------------------------------------------------
@@ -27726,6 +27726,8 @@ S_D_RestorePal_MZ1:
 ; ===========================================================================
 
 S_D_NoWF2Flag:
+		bra.s	BranchRoutine
+
 		cmpi.b	#2,($FFFFFFAE).w	; is flag set to 2?
 		beq.s	BranchRoutine		; if yes, branch
 		btst	#6,($FFFFF602).w	; check if A is being held
@@ -30625,7 +30627,10 @@ Sonic_TestSpeed:
 		cmpi.w	#$600,d2	; is Sonic at running speed?
 		bcc.s	loc_13AB4	; if yes, branch
 		lea	(SonAni_Walk).l,a1 ; use walking animation
-		bra.s	@cont2
+		move.b	d0,d1
+		lsr.b	#1,d1
+		add.b	d1,d0
+		bra.s	loc_13AB4
 
 @cont:
 		lea	(SonAni3_FastRunning).l,a1 ; use sprinting animation
@@ -30635,10 +30640,7 @@ Sonic_TestSpeed:
 		cmpi.w	#$600,d2	; is Sonic at running speed?
 		bcc.s	loc_13AB4	; if yes, branch
 		lea	(SonAni3_Walk).l,a1 ; use walking animation
-@cont2:
-		move.b	d0,d1
-		lsr.b	#1,d1
-		add.b	d1,d0
+		add.b	d0,d0
 
 loc_13AB4:
 		add.b	d0,d0
@@ -44127,6 +44129,8 @@ Nem_BallHog:	incbin	artnem\ballhog.bin	; ball hog
 Nem_Crabmeat:	incbin	artnem\crabmeat.bin	; crabmeat
 		even
 Nem_Buzz:	incbin	artnem\buzzbomb.bin	; buzz bomber
+		even
+Nem_ExplBall:	incbin	artnem\explodingballs.bin ; exploding balls
 		even
 Nem_Burrobot:	incbin	artnem\burrobot.bin	; burrobot
 		even

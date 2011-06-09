@@ -29,7 +29,7 @@ CreditsMaps:
 StartText:
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	"  CREATOR AND MAIN  ",$FF
+	dc.b	"  CREATED AND MAIN  ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"   PROGRAMMING BY   ",$FF
 	dc.b	"                    ",$FF

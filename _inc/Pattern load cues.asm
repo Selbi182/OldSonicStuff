@@ -240,7 +240,7 @@ PLC_TitleCard:	dc.w 0
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - act 3 boss
 ; ---------------------------------------------------------------------------
-PLC_Boss:	dc.w 4
+PLC_Boss:	dc.w 5
 		dc.l Nem_Eggman		; Eggman main patterns
 		dc.w $8000
 		dc.l Nem_Weapons	; Eggman's weapons
@@ -251,16 +251,20 @@ PLC_Boss:	dc.w 4
 		dc.w $A300
 		dc.l Nem_Exhaust	; exhaust flame
 		dc.w $A540
+		dc.l Nem_ExplBall	; buzz bomber enemy
+		dc.w $8E00
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - act 1/2 signpost
 ; ---------------------------------------------------------------------------
-PLC_Signpost:	dc.w 2
+PLC_Signpost:	dc.w 1
 		dc.l Nem_SignPost	; signpost
 		dc.w $D000
-		dc.l Nem_Bonus		; hidden bonus points
-		dc.w $96C0
-		dc.l Nem_BigFlash	; giant	ring flash effect
-		dc.w $8C40
+		dc.l Nem_HSpring	; horizontal spring
+		dc.w $A460
+	;	dc.l Nem_Bonus		; hidden bonus points
+	;	dc.w $96C0
+	;	dc.l Nem_BigFlash	; giant	ring flash effect
+	;	dc.w $8C40
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - beta special stage warp effect
 ; ---------------------------------------------------------------------------

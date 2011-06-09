@@ -201,6 +201,24 @@ Options_StartUpWrite:
 
 Options_NoTextChange:
 		move.b	($FFFFF605).w,d1	; get button presses
+		cmpi.w	#13,($FFFFFF82).w	; is selected line DELETE SRAM?
+		bne.s	Options_NotDltSRAM	; if not, branch
+		andi.b	#$80,d1			; is Start pressed?
+		beq.w	OptionsScreen_MainLoop	; if not, return
+
+		move.b	#1,($A130F1).l		; enable SRAM
+		lea	($200000).l,a1
+		moveq	#0,d0			; set d0 to 0
+		movep.l	d0,$01(a1)		; clear SRAM
+		movep.l	d0,$09(a1)		; clear SRAM
+		movep.l	d0,$11(a1)		; clear SRAM
+		movep.l	d0,$19(a1)		; clear SRAM
+		move.b	#0,($A130F1).l		; disable SRAM
+
+		move.b	#0,($FFFFF600).w	; set screen mode to Sega Screen
+		rts
+
+Options_NotDltSRAM:
 		cmpi.w	#16,($FFFFFF82).w	; is selected line SOUND TEST?
 		bne.s	Options_NotSndTst	; if not, branch
 		andi.b	#$6C,d1			; is left, right, A or C pressed?
@@ -228,15 +246,7 @@ Options_OK_NoSound:
 ; ===========================================================================
 
 Options_Check4:
-		cmpi.w	#4,d0		; have you selected item 4 (AIR MOVE ON B)?
-		bne.s	Options_Not4	; if not, check for next numbers
-		bchg	#0,($FFFFFFBC).w	; enable/disable air move
-		bsr	OptionsTextLoad
-		bra.w	OptionsScreen_MainLoop
-; ===========================================================================
-
-Options_Not4:
-		cmpi.w	#7,d0		; have you selected item 7 (EXTENDED CAMERA)?
+		cmpi.w	#4,d0		; have you selected item 4 (EXTENDED CAMERA)?
 		bne.s	Options_Not7	; if not, check for next numbers
 		bchg	#0,($FFFFFF93).w	; enable/disable extended camera
 		bsr	OptionsTextLoad
@@ -244,7 +254,7 @@ Options_Not4:
 ; ===========================================================================
 
 Options_Not7:
-		cmpi.w	#10,d0		; have you selected item 10 (SONIC ART)?
+		cmpi.w	#7,d0		; have you selected item 7 (SONIC ART)?
 		bne.s	Options_Not10	; if not, check for next numbers
 		bchg	#0,($FFFFFF94).w	; change art style flag
 		bsr	OptionsTextLoad
@@ -252,7 +262,7 @@ Options_Not7:
 ; ===========================================================================
 
 Options_Not10:
-		cmpi.w	#13,d0		; have you selected item 13 (HARD PART SKIPPER)?
+		cmpi.w	#10,d0		; have you selected item 10 (HARD PART SKIPPER)?
 		bne.s	Options_Not13	; if not, check for next numbers
 		bchg	#0,($FFFFFF92).w	; enable/disable hard part skipper
 		bsr	OptionsTextLoad
@@ -496,14 +506,6 @@ GetOptionsText:
 
 		adda.w	#(1*24),a1			; make one empty line
 
-		lea	(OpText_AirMove).l,a2		; set text location
-		bsr.w	OW_Loop				; write text
-		moveq	#1,d2				; set d2 to 1
-		bsr.w	GOT_ChkOption			; check if option is ON or OFF
-		bsr.w	OW_Loop				; write text
-
-		adda.w	#(2*24),a1			; make two empty lines
-
 		lea	(OpText_Extended).l,a2		; set text location
 		bsr.w	OW_Loop				; write text
 		moveq	#2,d2				; set d2 to 2
@@ -527,6 +529,14 @@ GetOptionsText:
 		bsr.w	OW_Loop				; write text
 
 		adda.w	#(2*24),a1			; make two empty lines
+
+		lea	(OpText_DeleteSRAM).l,a2	; set text location
+		bsr.w	OW_Loop				; write text
+	;	moveq	#1,d2				; set d2 to 1
+	;	bsr.w	GOT_ChkOption			; check if option is ON or OFF
+	;	bsr.w	OW_Loop				; write text
+
+		adda.w	#(2*24+3),a1			; make two empty lines + 3 characters
 
 ; ---------------------------------------------------------------------------
 		lea	(OpText_SoundTest).l,a2		; set text location
@@ -574,11 +584,11 @@ GOT_StartUpWrite:
 GOTSUP_Index:	dc.w	GOTSUP_Header1-GOTSUP_Index	; [$0] "=" Headers
 		dc.w	GOTSUP_Header2-GOTSUP_Index	; [$2] "SONIC ERAZOR" Header
 		dc.w	GOTSUP_Options-GOTSUP_Index	; [$4] The 4 options itself
-		dc.w	GOTSUP_ONOFF1-GOTSUP_Index	; [$6] Write "ON" or "OFF" text for Air Move on B
-		dc.w	GOTSUP_ONOFF2-GOTSUP_Index	; [$8] Write "ON" or "OFF" text for Extended Camera
-		dc.w	GOTSUP_ONOFF3-GOTSUP_Index	; [$A] Write "S2B" or "S3" text for Sonic Art
-		dc.w	GOTSUP_ONOFF4-GOTSUP_Index	; [$C] Write "ON" or "OFF" text for Fourh Option
-		dc.w	GOTSUP_ONOFF4-GOTSUP_Index	; [$E] Twice to give a little delay
+		dc.w	GOTSUP_ONOFF1-GOTSUP_Index	; [$6] Write "ON" or "OFF" text for Extended Camera
+		dc.w	GOTSUP_ONOFF2-GOTSUP_Index	; [$8] Write "ON" or "OFF" text for Sonic Art
+		dc.w	GOTSUP_ONOFF3-GOTSUP_Index	; [$A] Write "S2B" or "S3" text for Hard Part Skipper
+		dc.w	GOTSUP_Delay-GOTSUP_Index	; [$C] Delay
+		dc.w	GOTSUP_Delay-GOTSUP_Index	; [$E] Delay
 		dc.w	GOTSUP_SoundTest-GOTSUP_Index	; [$10] Write "SOUND TEST"
 		dc.w	GOTSUP_ExitOptions-GOTSUP_Index	; [$12] Write "EXIT OPTIONS"
 ; ===========================================================================
@@ -608,22 +618,22 @@ GOTSUP_Header2:
 GOTSUP_Options:
 		lea	($FFFFCA00+(4*24)).w,a1		; set destination
 		adda.w	($FFFFFF9A).w,a1
-		lea	(OpText_AirMove).l,a2		; set text location
+		lea	(OpText_Extended).l,a2		; set text location
 		bsr.w	Options_Write			; write text
 
 		lea	($FFFFCA00+(7*24)).w,a1		; set destination
 		adda.w	($FFFFFF9A).w,a1
-		lea	(OpText_Extended).l,a2		; set text location
+		lea	(OpText_SonicArt).l,a2		; set text location
 		bsr.w	OW_NoIncrease			; write text
 
 		lea	($FFFFCA00+(10*24)).w,a1	; set destination
 		adda.w	($FFFFFF9A).w,a1
-		lea	(OpText_SonicArt).l,a2		; set text location
+		lea	(OpText_HardPartSkipper).l,a2	; set text location
 		bsr.w	OW_NoIncrease			; write text
 
 		lea	($FFFFCA00+(13*24)).w,a1	; set destination
 		adda.w	($FFFFFF9A).w,a1
-		lea	(OpText_HardPartSkipper).l,a2	; set text location
+		lea	(OpText_DeleteSRAM).l,a2	; set text location
 		bsr.w	OW_NoIncrease			; write text
 		
 		subq.w	#1,($FFFFFF9A).w
@@ -634,7 +644,7 @@ GOTSUP_Options:
 
 GOTSUP_ONOFF1:
 		moveq	#0,d1				; clear d1
-		moveq	#1,d2				; set d2 to 1
+		moveq	#2,d2				; set d2 to 2
 		bsr.w	GOT_ChkOption			; check if option is ON or OFF
 		lea	($FFFFCA00+(4*24)+21).w,a1	; set destination
 		bsr.w	OW_Loop				; write text
@@ -643,7 +653,7 @@ GOTSUP_ONOFF1:
 
 GOTSUP_ONOFF2:
 		moveq	#0,d1				; clear d1
-		moveq	#2,d2				; set d2 to 2
+		moveq	#3,d2				; set d2 to 3
 		bsr.w	GOT_ChkOption			; check if option is ON or OFF
 		lea	($FFFFCA00+(7*24)+21).w,a1	; set destination
 		bsr.w	OW_Loop				; write text
@@ -652,20 +662,17 @@ GOTSUP_ONOFF2:
 
 GOTSUP_ONOFF3:
 		moveq	#0,d1				; clear d1
-		moveq	#3,d2				; set d2 to 3
+		moveq	#4,d2				; set d2 to 4
 		bsr.w	GOT_ChkOption			; check if option is ON or OFF
 		lea	($FFFFCA00+(10*24)+21).w,a1	; set destination
 		bsr.w	OW_Loop				; write text
 		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
 		rts					; return
+; ---------------------------------------------------------------------------
 
-GOTSUP_ONOFF4:
-		moveq	#0,d1				; clear d1
-		moveq	#4,d2				; set d2 to 4
-		bsr.w	GOT_ChkOption			; check if option is ON or OFF
-		lea	($FFFFCA00+(13*24)+21).w,a1	; set destination
-		bsr.w	OW_Loop				; write text
-		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
+GOTSUP_Delay:
+		clr.b	($FFFFFF96).w			; clear counter
+		addq.b	#2,($FFFFFF98).w		; increase pointer
 		rts					; return
 ; ---------------------------------------------------------------------------
 
@@ -853,10 +860,6 @@ OpText_Header2:
 		even
 ; ---------------------------------------------------------------------------
 
-OpText_AirMove:
-		dc.b	'AIR MOVE ON B        ', $FF
-		even
-
 OpText_Extended:
 		dc.b	'EXTENDED CAMERA      ', $FF
 		even
@@ -867,6 +870,10 @@ OpText_SonicArt:
 
 OpText_HardPartSkipper:
 		dc.b	'HARD PART SKIPPER    ', $FF
+		even
+
+OpText_DeleteSRAM:
+		dc.b	'DELETE SRAM          ', $FF
 		even
 ; ---------------------------------------------------------------------------
 
