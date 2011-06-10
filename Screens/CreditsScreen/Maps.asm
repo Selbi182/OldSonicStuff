@@ -112,14 +112,14 @@ StartText:
 
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	"    BETA TESTING    ",$FF
+	dc.b	" TECHNICAL  SUPPORT ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"      SONICVAAN     ",$FF
+	dc.b	"       FRAGAG       ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
@@ -133,9 +133,9 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
+	dc.b	"  THE SSRG IRC CHAT ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"       IRIXION      ",$FF
+	dc.b	"    ON BADNIKNET    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
@@ -150,11 +150,11 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"  THE SSRG IRC CHAT ",$FF
+	dc.b	"    EVERYONE WHO    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"    ON BADNIKNET    ",$FF
+	dc.b	"    HELPED ALONG    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
+	dc.b	"      THE WAY       ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF

@@ -48,7 +48,7 @@ AutoDEMO = 0
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened
-DoorsAlwaysOpen = 0
+DoorsAlwaysOpen = 1
 ;=================================================
 
 ; ---------------------------------------------------------------------------
@@ -5237,6 +5237,8 @@ SS_NoDebug:
 ; ---------------------------------------------------------------------------
 
 SS_MainLoop:
+		tst.b	($FFFFFF92).w		; is hard part skipper enabled?
+		beq.s	SS_NoSkip		; if not, branch
 		btst	#7,($FFFFF605).w	; is Start button pressed?
 		beq.w	SS_NoSkip		; if not, branch
 		cmpi.b	#4,($FFFFD024).w	; is special stage exiting routine being run?

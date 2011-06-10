@@ -1,5 +1,0 @@
-To-Do (MUST be done in order to release this hack):
-- Fix glitched exploding balls and springs at Eggman.
-
-Would be great:
-- Doing a Tutorial/Demo Mode. (Basically a walkthrough, but in the game itself. Actually, I already started working on this, but the gay demo mode system only does shit. -._-.)

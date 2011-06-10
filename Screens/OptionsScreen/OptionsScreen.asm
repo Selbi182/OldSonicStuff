@@ -213,10 +213,19 @@ Options_NoTextChange:
 		movep.l	d0,$09(a1)		; clear SRAM
 		movep.l	d0,$11(a1)		; clear SRAM
 		movep.l	d0,$19(a1)		; clear SRAM
+		move.b	#0,$19(a1)		; clear SRAM
+		clr.b	($FFFFFF8B).w
+		clr.b	($FFFFFFBC).w
+		clr.b	($FFFFFF92).w
+		clr.b	($FFFFFF9C).w
+		clr.b	($FFFFFF93).w
+		clr.b	($FFFFFFBC).w
+		clr.w	($FFFFFE20).w
+		clr.l	($FFFFFE26).w
+
 		move.b	#0,($A130F1).l		; disable SRAM
 
-		move.b	#0,($FFFFF600).w	; set screen mode to Sega Screen
-		rts
+		jmp	EntryPoint
 
 Options_NotDltSRAM:
 		cmpi.w	#16,($FFFFFF82).w	; is selected line SOUND TEST?
