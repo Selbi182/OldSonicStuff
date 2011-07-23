@@ -4780,6 +4780,7 @@ MainLevelArray:
 ; ---------------------------------------------------------------------------
 
 ClearEverySpecialFlag:
+		clr.b	($FFFFFF91).w
 		clr.l	($FFFFFFA0).w	; clear RAM adresses $FFA0-$FFA3 (4 flags)
 		clr.l	($FFFFFFA4).w	; $FFA4-$FFA7	(4)
 		clr.l	($FFFFFFA8).w	; $FFA8-$FFAB	(4)
@@ -13313,6 +13314,16 @@ Obj1F_BossDefeated:
 ; ===========================================================================
 
 Obj1F_BossDelete:
+		tst.b	($FFFFFFE7).w		; is Sonic in Inhuman Mode?
+		beq.s	@cont			; if not, branch
+		clr.b	($FFFFFFE7).w		; disabled Inhuman Mode
+		clr.b	($FFFFFE2C).w		; remove any shields
+		move.w	d7,-(sp)		; back up d7
+		moveq	#3,d0			; load Sonic's pallet
+		jsr	PalLoad2		; restore sonic's palette
+		move.w	(sp)+,d7		; restore d7
+
+@cont:
 		jsr	WhiteFlash3			; make white flash
 		move.b	#2,($FFFFFFD4).w		; set flag 4, 2
 		move.b	#0,($FFFFF7AA).w		; unlock screen
@@ -15709,7 +15720,7 @@ Obj0E:					; XREF: Obj_Index
 Obj0E_Index:	dc.w Obj0E_Main-Obj0E_Index
 		dc.w Obj0E_Delay-Obj0E_Index
 		dc.w Obj0E_Move-Obj0E_Index
-		dc.w Obj0E_Animate-Obj0E_Index
+		dc.w Obj0E_AnimateX-Obj0E_Index
 ; ===========================================================================
 
 Obj0E_Main:				; XREF: Obj0E_Index
@@ -15745,11 +15756,24 @@ Obj0E_Display:
 		bra.w	DisplaySprite
 ; ===========================================================================
 
+Obj0E_AnimateX:
+		move.b	$3F(a0),d0		; ^ make Sonic hovering
+		jsr	(CalcSine).l		; | copied
+		asr.w	#5,d0			; | from
+		add.w	$38(a0),d0		; | Obj3D
+		move.w	d0,$A(a0)		; | (GHZ-boss)
+		addq.b	#2,$3F(a0)		; v
+		add.w	#$D0,$A(a0)		; for some reason, I gotta bring Sonic down a little bit manually
+
 Obj0E_Animate:				; XREF: Obj0E_Index
 		lea	(Ani_obj0E).l,a1
 		bsr	AnimateSprite
 		bra.w	DisplaySprite
 ; ===========================================================================
+
+Ani_obj0E:
+		include	"_anim\obj0E.asm"
+
 
 ; ---------------------------------------------------------------------------
 ; Object 0F - "PRESS START BUTTON" from title screen
@@ -15781,7 +15805,7 @@ locret_A6F8:				; XREF: Obj0F_Index
 ; ===========================================================================
 
 Obj0F_PrsStart1:			; XREF: Obj0F_Index
-		addq.w	#6,$8(a0)	; move object across the screen
+		addq.w	#4,$8(a0)	; move object across the screen
 		cmpi.w	#$170,8(a0)
 		blt.s	Obj0F_Animate
 		addq.b	#2,$24(a0)
@@ -15789,7 +15813,7 @@ Obj0F_PrsStart1:			; XREF: Obj0F_Index
 ; ---------------------------------------------------------------------------
 
 Obj0F_PrsStart2:			; XREF: Obj0F_Index
-		subq.w	#6,$8(a0)	; move object across the screen
+		subq.w	#4,$8(a0)	; move object across the screen
 		cmpi.w	#$40,8(a0)
 		bgt.s	Obj0F_Animate
 		subq.b	#2,$24(a0)
@@ -15799,8 +15823,6 @@ Obj0F_Animate:
 		lea	(Ani_obj0F).l,a1
 		bra.s	AnimateSprite
 ; ===========================================================================
-Ani_obj0E:
-		include	"_anim\obj0E.asm"
 
 Ani_obj0F:
 		include	"_anim\obj0F.asm"

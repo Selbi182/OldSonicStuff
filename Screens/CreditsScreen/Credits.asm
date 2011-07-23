@@ -35,6 +35,8 @@ CJ_RepPal:
 		move.l	(a0)+,(a1)+				; ''
 		dbf	d1,CJ_RepPal				; repeat til palette is dumped
 
+		clr.b	($FFFFFF91).w
+
 	;	move.b	#$97,d0					; prepare Credits music ID
 	;	jsr	PlaySound				; play music ID
 		jsr	Pal_FadeTo				; fade palette in
