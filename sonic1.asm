@@ -48,7 +48,7 @@ AutoDEMO = 0
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened
-DoorsAlwaysOpen = 1
+DoorsAlwaysOpen = 0
 ;=================================================
 
 ; ---------------------------------------------------------------------------

@@ -109,17 +109,16 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
-
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	" TECHNICAL  SUPPORT ",$FF
+	dc.b	" MAIN BETA TESTING  ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
+	dc.b	"     SONICVAAN      ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"       FRAGAG       ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF

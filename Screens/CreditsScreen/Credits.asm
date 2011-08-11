@@ -185,7 +185,7 @@ CJML_NoramlScreen:
 
 CJML_ScrollSlow:
 		addq.b	#1,($FFFFFE04).w			; increase frame counter
-		btst	#0,($FFFFFE04).w
+		btst	#1,($FFFFFE04).w
 		bne.s	@cont
 		subq.w	#$0001,($FFFFFFA0).w			; decrease X scroll position left
 		subq.b	#$0001,($FFFFFF90).w		

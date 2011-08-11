@@ -677,16 +677,16 @@ InfoText_2:	; text after beating Green Hill Zone
 		dc.b	'ENEMIES, ALL WANTING TO KILL'
 		dc.b	'    HIM WITH EXPLOSIONS!    '
 		dc.b	'                            '
-		dc.b	' AFTER A MADNESS FIGHT WITH '
+		dc.b	'   AFTER A MAD FIGHT WITH   '
 		dc.b	' A SPECIAL CRABMEAT, SONIC  '
 		dc.b	'  CONTINUED HIS WAY TO THE  '
-		dc.b	' GREEN HILL ZONE, HOPING IT '
+		dc.b	'GREEN HILL PLACE, HOPING IT '
 		dc.b	' IS NOT EXPLODING AS WELL.  '
 		dc.b	'   SAD BUT TRUE, THAT WAS   '
-		dc.b	'     EXCACTLY THE CASE.     '
+		dc.b	'     EXACTLY THE CASE.      '
 		dc.b	'                            '
 		dc.b	'BACK IN SYZ, A RING BLOCKED '
-		dc.b	' HIS WAY TO MARBLE ZONE...  '
+		dc.b	' HIS WAY TO RUINED PLACE... '
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
@@ -701,12 +701,12 @@ InfoText_3:	; text after beating Special Stage
 		dc.b	' ANYWAY, AFTER BEATING THE  '
 		dc.b	'SPECIAL STAGE OF HELL, SONIC'
 		dc.b	' WAS FINALLY ABLE TO GO TO  '
-		dc.b	'  MARBLE ZONE, THINKING IT  '
+		dc.b	' RUINED PLACE, THINKING IT  '
 		dc.b	'   WILL BE EASY TO BEAT.    '
 		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	' LITTLE DID HE KNOW, IT HAD '
-		dc.b	'AN EVIL CHALLANGE AS WELL...'
+		dc.b	'JUST BY ITS NAME, YOU SHOULD'
+		dc.b	'  BE ABLE TO REALIZE, THAT  '
+		dc.b	' THIS NOT THE CASE AT ALL.  '
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
@@ -714,7 +714,7 @@ InfoText_3:	; text after beating Special Stage
 InfoText_4:	; text after beating Marble Zone
 		dc.b	'WHO WOULD HAVE THOUGHT THAT '
 		dc.b	'  SPIKES CAN BE THAT BAD?   '
-		dc.b	'    SONIC SURLY WAS NOT.    '
+		dc.b	'   SONIC SURELY WAS NOT.    '
 		dc.b	'                            '
 		dc.b	' ANYWAY, AFTER BEATING THIS '
 		dc.b	'HORRIBLE MAZE OF TELEPORTING'
@@ -789,17 +789,17 @@ ScrollText_1:	dc.b	1, 0, 0, 0
 
 ScrollText_2:	dc.b	1, 0, 0, 0
 		dc.b	0, 0, 1, 0
-		dc.b	0, 1, 0, 0
-		dc.b	0, 1, 1
+		dc.b	1, 1, 0, 1
+		dc.b	0, 1, 0
 		even
 
 ScrollText_3:	dc.b	0, 1, 0, 0
 		dc.b	0, 0, 1, 0
-		dc.b	1, 0, 1, 0
-		dc.b	0, 0, 0
+		dc.b	1, 1, 1, 0
+		dc.b	0, 0, 1
 		even
 
-ScrollText_4:	dc.b	1, 1, 0, 0
+ScrollText_4:	dc.b	1, 1, 1, 0
 		dc.b	0, 0, 0, 1
 		dc.b	1, 0, 0, 0
 		dc.b	0, 0, 0
