@@ -3,8 +3,8 @@
 ; ---------------------------------------------------------------------------
 
 OptionsScreen:				; XREF: GameModeArray
-		move.b	#$E4,d0
-		jsr	PlaySound_Special ; stop music
+		move.b	#$E0,d0
+		jsr	PlaySound_Special ; fade out music
 		jsr	ClearPLC
 		jsr	Pal_FadeFrom
 		move	#$2700,sr

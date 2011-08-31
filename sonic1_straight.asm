@@ -1185,11 +1185,7 @@ loc_13BE:
 		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
 		bne.s	PG_ChkHUD		; if not, branch
 		bsr	ClearEverySpecialFlag	; clear flags
-		move.b	#$20,($FFFFF600).w	; set screen mode to $20 (Info Screen)
-		move.b	#1,($A130F1).l		; enable SRAM
-		move.b	#1,($200007).l		; set number for text to 1
-		move.b	#0,($A130F1).l		; disable SRAM
-		clr.b	($FFFFFFE7).w		; make sure Sonic is not inhuman
+		move.b	#$24,($FFFFF600).w	; set to options Screen
 		rts
 ; ===========================================================================
 
@@ -3533,7 +3529,11 @@ StartGame:
 	;	cmpi.b	#$B6,($20001B).l	; does SRAM exist?
 	;	bne.s	T_NoSRAM		; if not, branch
 	;	move.b	#1,($FFFFFF7D).w
-		move.b	#$24,($FFFFF600).w	; set to options Screen
+		move.w	#$001,($FFFFFE10).w
+		move.b	#$0C,($FFFFF600).w
+		move.b	#$95,d0
+		jsr	PlaySound
+	;	move.b	#$24,($FFFFF600).w	; set to options Screen
 	;	move.b	#0,($A130F1).l		; disable SRAM
 		rts				; return
 
@@ -14888,18 +14888,8 @@ Obj4B_ChkGHZ2:
 		bne.s	Obj4B_SetSS		; if not, branch
 		subq.b	#1,($FFFFFFBA).w
 		bpl.s	Obj4B_Return
-		clr.b	($FFFFFFB8).w
-		clr.b	($FFFFFFB7).w
-		clr.b	($FFFFFFB6).w
+		move.b	#$24,($FFFFF600).w	; set to options Screen
 
-		move.b	#1,($A130F1).l		; enable SRAM
-		cmpi.b	#$B6,($20001B).l	; does SRAM exist?
-		bne.s	Obj4B_NoSRAM		; if not, branch
-		move.b	#0,($A130F1).l		; disable SRAM
-
-		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
-		move.b	#$C,($FFFFF600).w	; set to level
-		move.w	#1,($FFFFFE02).w	; restart level
 		rts
 
 Obj4B_NoSRAM:
@@ -30382,6 +30372,7 @@ Obj01_Death_NoWhite:
 		cmpi.w	#$601,($FFFFFE10).w	; is this the ending sequence?
 		beq.s	Obj01_Death_ES		; if yes, branch
 		move.w	#1,($FFFFFE02).w ; restart the level
+		move.b	#$C,($FFFFF600).w
 		clr.b	($FFFFFFAC).w
 		clr.b	($FFFFFFBB).w
 		clr.b	($FFFFFFB8).w
