@@ -1,0 +1,2 @@
+- Add a counter that tells you how much food you collected.
+- Add some more graphics, like improved Snake graphics and a background.

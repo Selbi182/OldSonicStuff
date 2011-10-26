@@ -10,11 +10,18 @@ Snake_Length	= $FFFFF900	; Length of the Snake, increases with eating food (byte
 Snake_Direction	= $FFFFF902	; Direction of the Snake (byte; 0=up, 1=right, 2=down, 3=left)
 Snake_HeadLoc	= $FFFFF906	; Location of Snake's head in coordinates (word; XXYY)
 Snake_FoodFlag	= $FFFFF90A
+FoodPosition	= $FFFFF90C
 
-Control1	= $FFFFF600	; Contains the controls of controller 1 (byte/bits; SABCUDLR)
-RandomNumber	= $FFFFF636	; Random number for the food positioning (longword)
-DelayTimer	= $FFFFF800	; Timer to slow down the system (byte)
-Time_Delay	= 30		; Time to delay in frames
+VInt_Flag	= $FFFFF800	; Used to slow down the system based on V-Blank (byte)
+DelayTimer	= $FFFFF802	; Timer to slow down the system (byte)
+Control1	= $FFFFF804	; Contains the controls of controller 1 (byte/bits; SABCUDLR)
+RandomNumber	= $FFFFF806	; Random number for the food positioning (longword)
+LastDirection	= $FFFFF80A
+LastBody	= $FFFFF80C
+CollectedFood	= $FFFFF80E	; Flag, that tells if current frame if food has been collected (byte)
+
+TimeDelay_Fast	= 5		; Time to delay in frames
+TimeDelay_Slow	= 30		; Time to delay in frames (while holding C)
 
 Size_X		= $26		; Horizontal playfield size
 Size_Y		= $18		; Vertical playfield size
@@ -69,46 +76,46 @@ ProductRegions:	dc.b	'JUE             '
 ; ---------------------------------------------------------------------------
 
 StartGame:
-		move	#$2700,sr				; disable interrupts V and H
+		move	#$2700,sr			; disable interrupts V and H
 
-		move.b	($A10001).l,d0				; load hardware I/O data
-		andi.b	#$0F,d0					; get only the hardware version number
-		beq	@SetupGame				; if it's null, then the machine is not official
-		move.l	#'SEGA',($A14000).l			; set the official security code (required for hardware)
+		move.b	($A10001).l,d0			; load hardware I/O data
+		andi.b	#$0F,d0				; get only the hardware version number
+		beq	@SetupGame			; if it's null, then the machine is not official
+		move.l	#'SEGA',($A14000).l		; set the official security code (required for hardware)
 
 	@SetupGame:
-		move.w	#$8014,($C00004).l			;[H-Interrupt On];[H,V Counter On];
-		move.w	#$8174,($C00004).l			;[Display On];[V-Interrupt On];[DMA On];[V 28 Cell PAL/NTSC Mode];
-		move.w	#$8200|((($C000)>>$0A)&$FF),($C00004).l	;[Scroll Plane A Map Table VRam address];  (V-Ram C000)
-		move.w	#$8300|((($F000)>>$0A)&$FF),($C00004).l	;[Window Plane A Map Table VRam address];  (V-Ram F000)
-		move.w	#$8400|((($E000)>>$0D)&$FF),($C00004).l	;[Scroll Plane B Map Table VRam address];  (V-Ram E000)
-		move.w	#$8500|((($D000)>>$09)&$FF),($C00004).l	;[Sprite Plane Map Table VRam address];  (V-Ram D000)
-		move.w	#$8600,($C00004).l			;[Unknown/Unused Register];
-		move.w	#$8700,($C00004).l			;[Backdrop Colour: Palette Line 0/Colour ID 0];
-		move.w	#$8800,($C00004).l			;[Unknown/Unused Register];
-		move.w	#$8900,($C00004).l			;[Unknown/Unused Register];
-		move.w	#$8ADF,($C00004).l			;[H-Interrupt Register];
-		move.w	#$8B00,($C00004).l			;[External Interrupt Off];[V-Scroll: Full];[H-Scroll: Full];[Line: By Cell];
-		move.w	#$8C81,($C00004).l			;[H-Mode: 32 Cell];[Shadow/Hi-Lighting Off];[Interlace Off];
-		move.w	#$8D00|((($D800)>>$0A)&$FF),($C00004).l	;[Horizontal Scroll Table VRam address];  (V-Ram D800)
-		move.w	#$8E00,($C00004).l			;[Unknown/Unused Register];
-		move.w	#$8F02,($C00004).l			;[Auto Increament: By 2];
-		move.w	#$9001,($C00004).l			;[VDP Screen Map Size: Vertical Size 32 (20) Cell/Horizontal Size 64 (40) Cell];
-		move.w	#$9100,($C00004).l			;[Window Horizontal Position: 00];
-		move.w	#$9200,($C00004).l			;[Window Vertical Position: 00];
-		move.w	#$93FF,($C00004).l			;[DMA Transfer Size (Lower Byte XX00)];
-		move.w	#$94FF,($C00004).l			;[DMA Transfer Size (Upper Byte 00XX)];
-		move.w	#$9500,($C00004).l			;[DMA Transfer Source (Low Byte XXXX00)];
-		move.w	#$9600,($C00004).l			;[DMA Transfer Source (Mid Byte XX00XX)];
-		move.w	#$9780,($C00004).l			;[DMA Transfer Source (Hi- Byte 00XXXX)];
+		move.w	#$8014,($C00004).l		;[H-Interrupt On];[H,V Counter On];
+		move.w	#$8174,($C00004).l		;[Display On];[V-Interrupt On];[DMA On];[V 28 Cell PAL/NTSC Mode];
+		move.w	#$8230,($C00004).l		;[Scroll Plane A Map Table VRam address];  (V-Ram C000)
+		move.w	#$833C,($C00004).l		;[Window Plane A Map Table VRam address];  (V-Ram F000)
+		move.w	#$8407,($C00004).l		;[Scroll Plane B Map Table VRam address];  (V-Ram E000)
+		move.w	#$8568,($C00004).l		;[Sprite Plane Map Table VRam address];  (V-Ram D000)
+		move.w	#$8600,($C00004).l		;[Unknown/Unused Register];
+		move.w	#$8700,($C00004).l		;[Backdrop color: Palette Line 0/color ID 0];
+		move.w	#$8800,($C00004).l		;[Unknown/Unused Register];
+		move.w	#$8900,($C00004).l		;[Unknown/Unused Register];
+		move.w	#$8ADF,($C00004).l		;[H-Interrupt Register];
+		move.w	#$8B00,($C00004).l		;[External Interrupt Off];[V-Scroll: Full];[H-Scroll: Full];[Line: By Cell];
+		move.w	#$8C81,($C00004).l		;[H-Mode: 32 Cell];[Shadow/Hi-Lighting Off];[Interlace Off];
+		move.w	#$8D36,($C00004).l		;[Horizontal Scroll Table VRam address];  (V-Ram D800)
+		move.w	#$8E00,($C00004).l		;[Unknown/Unused Register];
+		move.w	#$8F02,($C00004).l		;[Auto Increament: By 2];
+		move.w	#$9001,($C00004).l		;[VDP Screen Map Size: Vertical Size 32 (20) Cell/Horizontal Size 64 (40) Cell];
+		move.w	#$9100,($C00004).l		;[Window Horizontal Position: 00];
+		move.w	#$9200,($C00004).l		;[Window Vertical Position: 00];
+		move.w	#$93FF,($C00004).l		;[DMA Transfer Size (Lower Byte XX00)];
+		move.w	#$94FF,($C00004).l		;[DMA Transfer Size (Upper Byte 00XX)];
+		move.w	#$9500,($C00004).l		;[DMA Transfer Source (Low Byte XXXX00)];
+		move.w	#$9600,($C00004).l		;[DMA Transfer Source (Mid Byte XX00XX)];
+		move.w	#$9780,($C00004).l		;[DMA Transfer Source (Hi- Byte 00XXXX)];
 
-		move.w	#$0100,($A11100).l			; request Z80 stop (ON)
-		move.w	#$0000,($A11200).l			; request Z80 reset (ON)
-		moveq	#$40,d1					; prepare initiation flag
-		move.b	d1,($A10009).l				; initiate port 1
-		move.b	d1,($A1000B).l				; initiate port 2
-		move.b	d1,($A1000D).l				; initiate port 3
-		move.w	#$0100,($A11200).l			; request Z80 reset (OFF)
+		move.w	#$0100,($A11100).l		; request Z80 stop (ON)
+		move.w	#$0000,($A11200).l		; request Z80 reset (ON)
+		moveq	#$40,d1				; prepare initiation flag
+		move.b	d1,($A10009).l			; initiate port 1
+		move.b	d1,($A1000B).l			; initiate port 2
+		move.b	d1,($A1000D).l			; initiate port 3
+		move.w	#$0100,($A11200).l		; request Z80 reset (OFF)
 
 	; Clear RAM:
 		lea	($FFFFF000).w,a0		; set base of RAM to a0
@@ -131,7 +138,7 @@ SG_WriteArt:
 		lea	($C00004).l,a6			; load VDP address port address to a6
 		move.l	#$40200000,(a6)			; set VDP address to write to
 		lea	(Art_Snake).l,a0		; load uncompressed art to dump
-		moveq	#(448/(4*8))-1,d7		; set repeat times (filesize / (bytes per tile row * total rows per tile)) - 1
+		moveq	#(512/(4*8))-1,d7		; set repeat times (filesize / (bytes per tile row * total rows per tile)) - 1
 	@SWA_Snake_Loop:
 		move.l	(a0)+,(a5)			; dump art to V-Ram
 		move.l	(a0)+,(a5)			; ''
@@ -146,7 +153,7 @@ SG_WriteArt:
 	; Food graphics:
 		lea	($C00000).l,a5			; load VDP data port address to a5
 		lea	($C00004).l,a6			; load VDP address port address to a6
-		move.l	#$5FE00000,(a6)			; set VDP address to write to
+		move.l	#$42200000,(a6)			; set VDP address to write to
 		lea	(Art_Food).l,a0			; load uncompressed art to dump
 		move.l	(a0)+,(a5)			; dump art to V-Ram
 		move.l	(a0)+,(a5)			; ''
@@ -159,12 +166,12 @@ SG_WriteArt:
 
 	; Palette:
 		move.l	#$C0000000,(a6)			; set VDP address to C-Ram
-		lea	(Palette_Main).w,a1
+		lea	(Palette_Main).w,a1		; load palette data into a1
 	@SWA_Palette_Loop:
-		move.w	(a1)+,d0
-		bmi.s	SG_WritePlayfield
-		move.w	d0,(a5)				; dump colour for food
-		bra.s	@SWA_Palette_Loop
+		move.w	(a1)+,d0			; get current color into d0
+		bmi.s	SG_WritePlayfield		; if it's negative, the end of the list has been reached, so quit
+		move.w	d0,(a5)				; dump colors
+		bra.s	@SWA_Palette_Loop		; loop
 
 ; ---------------------------------------------------------------------------
 ; Write the playfield on start-up. The point of this is to instantly show
@@ -209,6 +216,7 @@ SG_WritePlayfield:
 
 	; Food:
 		move.b	#Food_ID,(Snake_Data+$270).w	; set first food positon (the $270 is just a random value to set the first position)
+		move.w	#$270,(FoodPosition).w		; also put that value into FoodPosition
 
 	; And finally, write everyting into the VDP:
 		bsr	Sub_WriteArt			; write data to VDP
@@ -222,17 +230,17 @@ SG_WritePlayfield:
 ; ---------------------------------------------------------------------------
 
 MainLoop:
-		clr.b	($FFFFF000).w			; clear frame flag
-		
-		bsr	Sub_RandomNumber		; create a new random number for the food
+		clr.b	(VInt_Flag).w			; clear frame flag
+
+		bsr	Sub_CheckForFood		; check if any new food needs to be created
 
 ; ---------------------------------------------------------------------------
 ; This routine checks for presses on the D-Pad and sets the corresponding
 ; direction for the Snake.
 ; ---------------------------------------------------------------------------
 
-ControlHandle:
-		bsr	GetControls			; load controls
+ControlHandel:
+		bsr	Sub_GetControls			; load controls
 
 		btst	#0,(Control1).w			; is 'up' being held?
 		bne.s	@CH_ChkDown			; if not, check for down
@@ -266,12 +274,20 @@ ControlHandle:
 ; ---------------------------------------------------------------------------
 
 WaitFrame:
-		tst.b	($FFFFF000).w			; has V-blank ran yet?
+		tst.b	(VInt_Flag).w			; has V-blank ran yet?
 		beq.s	WaitFrame			; if not, recheck
 
 		addq.b	#1,(DelayTimer).w		; add 1 to delay timer
-		cmpi.b	#Time_Delay,(DelayTimer).w	; has delay time in value been reached?
-		bne.w	MainLoop			; if not, loop the game until it is
+		btst	#5,(Control1).w			; is C button pressed?
+		bne.s	@WF_MoveFast			; if yes, branch
+		cmpi.b	#TimeDelay_Slow,(DelayTimer).w	; has delay time in value been reached?
+		blt.w	MainLoop			; if not, loop the game until it is
+		clr.b	(DelayTimer).w			; otherwise, reset the delay counter
+		bra.s	PlayfieldModify			; skip
+
+@WF_MoveFast:
+		cmpi.b	#TimeDelay_Fast,(DelayTimer).w	; has delay time in value been reached?
+		blt.w	MainLoop			; if not, loop the game until it is
 		clr.b	(DelayTimer).w			; otherwise, reset the delay counter
 
 ; ===========================================================================
@@ -332,21 +348,23 @@ PlayfieldModify:
 		move.w	d0,d1				; copy to d1
 		andi.w	#$FF00,d1			; only get X position
 		bpl.s	@PM_H_Done			; if the Snake didn't hit the left, branch
-		add.w	#((Size_X-1)<<8)+$100,d0	; otherwise make Snake re-appear on the right
+		add.w	#Size_X<<8,d0			; otherwise make Snake re-appear on the right
 	@PM_H_Done:
 		move.w	d0,(Snake_HeadLoc).w		; put entire result back into the head location's RAM address
 
-	; Write head to playfield:
+	; Write head to playfield & food handling:
 		move.w	d0,d1				; copy head result from last code block to d1
 		lsr.w	#8,d0				; get only the X position in d0
 		andi.w	#$00FF,d1			; get only the Y position in d1
 		mulu.w	#Size_X,d1			; multiply default X size with the row, the head is in
 		add.w	d0,d1				; add actual X position to it
 
+		clr.b	(CollectedFood).w		; set "CollectedFood" flag to false
 		lea	(Snake_Data).w,a1		; load playfield data into a1
 		cmpi.b	#Food_ID,(a1,d1.w)		; is head currently eating food?
 		bne.s	@PM_WF_ChkWrite			; if not, branch
 		addq.b	#1,(Snake_Length).w		; otherwise, increase Snake length by 1 unit
+		move.b	#1,(CollectedFood).w		; set "CollectedFood" flag to true
 		cmpi.b	#Food_ID,(Snake_Length).w	; is current Snake length now equal to Food ID?
 		beq.w	StartGame			; if yes, restart the game if (to prevent the Snake from laying shit and fucking everything up, will be replaced with something smarter one day)
 	@PM_WF_ChkWrite:
@@ -358,49 +376,12 @@ PlayfieldModify:
 	@PM_WF_WriteHead:
 		move.b	#$01,(a1,d1.w)			; write the freaking head already!
 
-; ---------------------------------------------------------------------------
-
-	; Write food to playfield:
-
-
-
-
-
-
-
-		clr.b	(Snake_FoodFlag).w
-		lea	(Snake_Data).w,a1
-		move.w	#(Size_X*Size_Y)-1,d1
-CheckFood_Loop:
-		cmpi.b	#Food_ID,(a1)+
-		bne.s	CFL_NoFood
-		move.b	#1,(Snake_FoodFlag).w
-CFL_NoFood:
-		dbf	d1,CheckFood_Loop
-
-		tst.b	(Snake_FoodFlag).w
-		bne.s	PM_WriteToVDP
-		lea	(Snake_Data).w,a1
-		move.l	(RandomNumber).w,d1
-		move.b	d1,d2
-		andi.w	#$F,d2
-		lsr.b	#1,d2
-LoopToSize:
-		cmpi.w	#(Size_X*Size_Y),d1
-		blt.s	SetNewFood
-DivBy16:
-		lsr.w	d2,d1
-		bra.s	LoopToSize
-SetNewFood:
-		tst.b	(a1,d1.w)
-		bne.s	DivBy16
-		move.b	#Food_ID,(a1,d1.w)
-
-PM_WriteToVDP:
-		bsr	Sub_WriteArt
+		bsr	Sub_CheckForFood		; check if any new food needs to be created
 
 ; ---------------------------------------------------------------------------
 
+	; Final code, writes everything to VDP and loops the game:
+		bsr	Sub_WriteArt			; write playfield data into VDP
 		jmp	MainLoop			; loop the game
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
@@ -409,176 +390,339 @@ PM_WriteToVDP:
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; V-Blank routine
+; Blank routines
 ; ---------------------------------------------------------------------------
 
 VBlankInt:
-		move.b	#1,($FFFFF000).w		; set frame flag (Set V-Blank as ran)
+		move.b	#1,(VInt_Flag).w		; set frame flag (Set V-Blank as ran)
 		rte					; return to main program
 
-; ---------------------------------------------------------------------------
-; H-Blank routine
 ; ---------------------------------------------------------------------------
 
 HBlankInt:
 		rte					; return to main program
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
+
 
 ; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to write everything into the VDP, thus showing you the actual game.
+; ---------------------------------------------------------------------------
 
 Sub_WriteArt:
-	;	lea	(Snake_BodyData).w,a0
-	;	lea	(Snake_Data).w,a1
-	;	moveq	#0,d0
-	;	move.w	#(Size_X*Size_Y)-1,d1
-Loop:
-	;	move.b	(a1)+,d0
-	;	beq.s	cont
-	;	move.b	d0,(a0)+
-	;	bra	toloop
-cont:
-	;	move.b	#0,(a0)+
-toloop:
-	;	dbf	d1,Loop
+		bsr	SWA_CreateBodyData		; create the array with the screen content
+		lea	(Snake_BodyData).l,a1		; get fresh body data into a1
 
-	;	bsr	SWA_CreateBodyData
-		moveq	#0,d0
-		moveq	#0,d1
-		moveq	#0,d2
-		moveq	#0,d3
-		move.l	#$40820003,d2
-		move.l	d2,(a6)				; set VDP address to map plane (C000)
-		lea	(Snake_Data).l,a1		; get body data into a1
+		moveq	#0,d0				; clear d0
+		move.l	#$40820003,d2			; load VDP stuff (map plane) into d2
+		move.l	d2,(a6)				; load it into the VDP
 
-		move.w	#(Size_Y)-1,d1
-MapLoop_Rows:
-		move.w	#(Size_X/2)-1,d3
-MapLoop_Line:
-		move.b	(a1)+,d0
-		swap	d0
-		move.b	(a1)+,d0
-		move.l	d0,(a5)
-		dbf	d3,MapLoop_Line
+		move.w	#(Size_Y)-1,d1			; set number of loops (for Rows)
+	@MapLoop_Rows:
+		move.w	#(Size_X/2)-1,d3		; set number of loops (for Lines)
+	@MapLoop_Line:
+		move.b	(a1)+,d0			; load next body data entry into d0
+		swap	d0				; swap words
+		move.b	(a1)+,d0			; load next body data entry into d0
+		move.l	d0,(a5)				; write to VDP (two at a time)
+		dbf	d3,@MapLoop_Line		; loop
 
-		addi.l	#$00800000,d2
-		move.l	d2,(a6)				; set VDP address to map plane (C000)
-		dbf	d1,MapLoop_Rows
-		rts
+		addi.l	#$00800000,d2			; use the next row
+		move.l	d2,(a6)				; load it into the VDP
+		dbf	d1,@MapLoop_Rows		; loop
 
+		rts					; return
+
+; ---------------------------------------------------------------------------
 ; ===========================================================================
+; ---------------------------------------------------------------------------
 
 SWA_CreateBodyData:
 	; Clear Body Data:
-		lea	(Snake_BodyData).w,a0
-		lea	(Snake_Data).w,a1
-		moveq	#0,d0
-		move.w	#$3F,d1
+		lea	(Snake_BodyData).w,a0		; load body data into a0
+		moveq	#0,d0				; set d0 to 0
+		move.w	#((Size_X*Size_Y)/4)-1,d1	; set number of loops
 	@SCBD_Loop:
-		move.l	d0,(a0)+
-		dbf	d1,@SCBD_Loop
+		move.l	d0,(a0)+			; clear 4 bytes
+		dbf	d1,@SCBD_Loop			; loop
+
+	; Find and write the food:
+		lea	(Snake_BodyData).w,a0		; load body data into a0
+		adda.w	(FoodPosition).w,a0		; add food position to it?
+		move.b	#$11,(a0)			; write food to body data
 
 	; Find and write Snake's head:
-		lea	(Snake_Data).w,a0
-		moveq	#-1,d0
+		lea	(Snake_Data).w,a0		; load playfield data into a0
+		moveq	#-1,d0				; set d0 to -1
 	@SFH_Loop:
-		addq.w	#1,d0
-		cmpi.b	#$01,(a0)+
-		bne.s	@SFH_Loop
-		lea	(Snake_BodyData).l,a1		; get body data into a1
-		adda.w	d0,a1
-		move.b	(Snake_Direction).w,(a1)
-		addq.b	#1,(a1)
+		addq.w	#1,d0				; increase d0 by 1
+		cmpi.b	#$01,(a0)+			; is this the head?
+		bne.s	@SFH_Loop			; if not, loop until it has been found
+		lea	(Snake_BodyData).l,a1		; load body data into a1
+		adda.w	d0,a1				; add head location to it
+		move.b	(Snake_Direction).w,(a1)	; write head (which happens to have the same values as the direction RAM ...
+		addq.b	#1,(a1)				; ... well almost, still needs to have a 1 added)
 
-	; Find and write next body pieces
-		move.b	#$02,d2
-		bsr	SWA_FindNextBody
-		move.b	d3,(a1)
- rts
-		move.b	#$03,d2
-		bsr	SWA_FindNextBody
-		move.b	d3,(a1)
+	; Find and write next body pieces:
+		move.b	(Snake_Direction).w,(LastDirection).w ; set LastDirection to the one of the head
+		moveq	#0,d4				; clear d4
+		move.b	(Snake_Length).w,d4		; load current length of the Snake into d4
+		subq.b	#3,d4				; substract 3 from it
+		tst.b	(CollectedFood).w		; have you collected any food in this round?
+		beq.s	@SWT_Skip			; if not, branch
+		subq.b	#1,d4				; otherwise, substract 1 from it once more
+	@SWT_Skip:
+		move.b	#$02,d2				; start with body segment 2 (1 is the head)
+	@SWB_Loop:
+		bsr	SWA_FindNextBody		; find the body piece (also, if it one, make prior body piece an edge piece)
+		move.b	d3,(a1)				; write result into body data
+		move.w	a1,(LastBody).w			; remember the position of the current body piece
+		addq.b	#1,d2				; set to next body piece
+		dbf	d4,@SWB_Loop			; loop
+	
+	; Find and write the tail:
+		bsr	SWA_FindNextBody		; find the tail of the Snake
+		addq.b	#8,d3				; make sure it uses the correct tiles
+		move.b	d3,(a1)				; write result into body data
 
-		move.b	#$04,d2
-		bsr	SWA_FindNextBody
-		move.b	d3,(a1)
+@SCBD_Return:
+		rts					; return
 
-		move.b	#$05,d2
-		bsr	SWA_FindNextBody
-		move.b	d3,(a1)
-
-		move.b	#$06,d2
-		bsr	SWA_FindNextBody
-		move.b	d3,(a1)
-
-		move.b	#$07,d2
-		bsr	SWA_FindNextBody
-		move.b	d3,(a1)
-
-		move.b	#$08,d2
-		bsr	SWA_FindNextBody
-		move.b	d3,(a1)
-		rts
-
+; ---------------------------------------------------------------------------
+; ===========================================================================
+; ---------------------------------------------------------------------------
+ID_Up		= 5
+ID_Right	= 6
+ID_Down		= 7
+ID_Left		= 8
+ID_TopRight	= 9
+ID_DownRight	= 10
+ID_TopLeft	= 11
+ID_DownLeft	= 12
 ; ---------------------------------------------------------------------------
 
 SWA_FindNextBody:
-		lea	(Snake_BodyData).l,a1		; get body data into a1
+		lea	(Snake_BodyData).l,a1		; load body data into a1
+		lea	(Snake_Data).l,a2		; load playfield data into a2
 
-		move.w	d0,d1
-		lea	(Snake_Data).l,a2		; get body data into a2
-		subi.w	#Size_X,d1	; check above
-		adda.w	d1,a2
-		cmp.b	(a2),d2
-		bne.s	@SFNB_ChkRightOf
-		move.w	d1,d7
+	; Above, moving downwards:
+		move.w	d0,d1				; load last body location (or head) into d1
+		subi.w	#Size_X,d1			; go one line upwards
+		cmp.b	(a2,d1.w),d2			; check if given body number is equal to Snake_Data's one
+		bne.s	@SFNB_ChkDownOf			; if not, branch
+		move.b	#ID_Up,d3			; use "upwards moving" tile
 
-		move.w	d1,d0
-		move.b	#5,d3
-		adda.w	d1,a1
-		rts
-
-	@SFNB_ChkRightOf:
-		move.w	d0,d1
-		lea	(Snake_Data).l,a2		; get body data into a2
-		addi.w	#1,d1		; check to the right
-		adda.w	d1,a2
-		cmp.b	(a2),d2
-		bne.s	@SFNB_ChkDownOf
+		moveq	#0,d5				; use array row #1
+		bra	SFNB_ChkCornerBody		; check if prior body piece an edge piece (and make it one if yes)
 		
-		move.w	d1,d7
-
-		move.w	d1,d0
-		move.b	#6,d3
-		adda.w	d1,a1
-		rts
-
+	; Below, moving upwards:
 	@SFNB_ChkDownOf:
-		move.w	d0,d1
-		lea	(Snake_Data).l,a2		; get body data into a2
-		addi.w	#Size_X,d1	; check below
-		adda.w	d1,a2
-		cmp.b	(a2),d2
-		bne.s	@SFNB_ChkLeftOf
-		move.w	d1,d7
+		move.w	d0,d1				; load last body location (or head) into d1
+		addi.w	#Size_X,d1			; go one line downwards
+		cmp.b	(a2,d1.w),d2			; check if given body number is equal to Snake_Data's one
+		bne.s	@SFNB_ChkRightOf		; if not, branch
+		move.b	#ID_Down,d3			; use "downwards moving" tile
 
-		move.w	d1,d0
-		move.b	#5,d3
-		adda.w	d1,a1
-		rts
+		moveq	#1,d5				; use array row #2
+		bra	SFNB_ChkCornerBody		; check if prior body piece an edge piece (and make it one if yes)
 
+	; Right, moving leftwards:
+	@SFNB_ChkRightOf:
+		move.w	d0,d1				; load last body location (or head) into d1
+		addi.w	#1,d1				; go to the right by one
+		cmp.b	(a2,d1.w),d2			; check if given body number is equal to Snake_Data's one
+		bne.s	@SFNB_ChkLeftOf			; if not, branch
+		move.b	#ID_Right,d3			; use "rightwards moving" tile
+
+		moveq	#2,d5				; use array row #3
+		bra	SFNB_ChkCornerBody		; check if prior body piece an edge piece (and make it one if yes)
+
+	; Left, moving rightwards:
 	@SFNB_ChkLeftOf:
-		move.w	d0,d1
-		lea	(Snake_Data).l,a2		; get body data into a2
-		subi.w	#1,d1
-		move.w	d1,d7
+		move.w	d0,d1				; load last body location (or head) into d1
+		subi.w	#1,d1				; go to the left by one
+		cmp.b	(a2,d1.w),d2			; check if given body number is equal to Snake_Data's one
+		bne.s	@SFNB_ChkOverScreen		; if not, branch
+		move.b	#ID_Left,d3			; use "leftwards moving" tile
 
-		move.w	d1,d0
-		move.b	#6,d3
-		adda.w	d1,a1
-		rts
+		moveq	#3,d5				; use array row #4
+		bra	SFNB_ChkCornerBody		; check if prior body piece an edge piece (and make it one if yes)
 
+; ---------------------------------------------------------------------------
+
+@SFNB_ChkOverScreen:
+	; Bottom, coming out of the top:
+		move.w	d0,d1				; load last body location (or head) into d1
+		addi.w	#Size_X*(Size_Y-1),d1		; go to the top of the screen
+		cmp.b	(a2,d1.w),d2			; check if given body number is equal to Snake_Data's one
+		bne.s	@SCOS_Top			; if not, branch
+		move.b	#ID_Down,d3			; use "downwards moving" tile
+
+		moveq	#4,d5				; use array row #5
+		bra	SFNB_ChkCornerBody		; check if prior body piece an edge piece (and make it one if yes)
+
+	; Top, coming out of the bottom:
+	@SCOS_Top:
+		move.w	d0,d1				; load last body location (or head) into d1
+		subi.w	#Size_X*(Size_Y-1),d1		; go to the bottom of the screen
+		cmp.b	(a2,d1.w),d2			; check if given body number is equal to Snake_Data's one
+		bne.s	@SCOS_Left			; if not, branch
+		move.b	#ID_Up,d3			; use "upwards moving" tile
+
+		moveq	#5,d5				; use array row #6
+		bra	SFNB_ChkCornerBody		; check if prior body piece an edge piece (and make it one if yes)
+
+	; Left, coming out of the right:
+	@SCOS_Left:
+		move.w	d0,d1				; load last body location (or head) into d1
+		addi.w	#Size_X-1,d1			; go to the right of the screen
+		cmp.b	(a2,d1.w),d2			; check if given body number is equal to Snake_Data's one
+		bne.s	@SCOS_Right			; if not, branch
+		move.b	#ID_Left,d3			; use "leftwards moving" tile
+
+		moveq	#6,d5				; use array row #7
+		bra	SFNB_ChkCornerBody		; check if prior body piece an edge piece (and make it one if yes)
+
+	; Right, coming out of the left:
+	@SCOS_Right:
+		move.w	d0,d1				; load last body location (or head) into d1
+		subi.w	#Size_X-1,d1			; go to the left of the screen
+		cmp.b	(a2,d1.w),d2			; check if given body number is equal to Snake_Data's one
+		bne.s	@SFNB_Return			; if not, branch (technically, this branch should never happen)
+		move.b	#ID_Right,d3			; use "rightwards moving" tile
+
+		moveq	#7,d5				; use array row #8
+		bra	SFNB_ChkCornerBody		; check if prior body piece an edge piece (and make it one if yes)
+
+@SFNB_Return:
+		rts					; return
+; End of subroutine Sub_WriteArt
+
+; ---------------------------------------------------------------------------
+; ===========================================================================
+; ---------------------------------------------------------------------------
+
+SFNB_ChkCornerBody:
+		move.w	d1,d0				; backup last body location to d0
+		adda.w	d1,a1				; add current body location to a1 (necessary for the next body segment)
+
+		lea	(SCCB_Array).l,a3		; load the below array into a3
+		mulu.w	#4,d5				; multiply input by d5
+		adda.w	d5,a3				; add result to a3
+		moveq	#0,d5				; clear d5
+
+		move.b	0(a3),d5			; load first entry into d5
+		cmp.b	(LastDirection).w,d5		; does it match with the last direction?
+		beq.s	@SCCB_Cont2			; if not, branch
+		movea.w	(LastBody).w,a2			; load last body segment into a2
+		move.b	1(a3),d5			; load second entry into d5
+		cmp.b	(LastDirection).w,d5		; does it match with the last direction=
+		bne.s	@SCCB_Cont1			; if not, branch
+		move.b	2(a3),(a2)			; use first tile
+		bra.s	@SCCB_Cont2			; skip
+	@SCCB_Cont1:
+		move.b	3(a3),(a2)			; use second tile
+	@SCCB_Cont2:
+		move.b	0(a3),(LastDirection).w		; set the new "LastDirection"
+		rts					; return
+
+; ---------------------------------------------------------------------------
+SCCB_Array:	;	Check 1, Check 2, Graphic 1, Graphic 2
+		dc.b	2, 1, ID_TopRight, ID_DownLeft	; Above
+		dc.b	0, 1, ID_DownRight, ID_TopLeft	; Below
+		dc.b	3, 2, ID_DownRight, ID_TopRight	; Rightwards
+		dc.b	1, 2, ID_TopLeft, ID_DownLeft	; Leftwards
+
+		dc.b	2, 1, ID_TopRight, ID_DownLeft	; Top (Screen)
+		dc.b	0, 1, ID_DownRight, ID_TopLeft	; Bottom (Screen)
+		dc.b	1, 2, ID_TopLeft, ID_DownLeft	; Right (Screen)
+		dc.b	3, 2, ID_DownRight, ID_TopRight	; Left (Screen)
+		even
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 
-GetControls:
+
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; This subroutine checks if a piece of food exists, and if not, creates a new one
+; ---------------------------------------------------------------------------
+
+Sub_CheckForFood:
+		bsr	Sub_RandomNumber		; create a new random number for the food (this happens even if it is not required
+
+	; Check if any food exists already:
+		moveq	#0,d0				; clear d0
+		lea	(Snake_Data).w,a1		; load playfield data into a1
+		move.w	#(Size_X*Size_Y)-1,d1		; set number of loops
+	@SCFF_Chk_Loop:
+		cmpi.b	#Food_ID,(a1)+			; is this food?
+		bne.s	@SCFF_NoFood			; if not, branchh
+		moveq	#1,d0				; otherwise, set d0 to 1 (food has been found)
+	@SCFF_NoFood:
+		dbf	d1,@SCFF_Chk_Loop		; loop
+
+		tst.b	d0				; has food been found?
+		bne.s	SCFF_Return			; if yes, skip all this
+
+	; Write new piece of food:
+		lea	(Snake_Data).w,a1		; load playfield data into a1
+		move.l	(RandomNumber).w,d1		; get the random generated number
+		move.b	d1,d2				; back up the first byte of it into d2
+		bclr	#0,d1				; make sure it's even
+		andi.w	#$F,d2				; only get the first nybble of the
+		bclr	#0,d2				; makae this one even as well
+		lsr.b	#1,d2				; divide it by 2
+	@SCFF_ToSize_Loop:
+		cmpi.w	#(Size_X*Size_Y)-1,d1		; is the food in the playfield area?
+		blt.s	@SCFF_SetNewFood		; if yes, branch
+	@SCFF_Div_Loop:
+		lsr.w	d2,d1				; divide by the random generated value (made for double randomness (lol))
+		bra.s	@SCFF_ToSize_Loop		; loop
+	@SCFF_SetNewFood:
+		adda.w	d1,a1				; add d1 to body data index
+		tst.b	(a1)				; is current position empty?
+		bne.s	@SCFF_Div_Loop			; if not, repeat until you found a free position
+
+		move.b	#Food_ID,(a1)			; write food
+		move.w	d1,(FoodPosition).w		; remember food position
+
+SCFF_Return:
+		rts					; return
+
+; ---------------------------------------------------------------------------
+
+Sub_RandomNumber:
+		move.l	(RandomNumber).w,d1		; get current random number
+		bne.s	@SRN_NoDefault			; if it's not zero, branch
+		move.l	#$2A6D365A,d1			; otherwise set a random value to start with
+
+	@SRN_NoDefault:
+		move.l	d1,d0				; do some random stuff to make it random
+		asl.l	#2,d1				; ''
+		add.l	d0,d1				; ''
+		asl.l	#3,d1				; ''
+		add.l	d0,d1				; ''
+		move.w	d1,d0				; ''
+		swap	d1				; ''
+		add.w	d1,d0				; ''
+		move.w	d0,d1				; ''
+		swap	d1				; ''
+		move.l	d1,(RandomNumber).w		; write result into RAM
+		rts					; return
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
+
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to load the control data and write a copy into the RAM.
+; ---------------------------------------------------------------------------
+
+Sub_GetControls:
 		lea	($A10003).l,a1			; load controller 1 into a1
 
 		move.b	#0,(a1)				; request controller part 1
@@ -597,31 +741,14 @@ GetControls:
 		or.b	d1,d0				; combine controller part 1 and 2
 		move.b	d0,(Control1).w			; write everything to RAM
 		rts					; return
-
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 
-Sub_RandomNumber:
-		move.l	(RandomNumber).w,d1
-		bne.s	loc_29C0
-		move.l	#$2A6D365A,d1
 
-loc_29C0:
-		move.l	d1,d0
-		asl.l	#2,d1
-		add.l	d0,d1
-		asl.l	#3,d1
-		add.l	d0,d1
-		move.w	d1,d0
-		swap	d1
-		add.w	d1,d0
-		move.w	d0,d1
-		swap	d1
-		move.l	d1,(RandomNumber).w
-		rts	
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Uncompressed art
+; Artistic stuff
 ; ---------------------------------------------------------------------------
 
 Art_Snake:	incbin	"Art_Snake.bin"
@@ -631,11 +758,12 @@ Art_Food:	incbin	"Art_Food.bin"
 ; ---------------------------------------------------------------------------
 
 Palette_Main:
-		dc.w	$0CEA	; BG Colour
-		dc.w	$00A2	; Snake Colour (Body)
-		dc.w	$0222	; Snake Colour (Eyes)
-		dc.w	$0248	; Food Colour
-		dc.w	$FFFF
+		dc.w	$0CEA	; BG color
+		dc.w	$00A2	; Snake color (Body)
+		dc.w	$0222	; Snake color (Eyes)
+		dc.w	$0248	; Food color
+		dc.w	$FFFF	; >>> End of list <<<
 		even
 
+; ---------------------------------------------------------------------------
 ; ===========================================================================
