@@ -4,27 +4,27 @@
 ; ---------------------------------------------------------------------------
 
 ; Named variables and constants:
-Snake_Data	= $FFFFF000	; Playfield RAM (open array)
-Snake_BodyData	= $FFFFF400	; Alternate playfield RAM, used for writing the Snake to VDP (open array)
-Snake_Length	= $FFFFF900	; Length of the Snake, increases with eating food (byte)
+Snake_Data	= $FFFFF000	; Playfield RAM (array; $400)
+Snake_BodyData	= $FFFFF400	; Alternate playfield RAM, used for writing the Snake to VDP (array; $400)
+Snake_Length	= $FFFFF900	; Length of the Snake, increases by eating food (byte)
 Snake_Direction	= $FFFFF902	; Direction of the Snake (byte; 0=up, 1=right, 2=down, 3=left)
 Snake_HeadLoc	= $FFFFF906	; Location of Snake's head in coordinates (word; XXYY)
-Snake_FoodFlag	= $FFFFF90A
-FoodPosition	= $FFFFF90C
 
 VInt_Flag	= $FFFFF800	; Used to slow down the system based on V-Blank (byte)
 DelayTimer	= $FFFFF802	; Timer to slow down the system (byte)
 Control1	= $FFFFF804	; Contains the controls of controller 1 (byte/bits; SABCUDLR)
 RandomNumber	= $FFFFF806	; Random number for the food positioning (longword)
-LastDirection	= $FFFFF80A
-LastBody	= $FFFFF80C
-CollectedFood	= $FFFFF80E	; Flag, that tells if current frame if food has been collected (byte)
+LastDirection	= $FFFFF80A	; Last direction per body segment, used for the body data building (byte)
+LastBody	= $FFFFF80C	; Last body position in RAM, used for body data building (word)
+CollectedFood	= $FFFFF80E	; Tells if current frame if food has been collected (byte; flag)
+FoodPosition	= $FFFFF810	; Current RAM position of the food (word)
+NewDir		= $FFFFF812	; Will be used for the new direction, if there is a new one (byte)
 
 TimeDelay_Fast	= 5		; Time to delay in frames
 TimeDelay_Slow	= 30		; Time to delay in frames (while holding C)
 
-Size_X		= $26		; Horizontal playfield size
-Size_Y		= $18		; Vertical playfield size
+Size_X		= 38		; Horizontal playfield size
+Size_Y		= 24		; Vertical playfield size
 
 Food_ID		= $FF		; ID of the food
 Snake_DefLen	= $08		; default Snake length when starting the game up
@@ -133,7 +133,7 @@ StartGame:
 ; ---------------------------------------------------------------------------
 
 SG_WriteArt:
-	; Snake graphics
+	; Snake graphics:
 		lea	($C00000).l,a5			; load VDP data port address to a5
 		lea	($C00004).l,a6			; load VDP address port address to a6
 		move.l	#$40200000,(a6)			; set VDP address to write to
@@ -164,6 +164,40 @@ SG_WriteArt:
 		move.l	(a0)+,(a5)			; ''
 		move.l	(a0)+,(a5)			; ''
 
+	; Numbers graphics:
+		lea	($C00000).l,a5			; load VDP data port address to a5
+		lea	($C00004).l,a6			; load VDP address port address to a6
+		move.l	#$42400000,(a6)			; set VDP address to write to
+		lea	(Art_Numbers).l,a0		; load uncompressed art to dump
+		moveq	#(512/(4*8))-1,d7		; set repeat times (filesize / (bytes per tile row * total rows per tile)) - 1
+	@SWA_Numbers_Loop:
+		move.l	(a0)+,(a5)			; dump art to V-Ram
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		dbf	d7,@SWA_Numbers_Loop		; repeat til art is written
+
+	; Screen border:
+		lea	($C00000).l,a5			; load VDP data port address to a5
+		lea	($C00004).l,a6			; load VDP address port address to a6
+		move.l	#$44400000,(a6)			; set VDP address to write to
+		lea	(Art_Border).l,a0		; load uncompressed art to dump
+		moveq	#(320/(4*8))-1,d7		; set repeat times (filesize / (bytes per tile row * total rows per tile)) - 1
+	@SWA_Border_Loop:
+		move.l	(a0)+,(a5)			; dump art to V-Ram
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		move.l	(a0)+,(a5)			; ''
+		dbf	d7,@SWA_Border_Loop		; repeat til art is written
+
 	; Palette:
 		move.l	#$C0000000,(a6)			; set VDP address to C-Ram
 		lea	(Palette_Main).w,a1		; load palette data into a1
@@ -182,6 +216,7 @@ SG_WritePlayfield:
 	; Head:
 		move.b	#Snake_DefLen,(Snake_Length).w	; set base Snake length to 8 units
 		move.b	#1,(Snake_Direction).w		; set base Snake direction to 'right'
+		move.b	#1,(NewDir).w			; set default control direction to 'right'
 
 		move.b	#Size_X,d0			; load horizontal playfield size into d0
 		lsr.b	#1,d0				; half it
@@ -218,11 +253,65 @@ SG_WritePlayfield:
 		move.b	#Food_ID,(Snake_Data+$270).w	; set first food positon (the $270 is just a random value to set the first position)
 		move.w	#$270,(FoodPosition).w		; also put that value into FoodPosition
 
+	; Screen border:
+		; Top Row:
+		move.l	#$60020003,(a6)			; set VDP position (top left + 1)
+		move.w	#(Size_X/2)-1,d1		; set loops ((horizontal playfield size / 2) - 1)
+	@SWSB_Top_Loop:
+		move.l	#$00240024,(a5)			; write two tiles (top)
+		dbf	d1,@SWSB_Top_Loop		; loop
+
+		; BottomRow 1:
+		move.l	#$6C820003,(a6)			; set VDP position (upper bottom left + 1)
+		move.w	#(Size_X/2)-1,d1		; set loops ((horizontal playfield size / 2) - 1)
+	@SWSB_Bottom1_Loop:
+		move.l	#$00220022,(a5)			; write two tiles (bottom)
+		dbf	d1,@SWSB_Bottom1_Loop		; loop
+
+		; Bottom Row 2:
+		move.l	#$6D820003,(a6)			; set VDP position (lower bottom left + 1)
+		move.w	#(Size_X/2)-1,d1		; set loops ((horizontal playfield size / 2) - 1)
+	@SWSB_Bottom2_Loop:
+		move.l	#$00220022,(a5)			; write two tiles (bottom)
+		dbf	d1,@SWSB_Bottom2_Loop		; loop
+
+		; Left Line:
+		move.l	#$60800003,d0			; set VDP position (second row, very left)
+		move.l	d0,(a6)				; write it to VDP
+		move.w	#Size_Y+1,d1			; set loops (vertical playfield size + 1)
+	@SWSB_Left_Loop:
+		move.w	#$0025,(a5)			; write tile (left line)
+		addi.l	#$00800000,d0			; use the next row
+		move.l	d0,(a6)				; load it into the VDP
+		dbf	d1,@SWSB_Left_Loop		; loop
+
+		; Right Line:
+		move.l	#$60CE0003,d0			; set VDP position (second row, very right)
+		move.l	d0,(a6)				; write it to VDP
+		move.w	#Size_Y+1,d1			; set loops (vertical playfield size + 1)
+	@SWSB_Right_Loop:
+		move.w	#$0023,(a5)			; write tile (right line)
+		addi.l	#$00800000,d0			; use the next row
+		move.l	d0,(a6)				; load it into the VDP
+		dbf	d1,@SWSB_Right_Loop		; loop
+
+		; Corners and T-Pieces:
+		move.l	#$60000003,(a6)			; write 'top left corner' tile
+		move.w	#$0026,(a5)			; ''
+		move.l	#$604E0003,(a6)			; write 'top right corner' tile
+		move.w	#$0027,(a5)			; ''
+		move.l	#$6D800003,(a6)			; write 'bottom left corner' tile
+		move.w	#$0028,(a5)			; ''
+		move.l	#$6DCE0003,(a6)			; write 'bottom right corner' tile
+		move.w	#$0029,(a5)			; ''
+		move.l	#$6C800003,(a6)			; write 'left T-piece' tile
+		move.w	#$002A,(a5)			; ''
+		move.l	#$6CCE0003,(a6)			; write 'right T-piece' tile
+		move.w	#$002B,(a5)			; ''
+
 	; And finally, write everyting into the VDP:
 		bsr	Sub_WriteArt			; write data to VDP
-
 		move	#$2300,sr			; enable interrupts V and H
-
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -240,34 +329,34 @@ MainLoop:
 ; ---------------------------------------------------------------------------
 
 ControlHandel:
-		bsr	Sub_GetControls			; load controls
+		bsr	Sub_GetControls			; load controls (SABCUDLR)
 
 		btst	#0,(Control1).w			; is 'up' being held?
 		bne.s	@CH_ChkDown			; if not, check for down
 		cmpi.b	#2,(Snake_Direction).w		; is current direction 'downwards'?
 		beq.s	WaitFrame			; if yes, don't change direction
-		move.b	#0,(Snake_Direction).w		; move upwards
+		move.b	#0,(NewDir).w			; move upwards
 		bra.s	WaitFrame			; skip
 	@CH_ChkDown:
 		btst	#1,(Control1).w			; is 'down' being held?
 		bne.s	@CH_ChkLeft			; if not, check for left
 		cmpi.b	#0,(Snake_Direction).w		; is current direction 'upwards'?
 		beq.s	WaitFrame			; if yes, don't change direction
-		move.b	#2,(Snake_Direction).w		; move downwards
+		move.b	#2,(NewDir).w			; move downwards
 		bra.s	WaitFrame			; skip
 	@CH_ChkLeft:
 		btst	#2,(Control1).w			; is 'left' being held?
 		bne.s	@CH_ChkRight			; if not, check for right
 		cmpi.b	#1,(Snake_Direction).w		; is current direction 'to the right'?
 		beq.s	WaitFrame			; if yes, don't change direction
-		move.b	#3,(Snake_Direction).w		; move to the left
+		move.b	#3,(NewDir).w			; move to the left
 		bra.s	WaitFrame			; skip
 	@CH_ChkRight:
 		btst	#3,(Control1).w			; is 'right' being held?
 		bne.s	WaitFrame			; if not, don't change direction in any way
 		cmpi.b	#3,(Snake_Direction).w		; is current direction 'to the left'?
 		beq.s	WaitFrame			; if yes, don't change direction
-		move.b	#1,(Snake_Direction).w		; move to the right
+		move.b	#1,(NewDir).w			; move to the right
 
 ; ---------------------------------------------------------------------------
 ; This routine handles system delay, in order to make the game playable.
@@ -296,6 +385,8 @@ WaitFrame:
 ; ---------------------------------------------------------------------------
 
 PlayfieldModify:
+		move.b	(NewDir).w,(Snake_Direction).w	; move to the right
+
 	; Body movement:
 		lea	(Snake_Data).w,a1		; load playfield data into a1
 		move.w	#(Size_X*Size_Y)-1,d1		; set loops to playfield size
@@ -365,14 +456,14 @@ PlayfieldModify:
 		bne.s	@PM_WF_ChkWrite			; if not, branch
 		addq.b	#1,(Snake_Length).w		; otherwise, increase Snake length by 1 unit
 		move.b	#1,(CollectedFood).w		; set "CollectedFood" flag to true
-		cmpi.b	#Food_ID,(Snake_Length).w	; is current Snake length now equal to Food ID?
-		beq.w	StartGame			; if yes, restart the game if (to prevent the Snake from laying shit and fucking everything up, will be replaced with something smarter one day)
+		cmpi.b	#$FF,(Snake_Length).w		; has maximum Snake size been reached?
+		beq.w	GameOver			; if yes, game over, branch
 	@PM_WF_ChkWrite:
 		tst.b	(a1,d1.w)			; check if the position, the Snake is about to move to, is empty
 		beq.s	@PM_WF_WriteHead		; if it is, branch and write head
 		cmpi.b	#Food_ID,(a1,d1.w)		; check if it is food
 		beq.s	@PM_WF_WriteHead		; if it is, branch
-		jmp	StartGame			; otherwise, you bit yourself, and the game restarts (will be replaced with a real game over one day)
+		bra.s	GameOver			; otherwise, you bit yourself, game over
 	@PM_WF_WriteHead:
 		move.b	#$01,(a1,d1.w)			; write the freaking head already!
 
@@ -387,6 +478,31 @@ PlayfieldModify:
 ; ===========================================================================
 
 
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Routine to handel game overs (currently simply restarts the game).
+; ---------------------------------------------------------------------------
+
+GameOver:
+		lea	($C00004).l,a6			; load VDP address port address to a6
+		move.l	#$C0000000,(a6)			; set VDP address to C-Ram
+		lea	($C00000).l,a5			; load VDP data port address to a5
+
+		lea	(Palette_Main).l,a1
+		move.w	#$0000,(a5)			; dump colors
+		move.w	2(a1),(a5)			; dump colors
+		move.w	#$000E,(a5)			; dump colors
+		move.w	6(a1),(a5)			; dump colors
+		move.w	#$0EEE,(a5)			; dump colors
+
+GO_Freeze:
+		bra.s	GO_Freeze			; loop
+
+		jmp	StartGame			; restart the game (will be replaced with something smarter one day)
+
+; ---------------------------------------------------------------------------
+; ===========================================================================
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -432,6 +548,30 @@ Sub_WriteArt:
 		addi.l	#$00800000,d2			; use the next row
 		move.l	d2,(a6)				; load it into the VDP
 		dbf	d1,@MapLoop_Rows		; loop
+
+; ---------------------------------------------------------------------------
+
+	; Create and write score counter:
+		lea	($C00000).l,a5			; load VDP data port address to a5
+		lea	($C00004).l,a6			; load VDP address port address to a6
+
+		move.l	#$40240003+($800000*(Size_Y+2)),(a6) ; set VDP position (Default Position + V. Playfield Size + 2)
+		move.b	(Snake_Length).w,d0		; load Snake's length into d0
+		subq.b	#Snake_DefLen,d0		; make the counter start at 0
+		move.b	d0,d1				; copy it to d1
+
+		lsr.b	#4,d0				; get first digit
+		ext.l	d0				; extend to long
+		addi.l	#$12,d0				; add $12 to the index (VRAM position of numbers starts there)
+
+		and.b	#$F,d1				; get second digit
+		lsl.w	#8,d1				; move it one byte to the left
+		ext.l	d1				; extend to long
+		lsl.l	#8,d1				; move it another byte to the left
+		addi.l	#$120000,d1			; add $12 to the index (VRAM position of numbers starts there)
+
+		move.l	d0,(a5)				; write first digit to VDP
+		move.l	d1,(a5)				; write second digit to VDP
 
 		rts					; return
 
@@ -751,8 +891,10 @@ Sub_GetControls:
 ; Artistic stuff
 ; ---------------------------------------------------------------------------
 
-Art_Snake:	incbin	"Art_Snake.bin"
-Art_Food:	incbin	"Art_Food.bin"
+Art_Snake:	incbin	"Content/Art_Snake.bin"
+Art_Food:	incbin	"Content/Art_Food.bin"
+Art_Numbers:	incbin	"Content/Art_Numbers.bin"
+Art_Border:	incbin	"Content/Art_Border.bin"
 		even
 
 ; ---------------------------------------------------------------------------
@@ -762,6 +904,12 @@ Palette_Main:
 		dc.w	$00A2	; Snake color (Body)
 		dc.w	$0222	; Snake color (Eyes)
 		dc.w	$0248	; Food color
+		dc.w	$0000	; Numbers color
+		dc.w	$0EEE	; Border colour 1
+		dc.w	$0CCC	; Border colour 2
+		dc.w	$0888	; Border colour 3
+		dc.w	$0444	; Border colour 4
+		dc.w	$0000	; Border colour 5
 		dc.w	$FFFF	; >>> End of list <<<
 		even
 

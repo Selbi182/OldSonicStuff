@@ -1,5 +1,5 @@
 @Echo Off
-Asm68k.exe /p Source.asm, Rom.bin
+DisasmMisc\Asm68k.exe /p Source.asm, Rom.bin
 echo.
 Pause
 echo.
