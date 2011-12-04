@@ -19,8 +19,9 @@ LastBody	= $FFFFF80C	; Last body position in RAM, used for body data building (w
 CollectedFood	= $FFFFF80E	; Tells if current frame if food has been collected (byte; flag)
 FoodPosition	= $FFFFF810	; Current RAM position of the food (word)
 NewDir		= $FFFFF812	; Will be used for the new direction, if there is a new one (byte)
+ScoreCounter	= $FFFFF814	; Score counter in decimal (word)
 
-TimeDelay_Fast	= 5		; Time to delay in frames
+TimeDelay_Fast	= 6		; Time to delay in frames
 TimeDelay_Slow	= 30		; Time to delay in frames (while holding C)
 
 Size_X		= 38		; Horizontal playfield size
@@ -200,12 +201,21 @@ SG_WriteArt:
 
 	; Palette:
 		move.l	#$C0000000,(a6)			; set VDP address to C-Ram
+		lea	(Palette_Snake).w,a1		; load palette data into a1
+	@SWA_Palette1_Loop:
+		move.w	(a1)+,d0			; get current color into d0
+		bmi.s	@SWA_Palette2			; if it's negative, the end of the list has been reached, so quit
+		move.w	d0,(a5)				; dump colors
+		bra.s	@SWA_Palette1_Loop		; loop
+
+	@SWA_Palette2:
+		move.l	#$C0200000,(a6)			; set VDP address to C-Ram
 		lea	(Palette_Main).w,a1		; load palette data into a1
-	@SWA_Palette_Loop:
+	@SWA_Palette2_Loop:
 		move.w	(a1)+,d0			; get current color into d0
 		bmi.s	SG_WritePlayfield		; if it's negative, the end of the list has been reached, so quit
 		move.w	d0,(a5)				; dump colors
-		bra.s	@SWA_Palette_Loop		; loop
+		bra.s	@SWA_Palette2_Loop		; loop
 
 ; ---------------------------------------------------------------------------
 ; Write the playfield on start-up. The point of this is to instantly show
@@ -258,21 +268,21 @@ SG_WritePlayfield:
 		move.l	#$60020003,(a6)			; set VDP position (top left + 1)
 		move.w	#(Size_X/2)-1,d1		; set loops ((horizontal playfield size / 2) - 1)
 	@SWSB_Top_Loop:
-		move.l	#$00240024,(a5)			; write two tiles (top)
+		move.l	#$20242024,(a5)			; write two tiles (top)
 		dbf	d1,@SWSB_Top_Loop		; loop
 
 		; BottomRow 1:
 		move.l	#$6C820003,(a6)			; set VDP position (upper bottom left + 1)
 		move.w	#(Size_X/2)-1,d1		; set loops ((horizontal playfield size / 2) - 1)
 	@SWSB_Bottom1_Loop:
-		move.l	#$00220022,(a5)			; write two tiles (bottom)
+		move.l	#$20222022,(a5)			; write two tiles (bottom)
 		dbf	d1,@SWSB_Bottom1_Loop		; loop
 
 		; Bottom Row 2:
 		move.l	#$6D820003,(a6)			; set VDP position (lower bottom left + 1)
 		move.w	#(Size_X/2)-1,d1		; set loops ((horizontal playfield size / 2) - 1)
 	@SWSB_Bottom2_Loop:
-		move.l	#$00220022,(a5)			; write two tiles (bottom)
+		move.l	#$20222022,(a5)			; write two tiles (bottom)
 		dbf	d1,@SWSB_Bottom2_Loop		; loop
 
 		; Left Line:
@@ -280,7 +290,7 @@ SG_WritePlayfield:
 		move.l	d0,(a6)				; write it to VDP
 		move.w	#Size_Y+1,d1			; set loops (vertical playfield size + 1)
 	@SWSB_Left_Loop:
-		move.w	#$0025,(a5)			; write tile (left line)
+		move.w	#$2025,(a5)			; write tile (left line)
 		addi.l	#$00800000,d0			; use the next row
 		move.l	d0,(a6)				; load it into the VDP
 		dbf	d1,@SWSB_Left_Loop		; loop
@@ -290,26 +300,27 @@ SG_WritePlayfield:
 		move.l	d0,(a6)				; write it to VDP
 		move.w	#Size_Y+1,d1			; set loops (vertical playfield size + 1)
 	@SWSB_Right_Loop:
-		move.w	#$0023,(a5)			; write tile (right line)
+		move.w	#$2023,(a5)			; write tile (right line)
 		addi.l	#$00800000,d0			; use the next row
 		move.l	d0,(a6)				; load it into the VDP
 		dbf	d1,@SWSB_Right_Loop		; loop
 
 		; Corners and T-Pieces:
 		move.l	#$60000003,(a6)			; write 'top left corner' tile
-		move.w	#$0026,(a5)			; ''
+		move.w	#$2026,(a5)			; ''
 		move.l	#$604E0003,(a6)			; write 'top right corner' tile
-		move.w	#$0027,(a5)			; ''
+		move.w	#$2027,(a5)			; ''
 		move.l	#$6D800003,(a6)			; write 'bottom left corner' tile
-		move.w	#$0028,(a5)			; ''
+		move.w	#$2028,(a5)			; ''
 		move.l	#$6DCE0003,(a6)			; write 'bottom right corner' tile
-		move.w	#$0029,(a5)			; ''
+		move.w	#$2029,(a5)			; ''
 		move.l	#$6C800003,(a6)			; write 'left T-piece' tile
-		move.w	#$002A,(a5)			; ''
+		move.w	#$202A,(a5)			; ''
 		move.l	#$6CCE0003,(a6)			; write 'right T-piece' tile
-		move.w	#$002B,(a5)			; ''
+		move.w	#$202B,(a5)			; ''
 
 	; And finally, write everyting into the VDP:
+		bsr	Sub_UpdateScore			; initiate score counter
 		bsr	Sub_WriteArt			; write data to VDP
 		move	#$2300,sr			; enable interrupts V and H
 
@@ -398,7 +409,8 @@ PlayfieldModify:
 		addq.b	#$01,d0				; otherwise, it's a body segment, and increase it
 	@PM_B_SkipZero:
 		cmp.b	(Snake_Length).w,d0		; is this the final part of the body?
-		ble.s	@PM_B_WriteSnake		; if not, branch
+		bcs.s	@PM_B_WriteSnake		; if not, branch
+		beq.s	@PM_B_WriteSnake		; if not, branch
 		moveq	#$00,d0				; otherwise, clear that byte
 	@PM_B_WriteSnake:
 		move.b	d0,(a1)+			; write to playfield data
@@ -452,18 +464,25 @@ PlayfieldModify:
 
 		clr.b	(CollectedFood).w		; set "CollectedFood" flag to false
 		lea	(Snake_Data).w,a1		; load playfield data into a1
-		cmpi.b	#Food_ID,(a1,d1.w)		; is head currently eating food?
-		bne.s	@PM_WF_ChkWrite			; if not, branch
+		cmp.w	(FoodPosition).w,d1		; is head currently eating food?
+		bne.s	@PM_WF_ChkWrite			; if not, branch (no food has been collected in this frame)
 		addq.b	#1,(Snake_Length).w		; otherwise, increase Snake length by 1 unit
+		move.w	(ScoreCounter).w,d2		; load score into d2
+		addq.b	#01,d2				; increase it by 1
+		cmpi.b	#10,d2				; did we reach 10?
+		bne.s	@PM_WF_No10			; if not, branch
+		move.b	#00,d2				; otherwise clear second digit
+		addi.w	#$0100,d2			; increase first digit by 1
+	@PM_WF_No10:
+		move.w	d2,(ScoreCounter).w		; write into score counter
 		move.b	#1,(CollectedFood).w		; set "CollectedFood" flag to true
-		cmpi.b	#$FF,(Snake_Length).w		; has maximum Snake size been reached?
-		beq.w	GameOver			; if yes, game over, branch
+		cmpi.w	#$0909,(ScoreCounter).w		; has maximum score counter number (99) been reached?
+		beq.w	GameOver			; if yes, game over, branch (temporary solution for noow)
 	@PM_WF_ChkWrite:
 		tst.b	(a1,d1.w)			; check if the position, the Snake is about to move to, is empty
 		beq.s	@PM_WF_WriteHead		; if it is, branch and write head
 		cmpi.b	#Food_ID,(a1,d1.w)		; check if it is food
-		beq.s	@PM_WF_WriteHead		; if it is, branch
-		bra.s	GameOver			; otherwise, you bit yourself, game over
+		bne.w	GameOver			; if it isn't, you bit yourself, game over
 	@PM_WF_WriteHead:
 		move.b	#$01,(a1,d1.w)			; write the freaking head already!
 
@@ -481,20 +500,92 @@ PlayfieldModify:
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
+; This subroutine checks if a piece of food exists, and if not, creates a new one.
+; ---------------------------------------------------------------------------
+
+Sub_CheckForFood:
+		bsr	Sub_RandomNumber		; create a new random number for the food (this happens even if it is not required)
+		
+	; Check if any food exists already:
+		moveq	#0,d0				; clear d0
+		lea	(Snake_Data).w,a1		; load playfield data into a1
+		move.w	#(Size_X*Size_Y)-1,d1		; set number of loops
+	@SCFF_Chk_Loop:
+		cmpi.b	#Food_ID,(a1)+			; is this food?
+		bne.s	@SCFF_NoFood			; if not, branchh
+		moveq	#1,d0				; otherwise, set d0 to 1 (food has been found)
+	@SCFF_NoFood:
+		dbf	d1,@SCFF_Chk_Loop		; loop
+
+		tst.b	d0				; has food been found?
+		bne.s	SCFF_Return			; if yes, skip all this
+
+	; Write new piece of food:
+	@SCFF_WriteFood:
+		lea	(Snake_Data).w,a2		; load playfield data into a2
+		bsr	Sub_RandomNumber		; create a new random number for the food
+		move.l	(RandomNumber).w,d0		; get the random generated number
+		bclr    #0,d0				; make sure it's even
+		move.b	d0,d1				; copy the first byte of it into d1
+		andi.w	#$000E,d1			; only get the first nybble of the copy (and make sure it REALLY is even)
+		lsr.b	#1,d1				; divide it by 2 (result will be 7 or less)
+		moveq	#0,d2				; clear d2
+		bra.s	@SCFF_ToSize_Loop		; start the loop
+
+	@SCFF_Div_Loop:
+		lsr.w	d1,d0				; divide by the random generated value (made for double randomness (lol))
+
+	@SCFF_ToSize_Loop:
+		cmpi.w	#(Size_X*Size_Y)-1,d0		; is the food in the playfield area?
+		bge.s	@SCFF_Div_Loop			; if not, branch
+		addq.b	#1,d2				; increase d2 by 1
+		beq.s	@SCFF_WriteFood			; did we reach 0 again? if yes, we got stuck, so emergency espace this crap and try again
+		tst.b	(a2,d0.w)			; is current position empty?
+		bne.s	@SCFF_Div_Loop			; if not, repeat until you found a free position
+
+		move.b	#Food_ID,(a2,d0.w)		; write food
+		move.w	d0,(FoodPosition).w		; remember food position
+
+SCFF_Return:
+		rts					; return
+
+; ---------------------------------------------------------------------------
+
+Sub_RandomNumber:	; stolen from Sonic 1 (lolz)
+		move.l	(RandomNumber).w,d1		; get current random number
+		bne.s	@SRN_NoDefault			; if it's not zero, branch
+		move.l	#$2A6D365A,d1			; otherwise set a random value to start with
+
+	@SRN_NoDefault:
+		move.l	d1,d0				; do some random stuff to make it random
+		asl.l	#2,d1				; ''
+		add.l	d0,d1				; ''
+		asl.l	#3,d1				; ''
+		add.l	d0,d1				; ''
+		move.w	d1,d0				; ''
+		swap	d1				; ''
+		add.w	d1,d0				; ''
+		move.w	d0,d1				; ''
+		swap	d1				; ''
+		move.l	d1,(RandomNumber).w		; write result into RAM
+		rts					; return
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
+
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
 ; Routine to handel game overs (currently simply restarts the game).
 ; ---------------------------------------------------------------------------
 
 GameOver:
+		lea	($C00000).l,a5			; load VDP data port address to a5
 		lea	($C00004).l,a6			; load VDP address port address to a6
 		move.l	#$C0000000,(a6)			; set VDP address to C-Ram
-		lea	($C00000).l,a5			; load VDP data port address to a5
-
-		lea	(Palette_Main).l,a1
-		move.w	#$0000,(a5)			; dump colors
-		move.w	2(a1),(a5)			; dump colors
-		move.w	#$000E,(a5)			; dump colors
-		move.w	6(a1),(a5)			; dump colors
-		move.w	#$0EEE,(a5)			; dump colors
+		move.w	#$0000,(a5)			; BG color (black)
+		move.l	#$C0280000,(a6)			; set VDP address to C-Ram
+		move.w	#$0EEE,(a5)			; score counter (white)
 
 GO_Freeze:
 		bra.s	GO_Freeze			; loop
@@ -517,6 +608,36 @@ VBlankInt:
 
 HBlankInt:
 		rte					; return to main program
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
+
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to update the score counter.
+; ---------------------------------------------------------------------------
+
+Sub_UpdateScore:
+		lea	($C00000).l,a5			; load VDP data port address to a5
+		lea	($C00004).l,a6			; load VDP address port address to a6
+
+		move.l	#$40240003+($800000*(Size_Y+2)),(a6) ; set VDP position (Default Position + Y Playfield Size + 2)
+		move.w	(ScoreCounter).w,d0		; load Snake's length into d0
+		move.w	d0,d1				; copy it to d1
+
+		lsr.w	#8,d0				; get first digit
+		addi.w	#$2012,d0			; add $12 to the index (VRAM position of numbers starts there) and use second palette row
+		andi.w	#$000F,d1			; get second digit
+		lsl.w	#8,d1				; move it one byte to the left
+		ext.l	d1				; extend to long
+		lsl.l	#8,d1				; move it another byte to the left
+		addi.l	#$20120000,d1			; add $12 to the index (VRAM position of numbers starts there) and use second palette row
+
+		move.l	d0,(a5)				; write first digit to VDP
+		move.l	d1,(a5)				; write second digit to VDP
+
+		rts					; return
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 
@@ -549,29 +670,7 @@ Sub_WriteArt:
 		move.l	d2,(a6)				; load it into the VDP
 		dbf	d1,@MapLoop_Rows		; loop
 
-; ---------------------------------------------------------------------------
-
-	; Create and write score counter:
-		lea	($C00000).l,a5			; load VDP data port address to a5
-		lea	($C00004).l,a6			; load VDP address port address to a6
-
-		move.l	#$40240003+($800000*(Size_Y+2)),(a6) ; set VDP position (Default Position + V. Playfield Size + 2)
-		move.b	(Snake_Length).w,d0		; load Snake's length into d0
-		subq.b	#Snake_DefLen,d0		; make the counter start at 0
-		move.b	d0,d1				; copy it to d1
-
-		lsr.b	#4,d0				; get first digit
-		ext.l	d0				; extend to long
-		addi.l	#$12,d0				; add $12 to the index (VRAM position of numbers starts there)
-
-		and.b	#$F,d1				; get second digit
-		lsl.w	#8,d1				; move it one byte to the left
-		ext.l	d1				; extend to long
-		lsl.l	#8,d1				; move it another byte to the left
-		addi.l	#$120000,d1			; add $12 to the index (VRAM position of numbers starts there)
-
-		move.l	d0,(a5)				; write first digit to VDP
-		move.l	d1,(a5)				; write second digit to VDP
+		bsr	Sub_UpdateScore			; update the score counter
 
 		rts					; return
 
@@ -590,7 +689,7 @@ SWA_CreateBodyData:
 
 	; Find and write the food:
 		lea	(Snake_BodyData).w,a0		; load body data into a0
-		adda.w	(FoodPosition).w,a0		; add food position to it?
+		adda.w	(FoodPosition).w,a0		; add food position to it
 		move.b	#$11,(a0)			; write food to body data
 
 	; Find and write Snake's head:
@@ -787,78 +886,6 @@ SCCB_Array:	;	Check 1, Check 2, Graphic 1, Graphic 2
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; This subroutine checks if a piece of food exists, and if not, creates a new one
-; ---------------------------------------------------------------------------
-
-Sub_CheckForFood:
-		bsr	Sub_RandomNumber		; create a new random number for the food (this happens even if it is not required
-
-	; Check if any food exists already:
-		moveq	#0,d0				; clear d0
-		lea	(Snake_Data).w,a1		; load playfield data into a1
-		move.w	#(Size_X*Size_Y)-1,d1		; set number of loops
-	@SCFF_Chk_Loop:
-		cmpi.b	#Food_ID,(a1)+			; is this food?
-		bne.s	@SCFF_NoFood			; if not, branchh
-		moveq	#1,d0				; otherwise, set d0 to 1 (food has been found)
-	@SCFF_NoFood:
-		dbf	d1,@SCFF_Chk_Loop		; loop
-
-		tst.b	d0				; has food been found?
-		bne.s	SCFF_Return			; if yes, skip all this
-
-	; Write new piece of food:
-		lea	(Snake_Data).w,a1		; load playfield data into a1
-		move.l	(RandomNumber).w,d1		; get the random generated number
-		move.b	d1,d2				; back up the first byte of it into d2
-		bclr	#0,d1				; make sure it's even
-		andi.w	#$F,d2				; only get the first nybble of the
-		bclr	#0,d2				; makae this one even as well
-		lsr.b	#1,d2				; divide it by 2
-	@SCFF_ToSize_Loop:
-		cmpi.w	#(Size_X*Size_Y)-1,d1		; is the food in the playfield area?
-		blt.s	@SCFF_SetNewFood		; if yes, branch
-	@SCFF_Div_Loop:
-		lsr.w	d2,d1				; divide by the random generated value (made for double randomness (lol))
-		bra.s	@SCFF_ToSize_Loop		; loop
-	@SCFF_SetNewFood:
-		adda.w	d1,a1				; add d1 to body data index
-		tst.b	(a1)				; is current position empty?
-		bne.s	@SCFF_Div_Loop			; if not, repeat until you found a free position
-
-		move.b	#Food_ID,(a1)			; write food
-		move.w	d1,(FoodPosition).w		; remember food position
-
-SCFF_Return:
-		rts					; return
-
-; ---------------------------------------------------------------------------
-
-Sub_RandomNumber:
-		move.l	(RandomNumber).w,d1		; get current random number
-		bne.s	@SRN_NoDefault			; if it's not zero, branch
-		move.l	#$2A6D365A,d1			; otherwise set a random value to start with
-
-	@SRN_NoDefault:
-		move.l	d1,d0				; do some random stuff to make it random
-		asl.l	#2,d1				; ''
-		add.l	d0,d1				; ''
-		asl.l	#3,d1				; ''
-		add.l	d0,d1				; ''
-		move.w	d1,d0				; ''
-		swap	d1				; ''
-		add.w	d1,d0				; ''
-		move.w	d0,d1				; ''
-		swap	d1				; ''
-		move.l	d1,(RandomNumber).w		; write result into RAM
-		rts					; return
-; ---------------------------------------------------------------------------
-; ===========================================================================
-
-
-
-; ===========================================================================
-; ---------------------------------------------------------------------------
 ; Subroutine to load the control data and write a copy into the RAM.
 ; ---------------------------------------------------------------------------
 
@@ -899,11 +926,26 @@ Art_Border:	incbin	"Content/Art_Border.bin"
 
 ; ---------------------------------------------------------------------------
 
+Palette_Snake:
+		dc.w	$0CEA	; 0 (BG color)
+		dc.w	$000E	; 1
+		dc.w	$0008	; 2
+		dc.w	$004A	; 3
+		dc.w	$0048	; 4
+		dc.w	$0280	; 5
+		dc.w	$02C0	; 6
+		dc.w	$08E8	; 7
+		dc.w	$0060	; 8
+		dc.w	$0024	; 9
+		dc.w	$0EEE	; A
+		dc.w	$0248	; B (Food color)
+		dc.w	$FFFF	; >>> End of list <<<
+
 Palette_Main:
-		dc.w	$0CEA	; BG color
-		dc.w	$00A2	; Snake color (Body)
-		dc.w	$0222	; Snake color (Eyes)
-		dc.w	$0248	; Food color
+		dc.w	$0000	; <null>
+		dc.w	$0000	; <null>
+		dc.w	$0000	; <null>
+		dc.w	$0000	; <null>
 		dc.w	$0000	; Numbers color
 		dc.w	$0EEE	; Border colour 1
 		dc.w	$0CCC	; Border colour 2
