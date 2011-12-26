@@ -16,8 +16,11 @@
 		dc.w byte_CB31X-Map_obj34
 		dc.w byte_CB3CX-Map_obj34
 		dc.w byte_CB3CXX-Map_obj34
+		dc.w byte_CB3CXXX-Map_obj34
 		dc.w byte_CB47-Map_obj34
 		dc.w byte_CB8A-Map_obj34
+		dc.w byte_CA7AX-Map_obj34
+
 
 byte_C9FE:	dc.b $A	; GREEN HILL | NIGHT HILL
 		dc.b $F8, 5, 0, $2E, $BC	;N
@@ -90,6 +93,18 @@ byte_CB10:	dc.b 5			; ZONE
 		dc.b $F8, 5, 0, 0, $F2		;A
 		dc.b $F8, 5, 0, 8, $2		;C
 		dc.b $F8, 5, 0, $10, $12	;E
+
+byte_CA7AX:	dc.b $A	;  STAR LIGHT | STAR LIGHT
+		dc.b $F8, 5, 0, $3E, $B4	; S
+		dc.b $F8, 5, 0, $42, $C4	; T
+		dc.b $F8, 5, 0, 0, $D4		; A
+		dc.b $F8, 5, 0, $3A, $E4	; R
+		dc.b $F8, 0, 0, $56, $F4	; Space
+		dc.b $F8, 5, 0, $26, $4	; L
+		dc.b $F8, 1, 0, $20, $14	; I
+		dc.b $F8, 5, 0, $18, $1C	; G
+		dc.b $F8, 5, 0, $1C, $2C	; H
+		dc.b $F8, 5, 0, $42, $3C	; T
 ; ---------------------------------------------------------------------------
 
 byte_CB26:	dc.b 2			; ACT 1
@@ -110,6 +125,9 @@ byte_CB3CX:	dc.b 2			; ACT 5
 byte_CB3CXX:	dc.b 2			; ACT 6
 		dc.b 4, $C, 0, $53, $EC	
 		dc.b $F4, 6, 0, $8F, 7	
+byte_CB3CXXX:	dc.b 2			; ACT 7
+		dc.b 4,	$C, 0, $53, $EC
+		dc.b $F4, 6, 0, $95, 7	
 byte_CB47:	dc.b $D			; Oval
 		dc.b $E4, $C, 0, $70, $F4
 		dc.b $E4, 2, 0,	$74, $14

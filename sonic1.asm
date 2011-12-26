@@ -35,8 +35,8 @@ align macro
 ;Don't allow debug mode, not even with Game Genie.
 ; 0 - No
 ; 1 - Yes
-DebugModeDefault = 0
-DontAllowDebug = 1
+DebugModeDefault = 1
+DontAllowDebug = 0
 ;=================================================
 ;Enable Demo Recording. (In RAM at $FFFFD200)
 ;Also disables Stars and Shields
@@ -48,7 +48,7 @@ AutoDEMO = 0
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened
-DoorsAlwaysOpen = 0
+DoorsAlwaysOpen = 1
 ;=================================================
 
 ; ---------------------------------------------------------------------------
@@ -2334,6 +2334,27 @@ PalCycle_MZ:				; XREF: PalCycle
 
 
 PalCycle_SLZ:				; XREF: PalCycle
+		subq.w	#1,($FFFFF634).w
+		bpl.s	locret_1A80
+		move.w	#7,($FFFFF634).w
+		move.w	($FFFFF632).w,d0
+		addq.w	#1,d0
+		cmpi.w	#6,d0
+		bcs.s	loc_1A60
+		moveq	#0,d0
+
+loc_1A60:
+		move.w	d0,($FFFFF632).w
+		move.w	d0,d1
+		add.w	d1,d1
+		add.w	d1,d0
+		add.w	d0,d0
+		lea	(Pal_SLZCyc).l,a0
+		lea	($FFFFFB56).w,a1
+		move.w	(a0,d0.w),(a1)
+		move.l	2(a0,d0.w),4(a1)
+
+locret_1A80:
 		rts	
 ; End of function PalCycle_SLZ
 
@@ -2448,6 +2469,7 @@ Pal_GHZCyc:	incbin	pallet\c_ghz.bin
 Pal_LZCyc1:	incbin	pallet\c_lz_wat.bin	; waterfalls pallet
 Pal_LZCyc2:	incbin	pallet\c_lz_bel.bin	; conveyor belt pallet
 Pal_LZCyc3:	incbin	pallet\c_lz_buw.bin	; conveyor belt (underwater) pallet
+Pal_SLZCyc:	incbin	pallet\c_slz.bin
 Pal_SYZCyc1:	incbin	pallet\c_syz_1.bin
 Pal_SYZCyc2:	incbin	pallet\c_syz_2.bin
 
@@ -3117,6 +3139,7 @@ Pal_GHZ3:		incbin	pallet\ghz3.bin
 Pal_LZ2:		incbin	pallet\lz2.bin
 Pal_LZWater2:		incbin	pallet\lz_uw2.bin
 Pal_MZ:			incbin	pallet\mz.bin
+Pal_SLZ:		incbin	pallet\slz.bin
 Pal_SYZ:		incbin	pallet\syz.bin
 Pal_FZ:			incbin	pallet\fz.bin
 Pal_Special:		incbin	pallet\special.bin
@@ -4729,6 +4752,7 @@ MusicList:
 		dc.b	$89	; Special Stage (Unused)
 		dc.b	$83	; Ruined Place
 		dc.b	$82	; Labyrinth Place
+		dc.b	$84	; >>Star Light Place<<
 		dc.b	$8D	; Finalor Place
 		dc.b	$85	; Spring Yard Place (Overworld)
 		even
@@ -4767,6 +4791,7 @@ MainLevelArray:
 		dc.w	$300	; Special Stage (Yes, it uses SLZ's ID)
 		dc.w	$200	; Ruined Place
 		dc.w	$101	; Labyrinth Place
+		dc.w	$301	; >>Star Light Place<<
 		dc.w	$502	; Finalor Place
 		dc.w	$400	; Spring Yard Place (Overworld)
 		even
@@ -9343,7 +9368,7 @@ MainLoadBlockLoad:			; XREF: Level; EndingSequence
 
 		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
 		bne.s	MLB_NotGHZ2		; if not, branch
-		moveq	#7,d0			; use GHZ2 pallet
+		moveq	#$D,d0			; use GHZ2 pallet
 
 MLB_NotGHZ2:
 		cmpi.w	#$002,($FFFFFE10).w	; is level GHZ3?
@@ -14907,24 +14932,31 @@ Obj4B_ChkMZ:
 
 Obj4B_ChkLZ2:
 		cmpi.w	#$0AA0,$8(a0)
-		bne.s	Obj4B_ChkFZ
+		bne.s	Obj4B_ChkSLZ2
 		move.w	#$101,($FFFFFE10).w	; set level to LZ2
 		bsr	MakeChapterScreen
 		bra.s	Obj4B_PlayLevel
 
-Obj4B_ChkFZ:
+Obj4B_ChkSLZ2:
 		cmpi.w	#$0CA0,$8(a0)
+		bne.s	Obj4B_ChkFZ
+		move.w	#$301,($FFFFFE10).w	; set level to SLZ2
+		bsr	MakeChapterScreen
+		bra.s	Obj4B_PlayLevel
+
+Obj4B_ChkFZ:
+		cmpi.w	#$0EA0,$8(a0)
 		bne.s	Obj4B_ChkEnding
 		move.w	#$502,($FFFFFE10).w	; set level to FZ
 		bsr	MakeChapterScreen
 		bra.s	Obj4B_PlayLevel
 
 Obj4B_ChkEnding:
-		cmpi.w	#$0EDE,$8(a0)
+		cmpi.w	#$10DE,$8(a0)
 		bne.w	Obj4B_Return
 		move.b	#$20,($FFFFF600).w	; load info screen
 		move.b	#1,($A130F1).l		; enable SRAM
-		move.b	#6,($200007).l		; set number for text to 6
+		move.b	#7,($200007).l		; set number for text to 6
 		move.b	#0,($A130F1).l		; disable SRAM
 		move.b	#$9D,d0
 		jmp	PlaySound
@@ -18042,12 +18074,17 @@ Obj34_CheckSBZ3:			; XREF: Obj34_Index
 		moveq	#5,d0		; load title card number 5 (GHZ)
 		
 Obj34_NotGHZ3:
+		cmpi.w	#$301,($FFFFFE10).w ; check if level is	SLZ 2
+		bne.s	Obj34_NotSLZ2
+		moveq	#$10,d0		; load title card number $F (SLZ)
+		
+Obj34_NotSLZ2:
 		move.w	d0,d2
 		moveq	#4,d0		; set to SYZ config		
 		cmpi.w	#$502,($FFFFFE10).w ; check if level is	FZ
 		bne.s	Obj34_LoadConfig
 		moveq	#6,d0		; load title card number 6 (FZ)
-		moveq	#$E,d2		; use "FINAL" mappings
+		moveq	#$F,d2		; use "FINAL" mappings
 
 Obj34_LoadConfig:
 		lea	(Obj34_ConData).l,a3
@@ -18303,7 +18340,7 @@ Obj34_ItemData:
 
 	; Oval
 		dc.w $E0
-		dc.b 2,	$D
+		dc.b 2,	$E
 
 		even
 ; ===========================================================================
@@ -21527,8 +21564,9 @@ loc_EC86:
 ; Bit 0 = GHZ | Special Stage
 ; Bit 1 = Special Stage | MZ
 ; Bit 2 = MZ | LZ
-; Bit 3 = LZ | FZ
-; Bit 4 = FZ | Ending Sequence and credits
+; Bit 3 = LZ | SLZ
+; Bit 4 = SLZ | FZ
+; Bit 5 = FZ | Ending Sequence and credits
 ; ---------------------------------------------------------------------------
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
@@ -21550,9 +21588,15 @@ GTA_ChkMZ1:
 
 GTA_ChkLZ2:
 		cmpi.w	#$101,($FFFFFE10).w	; is level LZ2?
-		bne.s	GTA_NoDoor		; if not, branch
+		bne.s	GTA_ChkSLZ2		; if not, branch
 		bset	#3,($FFFFFF8B).w	; unlock fourth door
 		move.b	#5,($200007).l		; set number for text to 5
+
+GTA_ChkSLZ2:
+		cmpi.w	#$301,($FFFFFE10).w	; is level SLZ2?
+		bne.s	GTA_NoDoor		; if not, branch
+		bset	#4,($FFFFFF8B).w	; unlock fifth door
+		move.b	#6,($200007).l		; set number for text to 6
 
 GTA_NoDoor:
 		move.b	#0,($A130F1).l		; disable SRAM
@@ -25370,9 +25414,9 @@ locret_11938:
 ; ===========================================================================
 Obj5E_Speeds:	dc.w $FFF8, $FFE4, $FFD1, $FFE4, $FFF8
 
-Obj5E_Data1:;	incbin	misc\slzssaw1.bin
+Obj5E_Data1:	incbin	misc\slzssaw1.bin
 		even
-Obj5E_Data2:;	incbin	misc\slzssaw2.bin
+Obj5E_Data2:	incbin	misc\slzssaw2.bin
 		even
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - seesaws (SLZ)
@@ -27252,44 +27296,7 @@ Map_Obj03:
 ; ===========================================================================
 
 
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Object 04 - Chapter Numbers
-; ---------------------------------------------------------------------------
-
-Obj04:
-		moveq	#0,d0			; clear d0
-		move.b	$24(a0),d0		; move routine counter to d0
-		move.w	Obj04_Index(pc,d0.w),d1 ; move the index to d1
-		jmp	Obj04_Index(pc,d1.w)	; find out the current position in the index
-; ===========================================================================
-Obj04_Index:	dc.w Obj04_Setup-Obj04_Index	; Set up the object (art etc.)	[$0]
-		dc.w Obj04_Display-Obj04_Index	; Display Sprite		[$2]
-; ===========================================================================
-
-Obj04_Setup:
-		addq.b	#2,$24(a0)		; set to "Obj04_Display"
-		move.l	#Map_Obj04,4(a0)	; load mappings
-		move.b	#0,$18(a0)		; set priority
-		move.b	#0,1(a0)		; set render flag
-		move.w	#$0100,2(a0)		; set art tile, use first palette line
-		move.w	#$123,8(a0)		; set X-position
-		move.w	#$C5,$A(a0)		; set Y-position
-		move.b	($FFFFFFA0).w,$1A(a0)	; set chapter number to frame
-
-Obj04_Display:
-		jmp	DisplaySprite		; jump to DisplaySprite
-; ===========================================================================
-
-; ---------------------------------------------------------------------------
-; Sprite mappings - Chapter Numbers
-; ---------------------------------------------------------------------------
-
-Map_Obj04:
-		include	"Screens/ChapterScreens/Maps_Numbers.asm"
-; ---------------------------------------------------------------------------
-; ===========================================================================
-
+; For Obj04 see Screens\ChapterScreens\Chapters.asm
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -33576,7 +33583,7 @@ Obj6B_Action:				; XREF: Obj6B_Index
 		move.b	$16(a0),d2
 		move.w	d2,d3
 		addq.w	#1,d3
-		bsr	SolidObject
+		jsr	SolidObject
 
 Obj6B_ChkDel:
 		move.w	$34(a0),d0
@@ -39290,7 +39297,7 @@ loc_1A248:
 		tst.b	1(a0)
 		bmi.s	loc_1A260
 
-		bset	#4,($FFFFFF8B).w	; unlock door to the credits
+		bset	#5,($FFFFFF8B).w	; unlock door to the credits
 		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
 		move.b	#$C,($FFFFF600).w	; set game mdoe to level
 		move.w	#1,($FFFFFE02).w	; restart level
@@ -44106,6 +44113,25 @@ Nem_Lava:	incbin	artnem\mzlava.bin	; MZ lava
 Nem_MzBlock:	incbin	artnem\mzblock.bin	; MZ green pushable block
 		even
 ; ---------------------------------------------------------------------------
+; Compressed graphics - SLZ stuff
+; ---------------------------------------------------------------------------
+Nem_Seesaw:	incbin	artnem\slzseesa.bin	; SLZ seesaw
+		even
+Nem_SlzSpike:	incbin	artnem\slzspike.bin	; SLZ spikeball that sits on a seesaw
+		even
+Nem_Fan:	incbin	artnem\slzfan.bin	; SLZ fan
+		even
+Nem_SlzWall:	incbin	artnem\slzwall.bin	; SLZ smashable wall
+		even
+Nem_Pylon:	incbin	artnem\slzpylon.bin	; SLZ foreground pylon
+		even
+Nem_SlzSwing:	incbin	artnem\slzswing.bin	; SLZ swinging platform
+		even
+Nem_SlzBlock:	incbin	artnem\slzblock.bin	; SLZ 32x32 block
+		even
+Nem_SlzCannon:	incbin	artnem\slzcanno.bin	; SLZ fireball launcher cannon
+		even
+; ---------------------------------------------------------------------------
 ; Compressed graphics - SYZ stuff
 ; ---------------------------------------------------------------------------
 Nem_Bumper:	incbin	artnem\syzbumpe.bin	; SYZ bumper
@@ -44255,11 +44281,11 @@ Nem_MZ:		incbin	artnem\8x8mz.bin	; MZ primary patterns
 		even
 Blk256_MZ:	incbin	map256\mz.bin
 		even
-Blk16_SLZ:;	incbin	map16\slz.bin
+Blk16_SLZ:	incbin	map16\slz.bin
 		even
-Nem_SLZ:;	incbin	artnem\8x8slz.bin	; SLZ primary patterns
+Nem_SLZ:	incbin	artnem\8x8slz.bin	; SLZ primary patterns
 		even
-Blk256_SLZ:;	incbin	map256\slz.bin
+Blk256_SLZ:	incbin	map256\slz.bin
 		even
 Blk16_SYZ:	incbin	map16\syz.bin
 		even
@@ -44323,7 +44349,7 @@ Col_LZ:		incbin	collide\lz.bin		; LZ index
 		even
 Col_MZ:		incbin	collide\mz.bin		; MZ index
 		even
-Col_SLZ:	;incbin	collide\slz.bin		; SLZ index
+Col_SLZ:	incbin	collide\slz.bin		; SLZ index
 		even
 Col_SYZ:	incbin	collide\syz.bin		; SYZ index
 		even
@@ -44428,13 +44454,13 @@ Level_MZ3bg:	;incbin	levels\mz3bg.bin
 byte_697E6:	dc.b 0,	0, 0, 0
 byte_697EA:	dc.b 0,	0, 0, 0
 
-Level_SLZ1:	;incbin	levels\slz1.bin
+Level_SLZ1:	incbin	levels\slz1.bin
 		even
-Level_SLZbg:	;incbin	levels\slzbg.bin
+Level_SLZbg:	incbin	levels\slzbg.bin
 		even
-Level_SLZ2:	;incbin	levels\slz2.bin
+Level_SLZ2:	incbin	levels\slz2.bin
 		even
-Level_SLZ3:	;incbin	levels\slz3.bin
+Level_SLZ3:	incbin	levels\slz3.bin
 		even
 byte_69B84:	dc.b 0,	0, 0, 0
 
@@ -44549,11 +44575,11 @@ ObjPos_MZ2:;	incbin	objpos\mz2.bin
 		even
 ObjPos_MZ3:;	incbin	objpos\mz3.bin
 		even
-ObjPos_SLZ1:;	incbin	objpos\slz1.bin
+ObjPos_SLZ1:	incbin	objpos\slz1.bin
 		even
-ObjPos_SLZ2:;	incbin	objpos\slz2.bin
+ObjPos_SLZ2:	incbin	objpos\slz2.bin
 		even
-ObjPos_SLZ3:;	incbin	objpos\slz3.bin
+ObjPos_SLZ3:	incbin	objpos\slz3.bin
 		even
 ObjPos_SYZ1:	incbin	objpos\syz1.bin
 		even

@@ -2,10 +2,11 @@
 ; Sprite mappings - output from SonMapEd - Sonic 1 format
 ; --------------------------------------------------------------------------------
 
-SME_5c4lo:	
-		dc.w SME_5c4lo_8-SME_5c4lo, SME_5c4lo_86-SME_5c4lo	
-		dc.w SME_5c4lo_104-SME_5c4lo, SME_5c4lo_18C-SME_5c4lo	
-SME_5c4lo_8:	dc.b $19	
+SME_qVf1i:	
+		dc.w SME_qVf1i_A-SME_qVf1i, SME_qVf1i_88-SME_qVf1i	
+		dc.w SME_qVf1i_106-SME_qVf1i, SME_qVf1i_18E-SME_qVf1i	
+		dc.w SME_qVf1i_1C1-SME_qVf1i	
+SME_qVf1i_A:	dc.b $19	
 		dc.b $E0, 2, 8, $7E, $54	
 		dc.b $F0, 0, 8, $81, $4D	
 		dc.b $F0, 0, 0, $81, $C8	
@@ -31,7 +32,7 @@ SME_5c4lo_8:	dc.b $19
 		dc.b $18, 1, 0, $83, $C8	
 		dc.b $F8, 3, 8, $82, $4D	
 		dc.b $18, 1, 8, $82, $4D	
-SME_5c4lo_86:	dc.b $19	
+SME_qVf1i_88:	dc.b $19	
 		dc.b $E0, 2, 8, $7E, $54	
 		dc.b $F0, 0, 8, $81, $4D	
 		dc.b $F0, 0, 0, $81, $C8	
@@ -57,7 +58,7 @@ SME_5c4lo_86:	dc.b $19
 		dc.b $E0, 2, 0, $89, $D0	
 		dc.b $E0, 1, 0, $86, $4C	
 		dc.b $E0, 2, 0, $86, $C8	
-SME_5c4lo_104:	dc.b $1B	
+SME_qVf1i_106:	dc.b $1B	
 		dc.b $F0, $C, 0, $78, $22	
 		dc.b $E8, $C, 0, $72, $22	
 		dc.b $F0, $C, 0, $4B, $CB	
@@ -85,7 +86,18 @@ SME_5c4lo_104:	dc.b $1B
 		dc.b $F0, 4, 0, $7C, $42	
 		dc.b $E0, 2, 0, $86, $4D	
 		dc.b $E0, 2, 0, $86, $C8	
-SME_5c4lo_18C:	dc.b $17	
+SME_qVf1i_18E:	dc.b $A	
+		dc.b $E0, 2, 8, $7E, $54	
+		dc.b $F0, 0, 8, $81, $4D	
+		dc.b $F0, 0, 0, $81, $C8	
+		dc.b $E0, 2, 0, $7E, $C0	
+		dc.b $F8, 3, 0, $82, $C8	
+		dc.b $18, 1, 0, $83, $C8	
+		dc.b $F8, 3, 8, $82, $4D	
+		dc.b $18, 1, 8, $82, $4D	
+		dc.b $E0, 6, 0, $86, $C8	
+		dc.b $E0, 6, 0, $86, $44	
+SME_qVf1i_1C1:	dc.b $17	
 		dc.b $E0, 2, 8, $7E, $54	
 		dc.b $F0, 0, 8, $81, $4D	
 		dc.b $F0, 0, 0, $81, $C8	

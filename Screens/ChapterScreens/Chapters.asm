@@ -103,11 +103,39 @@ CS_PalLoop1:
 
 ; ---------------------------------------------------------------------------
 
+		moveq	#0,d0
+		move.b	($FFFFFFA0).w,d0
+		add.b	d0,d0
+		move.w	CS_Tiles_Index(pc,d0.w),d1
+		jmp	CS_Tiles_Index(pc,d1.w)
+; ===========================================================================
+CS_Tiles_Index:	dc.w CS_Tiles1-CS_Tiles_Index
+		dc.w CS_Tiles2-CS_Tiles_Index
+		dc.w CS_Tiles3-CS_Tiles_Index
+		dc.w CS_Tiles4-CS_Tiles_Index
+		dc.w CS_Tiles5-CS_Tiles_Index
+		dc.w CS_Tiles6-CS_Tiles_Index
+; ===========================================================================
+
+CS_Tiles1:
 		lea	(Art_Chapter1).l,a1		; load chapter 1
-		moveq	#0,d0				; clear d0
-		move.b	($FFFFFFA0).w,d0		; get chapter ID
-		mulu.w	#3808,d0			; multiply it by 3808 bytes
-		adda.w	d0,a1				; add result to a1
+		bra.s	CS_Tiles_Load
+CS_Tiles2:
+		lea	(Art_Chapter2).l,a1		; load chapter 2
+		bra.s	CS_Tiles_Load
+CS_Tiles3:
+		lea	(Art_Chapter3).l,a1		; load chapter 3
+		bra.s	CS_Tiles_Load
+CS_Tiles4:
+		lea	(Art_Chapter4).l,a1		; load chapter 4
+		bra.s	CS_Tiles_Load
+CS_Tiles5:
+		lea	(Art_Chapter5).l,a1		; load chapter 5
+		bra.s	CS_Tiles_Load
+CS_Tiles6:
+		lea	(Art_Chapter6).l,a1		; load chapter 6
+
+CS_Tiles_Load:
 		move.l	#$45A00000,($C00004).l		; Load art
 		lea	($C00000).l,a6
 		move.w	#$7C,d1				; load $7C tiles
@@ -195,6 +223,12 @@ CS_ChkChapter4:
 
 CS_ChkChapter5:
 		cmpi.b	#5,($FFFFFFA0).w	; is this chapter 5?
+		bne.s	CS_ChkChapter6		; if not, branch
+		move.w	#$301,($FFFFFE10).w	; set level to SLZ2
+		bra.s 	CS_PlayLevel
+
+CS_ChkChapter6:
+		cmpi.b	#6,($FFFFFFA0).w	; is this chapter 6?
 		bne.s	CS_PlayLevel		; if not, branch
 		move.w	#$502,($FFFFFE10).w	; set level to FZ
 
@@ -203,6 +237,45 @@ CS_PlayLevel:
 		move.w	#1,($FFFFFE02).w	; restart level
 		clr.b	($FFFFFF7D).w
 		rts
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Object 04 - Chapter Numbers
+; ---------------------------------------------------------------------------
+
+Obj04:
+		moveq	#0,d0			; clear d0
+		move.b	$24(a0),d0		; move routine counter to d0
+		move.w	Obj04_Index(pc,d0.w),d1 ; move the index to d1
+		jmp	Obj04_Index(pc,d1.w)	; find out the current position in the index
+; ===========================================================================
+Obj04_Index:	dc.w Obj04_Setup-Obj04_Index	; Set up the object (art etc.)	[$0]
+		dc.w Obj04_Display-Obj04_Index	; Display Sprite		[$2]
+; ===========================================================================
+
+Obj04_Setup:
+		addq.b	#2,$24(a0)		; set to "Obj04_Display"
+		move.l	#Map_Obj04,4(a0)	; load mappings
+		move.b	#0,$18(a0)		; set priority
+		move.b	#0,1(a0)		; set render flag
+		move.w	#$0100,2(a0)		; set art tile, use first palette line
+		move.w	#$123,8(a0)		; set X-position
+		move.w	#$C5,$A(a0)		; set Y-position
+		move.b	($FFFFFFA0).w,$1A(a0)	; set chapter number to frame
+
+Obj04_Display:
+		jmp	DisplaySprite		; jump to DisplaySprite
+; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Sprite mappings - Chapter Numbers
+; ---------------------------------------------------------------------------
+
+Map_Obj04:
+		include	"Screens/ChapterScreens/Maps_Numbers.asm"
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 
@@ -245,16 +318,15 @@ Pal_ChapterHeader:	incbin	"Screens/ChapterScreens/Palette_ChapterHeader.bin"
 ; ---------------------------------------------------------------------------
 Art_Chapter1:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter1.bin"
 		even
-		dcb.b	1536, $00
 Art_Chapter2:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter2.bin"
 		even
-		dcb.b	0928, $00
 Art_Chapter3:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter3.bin"
 		even
 Art_Chapter4:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter4.bin"
 		even
-		dcb.b	1216, $00
 Art_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter5.bin"
+		even
+Art_Chapter6:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter6.bin"
 		even
 ; ---------------------------------------------------------------------------
 Map_Chapter1:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter1.bin"
@@ -267,6 +339,8 @@ Map_Chapter4:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter4.bin"
 		even
 Map_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter5.bin"
 		even
+Map_Chapter6:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter6.bin"
+		even
 ; ---------------------------------------------------------------------------
 Pal_Chapter1:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter1.bin"
 		even
@@ -277,6 +351,8 @@ Pal_Chapter3:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter3.bin"
 Pal_Chapter4:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter4.bin"
 		even
 Pal_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter5.bin"
+		even
+Pal_Chapter6:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter6.bin"
 		even
 ; ---------------------------------------------------------------------------
 Art_OHDIGHZ:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_OHDIGHZ.bin"

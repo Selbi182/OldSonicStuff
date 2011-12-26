@@ -146,7 +146,7 @@ Info_NoTextChange:
 		rts
 
 Info_NoIntro:
-		cmpi.b	#6,($FFFFFF9C).w	; is this the ending sequence?
+		cmpi.b	#7,($FFFFFF9C).w	; is this the ending sequence?
 		bne.s	Info_NoEnding		; if not, branch
 		move.b	#$18,($FFFFF600).w	; set to ending sequence ($18)
 		rts
@@ -751,7 +751,27 @@ InfoText_5:	; text after beating Labyrinth Zone
 		even
 ; ---------------------------------------------------------------------------
 
-InfoText_6:	; text after jumping in the ring for the Ending Sequence
+InfoText_6:	; text after beating Star Light Zone
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'  STAR LIGHT PLACEHOLDER    '
+		dc.b	'               TEXT         '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'    ASJHDBAJHSBDJABSD       '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	$FF
+		even
+; ---------------------------------------------------------------------------
+
+InfoText_7:	; text after jumping in the ring for the Ending Sequence
 		dc.b	'   THE WORLD IS RESCUED,    '
 		dc.b	'  SONIC ONCE AGAIN STOPPED  '
 		dc.b	' ROBOTNIK FROM TAKING OVER  '

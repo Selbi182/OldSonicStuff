@@ -22,7 +22,7 @@
 	dc.l Pal_MZ
 	dc.w $FB20
 	dc.w $17
-	dc.l Pal_GHZ2
+	dc.l Pal_SLZ
 	dc.w $FB20
 	dc.w $17
 	dc.l Pal_SYZ
@@ -40,9 +40,9 @@
 	dc.l Pal_GHZ3
 	dc.w $FB20
 	dc.w $17
-	dc.l Pal_Null
-	dc.w $FB00
-	dc.w $1F
+	dc.l Pal_GHZ2
+	dc.w $FB20
+	dc.w $17
 	dc.l Pal_FZ
 	dc.w $FB20
 	dc.w $17

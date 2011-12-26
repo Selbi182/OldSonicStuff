@@ -1,0 +1,12 @@
+To-Do:
+- The Star Light Update:
+	- Find a concept and implent it (easier said than done).
+	- Find a proper name for the stage, create the sign, write the new story text, and make an "Act 7" art.
+
+- Implant Markey's improved palette fade out.
+- Rewrite most of the embarrasing story texts and maybe redo its entire art to be more appealing.
+- Work a little on the credits again (slowdown and new font).
+
+
+Bugs:
+- Fix the "2 Crameats on Spindash" bug.
