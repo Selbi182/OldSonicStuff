@@ -1,11 +1,13 @@
 To-Do:
 - The Star Light Update:
 	- Find a concept and implent it (easier said than done).
-	- Find a proper name for the stage, create the sign, write the new story text, and make an "Act 7" art.
+	- Find a proper name for the stage, create the sign, write the new story text, create the new chapter screen, and make an "Act 7" art.
 
-- Implant Markey's improved palette fade out.
-- Rewrite most of the embarrasing story texts and maybe redo its entire art to be more appealing.
+- Rewrite most of the embarrasing story texts and maybe redo its entire art to be more appealing. Also increase its speed.
 - Work a little on the credits again (slowdown and new font).
+- Redesign "Finalor Place" to at least get rid of that grey background in the boss area. Making it longer wouldn't harm though.
+
+- Create a straight version of the finished product (or even combine both).
 
 
 Bugs:

@@ -94,17 +94,8 @@ byte_CB10:	dc.b 5			; ZONE
 		dc.b $F8, 5, 0, 8, $2		;C
 		dc.b $F8, 5, 0, $10, $12	;E
 
-byte_CA7AX:	dc.b $A	;  STAR LIGHT | STAR LIGHT
-		dc.b $F8, 5, 0, $3E, $B4	; S
-		dc.b $F8, 5, 0, $42, $C4	; T
-		dc.b $F8, 5, 0, 0, $D4		; A
-		dc.b $F8, 5, 0, $3A, $E4	; R
-		dc.b $F8, 0, 0, $56, $F4	; Space
-		dc.b $F8, 5, 0, $26, $4	; L
-		dc.b $F8, 1, 0, $20, $14	; I
-		dc.b $F8, 5, 0, $18, $1C	; G
-		dc.b $F8, 5, 0, $1C, $2C	; H
-		dc.b $F8, 5, 0, $42, $3C	; T
+byte_CA7AX:	dc.b $0	;  STAR LIGHT | STAR LIGHT
+		dc.b 0
 ; ---------------------------------------------------------------------------
 
 byte_CB26:	dc.b 2			; ACT 1

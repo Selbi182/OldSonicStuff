@@ -882,7 +882,7 @@ OpText_HardPartSkipper:
 		even
 
 OpText_DeleteSRAM:
-		dc.b	'DELETE SRAM          ', $FF
+		dc.b	'DELETE SAVE GAME     ', $FF
 		even
 ; ---------------------------------------------------------------------------
 

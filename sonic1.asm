@@ -2511,17 +2511,21 @@ Pal_FadeTo2:
 Pal_ToBlack:
 		move.w	d1,(a0)+
 		dbf	d0,Pal_ToBlack	; fill pallet with $000	(black)
-
-PFT_NoBlack:
-		move.w	#$15,d4
+		moveq	#$0E,d4					; MJ: prepare maximum colour check
+		moveq	#$00,d6					; MJ: clear d6
 
 loc_1DCE:
+		bsr.w	RunPLC_RAM
 		move.b	#$12,($FFFFF62A).w
-		bsr	DelayProgram
+		bsr.w	DelayProgram
+		bchg	#$00,d6					; MJ: change delay counter
+		beq	loc_1DCE				; MJ: if null, delay a frame
 		bsr.s	Pal_FadeIn
-		bsr	RunPLC_RAM
-		dbf	d4,loc_1DCE
-		rts	
+		subq.b	#$02,d4					; MJ: decrease colour check
+		bne	loc_1DCE				; MJ: if it has not reached null, branch
+		move.b	#$12,($FFFFF62A).w			; MJ: wait for V-blank again (so colours transfer)
+		bra	DelayProgram				; MJ: ''
+
 ; End of function Pal_FadeTo
 
 ; ---------------------------------------------------------------------------
@@ -2566,35 +2570,30 @@ locret_1E24:
 
 
 Pal_AddColor:				; XREF: Pal_FadeIn
-		move.w	(a1)+,d2
-		move.w	(a0),d3
-		cmp.w	d2,d3
-		beq.s	loc_1E4E
-		move.w	d3,d1
-		addi.w	#$200,d1	; increase blue	value
-		cmp.w	d2,d1		; has blue reached threshold level?
-		bhi.s	Pal_AddGreen	; if yes, branch
-		move.w	d1,(a0)+	; update pallet
-		rts	
-; ===========================================================================
+		move.b	(a1),d5					; MJ: load blue
+		move.w	(a1)+,d1				; MJ: load green and red
+		move.b	d1,d2					; MJ: load red
+		lsr.b	#$04,d1					; MJ: get only green
+		andi.b	#$0E,d2					; MJ: get only red
+		move.w	(a0),d3					; MJ: load current colour in buffer
+		cmp.b	d5,d4					; MJ: is it time for blue to fade?
+		bhi	FCI_NoBlue				; MJ: if not, branch
+		addi.w	#$0200,d3				; MJ: increase blue
 
-Pal_AddGreen:				; XREF: Pal_AddColor
-		move.w	d3,d1
-		addi.w	#$20,d1		; increase green value
-		cmp.w	d2,d1
-		bhi.s	Pal_AddRed
-		move.w	d1,(a0)+	; update pallet
-		rts	
-; ===========================================================================
+FCI_NoBlue:
+		cmp.b	d1,d4					; MJ: is it time for green to fade?
+		bhi	FCI_NoGreen				; MJ: if not, branch
+		addi.b	#$20,d3					; MJ: increase green
 
-Pal_AddRed:				; XREF: Pal_AddGreen
-		addq.w	#2,(a0)+	; increase red value
-		rts	
-; ===========================================================================
+FCI_NoGreen:
+		cmp.b	d2,d4					; MJ: is it time for red to fade?
+		bhi	FCI_NoRed				; MJ: if not, branch
+		addq.b	#$02,d3					; MJ: increase red
 
-loc_1E4E:				; XREF: Pal_AddColor
-		addq.w	#2,a0
-		rts	
+FCI_NoRed:
+		move.w	d3,(a0)+				; MJ: save colour
+		rts						; MJ: return
+
 ; End of function Pal_AddColor
 
 
@@ -2603,13 +2602,16 @@ loc_1E4E:				; XREF: Pal_AddColor
 
 Pal_FadeFrom:
 		move.w	#$3F,($FFFFF626).w
-		move.w	#$15,d4
+		moveq	#$07,d4					; MJ: set repeat times
+		moveq	#$00,d6					; MJ: clear d6
 
 loc_1E5C:
+		bsr.w	RunPLC_RAM
 		move.b	#$12,($FFFFF62A).w
-		bsr	DelayProgram
+		bsr.w	DelayProgram
+		bchg	#$00,d6					; MJ: change delay counter
+		beq	loc_1E5C				; MJ: if null, delay a frame
 		bsr.s	Pal_FadeOut
-		bsr	RunPLC_RAM
 		dbf	d4,loc_1E5C
 		rts	
 ; End of function Pal_FadeFrom
@@ -2649,34 +2651,28 @@ loc_1E98:
 
 
 Pal_DecColor:				; XREF: Pal_FadeOut
-		move.w	(a0),d2
-		beq.s	loc_1ECC
-		move.w	d2,d1
-		andi.w	#$E,d1
-		beq.s	Pal_DecGreen
-		subq.w	#2,(a0)+	; decrease red value
-		rts	
-; ===========================================================================
+		move.w	(a0),d5					; MJ: load colour
+		move.w	d5,d1					; MJ: copy to d1
+		move.b	d1,d2					; MJ: load green and red
+		move.b	d1,d3					; MJ: load red
+		andi.w	#$0E00,d1				; MJ: get only blue
+		beq	FCO_NoBlue				; MJ: if blue is finished, branch
+		subi.w	#$0200,d5				; MJ: decrease blue
 
-Pal_DecGreen:				; XREF: Pal_DecColor
-		move.w	d2,d1
-		andi.w	#$E0,d1
-		beq.s	Pal_DecBlue
-		subi.w	#$20,(a0)+	; decrease green value
-		rts	
-; ===========================================================================
+FCO_NoBlue:
+		andi.b	#$E0,d2					; MJ: get only green
+		beq	FCO_NoGreen				; MJ: if green is finished, branch
+		subi.b	#$20,d5					; MJ: decrease green
 
-Pal_DecBlue:				; XREF: Pal_DecGreen
-		move.w	d2,d1
-		andi.w	#$E00,d1
-		beq.s	loc_1ECC
-		subi.w	#$200,(a0)+	; decrease blue	value
-		rts	
-; ===========================================================================
+FCO_NoGreen:
+		andi.b	#$0E,d3					; MJ: get only red
+		beq	FCO_NoRed				; MJ: if red is finished, branch
+		subq.b	#$02,d5					; MJ: decrease red
 
-loc_1ECC:				; XREF: Pal_DecColor
-		addq.w	#2,a0
-		rts	
+FCO_NoRed:
+		move.w	d5,(a0)+				; MJ: save new colour
+		rts						; MJ: return
+
 ; End of function Pal_DecColor
 
 ; ---------------------------------------------------------------------------
@@ -4203,6 +4199,8 @@ Level_StartGame:
 ; ---------------------------------------------------------------------------
 
 Level_MainLoop:
+		jsr	RandomNumber		; constantly create a new random number
+
 		cmpi.b	#$3F,($FFFFFFF0).w		; was demo mode set to $3F for some reason?
 		bne.s	Level_DemoOK			; thanks god if no
 		clr.w	($FFFFFFF0).w			; otherwise, clear it and hope that nothing bad happened
@@ -14793,9 +14791,13 @@ Obj4B_Index:	dc.w Obj4B_Main-Obj4B_Index
 ; ===========================================================================
 
 Obj4B_Main:				; XREF: Obj4B_Index
+		move.w	$C(a0),$34(a0)
+		move.b	#5,$37(a0)
+		move.b	#5,$38(a0)
+
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
 		bne.s	Obj4B_Main_Cont		; if not, branch
-		move.b	#60,$30(a0)
+		move.w	#100,$30(a0)
 
 Obj4B_Main_Cont:
 		move.l	#Map_obj4B,4(a0)
@@ -14812,7 +14814,18 @@ Obj4B_Okay:				; XREF: Obj4B_Main
 		move.w	#$C40,($FFFFF7BE).w
 
 Obj4B_Animate:				; XREF: Obj4B_Index
-		move.b	($FFFFFEC3).w,$1A(a0)
+		subq.b	#1,$37(a0)
+		bpl	@cont
+		move.b	$38(a0),$37(a0)
+		addq.b	#1,$36(a0)
+		cmpi.b	#4,$36(a0)
+		bne.s	@cont
+		move.b	#0,$36(a0)
+
+@cont
+	;	move.b	($FFFFFEC3).w,$1A(a0)
+		move.b	$36(a0),$1A(a0)
+
 		move.w	8(a0),d0
 		andi.w	#$FF80,d0
 		move.w	($FFFFF700).w,d1
@@ -14847,7 +14860,7 @@ Obj4B_NotGHZ1:
 		tst.b	($FFFFFE1E).w		; is time counter stopped?
 		beq.s	Obj4B_NoCapsule		; if yes, branch
 		subq.b	#2,$24(a0)
-		bra.s	Obj4B_Animate
+		bra.w	Obj4B_Animate
 ; ===========================================================================
 
 Obj4B_NoCapsule:
@@ -14890,10 +14903,25 @@ Obj4B_Delete:				; XREF: Obj4B_Index
 
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
 		bne.w	Obj4B_ChkGHZ2		; if not, branch
-		subq.b	#1,$30(a0)		; sub 1 from timer
-		bpl.w	Obj4B_Return		; if time is left, branch
-		
+
+		tst.b	($FFFFFF7D).w
+		bne.s	@cont2
+		addi.w	#$10,$12(a0)
+		move.b	#2,$38(a0)
+		cmpi.w	#$340,$12(a0)
+		bne.s	@cont
 		move.b	#1,($FFFFFF7D).w
+		bra	@cont
+@cont2:
+		subi.w	#$50,$12(a0)
+		move.b	#0,$38(a0)
+@cont:
+		jsr	SpeedToPos
+
+		tst.b	1(a0)
+		bmi.w	Obj4B_Return
+		
+		
 
 Obj4B_ChkOptions:
 		cmpi.w	#$0100,$8(a0)
@@ -24700,6 +24728,8 @@ Obj5C:					; XREF: Obj_Index
 ; ===========================================================================
 Obj5C_Index:	dc.w Obj5C_Main-Obj5C_Index
 		dc.w Obj5C_Display-Obj5C_Index
+		dc.w Obj5C_Main2-Obj5C_Index
+		dc.w Obj5C_Display2-Obj5C_Index
 ; ===========================================================================
 
 Obj5C_Main:				; XREF: Obj5C_Index
@@ -24707,6 +24737,9 @@ Obj5C_Main:				; XREF: Obj5C_Index
 		move.l	#Map_obj5C,4(a0)
 		move.w	#$83CC,2(a0)
 		move.b	#$10,$19(a0)
+		jsr	SingleObjLoad
+		move.b	#$5C,(a1)
+		move.b	#4,$24(a1)		
 
 Obj5C_Display:				; XREF: Obj5C_Index
 		move.l	($FFFFF700).w,d1
@@ -24714,15 +24747,60 @@ Obj5C_Display:				; XREF: Obj5C_Index
 		swap	d1
 		neg.w	d1
 		move.w	d1,8(a0)
+
 		move.l	($FFFFF704).w,d1
 		add.l	d1,d1
 		swap	d1
+
+		move.w	d1,d2
+		move.w	d1,d3
+		lsr.w	#1,d2
+		lsr.w	#2,d3
+		add.w	d3,d2
+		add.w	d2,d1
+
 		andi.w	#$3F,d1
 		neg.w	d1
 		addi.w	#$100,d1
 		move.w	d1,$A(a0)
+
 		bra.w	DisplaySprite
 ; ===========================================================================
+
+Obj5C_Main2:				; XREF: Obj5C_Index
+		addq.b	#2,$24(a0)
+		move.l	#Map_obj5C,4(a0)
+		move.w	#$83CC,2(a0)
+		move.b	#$10,$19(a0)
+
+Obj5C_Display2:				; XREF: Obj5C_Index
+		move.l	($FFFFF700).w,d1
+		add.l	d1,d1
+		swap	d1
+		move.w	d1,d2
+		lsr.w	#2,d2
+		sub.w	d2,d1
+		neg.w	d1
+		move.w	d1,8(a0)
+
+		move.l	($FFFFF704).w,d1
+		add.l	d1,d1
+		swap	d1
+
+		move.w	d1,d2
+		move.w	d1,d3
+		lsr.w	#3,d2
+		sub.w	d2,d1
+
+		andi.w	#$3F,d1
+		neg.w	d1
+		addi.w	#$100,d1
+		move.w	d1,$A(a0)
+		
+		bra.w	DisplaySprite
+; ===========================================================================
+
+
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - metal girders in foreground	(SLZ)
 ; ---------------------------------------------------------------------------
@@ -25468,10 +25546,19 @@ Obj5F_Action:				; XREF: Obj5F_Index
 		moveq	#0,d0
 		move.b	$25(a0),d0
 		move.w	Obj5F_Index2(pc,d0.w),d1
-		jsr	obj5F_Index2(pc,d1.w)
+		jsr	Obj5F_Index2(pc,d1.w)
 		lea	(Ani_obj5F).l,a1
 		bsr.w	AnimateSprite
-		bra.w	MarkObjGone
+
+		move.w	8(a0),d0
+		andi.w	#$FF80,d0
+		move.w	($FFFFF700).w,d1
+		subi.w	#$80,d1
+		andi.w	#$FF80,d1
+		sub.w	d1,d0
+		cmpi.w	#$280,d0
+		bhi.w	DeleteObject
+		bra.w	DisplaySprite
 ; ===========================================================================
 Obj5F_Index2:	dc.w Obj5F_Walk-Obj5F_Index2
 		dc.w Obj5F_Wait-Obj5F_Index2
@@ -25480,18 +25567,39 @@ Obj5F_Index2:	dc.w Obj5F_Walk-Obj5F_Index2
 
 Obj5F_Walk:				; XREF: Obj5F_Index2
 		bsr.w	Obj5F_ChkSonic
-		subq.w	#1,$30(a0)	; subtract 1 from time delay
-		bpl.s	locret_11A96	; if time remains, branch
-		addq.b	#2,$25(a0)
-		move.w	#1535,$30(a0)	; set time delay to 25 seconds
-		move.w	#$50,$10(a0)
+		bmi	locret_11AD0
 		move.b	#1,$1C(a0)
-		bchg	#0,$22(a0)
-		beq.s	locret_11A96
-		neg.w	$10(a0)		; change direction
+		moveq	#0,d0
+		move.w	($FFFFD008).w,d0
+		sub.w	8(a0),d0
+		bpl.s	Obj5F_Walk2
+		bclr	#0,$22(a0)		
+		move.w	#-$C0,$10(a0)	; move object to the left
+		bra.s	Obj5F_Return
 
-locret_11A96:
-		rts	
+Obj5F_Walk2:
+		bset	#0,$22(a0)
+		move.w	#$C0,$10(a0)	; move object to the right
+
+Obj5F_Return:
+		bsr	ObjHitFloor
+		subi.w	#15,d1
+		add.w	d1,$C(a0)	; match	object's position with the floor
+		bsr.w	SpeedToPos
+		rts
+; ===========================================================================
+
+Obj5F_FaceSonic:
+		moveq	#0,d0
+		move.w	($FFFFD008).w,d0
+		sub.w	8(a0),d0
+		bpl.s	Obj5F_FC2
+		bclr	#0,$22(a0)		
+		rts
+
+Obj5F_FC2:
+		bset	#0,$22(a0)
+		rts
 ; ===========================================================================
 
 Obj5F_Wait:				; XREF: Obj5F_Index2
@@ -25504,15 +25612,24 @@ Obj5F_Wait:				; XREF: Obj5F_Index2
 
 loc_11AA8:
 		subq.b	#2,$25(a0)
-		move.w	#1,$30(a0)	; set time delay to 3 seconds
+		move.w	#0,$30(a0)	; set time delay to 3 seconds
 		clr.w	$10(a0)		; stop walking
-		move.b	#0,$1C(a0)	; stop animation
 		rts	
 ; ===========================================================================
 
 Obj5F_Explode:				; XREF: Obj5F_Index2
+		bsr	Obj5F_FaceSonic
+		move.b	#0,$1C(a0)	; stop animation
+		move.b	#4,$18(a0)
 		subq.w	#1,$30(a0)
 		bpl.s	locret_11AD0
+
+		jsr	SingleObjLoad
+		move.b	#$5F,0(a1)	; load a new bomb object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+		move.w	$22(a0),$22(a1)
+
 		move.b	#$3F,0(a0)	; change bomb into an explosion
 		move.b	#0,$24(a0)
 
@@ -25521,26 +25638,27 @@ locret_11AD0:
 ; ===========================================================================
 
 Obj5F_ChkSonic:				; XREF: Obj5F_Walk; Obj5F_Wait
+		bsr	Obj5F_FaceSonic
 		move.w	($FFFFD008).w,d0
 		sub.w	8(a0),d0
 		bcc.s	loc_11ADE
 		neg.w	d0
 
 loc_11ADE:
-		cmpi.w	#$60,d0
-		bcc.s	locret_11B5E
+		cmpi.w	#$40,d0
+		bcc.w	locret_11B5E
 		move.w	($FFFFD00C).w,d0
 		sub.w	$C(a0),d0
 		bcc.s	Obj5F_MakeFuse
 		neg.w	d0
 
 Obj5F_MakeFuse:
-		cmpi.w	#$60,d0
+		cmpi.w	#$40,d0
 		bcc.s	locret_11B5E
 		tst.w	($FFFFFE08).w
 		bne.s	locret_11B5E
 		move.b	#4,$25(a0)
-		move.w	#1,$30(a0)	; set fuse time
+		move.w	#71,$30(a0)	; set fuse time
 		clr.w	$10(a0)
 		move.b	#2,$1C(a0)
 		bsr.w	SingleObjLoad2
@@ -25549,23 +25667,26 @@ Obj5F_MakeFuse:
 		move.w	8(a0),8(a1)
 		move.w	$C(a0),$C(a1)
 		move.w	$C(a0),$34(a1)
-		move.b	$22(a0),$22(a1)
+		move.w	$22(a0),$22(a1)
 		move.b	#4,$28(a1)
 		move.b	#3,$1C(a1)
-		move.w	#$10,$12(a1)
+		move.b	#0,$18(a1)
+		move.w	#$30,$12(a1)
 		btst	#1,$22(a0)
 		beq.s	loc_11B54
 		neg.w	$12(a1)
 
 loc_11B54:
-		move.w	#1,$30(a1)	; set fuse time
+		move.w	#71,$30(a1)	; set fuse time
 		move.l	a0,$3C(a1)
+		moveq	#-1,d1
 
 locret_11B5E:
 		rts	
 ; ===========================================================================
 
 Obj5F_Display:				; XREF: Obj5F_Index
+		bsr	Obj5F_FaceSonic
 		bsr.s	loc_11B70
 		lea	(Ani_obj5F).l,a1
 		bsr.w	AnimateSprite
@@ -25583,9 +25704,8 @@ loc_11B7C:
 		clr.w	$30(a0)
 		clr.b	$24(a0)
 		move.w	$34(a0),$C(a0)
-		moveq	#5,d1
+		moveq	#7,d6			; bomb pellets
 		movea.l	a0,a1
-		lea	(Obj5F_ShrSpeed).l,a2 ;	load shrapnel speed data
 		bra.s	Obj5F_MakeShrap
 ; ===========================================================================
 
@@ -25599,35 +25719,56 @@ Obj5F_MakeShrap:			; XREF: loc_11B7C
 		move.w	$C(a0),$C(a1)
 		move.b	#6,$28(a1)
 		move.b	#4,$1C(a1)
-		move.w	(a2)+,$10(a1)
-		move.w	(a2)+,$12(a1)
+
+		jsr	RandomNumber
+		move.l	d1,d4
+		move.w	d4,d5
+		swap	d4
+		andi.w	#$2FF,d4
+		btst	#0,d6
+		beq.s	@cont
+		neg.w	d4
+
+@cont:
+		andi.w	#$2FF,d5
+		neg.w	d5
+
+		move.w	d4,d2
+		move.w	d2,d3
+		asr.w	#1,d3
+		add.w	d3,d2
+		move.w	d2,$10(a1)
+
+		move.w	d5,d2
+		move.w	d2,d3
+		asr.w	#1,d3
+		add.w	d3,d2
+		move.w	d2,$12(a1)
+
 		move.b	#$98,$20(a1)
 		bset	#7,1(a1)
 
 loc_11BCE:
-		dbf	d1,Obj5F_Loop	; repeat 3 more	times
-
-		move.b	#6,$24(a0)
+		dbf	d6,Obj5F_Loop	; repeat 3 more	times
 
 Obj5F_End:				; XREF: Obj5F_Index
 		bsr.w	SpeedToPos
-		addi.w	#$18,$12(a0)
+		addi.w	#$20,$12(a0)
 		lea	(Ani_obj5F).l,a1
 		bsr.w	AnimateSprite
 		tst.b	1(a0)
 		bpl.w	DeleteObject
 		bra.w	DisplaySprite
 ; ===========================================================================
-Obj5F_ShrSpeed:	dc.w $FE00, $FD00, $FF00, $FE00, $200, $FD00, $100, $FE00
 
 Ani_obj5F:
-		include	"_anim\obj5F.asm"
+	include "_anim\obj5F.asm"
 
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - walking bomb enemy (SLZ, SBZ)
 ; ---------------------------------------------------------------------------
 Map_obj5F:
-		include	"_maps\obj5F.asm"
+	include "_maps\obj5F.asm"
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
