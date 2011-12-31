@@ -132,11 +132,11 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"  THE SSRG IRC CHAT ",$FF
+	dc.b	"    THE SSRG IRC    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"    ON BADNIKNET    ",$FF
+	dc.b	"     CHANNEL ON     ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
+	dc.b	"     BADNIK NET     ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
@@ -171,7 +171,7 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"     SONIC TEAM     ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
+	dc.b	"        SEGA        ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF

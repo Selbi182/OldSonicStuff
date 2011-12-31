@@ -9537,7 +9537,8 @@ Resize_GHZ1:
 		move.w	#$400,($FFFFF726).w ; set lower	y-boundary
 
 locret_6E08:
-		cmpi.w	#$20AA,($FFFFF700).w ; has the camera reached $20BB on x-axis?
+	;	cmpi.w	#$20AA,($FFFFF700).w ; has the camera reached $20AA on x-axis?
+		cmpi.w	#$214A,($FFFFD008).w ; has Sonic reached position $214A on X-axis?
 		bcs.s	locret_6E08XX	; if not, branch
 		move.w	#$410,($FFFFF726).w ; set lower	y-boundary
 		tst.b	($FFFFFFA9).w
@@ -19449,6 +19450,38 @@ ObjectFall:
 		rts	
 ; End of function ObjectFall
 
+
+; ---------------------------------------------------------------------------
+; Subroutine to	handle falling physics on Sonic
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
+
+
+ObjectFall_Sonic:
+		move.l	8(a0),d2
+		move.l	$C(a0),d3
+		move.w	$10(a0),d0
+		ext.l	d0
+		asl.l	#8,d0
+		add.l	d0,d2
+		move.w	$12(a0),d0
+		addi.w	#$38,$12(a0)		; increase vertical speed
+		cmpi.w	#$301,($FFFFFE10).w	; is level SLZ 2?
+		bne.s	OFS_NoA			; if not, branch
+		btst	#6,($FFFFF602).w	; is A pressed?
+		beq.s	OFS_NoA			; if not, branch
+		subi.w	#$38*2,$12(a0)		; decrease vertical speed
+
+OFS_NoA:
+		ext.l	d0
+		asl.l	#8,d0
+		add.l	d0,d3
+		move.l	d2,8(a0)
+		move.l	d3,$C(a0)
+		rts	
+; End of function ObjectFall
+
 ; ---------------------------------------------------------------------------
 ; Subroutine translating object	speed to update	object position
 ; ---------------------------------------------------------------------------
@@ -24772,6 +24805,7 @@ Obj5C_Main2:				; XREF: Obj5C_Index
 		move.l	#Map_obj5C,4(a0)
 		move.w	#$83CC,2(a0)
 		move.b	#$10,$19(a0)
+		move.b	#1,$1A(a0)
 
 Obj5C_Display2:				; XREF: Obj5C_Index
 		move.l	($FFFFF700).w,d1
@@ -28306,7 +28340,7 @@ Obj01_MdJump:				; XREF: Obj01_Modes
 		bsr	Sonic_FixWalkJumpBug	; branch to walk/jump fix routine
 		bsr	Sonic_ChgJumpDir
 		bsr	Sonic_LevelBound
-		bsr	ObjectFall
+		bsr	ObjectFall_Sonic
 		btst	#6,$22(a0)
 		beq.s	loc_12E5C
 		subi.w	#$28,$12(a0)
@@ -28340,7 +28374,7 @@ Obj01_MdJump2:				; XREF: Obj01_Modes
 		bsr	Sonic_FixWalkJumpBug	; branch to walk/jump fix routine
 		bsr	Sonic_ChgJumpDir
 		bsr	Sonic_LevelBound
-		bsr	ObjectFall
+		bsr	ObjectFall_Sonic
 		btst	#6,$22(a0)
 		beq.s	loc_12EA6
 		subi.w	#$28,$12(a0)
@@ -29159,18 +29193,10 @@ Sonic_JumpDash:
 JD_NotMZ:
 		tst.b	($FFFFFFE5).w		; was AirFreeze flag set?
 		bne.w	JD_End			; if yes, branch
-		move.b	($FFFFF603).w,d0	; is ABC pressed? (part 1)
-		andi.b	#$70,d0			; is ABC pressed? (part 2)
+		move.b	($FFFFF603).w,d0	; is B or C pressed? (part 1)
+		andi.b	#$30,d0			; is B C pressed? (part 2)
 		beq.w	JD_End			; if not, branch
-		tst.b	($FFFFFFE7).w		; is inhuman move on?
-		beq.s	JD_NotInhuman2		; if not, branch
-		move.b	($FFFFF603).w,d0	; is A pressed? (part 1)
-		andi.b	#$40,d0			; is A pressed? (part 2)
-		beq.s	JD_NotInhuman2		; if not, branch
-		rts				; if A is pressed while you are inhuman, return
-; ===========================================================================
 
-JD_NotInhuman2:
 		tst.b	($FFFFFFEB).w		; was jumpdash flag set?
 		bne.w	JD_End			; if yes, branch
 		move.b	#1,($FFFFFFEB).w	; if not, set jumpdash flag
@@ -29896,13 +29922,9 @@ S_F_End:
 
 Sonic_Jump:				; XREF: Obj01_MdNormal; Obj01_MdRoll
 		move.b	($FFFFF603).w,d0
-		andi.b	#$10,d0		; is B pressed?
-		bne.w	S_J_IfAPressed	; if yes, branch
-		move.b	($FFFFF603).w,d0
-		andi.b	#$20,d0		; is C pressed?
+		andi.b	#$30,d0		; is B or C pressed?
 		beq.w	locret_1348E	; if not, branch
 
-S_J_IfAPressed:
 	;	andi.b	#$40,d0		; was the button that was pressed A?
 	;	bne.w	Sonic_SpeedDash	; if yes, speeddash instead of jumping
 		moveq	#0,d0
@@ -33382,7 +33404,7 @@ Obj69_Animate2:
 		addq.w	#1,d3
 		move.w	8(a0),d4
 		bsr	SolidObject
-		bra.w	MarkObjGone
+		jmp	MarkObjGone
 ; ===========================================================================
 
 Obj69_NotSolid2:
@@ -33394,7 +33416,7 @@ Obj69_NotSolid2:
 		clr.b	$25(a0)
 
 Obj69_Display2:
-		bra.w	MarkObjGone
+		jmp	MarkObjGone
 ; ===========================================================================
 Ani_obj69:
 		include	"_anim\obj69.asm"
@@ -40679,6 +40701,11 @@ Pal_MBW_LoopXX:
 		dbf	d3,Pal_MBW_LoopXX		; loop for each colour
 
 Kill_NoGreyPal:
+		cmpi.b	#$18,($FFFFF600).w	; is this the ending sequence?
+		bne.s	SH_NotEnding		; if not, branch
+		move.w	#0,($FFFFF72A).w	; lock screen
+
+SH_NotEnding:
 		clr.b	($FFFFFFAA).w		; clear crabmeat boss flag 1
 		clr.b	($FFFFFFAB).w		; clear crabmeat boss flag 2
 		clr.b	($FFFFFFBB).w
@@ -41353,6 +41380,53 @@ loc_1B730:
 
 		clr.l	(a1)+
 		dbf	d1,loc_1B730
+
+
+		lea	($FF1020).l,a1		; load SS blocks (layout?) into a1
+		moveq	#$3F,d1			; set normal loop
+
+SSL_GoalLoop2:
+		moveq	#$3F,d2			; set alternate loop
+
+SSL_GoalLoop:
+		cmpi.b	#$2C,(a1)		; is the item a	goal block?
+		bne.s	SSL_NoReplace2	; if not, branch
+		addi.b	#1,($FFFFFFD7).w	; increase counter
+		cmpi.b	#24,($FFFFFFD7).w	; is counter over 24 (end of normal blocks)?
+		blt.s	SSL_NoResetFFD7	; if not, branch
+		move.b	#2,($FFFFFFD7).w	; else, reset to first block
+
+SSL_NoResetFFD7:
+		cmpi.b	#1,($FFFFFFD7).w	; is block number 1 (static block)?
+		beq.s	SSL_SkipBlockX	; if yes, branch
+		cmpi.b	#2,($FFFFFFD7).w	; is the item a blue block (2)?
+		beq.s	SSL_SkipBlock		; if yes, branch
+		cmpi.b	#6,($FFFFFFD7).w	; is the item a blue block (6)?
+		beq.s	SSL_SkipBlock		; if yes, branch		
+		cmpi.b	#$A,($FFFFFFD7).w	; is block number $A (static block)?
+		beq.s	SSL_SkipBlock		; if yes, branch
+		cmpi.b	#$13,($FFFFFFD7).w	; is block number $13 (static block)?
+		beq.s	SSL_SkipBlock		; if yes, branch
+		cmpi.b	#$1C,($FFFFFFD7).w	; is block number $1C (static block)?
+		beq.s	SSL_SkipBlock		; if yes, branch
+		bra.s	SSL_ReplaceNormal	; skip
+
+SSL_SkipBlockX:
+		addi.b	#1,($FFFFFFD7).w	; use next blinking block
+
+SSL_SkipBlock:
+		addi.b	#1,($FFFFFFD7).w	; use next blinking block
+
+SSL_ReplaceNormal:
+		move.b	($FFFFFFD7).w,(a1)	; replace goal block with a solid block
+
+SSL_NoReplace2:
+		addq.w	#1,a1			; go to next block
+		dbf	d2,SSL_GoalLoop	; loop
+		lea	$40(a1),a1		; increase pointer by $40
+		dbf	d1,SSL_GoalLoop2	; loop
+
+
 
 		rts	
 ; End of function SS_Load
@@ -42081,34 +42155,8 @@ Obj09_GoalLoop2:
 Obj09_GoalLoop:
 		cmpi.b	#$27,(a1)		; is the item a	goal block?
 		bne.s	Obj09_NoReplace2	; if not, branch
-		addi.b	#1,($FFFFFFD7).w	; increase counter
-		cmpi.b	#24,($FFFFFFD7).w	; is counter over 24 (end of normal blocks)?
-		blt.s	Obj09_NoResetFFD7	; if not, branch
-		move.b	#2,($FFFFFFD7).w	; else, reset to first block
 
-Obj09_NoResetFFD7:
-		cmpi.b	#1,($FFFFFFD7).w	; is block number 1 (static block)?
-		beq.s	Obj09_SkipBlockX	; if yes, branch
-		cmpi.b	#2,($FFFFFFD7).w	; is the item a blue block (2)?
-		beq.s	Obj09_SkipBlock		; if yes, branch
-		cmpi.b	#6,($FFFFFFD7).w	; is the item a blue block (6)?
-		beq.s	Obj09_SkipBlock		; if yes, branch		
-		cmpi.b	#$A,($FFFFFFD7).w	; is block number $A (static block)?
-		beq.s	Obj09_SkipBlock		; if yes, branch
-		cmpi.b	#$13,($FFFFFFD7).w	; is block number $13 (static block)?
-		beq.s	Obj09_SkipBlock		; if yes, branch
-		cmpi.b	#$1C,($FFFFFFD7).w	; is block number $1C (static block)?
-		beq.s	Obj09_SkipBlock		; if yes, branch
-		bra.s	Obj09_ReplaceNormal	; skip
-
-Obj09_SkipBlockX:
-		addi.b	#1,($FFFFFFD7).w	; use next blinking block
-
-Obj09_SkipBlock:
-		addi.b	#1,($FFFFFFD7).w	; use next blinking block
-
-Obj09_ReplaceNormal:
-		move.b	($FFFFFFD7).w,(a1)	; replace goal block with a solid block
+		move.b	#$2C,(a1)		; replace goal block with a solid block
 
 Obj09_NoReplace2:
 		addq.w	#1,a1			; go to next block
@@ -42131,34 +42179,24 @@ Obj09_GoalNotSolid:
 
 		move.b	#0,($FF1C28).l		; make sure there is no pink glass block
 		move.b	#0,($FF1DA7).l		; make sure there is no yellow glass block
-		move.b	#$2C,($FF1E2C).l	; place block
-		move.b	#$2C,($FF1EAC).l	; place block
-		move.b	#$2C,($FF1F2C).l	; place block
 
-		lea	($FF1020).l,a1		; load SS blocks (layout?) into a1
-		moveq	#$3F,d1			; set normal loop
+		move.b	#1,($FF1E2C).l		; place block
+		move.b	#1,($FF1EAC).l		; place block
+		move.b	#1,($FF1F2C).l		; place block
 
-Obj09_GoalLoop2X:
-		moveq	#$3F,d2			; set alternate loop
+		move.b	#0,($FF1FAD).l		; remove blocks over emerald cave
+		move.b	#0,($FF1FAE).l		; remove blocks over emerald cave
 
-Obj09_GoalLoopX:
-		cmpi.b	#2,(a1)			; is the item a blue block (2)?
-		beq.s	Obj09_Block2		; if yes, branch
-		cmpi.b	#6,(a1)			; is the item a blue block (6)?
-		bne.s	Obj09_NoReplace2X	; if not, branch
+		move.b	#1,($FF12BD).l		; place blocks over W blocks
+		move.b	#1,($FF12BE).l		; place blocks over W blocks
 
-Obj09_Block2:
-		move.b	#0,(a1)			; remove block
+		move.b	#0,($FF11BC).l		; remove blocks next to W blocks
+		move.b	#0,($FF123C).l		; remove blocks next to W blocks
 
-Obj09_NoReplace2X:
-		addq.w	#1,a1			; go to next block
-		dbf	d2,Obj09_GoalLoopX	; loop
-		lea	$40(a1),a1		; unkown
-		dbf	d1,Obj09_GoalLoop2X	; loop
-
-		move.b	#2,($FF12BD).l		; place blue block - type 2
-		move.b	#6,($FF12BE).l		; place blue block - type 6
-
+		move.b	#0,($FF11AC).l		; remove blocks next to R blocks
+		move.b	#0,($FF122C).l		; remove blocks next to R blocks
+		move.b	#0,($FF112A).l		; remove blocks next to R blocks
+		move.b	#0,($FF112B).l		; remove blocks next to R blocks
 
 		rts
 ; ===========================================================================
@@ -42347,6 +42385,12 @@ Obj09_Rblock:
 
 Obj09_RevStage:
 		move.b	#1,($FFFFFF9F).w	; set flag
+		tst.b	($FFFFFFD6).w
+		beq.s	@cont
+		move.b	#1,($FF11AC).l		; place blocks next to R blocks
+		move.b	#1,($FF122C).l		; place blocks next to R blocks
+
+@cont:
 		move.w	#$C3,d0			; set giant ring sound
 		jmp	(PlaySound_Special).l	; play it
 ; ===========================================================================
@@ -43227,6 +43271,8 @@ loc_1C6E4:
 Hud_ChkTime:
 		tst.b	($FFFFFE1E).w	; does the time	need updating?
 		beq.s	Hud_ChkLives	; if not, branch
+		cmpi.w	#$400,($FFFFFE10).w ; is level SYZ1?
+		beq.s	Hud_ChkLives	; if yes, branch
 		tst.w	($FFFFF63A).w	; is the game paused?
 		bne.s	Hud_ChkLives	; if yes, branch
 		lea	($FFFFFE22).w,a1

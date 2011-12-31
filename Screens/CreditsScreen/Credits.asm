@@ -12,6 +12,9 @@ CreditsJest:
 		move	#$2700,sr				; set IRQ's (disable interrupts)
 		jsr	ClearScreen				; clear the screen
 
+		move.b	#4,($FFFFF62A).w
+		jsr	DelayProgram
+
 		move.l	#$40000000,($C00004).l			; set VDP to V-Ram write mode with address
 		lea	(Art_Credits).l,a0			; load address of compressed art
 		jsr	NemDec					; decompress and dump

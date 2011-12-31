@@ -216,15 +216,15 @@ PLC_SLZ:	dc.w 8
 		dc.w $A460
 		dc.l Nem_VSpring	; vertical spring
 		dc.w $A660
-PLC_SLZ2:	dc.w 5
+PLC_SLZ2:	dc.w 4 ;5
 		dc.l Nem_Seesaw		; seesaw
 		dc.w $6E80
 		dc.l Nem_Fan		; fan
 		dc.w $7400
 		dc.l Nem_Pylon		; foreground pylon
 		dc.w $7980
-		dc.l Nem_SlzSwing	; swinging platform
-		dc.w $7B80
+	;	dc.l Nem_SlzSwing	; swinging platform
+	;	dc.w $7B80
 		dc.l Nem_SlzCannon	; fireball launcher
 		dc.w $9B00
 		dc.l Nem_SlzSpike	; spikeball
