@@ -531,7 +531,7 @@ GetOptionsText:
 
 		adda.w	#(2*24),a1			; make two empty lines
 
-		lea	(OpText_HardPartSkipper).l,a2	; set text location
+		lea	(OpText_EasterEgg).l,a2		; set text location
 		bsr.w	OW_Loop				; write text
 		moveq	#4,d2				; set d2 to 4
 		bsr.w	GOT_ChkOption			; check if option is ON or OFF
@@ -637,7 +637,7 @@ GOTSUP_Options:
 
 		lea	($FFFFCA00+(10*24)).w,a1	; set destination
 		adda.w	($FFFFFF9A).w,a1
-		lea	(OpText_HardPartSkipper).l,a2	; set text location
+		lea	(OpText_EasterEgg).l,a2		; set text location
 		bsr.w	OW_NoIncrease			; write text
 
 		lea	($FFFFCA00+(13*24)).w,a1	; set destination
@@ -796,6 +796,12 @@ OW_NotDollar:
 		bra.s	OW_DoWrite		; skip
 
 OW_NotExclam:
+		cmpi.b	#'?',d0			; is current character a "?"?
+		bne.s	OW_NotQuestion		; if not, branch
+		move.b	#$2A,d0			; set correct value for "?"
+		bra.s	OW_DoWrite		; skip
+
+OW_NotQuestion:
 		subi.b	#50,d0			; otherwise it's a letter and has to be set to the correct value
 		cmpi.b	#9,d0			; is result a number?
 		bgt.s	OW_DoWrite		; if not, branch
@@ -833,7 +839,7 @@ GOTCO_ChkExtCam:
 
 GOTCO_ChkSonArt:
 		cmpi.b	#3,d2				; is d2 set to 3?
-		bne.s	GOTCO_ChkHardPartSkipper	; if not, branch
+		bne.s	GOTCO_ChkEasterEgg		; if not, branch
 		lea	(OpText_S2B).l,a2		; use "S2B" text
 		tst.b	($FFFFFF94).w			; is art set to S3?
 		beq.s	GOTCO_Return			; if not, branch
@@ -841,7 +847,7 @@ GOTCO_ChkSonArt:
 		rts					; return
 ; ---------------------------------------------------------------------------
 
-GOTCO_ChkHardPartSkipper:
+GOTCO_ChkEasterEgg:
 		cmpi.b	#4,d2				; is d2 set to 4?
 		bne.s	GOTCO_Return			; if not, branch
 		lea	(OpText_OFF).l,a2		; use "OFF" text
@@ -877,8 +883,8 @@ OpText_SonicArt:
 		dc.b	'SONIC ART            ', $FF
 		even
 
-OpText_HardPartSkipper:
-		dc.b	'HARD PART SKIPPER    ', $FF
+OpText_EasterEgg:
+		dc.b	'?????????????????    ', $FF
 		even
 
 OpText_DeleteSRAM:

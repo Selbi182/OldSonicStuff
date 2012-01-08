@@ -1,0 +1,30 @@
+*This is supposed to take place in SBZ Act 1, but slightly "friendlier".
+
+*Screen fades in, you can see Sonic and a big text box at the bottom, writing all of the following texts:*
+Hello, and welcome to Sonic ERaZor, the craziest journey you will ever take with a blue hedgehog!
+
+I know you want to dive right into the action and get yourself slain by {something}, but before you do so, there are a few things you should know:
+
+- First, Sonic ERaZor is not based on cheap levels and eye-burning colors, but about unique and completely wicked challanges, most of them somehow related to explosions.
+
+- Second, there are a few mechanics you should get yourself comfortable with before you actually need them:
+	- The Controls: To control Sonic, use the D-Pad to move and the C or B button to jump. While being in mid-air you are granted access to a few other features: Jumpdash/Homing Attack by pressing C, Double Jump by pressing B or C+Up, Down Dash by pressing C+Down. On the ground, Sonic is able to perform a Spindash by pressing Down+C, and a Super Peel Out by pressing Up+C.
+	  Play a little around and reach the next level to continue!
+
+	- S-Monitor: This monitor makes Sonic completely invincible, even from things like bottomless pits, for example.  Additionally, you can shoot a small bullet in front of you which propels you in the air when touching it. Try to reach that higher platform!
+	  Have a little fly around by propelling yourself in the air. Find another S-Monitor, hidden somewhere in this room to continue!
+	  
+	- S-Monitor (2): Oh snap! Seems like you opened a bad S-Monitor. These are very rare and you shouldn't find many of them. This monitor still makes you invincible and grants you the ability to shoot bullets to fly, at the cost of having not a single other movement ability and your ring counter slowly draining (faster when you're standing on the ground).
+	 Get through that narrow spot to continue! However, be aware that your rings don't run out, or you will die!
+
+	- Hard Part Skipper: Some challanges may be too tough for you. Since you absolutely want to continue playing, what you can do without finding your last hope in cheating, you can use a Hard Part Skipper! These will automatically be enabled once you fail at a certain challange for at least 5 times (30 times for Special Stages). Once it's enabled (which will be indicated by a sound), just position yourself in front of it and press A+B+C at the same time to skip the part. At the cost of that you will lose all your rings and not feel fully satisfied, but at least you can continue playing.
+	  Try it by skipping that next area to continue!
+
+	- Trial-And-Error: Some parts may require you to dive straight into the action and take any risks in order to find the correct solution for a puzzle. Don't be afraid, there is no real game over!
+	  Find a way through that room to continue!
+
+- Third, this game is rather short, so I would be really flattened if you could play it to the very end!
+
+And now, have fun with Sonic ERaZor! I hope you have as much fun as I had creating it!
+
+~Selbi (They call me the Michael Bay of Sonic Hacking.)

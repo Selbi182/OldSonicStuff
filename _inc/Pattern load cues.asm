@@ -237,7 +237,9 @@ PLC_SYZ:	dc.w 1
 		dc.w $0000
 		dc.l Nem_LevelSigns	; level signs
 		dc.w $6E40
-PLC_SYZ2:	dc.w 0
+PLC_SYZ2:	dc.w 1
+		dc.l Nem_LzSwitch	; switch
+		dc.w $A1E0
 		dc.l Nem_HSpring	; horizontal spring
 		dc.w $A460
 ; ---------------------------------------------------------------------------

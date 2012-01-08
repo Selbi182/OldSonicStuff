@@ -146,7 +146,7 @@ Info_NoTextChange:
 		rts
 
 Info_NoIntro:
-		cmpi.b	#7,($FFFFFF9C).w	; is this the ending sequence?
+		cmpi.b	#8,($FFFFFF9C).w	; is this the ending sequence?
 		bne.s	Info_NoEnding		; if not, branch
 		move.b	#$18,($FFFFF600).w	; set to ending sequence ($18)
 		rts
@@ -754,6 +754,26 @@ InfoText_5:	; text after beating Labyrinth Zone
 InfoText_6:	; text after beating Star Light Zone
 		dc.b	'                            '
 		dc.b	'                            '
+		dc.b	'  SPECIAL 2 PLACEHOLDER     '
+		dc.b	'               TEXT         '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'    ASJHDBAJHSBDJABSD       '
+		dc.b	'                            '
+		dc.b	'            ASVDJHGAVSJGHD  '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	'                            '
+		dc.b	$FF
+		even
+; ---------------------------------------------------------------------------
+
+InfoText_7:	; text after beating Star Light Zone
+		dc.b	'                            '
+		dc.b	'                            '
 		dc.b	'  STAR LIGHT PLACEHOLDER    '
 		dc.b	'               TEXT         '
 		dc.b	'                            '
@@ -771,7 +791,7 @@ InfoText_6:	; text after beating Star Light Zone
 		even
 ; ---------------------------------------------------------------------------
 
-InfoText_7:	; text after jumping in the ring for the Ending Sequence
+InfoText_8:	; text after jumping in the ring for the Ending Sequence
 		dc.b	'   THE WORLD IS RESCUED,    '
 		dc.b	'  SONIC ONCE AGAIN STOPPED  '
 		dc.b	' ROBOTNIK FROM TAKING OVER  '
@@ -831,7 +851,19 @@ ScrollText_5:	dc.b	0, 1, 0, 0
 		dc.b	0, 1, 0
 		even
 
-ScrollText_6:	dc.b	1, 0, 1, 0
+ScrollText_6:	dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0
+		even
+
+ScrollText_7:	dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0, 0
+		dc.b	0, 0, 0
+		even
+
+ScrollText_8:	dc.b	1, 0, 1, 0
 		dc.b	0, 0, 1, 1
 		dc.b	0, 1, 0, 0
 		dc.b	0, 1, 0

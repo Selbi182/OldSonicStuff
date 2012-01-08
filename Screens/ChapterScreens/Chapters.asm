@@ -115,6 +115,7 @@ CS_Tiles_Index:	dc.w CS_Tiles1-CS_Tiles_Index
 		dc.w CS_Tiles4-CS_Tiles_Index
 		dc.w CS_Tiles5-CS_Tiles_Index
 		dc.w CS_Tiles6-CS_Tiles_Index
+		dc.w CS_Tiles7-CS_Tiles_Index
 ; ===========================================================================
 
 CS_Tiles1:
@@ -134,6 +135,9 @@ CS_Tiles5:
 		bra.s	CS_Tiles_Load
 CS_Tiles6:
 		lea	(Art_Chapter6).l,a1		; load chapter 6
+		bra.s	CS_Tiles_Load
+CS_Tiles7:
+		lea	(Art_Chapter7).l,a1		; load chapter 7
 
 CS_Tiles_Load:
 		move.l	#$45A00000,($C00004).l		; Load art
@@ -192,10 +196,13 @@ CS_Loop:
 		jsr	BuildSprites
 		move.b	#4,($FFFFF62A).w
 		jsr	DelayProgram
+		andi.b	#$80,($FFFFF605).w ; is	Start button pressed?
+		bne.s	CS_EndLoop	; if yes, branch
 		tst.w	($FFFFF614).w		; test wait time
 		bne.s	CS_Loop			; if it isn't over, loop
 ; ---------------------------------------------------------------------------
 
+CS_EndLoop:
 		tst.b	($FFFFFFA0).w
 		beq.s	CS_PlayLevel
 
@@ -224,11 +231,17 @@ CS_ChkChapter4:
 CS_ChkChapter5:
 		cmpi.b	#5,($FFFFFFA0).w	; is this chapter 5?
 		bne.s	CS_ChkChapter6		; if not, branch
+		move.w	#$302,($FFFFFE10).w	; use correct stage
+		move.b	#$10,($FFFFF600).w	; set to special stage
+		rts
+CS_ChkChapter6:
+		cmpi.b	#6,($FFFFFFA0).w	; is this chapter 6?
+		bne.s	CS_ChkChapter7		; if not, branch
 		move.w	#$301,($FFFFFE10).w	; set level to SLZ2
 		bra.s 	CS_PlayLevel
 
-CS_ChkChapter6:
-		cmpi.b	#6,($FFFFFFA0).w	; is this chapter 6?
+CS_ChkChapter7:
+		cmpi.b	#7,($FFFFFFA0).w	; is this chapter 7?
 		bne.s	CS_PlayLevel		; if not, branch
 		move.w	#$502,($FFFFFE10).w	; set level to FZ
 
@@ -324,9 +337,11 @@ Art_Chapter3:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter3.bin"
 		even
 Art_Chapter4:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter4.bin"
 		even
-Art_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter5.bin"
+Art_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter2.bin"
 		even
 Art_Chapter6:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter6.bin"
+		even
+Art_Chapter7:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter7.bin"
 		even
 ; ---------------------------------------------------------------------------
 Map_Chapter1:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter1.bin"
@@ -337,9 +352,11 @@ Map_Chapter3:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter3.bin"
 		even
 Map_Chapter4:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter4.bin"
 		even
-Map_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter5.bin"
+Map_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter2.bin"
 		even
 Map_Chapter6:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter6.bin"
+		even
+Map_Chapter7:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter7.bin"
 		even
 ; ---------------------------------------------------------------------------
 Pal_Chapter1:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter1.bin"
@@ -350,9 +367,11 @@ Pal_Chapter3:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter3.bin"
 		even
 Pal_Chapter4:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter4.bin"
 		even
-Pal_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter5.bin"
+Pal_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter2.bin"
 		even
 Pal_Chapter6:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter6.bin"
+		even
+Pal_Chapter7:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter7.bin"
 		even
 ; ---------------------------------------------------------------------------
 Art_OHDIGHZ:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_OHDIGHZ.bin"
