@@ -3,7 +3,7 @@
 ; =====================================================================================================================
 SelbiSplash_MusicID		EQU	$B7		; Music to play
 SelbiSplash_NxtScr		EQU	$04		; Screen mode to go to next (Title Screen)
-SelbiSplash_Wait		EQU	$D0		; Time to wait ($100)
+SelbiSplash_Wait		EQU	$30		; Time to wait ($100)
 SelbiSplash_PalChgSpeed		EQU	$200		; Speed for the palette to be changed ($200)
 
 ; ---------------------------------------------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ SelbiSplash_Art:
 		
 SelbiSplash_Mappings:
 		lea	($FF0000).l,a1			; Load screen mappings
-		lea	(Map_SelbiSplash).l,a0
+		lea	(Map3_SelbiSplash).l,a0
 		move.w	#0,d0
 		jsr	EniDec
 		
@@ -62,12 +62,63 @@ SelbiSplash_Music:
 SelbiSplash_SetWait:
 		move.w	#SelbiSplash_Wait,($FFFFF614).w	; Wait time
 		jsr	Pal_FadeTo			; Fade palette in
-		move.b	#SelbiSplash_MusicID,d0		; Play music
-		jsr	PlaySound
+	;	move.b	#SelbiSplash_MusicID,d0		; Play music
+	;	jsr	PlaySound
+		
+		move.l	#$4E400001,($FFFFFF7A).w
+		move.w	#0,($FFFFFF7E).w
+		bra.s	SelbiSplash_Loop
+; ---------------------------------------------------------------------------------------------------------------------
+
+SelbiSplash_Sounds:
+		dc.b	$BD
+		dc.b	$B5
+		dc.b	$BC
+		dc.b	$A6
+		dc.b	$C4
+		even
 
 ; ---------------------------------------------------------------------------------------------------------------------
 SelbiSplash_Loop:
-		cmpi.w	#$40,($FFFFF614).w		; is time less than $40?
+		cmpi.l	#$4EE00001,($FFFFFF7A).w
+		beq.w	@cont
+		cmpi.w	#$20,($FFFFF614).w		; is time less than $40?
+		bpl	SelbiSplash_ChangePal	; if yes, branch
+
+		lea	($C00000).l,a5			; load VDP data port address to a5
+		lea	($C00004).l,a6			; load VDP address port address to a6
+		move.l	($FFFFFF7A).w,(a6)		; set VDP address to write to
+		move.l	#$44444444,d2
+		move.l	d2,(a5)			; dump art to V-Ram
+		move.l	d2,(a5)			; ''
+		move.l	d2,(a5)			; ''
+		move.l	d2,(a5)			; ''
+		move.l	d2,(a5)			; ''
+		move.l	d2,(a5)			; ''
+		move.l	d2,(a5)			; ''
+		move.l	d2,(a5)			; ''
+		addi.l	#$00200000,($FFFFFF7A).w
+
+		lea	(SelbiSplash_Sounds).l,a1
+		move.w	($FFFFFF7E).w,d3
+		move.b	(a1,d3.w),d0
+		jsr	PlaySound_Special
+		addi.w	#1,($FFFFFF7E).w
+
+		cmpi.l	#$4EE00001,($FFFFFF7A).w
+		beq.s	@cont2
+		add.w	#$20,($FFFFF614).w
+
+		bra	SelbiSplash_ChangePal
+@cont2:
+		move.w	#$B0,($FFFFF614).w
+		lea	($C00000).l,a5
+		lea	$04(a5),a6
+		move.w	#$8B00,(a6)
+		move.l	#$40000010,(a6)
+		move.w	#$0008,(a5)
+@cont:
+		cmpi.w	#$70,($FFFFF614).w		; is time less than $40?
 		bmi.s	SelbiSplash_DontChangePal	; if yes, branch
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB04)
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB06)
@@ -75,19 +126,34 @@ SelbiSplash_Loop:
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB0A)
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB0C)
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB0E)
-		cmpi.w	#$70,($FFFFF614).w		; is time more than $70?
-		bpl.s	SelbiSplash_ChangePal		; if yes, branch
-		move.w	($FFFFF614).w,d0
-		neg.w	d0
-		and.w	#3,d0
-		bne.s	SelbiSplash_ChangePal
+		cmpi.w	#$B0,($FFFFF614).w		; is time more than $70?
+		bpl.w	SelbiSplash_ChangePal		; if yes, branch
+
+
+		move.b	($FFFFFE0F).w,d0
+		andi.b	#3,d0
+		bne.w	SelbiSplash_ChangePal
 		jsr	Pal_ToWhite
+
+		lea	($C00000).l,a5
+		lea	$04(a5),a6
+		move.w	#$8B00,(a6)
+		move.l	#$40000010,(a6)
+		move.w	#$0008,(a5)
+
+
+		move.b	($FFFFFE0F).w,d0
+		andi.b	#5,d0
+		beq.s	SelbiSplash_ChangePal
+
+		move.b	(SelbiSplash_Sounds+4),d0
+		jsr	PlaySound_Special
 		bra.s	SelbiSplash_ChangePal
 
 SelbiSplash_DontChangePal:
 		tst.b	($FFFFFFAF).w
 		bne.s	SelbiSplash_ChangePal
-		move.b	#$C3,d0			; play giant ring sound
+		move.b	#$B9,d0			; play giant ring sound
 		jsr	PlaySound		
 		movem.l	d0-a6,-(sp)
 
@@ -124,6 +190,7 @@ SelbiSplash_ChangePal:
 
 SelbiSplash_Next:
 		clr.b	($FFFFFFAF).w
+		clr.l	($FFFFFF7A).w
 	;	jmp	TongaraSplash
 		move.b	#SelbiSplash_NxtScr,($FFFFF600).w ; go to next screen
 		rts	
@@ -131,9 +198,11 @@ SelbiSplash_Next:
 ; ---------------------------------------------------------------------------------------------------------------------
 Art_SelbiSplash:	incbin	"Screens/SelbiSplash/Tiles.bin"
 			even
+;Map_SelbiSplash:	incbin	"Screens/SelbiSplash/Maps_NoPRESENTS.bin"
+;			even
 Map2_SelbiSplash:	incbin	"Screens/SelbiSplash/Maps_WithPRESENTS.bin"
 			even
-Map_SelbiSplash:	incbin	"Screens/SelbiSplash/Maps_NoPRESENTS.bin"
+Map3_SelbiSplash:	incbin	"Screens/SelbiSplash/Maps_SoftSelbi.bin"
 			even
 Pal_SelbiSplash:	incbin	"Screens/SelbiSplash/Palette.bin"
 			even 

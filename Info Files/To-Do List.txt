@@ -4,17 +4,15 @@ To-Do:
 	- Find a proper name for the stage, create the sign, write the new story text, and create the new chapter screen.
 
 - Rewrite most of the embarrasing story texts and maybe redo its entire art to be more appealing. Also increase its speed.
-- Work a little on the credits again (slowdown and new font).
 - Redesign "Finalor Place" to at least get rid of that grey background in the boss area. Making it longer wouldn't harm either.
 - A new life icon. That crazed Sonic is really starting to piss me off.
+- Create a new layout or improve the one of the second special stage.
 
 - Create a straight version of the finished product if necessary (or even combine both).
 
 
 Ideas:
 - Turorial level (see Intro Script.txt)
-- Hardening GHZ boss by releasing the balls after a certain amount of hits.
 - More cutscenes. One will be when Eggman creates the new bomb (see CutsceneConcept.png).
 - Adding a second special stage. I can use my old unfinished one as a sample.
 - The S-Monitor should get a new level that solely is made for it (in a positive way, so completely unlike to Ruined Place).
-- Adding an end-game easter egg. I tend towards making a "Retro Mode", which basically removes any drums and makes the entire palette grey.

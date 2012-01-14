@@ -20,9 +20,9 @@
 ; =====================
 ;Align macro for ASM68k
 ; DON'T TOUCH IT!!!
-align macro
-     cnop 0,\1
-     endm
+Align:		macro
+		cnop 0,\1
+		endm
 ; =====================
 
 ;--------------------------------------------------------
@@ -265,8 +265,13 @@ GameClrRAM:
 
 @cont7:
 		move.b	$19(a1),($FFFFFF8B).w	; otherwise update check value
-		bpl.s	NoSRAM
+		bpl.s	@cont8
 		clr.b	($FFFFFF8B).w
+
+@cont8:
+	;	move.b	$1D(a1),($FFFFFF92).w
+	;	bpl.s	NoSRAM
+	;	clr.b	($FFFFFF92).w
 
 NoSRAM:
 		move.b	#0,($A130F1).l		; disable SRAM
@@ -3153,6 +3158,7 @@ Pal_Null:		incbin	pallet\null.bin
 
 DelayProgram:				; XREF: PauseGame
 		move	#$2300,sr
+		jsr	EasterEgg_Epileptic
 
 loc_29AC:
 		tst.b	($FFFFF62A).w
@@ -3350,7 +3356,14 @@ SegaScreen:				; XREF: GameModeArray
 
 Sega_WhiteFadeIn:
 		move.b	#2,($FFFFF62A).w	; set to function 2 in V-blank
-		bsr	DelayProgram		; do V-blank
+	;	bsr	DelayProgram		; do V-blank
+
+		move	#$2300,sr
+
+loc_29ACx:
+		tst.b	($FFFFF62A).w
+		bne.s	loc_29ACx
+
 		addi.w	#$0111,($FFFFFB00).w	; make background brighter
 		cmpi.w	#$0FFF,($FFFFFB00).w	; has white been reached?
 		bne.s	Sega_WhiteFadeIn	; if not, loop
@@ -4734,6 +4747,30 @@ byte_3FCF:	dc.b 0			; XREF: LZWaterSlides
 		even
 ; ===========================================================================
 
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+EasterEgg_Epileptic:
+		tst.b	($FFFFFF92).w
+		beq.s	EEGP_End
+
+		movem.l	d0-a1,-(sp)
+		lea	($FFFFFB00).w,a1 	; get palette
+		moveq	#0,d2			; clear d3
+		move.b	#$3F,d2			; set d3 to $3F (+1 for the first run)
+
+EEGP_Loop:
+		jsr	RandomNumber
+		andi.w	#$0EEE,d0
+		move.w	d0,(a1)+		; set new colour
+		dbf	d2,EEGP_Loop	; loop for each colour
+		movem.l	(sp)+,d0-a1
+
+EEGP_End:
+		rts
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Subroutine to play level music.
@@ -5273,15 +5310,18 @@ SS_NoDebug:
 ; ---------------------------------------------------------------------------
 
 SS_MainLoop:
-		tst.b	($FFFFFF92).w		; is hard part skipper enabled?
-		beq.s	SS_NoSkip		; if not, branch
-		btst	#7,($FFFFF605).w	; is Start button pressed?
-		beq.w	SS_NoSkip		; if not, branch
+	;	tst.b	($FFFFFF92).w		; is hard part skipper enabled?
+	;	beq.s	SS_NoSkip		; if not, branch
+		move.b	($FFFFF602).w,d0	; get button presses
+		andi.b	#$70,d0			; sort out any non ABC button presses
+		cmpi.b	#$70,d0			; sort out any non ABC button presses
+		bne.w	SS_NoSkip		; if not, branch
 		cmpi.b	#4,($FFFFD024).w	; is special stage exiting routine being run?
 		bge.s	SS_NoPauseGame		; if yes, branch
 		move.b	#4,($FFFFD024).w	; make SS-Sonic object run "Obj09_Exit"
 		move.w	#$A8,d0			; play special stage exit sound
 		jsr	(PlaySound_Special).l	; play sound
+		clr.w	($FFFFFE20).w
 		bra.s	SS_NoPauseGame		; skip PauseGame jump
 
 SS_NoSkip:
@@ -9691,7 +9731,7 @@ Resize_LZ2:
 		cmpi.w	#$0E80,($FFFFF700).w
 		bcs.s	@contBoss
 		bset	#0,($FFFFFF9A).w
-		bsr	SingleObjLoad
+		jsr	SingleObjLoad
 		move.b	#$4F,0(a1)	; load LZ2 boss object
 
 @contBoss:
@@ -10162,7 +10202,7 @@ Resize_SBZ2end:
 ; ===========================================================================
 
 loc_72C2:
-		move.w	($FFFFF700).w,($FFFFF728).w
+	;	move.w	($FFFFF700).w,($FFFFF728).w
 		rts	
 ; ===========================================================================
 
@@ -15598,6 +15638,12 @@ Obj2E_ChkSonic:
 ExtraLife:
 		addq.b	#1,($FFFFFE12).w ; add 1 to the	number of lives	you have
 		addq.b	#1,($FFFFFE1C).w ; add 1 to the	lives counter
+		cmpi.w	#$200,($FFFFFE10).w
+		bne.s	@cont
+		addi.w	#30,($FFFFFE20).w
+		addq.b	#1,($FFFFFE1D).w 
+
+@cont:
 		move.w	#$C5,d0
 		jmp	(PlaySound).l	; play extra life music
 ; ===========================================================================
@@ -17637,13 +17683,46 @@ loc_BDBE:
 		tst.b	$25(a0)
 		bne.s	loc_BDC8
 		bclr	d3,(a3)
-		bra.s	loc_BDDE
+		bra.w	loc_BDDE
 ; ===========================================================================
 
 loc_BDC8:
 		tst.b	(a3)
-		bne.s	loc_BDD6
+		bne.w	loc_BDD6
 		move.w	#$CD,d0
+
+		cmpi.w	#$400,($FFFFFE10).w
+		bne.s	@cont
+		tst.b	($FFFFFF92).w
+		beq.s	@contx
+
+		move.b	#0,($FFFFFF92).w
+		
+		movem.l	d0-a7,-(sp)
+		lea	(Pal_SYZ).l,a3		; load SYZ palette to a1
+		lea	($FFFFFB20).w,a4	; move palette row 3 to a2
+		move.w	#$18,d5			; set loop time ($18 colours)
+
+@NewPalette_LoopXX:
+		move.l	(a3)+,(a4)+		; set new colour
+		dbf	d5,@NewPalette_LoopXX	; repeat process for number in d1
+
+		moveq	#3,d0
+		jsr	PalLoad2	; load Sonic's pallet line
+		movem.l	(sp)+,d0-a7
+
+		bra.s	@cont
+
+@contx:
+		move.b	#1,($FFFFFF92).w
+		jsr	EasterEgg_Epileptic
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	#1,($20001D).l		; enable grey mode flag
+		move.b	#0,($A130F1).l		; disable SRAM
+
+		move.w	#$C3,d0
+
+@cont:
 		jsr	(PlaySound_Special).l ;	play switch sound
 
 		cmpi.w	#$101,($FFFFFE10).w	; is level LZ2?
@@ -19083,7 +19162,7 @@ Obj36_Upright:				; XREF: Obj36_Solid
 
 Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
 		tst.b	($FFFFFE2D).w	; is Sonic invincible?
-		bne.s	Obj36_Display	; if yes, branch
+		bne.w	Obj36_Display	; if yes, branch
 		tst.b	($FFFFFFE7).w		; is inhuman mode on?
 		beq.s	Obj36_NotInhuman2	; if not, branch
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
@@ -19103,6 +19182,10 @@ Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
 		jsr	PlaySound		; play it
 		jsr	WhiteFlash2		; make a white flash
 		bsr	FixLevel
+
+		subi.w	#10,($FFFFFE20).w ; remove 10 rings
+		addq.b	#1,($FFFFFE1D).w ; update
+
 	;	clr.w	($FFFFFE20).w		; clear rings
 
 Obj36_NotInhuman2:
@@ -27569,8 +27652,8 @@ Map_Obj03:
 ; ---------------------------------------------------------------------------
 
 Obj06:
-		tst.b	($FFFFFF92).w		; is hard part skipper disabled?
-		beq.w	DeleteObject		; if yes, delete object instantly
+	;	tst.b	($FFFFFF92).w		; is hard part skipper disabled?
+	;	beq.w	DeleteObject		; if yes, delete object instantly
 
 		moveq	#0,d0			; clear d0
 		move.b	$24(a0),d0		; move routine counter to d0
@@ -27638,6 +27721,9 @@ contin:
 		clr.w	($FFFFD012).w		; clear Sonic's Y-speed
 		clr.w	($FFFFD014).w		; clear Sonic's interia
 
+		clr.b	($FFFFFFE7).w
+		clr.w	($FFFFFE20).w
+		clr.b	($FFFFFE1D).w
 		move.w	#$C3,d0			; set giant ring sound
 		jsr	PlaySound_Special	; play it
 		jsr	WhiteFlash2		; make a white flash

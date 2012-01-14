@@ -156,6 +156,18 @@ OptionsScreen_MainLoop:
 		move.b	#4,($FFFFF62A).w
 		jsr	DelayProgram
 
+		move.b	#1,($A130F1).l			; enable SRAM
+		tst.b	($20001D).l			; has easter egg button been pressed?
+		beq.s	O_PalFine
+	
+		cmpi.l	#$088E066E,($FFFFFB48).w
+		beq.s	O_PalFine
+		moveq	#2,d0		; load Options screen pallet
+		jsr	PalLoad2
+O_PalFine:
+		move.b	#0,($A130F1).l			; disable SRAM
+
+
 		tst.w	($FFFFF614).w		; is timer empty?
 		bne.s	O_DontResetTimer	; if not, branch
 		move.w	#$618,($FFFFF614).w	; otherwise, reset it
@@ -164,7 +176,7 @@ O_DontResetTimer:
 		bsr	OptionsControls
 		jsr	RunPLC_RAM
 		
-		bsr.s	Options_PalCycle
+		bsr.w	Options_PalCycle
 
 		tst.l	($FFFFF680).w
 		bne.s	OptionsScreen_MainLoop
@@ -196,7 +208,7 @@ Options_StartUpWrite:
 		bsr	OptionsTextLoad		; update text
 		tst.b	($FFFFFF9C).w	; is routine counter at $12 (Options_NoMore)?
 		bne.s	Options_NoTextChange	; if yes, branch
-		bra.s	OptionsScreen_MainLoop
+		bra.w	OptionsScreen_MainLoop
 ; ---------------------------------------------------------------------------
 
 Options_NoTextChange:
@@ -246,6 +258,16 @@ Options_NoLR:
 		beq.w	OptionsScreen_MainLoop	; if not, branch
 
 Options_OK:
+		cmpi.w	#10,($FFFFFF82).w	; have you selected item 10 (EASTER EGG)?
+		bne.s	OOK_NoEaster		; if not, check for next numbers
+		move.b	#1,($A130F1).l			; enable SRAM
+		tst.b	($20001D).l			; has easter egg button been pressed?
+		bne.s	OOK_NoEaster
+		move.b	#0,($A130F1).l			; disable SRAM
+		bra.s	Options_OK_NoSound
+OOK_NoEaster:
+		move.b	#0,($A130F1).l			; disable SRAM
+
 		move.w	#$D9,d0
 		jsr	PlaySound_Special
 
@@ -273,7 +295,28 @@ Options_Not7:
 Options_Not10:
 		cmpi.w	#10,d0		; have you selected item 10 (HARD PART SKIPPER)?
 		bne.s	Options_Not13	; if not, check for next numbers
+
+		move.b	#1,($A130F1).l			; enable SRAM
+		tst.b	($20001D).l			; has easter egg button been pressed?
+		bne.s	Opt10_YesEaster
+
+@cont:
+		move.b	#0,($A130F1).l			; disable SRAM
+		bra.w	OptionsScreen_MainLoop
+
+Opt10_YesEaster:
+		move.b	#0,($A130F1).l			; disable SRAM
+
 		bchg	#0,($FFFFFF92).w	; enable/disable hard part skipper
+		tst.b	($FFFFFF92).w
+		bne.s	@contx
+
+		moveq	#2,d0		; load Options screen pallet
+		jsr	PalLoad1
+		moveq	#3,d0		; load Sonic screen pallet
+		jsr	PalLoad2
+
+@contx:
 		bsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
@@ -333,7 +376,7 @@ Options_Not16:
 		move.b	#1,($A130F1).l		; enable SRAM
 		lea	($200000).l,a1		; base of SRAM
 		move.b	($FFFFFFBC).w,$3(a1)	; backup air move flag
-		move.b	($FFFFFF92).w,$5(a1)	; backup invin time flag
+		move.b	($FFFFFF92).w,$5(a1)	; backup easter egg flag
 		move.b	($FFFFFF93).w,$9(a1)	; backup extended camera flag
 		move.b	($FFFFFF94).w,$B(a1)	; backup art style flag
 		move.b	#$B6,$1B(a1)		; make sure SRAM will be created at the correct size
@@ -499,6 +542,15 @@ loc2_3598:				; XREF: Options_ChgLine
 ; ---------------------------------------------------------------------------
 
 GetOptionsText:
+		move.l	#OpText_EasterEgg_Locked,d6	; set locked text location
+		move.b	#1,($A130F1).l			; enable SRAM
+		tst.b	($20001D).l			; has easter egg button been pressed?
+		beq.s	GOT_NoEaster			; if not, branch
+		move.l	#OpText_EasterEgg_Unlocked,d6	; set unlocked text location
+
+GOT_NoEaster:
+		move.b	#0,($A130F1).l			; disable SRAM
+
 		tst.b	($FFFFFF9C).w			; has start been pressed?
 		beq.w	GOT_StartUpWrite		; if not, continue start-up-sequence
 ; ---------------------------------------------------------------------------
@@ -531,7 +583,8 @@ GetOptionsText:
 
 		adda.w	#(2*24),a1			; make two empty lines
 
-		lea	(OpText_EasterEgg).l,a2		; set text location
+	;	lea	(OpText_EasterEgg).l,a2		; set text location
+		movea.l	d6,a2				; set text location
 		bsr.w	OW_Loop				; write text
 		moveq	#4,d2				; set d2 to 4
 		bsr.w	GOT_ChkOption			; check if option is ON or OFF
@@ -637,7 +690,8 @@ GOTSUP_Options:
 
 		lea	($FFFFCA00+(10*24)).w,a1	; set destination
 		adda.w	($FFFFFF9A).w,a1
-		lea	(OpText_EasterEgg).l,a2		; set text location
+		movea.l	d6,a2				; set text location
+	;	lea	(OpText_EasterEgg).l,a2		; set text location
 		bsr.w	OW_NoIncrease			; write text
 
 		lea	($FFFFCA00+(13*24)).w,a1	; set destination
@@ -664,7 +718,7 @@ GOTSUP_ONOFF2:
 		moveq	#0,d1				; clear d1
 		moveq	#3,d2				; set d2 to 3
 		bsr.w	GOT_ChkOption			; check if option is ON or OFF
-		lea	($FFFFCA00+(7*24)+21).w,a1	; set destination
+		lea	($FFFFCA00+(7*24)+21-4).w,a1	; set destination
 		bsr.w	OW_Loop				; write text
 		bsr.w	GOTSUP_CheckEnd			; check if we reached the end
 		rts					; return
@@ -880,11 +934,16 @@ OpText_Extended:
 		even
 
 OpText_SonicArt:
-		dc.b	'SONIC ART            ', $FF
+		dc.b	'SONIC ART        ', $FF
+		dc.b	'  ', $FF
 		even
 
-OpText_EasterEgg:
+OpText_EasterEgg_Locked:
 		dc.b	'?????????????????    ', $FF
+		even
+
+OpText_EasterEgg_Unlocked:
+		dc.b	'EPILEPTIC MODE       ', $FF
 		even
 
 OpText_DeleteSRAM:
@@ -903,8 +962,8 @@ OpText_Exit:	dc.b	'      EXIT OPTIONS      ', $FF
 
 OpText_ON:	dc.b	' ON', $FF
 OpText_OFF:	dc.b	'OFF', $FF
-OpText_S2B:	dc.b	'S2B', $FF
-OpText_S3:	dc.b	' S3', $FF
+OpText_S2B:	dc.b	' ERAZOR', $FF
+OpText_S3:	dc.b	'SONIC 3', $FF
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
