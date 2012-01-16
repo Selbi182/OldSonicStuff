@@ -41582,15 +41582,18 @@ SS_LoadData:
 
 SS_AlwaysStage12:
 		moveq	#0,d0
-
-		cmpi.w	#$302,($FFFFFE10).w
-		bne.s	SSAS_Not2
-		moveq	#4,d0
-
-SSAS_Not2:
 		lea	SS_StartLoc(pc,d0.w),a1
 		move.w	(a1)+,($FFFFD008).w
 		move.w	(a1)+,($FFFFD00C).w
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	SSAS_Not2
+		move.w	(a1)+,($FFFFD008).w
+		move.w	(a1)+,($FFFFD00C).w
+		moveq	#4,d0
+
+
+SSAS_Not2:
+
 
 		movea.l	SS_LayoutIndex(pc,d0.w),a0	; set layout pointer
 		lea	($FF4000).l,a1			; set destination
@@ -41874,6 +41877,25 @@ Obj09_ChkRight:
 		jsr	obj09_MoveRight
 
 loc_1BA78:
+		tst.b	($FFFFFFBF).w
+		beq.s	@cont
+		cmpi.b	#1,($FFFFFFBF).w
+		bne.s	@contx
+		cmpi.w	#-$160,$12(a0)
+		beq.s	@cont
+		subq.w	#8,$12(a0)
+	;	move.w	#-$160,$12(a0)
+		bra.s	@cont
+
+@contx:
+		cmpi.b	#2,($FFFFFFBF).w
+		bne.s	@cont
+		cmpi.w	#$160,$12(a0)
+		beq.s	@cont
+		addq.w	#8,$12(a0)
+	;	move.w	#$160,$12(a0)
+
+@cont:
 		move.b	($FFFFF602).w,d0
 		andi.b	#$C,d0
 		bne.s	loc_1BAA8
@@ -41993,6 +42015,8 @@ Obj09_Jump:				; XREF: Obj09_OnWall
 		move.b	($FFFFF603).w,d0	; get button press
 		andi.b	#$70,d0			; is A,	B or C pressed?
 		beq.s	Obj09_NoJump		; if not, branch
+		tst.b	($FFFFFFBF).w
+		bne.s	Obj09_NoJump
 	if DontAllowDebug=1
 		bra.s	Obj09_Jump_NoDebug
 	endif
@@ -42143,6 +42167,8 @@ loc_1BC40:
 
 
 Obj09_Fall:				; XREF: Obj09_OnWall; Obj09_InAir
+		tst.b	($FFFFFFBF).w
+		bne.s	O9F_Return
 		move.l	$C(a0),d2
 		move.l	8(a0),d3
 		move.b	($FFFFF780).w,d0
@@ -42171,6 +42197,7 @@ Obj09_Fall:				; XREF: Obj09_OnWall; Obj09_InAir
 		sub.l	d1,d2
 		moveq	#0,d1
 		move.w	d1,$12(a0)
+O9F_Return:
 		rts	
 ; ===========================================================================
 
@@ -42570,7 +42597,7 @@ Obj09_ChkW_NoChange:
 
 Obj09_GOAL:
 		cmpi.b	#$27,d0			; is the item a	"GOAL"?
-		bne.s	Obj09_UPblock		; if not, branch
+		bne.w	Obj09_UPblock		; if not, branch
 		addq.b	#2,$24(a0)		; run routine "Obj09_ExitStage"
 		move.w	#$A8,d0			; play special stage exit sound				
 	;	cmpi.b	#1,($FFFFFE16).w	; is current special stage number = 1?
@@ -42582,6 +42609,12 @@ Obj09_GOAL:
 		lea	(SS1_StartLoc).l,a1
 		move.w	(a1)+,d1		; set Sonic's X-position
 		move.w	(a1)+,d2		; set Sonic's Y-position
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@cont
+		move.w	(a1)+,d1		; set Sonic's X-position
+		move.w	(a1)+,d2		; set Sonic's Y-position
+
+@cont:
 		tst.w	($FFFFFF86).w		; did he pass a checkpoint ytt?
 		beq.s	Obj09_CPTeleEnd		; if not, branch
 		move.w	($FFFFFF86).w,d1	; get saved X-pos
@@ -42590,12 +42623,20 @@ Obj09_GOAL:
 Obj09_CPTeleEnd:
 		move.w	d1,8(a0)		; restore X-pos
 		move.w	d2,$C(a0)		; restore Y-pos
-		clr.w	$10(a0)			; clear X-speed
-		clr.w	$12(a0)			; clear Y-speed
-		clr.w	($FFFFF780).w		; set rotation to 0
+		jsr	WhiteFlash2
+
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	Obj09_NotSS2
 		move.b	#$30,($FF1C28).l	; restore pink glass block
 		move.b	#$2F,($FF1DA7).l	; restore yellow glass block
-		jsr	WhiteFlash2
+		bra.s	Obj09_NotSS1x
+
+Obj09_NotSS2:
+		move.b	#$3F,($FF113D).l	; restore red emerald
+		move.b	#$40,($FF1141).l	; restore grey emerald
+		clr.b	($FFFFFE57).w		; clear emerald counter
+		move.w	#0,$12(a0)
+
 
 Obj09_NotSS1x:
 		jsr	(PlaySound_Special).l	; play sound
@@ -42608,15 +42649,19 @@ Obj09_UPblock:
 		tst.b	$36(a0)
 		bne.w	Obj09_NoGlass
 		move.b	#$1E,$36(a0)
-		btst	#6,($FFFFF783).w
-		beq.s	Obj09_UPsnd
-		asl	($FFFFF782).w	; increase stage rotation speed
-		movea.l	$32(a0),a1
-		subq.l	#1,a1
-		move.b	#$2A,(a1)	; change item to a "DOWN" block
+	;	btst	#6,($FFFFF783).w
+	;	beq.s	Obj09_UPsnd
+		tst.b	($FFFFFFBF).w
+		bne.s	Obj09_UPsnd
+		move.w	#$9A,d0		; A9
+		jsr	(PlaySound).l ;	play up/down sound
+
+
 
 Obj09_UPsnd:
-		move.w	#$A9,d0
+		move.w	#-$160,$12(a0)
+		move.b	#1,($FFFFFFBF).w
+		move.w	#$D9,d0		; A9
 		jmp	(PlaySound_Special).l ;	play up/down sound
 ; ===========================================================================
 
@@ -42626,15 +42671,14 @@ Obj09_DOWNblock:
 		tst.b	$36(a0)
 		bne.w	Obj09_NoGlass
 		move.b	#$1E,$36(a0)
-		btst	#6,($FFFFF783).w
-		bne.s	Obj09_DOWNsnd
-		asr	($FFFFF782).w	; reduce stage rotation	speed
-		movea.l	$32(a0),a1
-		subq.l	#1,a1
-		move.b	#$29,(a1)	; change item to an "UP" block
+	;	btst	#6,($FFFFF783).w
+	;	bne.s	Obj09_DOWNsnd
+		move.b	#2,($FFFFFFBF).w
+		move.w	#$160,$12(a0)
+
 
 Obj09_DOWNsnd:
-		move.w	#$A9,d0
+		move.w	#$DA,d0
 		jmp	(PlaySound_Special).l ;	play up/down sound
 ; ===========================================================================
 
@@ -47631,7 +47675,7 @@ SoundD8:	incbin	sound\soundD8.bin
 		even
 SoundD9:	incbin	sound\soundD9.bin
 		even
-SoundDA:	incbin	sound\soundNULL.bin
+SoundDA:	incbin	sound\soundDA.bin
 		even
 SoundDB:	incbin	sound\soundNULL.bin
 		even

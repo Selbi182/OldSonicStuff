@@ -111,14 +111,14 @@ SelbiSplash_Loop:
 
 		bra	SelbiSplash_ChangePal
 @cont2:
-		move.w	#$B0,($FFFFF614).w
+		move.w	#$D0,($FFFFF614).w
 		lea	($C00000).l,a5
 		lea	$04(a5),a6
 		move.w	#$8B00,(a6)
 		move.l	#$40000010,(a6)
 		move.w	#$0008,(a5)
 @cont:
-		cmpi.w	#$70,($FFFFF614).w		; is time less than $40?
+		cmpi.w	#$90,($FFFFF614).w		; is time less than $40?
 		bmi.s	SelbiSplash_DontChangePal	; if yes, branch
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB04)
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB06)
@@ -126,7 +126,7 @@ SelbiSplash_Loop:
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB0A)
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB0C)
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB0E)
-		cmpi.w	#$B0,($FFFFF614).w		; is time more than $70?
+		cmpi.w	#$D0,($FFFFF614).w		; is time more than $70?
 		bpl.w	SelbiSplash_ChangePal		; if yes, branch
 
 
