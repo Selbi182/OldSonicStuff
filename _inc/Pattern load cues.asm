@@ -245,11 +245,13 @@ PLC_SYZ2:	dc.w 1
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Scrap Brain
 ; ---------------------------------------------------------------------------
-PLC_SBZ:	dc.w 1
+PLC_SBZ:	dc.w 2
 		dc.l Nem_SBZ		; SBZ main patterns
 		dc.w 0
 		dc.l Nem_SbzDoor1	; door
 		dc.w $5D00
+		dc.l Nem_Buzz		; buzz bomber enemy
+		dc.w $8880
 PLC_SBZ2:	dc.w 3
 		dc.l Nem_Electric	; electric orb
 		dc.w $8FC0

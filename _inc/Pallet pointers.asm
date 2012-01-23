@@ -28,7 +28,7 @@
 	dc.l Pal_SYZ
 	dc.w $FB20
 	dc.w $17
-	dc.l Pal_Null
+	dc.l Pal_SBZ2
 	dc.w $FB20
 	dc.w $17
 	dc.l Pal_Special

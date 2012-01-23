@@ -337,7 +337,7 @@ Art_Chapter3:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter3.bin"
 		even
 Art_Chapter4:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter4.bin"
 		even
-Art_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter2.bin"
+Art_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter5.bin"
 		even
 Art_Chapter6:	incbin	"Screens/ChapterScreens/ChapterFiles/Tiles_Chapter6.bin"
 		even
@@ -352,7 +352,7 @@ Map_Chapter3:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter3.bin"
 		even
 Map_Chapter4:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter4.bin"
 		even
-Map_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter2.bin"
+Map_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter5.bin"
 		even
 Map_Chapter6:	incbin	"Screens/ChapterScreens/ChapterFiles/Maps_Chapter6.bin"
 		even
@@ -367,7 +367,7 @@ Pal_Chapter3:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter3.bin"
 		even
 Pal_Chapter4:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter4.bin"
 		even
-Pal_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter2.bin"
+Pal_Chapter5:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter5.bin"
 		even
 Pal_Chapter6:	incbin	"Screens/ChapterScreens/ChapterFiles/Palette_Chapter6.bin"
 		even

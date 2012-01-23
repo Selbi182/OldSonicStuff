@@ -3142,6 +3142,7 @@ Pal_LZWater2:		incbin	pallet\lz_uw2.bin
 Pal_MZ:			incbin	pallet\mz.bin
 Pal_SLZ:		incbin	pallet\slz.bin
 Pal_SYZ:		incbin	pallet\syz.bin
+Pal_SBZ2:		incbin	pallet\fz.bin
 Pal_FZ:			incbin	pallet\fz.bin
 Pal_Special:		incbin	pallet\special.bin
 Pal_LZSonWater:		incbin	pallet\son_lzuw.bin
@@ -4801,6 +4802,7 @@ MusicList:
 		dc.b	$84	; >>Star Light Place<<
 		dc.b	$8D	; Finalor Place
 		dc.b	$85	; Spring Yard Place (Overworld)
+		dc.b	$91	; Tutorial Place (SBZ 2)
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
@@ -4841,6 +4843,7 @@ MainLevelArray:
 		dc.w	$301	; >>Star Light Place<<
 		dc.w	$502	; Finalor Place
 		dc.w	$400	; Spring Yard Place (Overworld)
+		dc.w	$501	; Tutorial Place (SBZ 2)
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
@@ -9780,7 +9783,7 @@ loc_6F28:
 		bcs.s	locret_6F62
 		cmpi.w	#$600,($FFFFF704).w
 		bcc.s	locret_6F62
-		bsr	SingleObjLoad
+		jsr	SingleObjLoad
 		bne.s	loc_6F4A
 		move.b	#$77,0(a1)	; load LZ boss object
 
@@ -10128,10 +10131,10 @@ Resize_SBZx:	dc.w Resize_SBZ1-Resize_SBZx
 ; ===========================================================================
 
 Resize_SBZ1:
-		move.w	#$720,($FFFFF726).w
+		move.w	#$810,($FFFFF726).w
 		cmpi.w	#$1880,($FFFFF700).w
 		bcs.s	locret_7242
-		move.w	#$620,($FFFFF726).w
+		move.w	#$810,($FFFFF726).w
 		cmpi.w	#$2000,($FFFFF700).w
 		bcs.s	locret_7242
 		move.w	#$2A0,($FFFFF726).w
@@ -10153,13 +10156,10 @@ off_7252:	dc.w Resize_SBZ2main-off_7252
 ; ===========================================================================
 
 Resize_SBZ2main:
-		move.w	#$800,($FFFFF726).w
-		cmpi.w	#$1800,($FFFFF700).w
+		move.w	#$710,($FFFFF726).w
+		cmpi.w	#$1200,($FFFFF700).w
 		bcs.s	locret_727A
-		move.w	#$510,($FFFFF726).w
-		cmpi.w	#$1E00,($FFFFF700).w
-		bcs.s	locret_727A
-		addq.b	#2,($FFFFF742).w
+		move.w	#$420,($FFFFF726).w
 
 locret_727A:
 		rts	
@@ -10218,6 +10218,12 @@ off_72D8:	dc.w Resize_FZmain-off_72D8, Resize_FZboss-off_72D8
 ; ===========================================================================
 
 Resize_FZmain:
+		move.w	#$810,($FFFFF726).w
+		cmpi.w	#$A00,($FFFFF700).w
+		bcs.s	@cont
+		move.w	#$510,($FFFFF726).w
+
+@cont:
 		cmpi.w	#$2148,($FFFFF700).w
 		bcs.s	loc_72F4
 		addq.b	#2,($FFFFF742).w
@@ -12216,6 +12222,7 @@ Obj2A:					; XREF: Obj_Index
 ; ===========================================================================
 Obj2A_Index:	dc.w Obj2A_Main-Obj2A_Index
 		dc.w Obj2A_OpenShut-Obj2A_Index
+		dc.w Obj2A_OpenShutSBZ-Obj2A_Index
 ; ===========================================================================
 
 Obj2A_Main:				; XREF: Obj2A_Index
@@ -12225,6 +12232,11 @@ Obj2A_Main:				; XREF: Obj2A_Index
 		ori.b	#4,1(a0)
 		move.b	#8,$19(a0)
 		move.b	#4,$18(a0)
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	Obj2A_OpenShut
+		addq.b	#2,$24(a0)
+		move.b	#1,$1C(a0)
+		bra.w	Obj2A_OpenShutSBZ
 
 Obj2A_OpenShut:				; XREF: Obj2A_Index
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1 (overworld)?
@@ -12279,6 +12291,8 @@ Obj2A_SYZ1:
 loc_899A:				; XREF: Obj2A_OpenShut
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1 (overworld)?
 		beq.s	Obj2A_Open		; if yes, branch
+
+Obj2A_Open_SBZ:
 		btst	#0,$22(a0)
 		beq.s	Obj2A_Animate
 
@@ -12287,7 +12301,7 @@ Obj2A_Open:				; XREF: Obj2A_OpenShut
 
 Obj2A_Animate:				; XREF: Obj2A_OpenShut; loc_899A
 		lea	(Ani_obj2A).l,a1
-		bsr	AnimateSprite
+		bsr.w	AnimateSprite
 		tst.b	$1A(a0)		; is the door open?
 		bne.s	Obj2A_MarkAsUsed ; if yes, branch
 		move.w	#$11,d1
@@ -12299,6 +12313,18 @@ Obj2A_Animate:				; XREF: Obj2A_OpenShut; loc_899A
 
 Obj2A_MarkAsUsed:
 		jmp	MarkObjGone
+; ===========================================================================
+
+Obj2A_OpenShutSBZ:
+	;	tst.b	$1C(a0)
+	;	beq.s	Obj2A_Animate
+		move.w	($FFFFD008).w,d0
+	;	subi.w	#$40,d0
+		cmp.w	$8(a0),d0
+		blt.s	Obj2A_Open
+		move.b	#0,$1C(a0)		; use "closing"	animation
+		bra.s	Obj2A_Animate
+
 ; ===========================================================================
 Ani_obj2A:
 		include	"_anim\obj2A.asm"
@@ -15044,6 +15070,14 @@ Obj4B_ChkOptions:
 Obj4B_ChkIntro:
 		cmpi.w	#$0200,$8(a0)
 		bne.s	Obj4B_ChkGHZ
+
+		move.w	#$501,($FFFFFE10).w	; set level to SBZ2
+	;	move.b	#$91,d0
+	;	jsr	PlaySound
+		bra.w	Obj4B_PlayLevel
+
+
+
 		move.w	#$001,($FFFFFE10).w	; set level to GHZ2
 		move.b	#$95,d0
 		jsr	PlaySound
@@ -18265,6 +18299,12 @@ Obj34_CheckSBZ3:			; XREF: Obj34_Index
 		movea.l	a0,a1
 		moveq	#0,d0
 		move.b	($FFFFFE10).w,d0
+
+		cmpi.w	#$501,($FFFFFE10).w ; check if level is SBZ 2
+		bne.s	Obj34_NotSBZ2
+		moveq	#$12,d0		; load title card number $12 (SBZ 2)
+
+Obj34_NotSBZ2:
 		cmpi.w	#$002,($FFFFFE10).w ; check if level is	GHZ 3
 		bne.s	Obj34_NotGHZ3
 		moveq	#5,d0		; load title card number 5 (GHZ)
@@ -18272,7 +18312,7 @@ Obj34_CheckSBZ3:			; XREF: Obj34_Index
 Obj34_NotGHZ3:
 		cmpi.w	#$301,($FFFFFE10).w ; check if level is	SLZ 2
 		bne.s	Obj34_NotSLZ2
-		moveq	#$10,d0		; load title card number $F (SLZ)
+		moveq	#$11,d0		; load title card number $F (SLZ)
 		
 Obj34_NotSLZ2:
 		move.w	d0,d2
@@ -18280,7 +18320,7 @@ Obj34_NotSLZ2:
 		cmpi.w	#$502,($FFFFFE10).w ; check if level is	FZ
 		bne.s	Obj34_LoadConfig
 		moveq	#6,d0		; load title card number 6 (FZ)
-		moveq	#$F,d2		; use "FINAL" mappings
+		moveq	#$10,d2		; use "FINAL" mappings
 
 Obj34_LoadConfig:
 		lea	(Obj34_ConData).l,a3
@@ -18424,7 +18464,11 @@ Obj34_NotZone2:
 Obj34_Move2:
 		add.w	d1,8(a0)	; change item's position
 		cmpi.w	#$400,($FFFFFE10).w	; is current level SYZ1?
+		beq.s	@cont1			; if not, branch´
+		cmpi.w	#$501,($FFFFFE10).w	; is current level SBZ2?
 		bne.s	Obj34_DoOval		; if not, branch
+
+@cont1:
 		cmpi.b	#4,$3F(a0)		; is current object the Act Number?
 		beq.s	Obj34_NoOvalOnY		; if yes, branch
 
@@ -18471,6 +18515,31 @@ HUDSpeed = 6
 Obj34_NoDemo:
 		cmpi.b	#$10,($FFFFF600).w		; is level SLZ1 (special stage)?
 		beq.w	Obj34_JustDelete		; if yes, branch
+		bra.s	@cont2
+
+; ===========================================================================
+		bne.s	@cont2
+
+		move.b	#$21,($FFFFD440).w		; load HUD object
+		move.b	#3,($FFFFD470).w		; set to TIME
+		move.w	#HudSpeed,($FFFFD072).w		; set X-speed
+		move.w	#HudSpeed,($FFFFD074).w		; set Y-speed
+
+		move.b	#$21,($FFFFD400).w		; load HUD object
+		move.b	#2,($FFFFD430).w		; set to RINGS
+		move.w	#HUDSpeed,d3			; load HUD speed into d3
+		neg.w	d3				; negate it
+		move.w	d3,($FFFFD432).w		; set X-speed
+		move.w	#HUDSpeed,($FFFFD434).w		; set Y-speed
+
+
+		bra.w	Obj34_JustDelete
+
+@cont2:
+; ===========================================================================
+
+		cmpi.w	#$501,($FFFFFE10).w
+		beq	Obj34_JustDelete
 		cmpi.w	#$002,($FFFFFE10).w
 		bne.s	@cont
 		cmpi.b	#2,($FFFFFFAA).w
@@ -18512,7 +18581,11 @@ Obj34_JustDelete:
 
 Obj34_Display:
 		cmpi.w	#$400,($FFFFFE10).w	; is current level SYZ1?
+		beq.s	@cont3			; if not, branch
+		cmpi.w	#$501,($FFFFFE10).w	; is current level SBZ2?
 		bne.s	Obj34_DoDisplay		; if not, branch
+
+@cont3:
 		cmpi.b	#3,$3F(a0)		; is current object the Act Number?
 		bne.s	Obj34_DoDisplay		; if not, branch
 		rts				; otherwise don't display act number
@@ -18536,7 +18609,7 @@ Obj34_ItemData:
 
 	; Oval
 		dc.w $E0
-		dc.b 2,	$E
+		dc.b 2,	$F
 
 		even
 ; ===========================================================================
@@ -19277,7 +19350,7 @@ loc_CFA4:
 		bcc.s	locret_CFE6
 		move.w	#0,$34(a0)
 		move.w	#0,$36(a0)
-		move.w	#60,$38(a0)	; set time delay to 1 second
+		move.w	#15,$38(a0)	; set time delay to 1 second
 		bra.s	locret_CFE6
 ; ===========================================================================
 
@@ -19287,7 +19360,7 @@ loc_CFC6:
 		bcs.s	locret_CFE6
 		move.w	#$2000,$34(a0)
 		move.w	#1,$36(a0)
-		move.w	#60,$38(a0)	; set time delay to 1 second
+		move.w	#15,$38(a0)	; set time delay to 1 second
 
 locret_CFE6:
 		rts	
@@ -27750,6 +27823,9 @@ Obj06_Locations:	;XXXX   YYYY
 		dc.w	$038F, $002E	; Labyrinth Place
 		dc.w	$FFFF, $FFFF	; Finalor Place		(Unused)
 		dc.w	$FFFF, $FFFF	; Spring Yard Place	(Unused)
+		dc.w	$FFFF, $FFFF
+		dc.w	$FFFF, $FFFF
+		dc.w	$101E, $036C	; Tutorial Place
 
 ; ---------------------------------------------------------------------------
 
@@ -28038,6 +28114,8 @@ Obj01_PeeloutCancel:
 		cmpi.w	#$400,($FFFFFE10).w		; is level SYZ1?
 		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
 		cmpi.w	#$101,($FFFFFE10).w		; is level LZ2?
+		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
+		cmpi.w	#$501,($FFFFFE10).w		; is level SBZ2?
 		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
 		cmpi.w	#$502,($FFFFFE10).w		; is level FZ?
 		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
@@ -42366,6 +42444,8 @@ Obj09_ChkEmer:
 		move.b	#5,(a2)
 		addq.b	#1,($FFFFFE57).w ; add 1 to number of emeralds
 
+		move.w	#$93,d0
+
 		cmpi.b	#4,($FFFFFE57).w ; do you have all the emeralds?
 		beq.s	Obj09_YesEmer	; if yes, branch
 		cmpi.w	#$302,($FFFFFE10).w
@@ -42375,9 +42455,9 @@ Obj09_ChkEmer:
 
 Obj09_NoSpecial2:
 		move.b	#1,(a2)
+		move.w	#$C5,d0
 
 Obj09_YesEmer:
-		move.w	#$93,d0
 		jsr	(PlaySound_Special).l ;	play emerald music
 		moveq	#0,d4
 		rts
@@ -42392,12 +42472,29 @@ Obj09_ChkGhost:
 		move.w	$C(a0),($FFFFFF88).w	; save Sonic's Y-position
 		move.w	#$A1,d0			; set checkpoint sound
 		jsr	(PlaySound_Special).l	; play it
+
 		bsr	SS_RemoveCollectedItem	; prepare removing code
 		bne.s	Obj09_CG_End		; if it's impossible branch
 		move.b	#3,(a2)			; overwrite...
 		move.l	a1,4(a2)		; ...it
 		moveq	#0,d4			; clear d4
 
+
+		cmpi.b	#$41,1(a1)
+		bne.s	@cont1
+		move.b	#0,1(a1)
+		move.b	#3,8(a2)			; overwrite...
+		move.l	a1,12(a2)		; ...it
+		bra.s	Obj09_CG_End
+
+@cont1:
+		cmpi.b	#$41,-1(a1)
+		bne.s	Obj09_CG_End
+		move.b	#0,-1(a1)
+		move.b	#3,-8(a2)			; overwrite...
+		move.l	a1,-12(a2)		; ...it
+
+		
 Obj09_CG_End:
 		rts				; return
 ; ===========================================================================
@@ -42629,11 +42726,12 @@ Obj09_CPTeleEnd:
 		beq.s	Obj09_NotSS2
 		move.b	#$30,($FF1C28).l	; restore pink glass block
 		move.b	#$2F,($FF1DA7).l	; restore yellow glass block
+		clr.w	($FFFFF780).w		; clear rotation
 		bra.s	Obj09_NotSS1x
 
 Obj09_NotSS2:
-		move.b	#$3F,($FF113D).l	; restore red emerald
-		move.b	#$40,($FF1141).l	; restore grey emerald
+		move.b	#$3F,($FF11BD).l	; restore red emerald
+		move.b	#$40,($FF11C1).l	; restore grey emerald
 		clr.b	($FFFFFE57).w		; clear emerald counter
 		move.w	#0,$12(a0)
 
@@ -42651,17 +42749,32 @@ Obj09_UPblock:
 		move.b	#$1E,$36(a0)
 	;	btst	#6,($FFFFF783).w
 	;	beq.s	Obj09_UPsnd
+		move.w	#$D9,d0		; A9
 		tst.b	($FFFFFFBF).w
 		bne.s	Obj09_UPsnd
 		move.w	#$9A,d0		; A9
 		jsr	(PlaySound).l ;	play up/down sound
 
+		move.b	#$27,($FF2AA6).l
+		move.b	#$27,($FF2B26).l
+		move.b	#$27,($FF2BA6).l
+		
+		move.l	a0,-(sp)
+		lea	($FFFFFB20).w,a0
+		move.w	#0,$20(a0)
+		move.b	#$2F,d4
+
+@contx
+		jsr	Pal_DecColor
+		dbf	d4,@contx
+		move.l	(sp)+,a0
+
+		move.w	#$C3,d0		; A9
 
 
 Obj09_UPsnd:
 		move.w	#-$160,$12(a0)
 		move.b	#1,($FFFFFFBF).w
-		move.w	#$D9,d0		; A9
 		jmp	(PlaySound_Special).l ;	play up/down sound
 ; ===========================================================================
 
@@ -43340,7 +43453,7 @@ Obj21_ChkScore:
 		move.w	#$C5,$36(a0)		; set X-position
 		move.w	#$94,$A(a0)		; set Y-position
 		move.w	#$1D1,8(a0)
-		bra.s	Obj21_FrameSelected	; skip
+		bra.w	Obj21_FrameSelected	; skip
 
 Obj21_ChkRings:
 		cmpi.b	#2,$30(a0)		; is object set to RINGS?
@@ -43360,6 +43473,17 @@ Obj21_ChkTime:
 		move.w	#$14F,$38(a0)		; set Y-position
 		bra.s	Obj21_FrameSelected	; skip
 
+; ===========================================================================
+		cmpi.b	#$10,($FFFFF600).w
+		bne.s	Obj21_FrameSelected
+
+		move.b	#4,$1A(a0)		; use TIME frame (3 is the red ring frame, so we have to use 4)
+		move.w	#$C5,$36(a0)		; set X-position
+		move.w	#$94,$A(a0)		; set Y-position
+		move.w	#$1D1,8(a0)
+		bra.s	Obj21_FrameSelected	; skip
+; ===========================================================================
+
 Obj21_ChkLives:
 		cmpi.b	#4,$30(a0)		; is object set to LIVES?
 		bne.s	Obj21_FrameSelected	; if not, branch
@@ -43369,9 +43493,13 @@ Obj21_ChkLives:
 		move.w	#$8F,8(a0)
 
 Obj21_FrameSelected:
-		move.w	#$6CA,2(a0)
 		move.b	#0,1(a0)
 		move.b	#0,$18(a0)
+		move.w	#$6CA,2(a0)
+		cmpi.b	#$10,($FFFFF600).w
+		bne.s	Obj21_Flash
+		move.w	#$370,2(a0)
+
 ; ===========================================================================
 
 Obj21_Flash:
@@ -43421,7 +43549,7 @@ Obj21_NoSignPost:
 
 Obj21_NotDying:
 		tst.b	$3A(a0)			; is everything done?
-		bne.s	Obj21_NoUpdate		; if yes, don't do anything
+		bne.w	Obj21_NoUpdate		; if yes, don't do anything
 
 		cmpi.b	#1,$30(a0)
 		bne.s	Obj21_ChkRings2
@@ -43443,6 +43571,15 @@ Obj21_ChkRings2:
 Obj21_ChkTime2:
 		cmpi.b	#3,$30(a0)
 		bne.s	Obj21_ChkLives2
+		cmpi.b	#$10,($FFFFF600).w
+		bne.s	@cont
+		move.w	8(a0),d0		; move X-pos into d0
+		sub.w	#HudSpeed,d0		; substract HUDSpeed - 1 from it
+		cmp.w	$36(a0),d0		; check current position on goal position
+		bge.s	Obj21_NormalUpdateX	; if current position is bigger than goal position, move it normally
+		bra.s	Obj21_XEnd
+
+@cont:
 		move.w	$A(a0),d0		; move Y-pos into d0
 		add.w	#HudSpeed,d0		; add the HUDSpeed - 1 to it
 		cmp.w	$38(a0),d0		; check current position on goal position
@@ -43584,6 +43721,8 @@ Hud_ChkTime:
 		tst.b	($FFFFFE1E).w	; does the time	need updating?
 		beq.s	Hud_ChkLives	; if not, branch
 		cmpi.w	#$400,($FFFFFE10).w ; is level SYZ1?
+		beq.s	Hud_ChkLives	; if yes, branch
+		cmpi.w	#$501,($FFFFFE10).w ; is level SBZ1?
 		beq.s	Hud_ChkLives	; if yes, branch
 		tst.w	($FFFFF63A).w	; is the game paused?
 		bne.s	Hud_ChkLives	; if yes, branch
@@ -45090,7 +45229,7 @@ ObjPos_SYZ3:;	incbin	objpos\syz3.bin
 		even
 ObjPos_SBZ1:;	incbin	objpos\sbz1.bin
 		even
-ObjPos_SBZ2:;	incbin	objpos\sbz2.bin
+ObjPos_SBZ2:	incbin	objpos\fz.bin
 		even
 ObjPos_FZ:	incbin	objpos\fz.bin
 		even

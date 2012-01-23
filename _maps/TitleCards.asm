@@ -3,23 +3,25 @@
 ; ---------------------------------------------------------------------------
 
 ; Map_Obj34:
-		dc.w byte_C9FE-Map_obj34
-		dc.w byte_CA2C-Map_obj34
-		dc.w byte_CA5A-Map_obj34
-		dc.w byte_CA7A-Map_obj34
-		dc.w byte_CAA8-Map_obj34
-		dc.w byte_CADC-Map_obj34
-		dc.w byte_CB10-Map_obj34
-		dc.w byte_CB26-Map_obj34
-		dc.w byte_CB31-Map_obj34
-		dc.w byte_CB3C-Map_obj34
-		dc.w byte_CB31X-Map_obj34
-		dc.w byte_CB3CX-Map_obj34
-		dc.w byte_CB3CXX-Map_obj34
-		dc.w byte_CB3CXXX-Map_obj34
-		dc.w byte_CB47-Map_obj34
-		dc.w byte_CB8A-Map_obj34
-		dc.w byte_CA7AX-Map_obj34
+		dc.w byte_C9FE-Map_obj34	; $00
+		dc.w byte_CA2C-Map_obj34	; $01
+		dc.w byte_CA5A-Map_obj34	; $02
+		dc.w byte_CA7A-Map_obj34	; $03
+		dc.w byte_CAA8-Map_obj34	; $04
+		dc.w byte_CADC-Map_obj34	; $05
+		dc.w byte_CB10-Map_obj34	; $06
+		dc.w byte_CB26-Map_obj34	; $07
+		dc.w byte_CB31-Map_obj34	; $08
+		dc.w byte_CB3C-Map_obj34	; $09
+		dc.w byte_CB31X-Map_obj34	; $0A
+		dc.w byte_CB3CX-Map_obj34	; $0B
+		dc.w byte_CB3CXX-Map_obj34	; $0C
+		dc.w byte_CB3CXXX-Map_obj34	; $0D
+		dc.w byte_CB3CXXXX-Map_obj34	; $0E
+		dc.w byte_CB47-Map_obj34	; $0F
+		dc.w byte_CB8A-Map_obj34	; $10
+		dc.w byte_CA7AX-Map_obj34	; $11
+		dc.w byte_CADCX-Map_obj34	; $12
 
 
 byte_C9FE:	dc.b $A	; GREEN HILL | NIGHT HILL
@@ -87,6 +89,16 @@ byte_CADC:	dc.b $A	;  SCRAP BRAIN | GREEN HILL
 		dc.b $F8, 5, 0, $26, $2C	; L
 		dc.b $F8, 5, 0, $26, $3C	; L
 
+byte_CADCX:	dc.b 8	;  SCRAP BRAIN | TUTORIAL
+		dc.b $F8, 5, 0, $42, $D4	; T
+		dc.b $F8, 5, 0, $46, $E4	; U
+		dc.b $F8, 5, 0, $42, $F4	; T
+		dc.b $F8, 5, 0, $32, $4	; O
+		dc.b $F8, 5, 0, $3A, $14	; R
+		dc.b $F8, 1, 0, $20, $24	; I
+		dc.b $F8, 5, 0, 0, $2C		; A
+		dc.b $F8, 5, 0, $26, $3C	; L
+
 byte_CB10:	dc.b 5			; ZONE
 		dc.b $F8, 5, 0, $36, $D2	;P
 		dc.b $F8, 5, 0, $26, $E2	;L
@@ -119,6 +131,9 @@ byte_CB3CXX:	dc.b 2			; ACT 6
 byte_CB3CXXX:	dc.b 2			; ACT 7
 		dc.b 4,	$C, 0, $53, $EC
 		dc.b $F4, 6, 0, $95, 7	
+byte_CB3CXXXX:	dc.b 2			; ACT 8
+		dc.b 4,	$C, 0, $53, $EC
+		dc.b $F4, 6, 0, $9B, 7	
 byte_CB47:	dc.b $D			; Oval
 		dc.b $E4, $C, 0, $70, $F4
 		dc.b $E4, 2, 0,	$74, $14
