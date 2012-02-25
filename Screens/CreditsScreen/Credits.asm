@@ -154,14 +154,20 @@ CJML_RunLetter:
 
 CJML_ScrollIn:
 		cmpi.b	#10,($FFFFFF91).w
-		bne.s	CJML_NoramlScreen
+		bne.s	CJML_NormalScreen
 
 CJML_FinalLoop:
+		addq.b	#1,($FFFFFE04).w			; increase frame counter
+		btst	#0,($FFFFFE04).w
+		bne.s	ycont
+
 		subi.w	#1,($FFFFFFA0).w			; decrease X scroll position left
 		move.w	($FFFFFFA0).w,d0			; load scroll position
 		andi.w	#$01FF,d0				; keep within the X line
 		cmp.w	#$0000,d0				; has it reached in screen?
 		beq	CJML_FinalLoop2				; if so, branch
+
+ycont:
 		move.b	#$04,($FFFFF62A).w			; set V-Blank routine to run
 		jsr	DelayProgram				; hult main program to run V-Blank
 		bsr	CJ_ScrollMappings			; run scrolling/deformation
@@ -174,7 +180,7 @@ CJML_FinalLoop2:
 		bmi.s	CJML_End
 		bra	CJML_FinalLoop2
 
-CJML_NoramlScreen:
+CJML_NormalScreen:
 		subi.w	#MoveOffSpeed,($FFFFFFA0).w		; decrease X scroll position left
 		move.b	#$60,($FFFFFF90).w
 		move.w	($FFFFFFA0).w,d0			; load scroll position
@@ -189,14 +195,14 @@ CJML_NoramlScreen:
 CJML_ScrollSlow:
 		addq.b	#1,($FFFFFE04).w			; increase frame counter
 		btst	#1,($FFFFFE04).w
-		beq.s	@cont
+		beq.s	xcont
 		btst	#0,($FFFFFE04).w
-		bne.s	@cont
+		bne.s	xcont
 		subq.w	#$0001,($FFFFFFA0).w			; decrease X scroll position left
 		subq.b	#$0001,($FFFFFF90).w		
 		beq	CJML_FinishUp				; if so, branch
 
-@cont:
+xcont:
 		move.b	#$04,($FFFFF62A).w			; set V-Blank routine to run
 		jsr	DelayProgram				; hult main program to run V-Blank
 		bsr	CJ_ScrollMappings			; run scrolling/deformation

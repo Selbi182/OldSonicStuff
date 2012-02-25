@@ -149,11 +149,11 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"    EVERYONE WHO    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"    HELPED ALONG    ",$FF
+	dc.b	"     MAINMEMORY     ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"      THE WAY       ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF

@@ -13,7 +13,9 @@
 ;				EduardoKnuckles
 
 ; Beta Testing:			SonicVaan
-;				Irixion
+;				#SSRG on BadnikNET
+
+; Special Thanks to:		MainMemory
 ; ------------------------------------------------------
 ; =======================================================
 
@@ -2253,7 +2255,7 @@ PalCycle_GHZ:				; XREF: PalCycle
 loc_196A:				; XREF: PalCycle_Title
 		subq.w	#1,($FFFFF634).w
 		bpl.s	locret_1990
-		move.w	#5,($FFFFF634).w
+		move.w	#4,($FFFFF634).w
 		move.w	($FFFFF632).w,d0
 		addq.w	#1,($FFFFF632).w
 		andi.w	#3,d0
@@ -3614,17 +3616,33 @@ T_PalSkip_2:
 		bne.w	Title_MainLoop		; if not, branch
 
 StartGame:
-	;	move.b	#1,($A130F1).l		; enable SRAM
-	;	cmpi.b	#$B6,($20001B).l	; does SRAM exist?
-	;	bne.s	T_NoSRAM		; if not, branch
-	;	move.b	#1,($FFFFFF7D).w
+		move.b	#1,($A130F1).l		; enable SRAM
+		cmpi.b	#$B6,($20001B).l	; does SRAM exist?
+		beq.s	T_NoSRAM		; if not, branch
+
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	#1,($200001).l		; set number for text to 1
+		move.b	#0,($A130F1).l		; disable SRAM
+
+
+
+		move.b	#$E0,d0
+		jsr	PlaySound
+		jsr	Pal_MakeWhite			; Fade out previous palette
+		
+		move.w	#$501,($FFFFFE10).w	; set level to SBZ2
+		move.b	#$C,($FFFFF600).w	; set to level
+		move.w	#1,($FFFFFE02).w	; restart level
+		rts
+
+
+T_NoSRAM:
 		move.b	#$28,($FFFFF600).w	; set to Chapters Screen
-	;	move.b	#0,($A130F1).l		; disable SRAM
+		move.b	#0,($A130F1).l		; disable SRAM
 		rts				; return
 
-;T_NoSRAM:
-	;	move.b	#0,($A130F1).l		; disable SRAM
 
+	;	move.b	#0,($A130F1).l		; disable SRAM
 		move.b	#$95,d0
 		bsr	PlaySound
 		move.w	#$001,($FFFFFE10).w	; load GHZ2
@@ -4142,7 +4160,7 @@ Level_LoadObj:
 loc_39E8:
 		move.b	d0,($FFFFFE1A).w
 		move.b	d0,($FFFFFE2C).w ; clear shield
-		move.b	d0,($FFFFFFFC).w ; clear multi shield counter
+	;	move.b	d0,($FFFFFFFC).w ; clear multi shield counter
 		move.b	d0,($FFFFFE2D).w ; clear invincibility
 		move.b	d0,($FFFFFE2E).w ; clear speed shoes
 		move.b	d0,($FFFFFE2F).w
@@ -4855,6 +4873,8 @@ MainLevelArray:
 ; ---------------------------------------------------------------------------
 
 ClearEverySpecialFlag:
+		clr.b	($FFFFFF74).w
+		clr.b	($FFFFFFEB).w
 		clr.b	($FFFFFF91).w
 		clr.l	($FFFFFFA0).w	; clear RAM adresses $FFA0-$FFA3 (4 flags)
 		clr.l	($FFFFFFA4).w	; $FFA4-$FFA7	(4)
@@ -6067,7 +6087,7 @@ End_LoadSonic:
 	;	move.w	d0,($FFFFFE20).w
 		move.l	d0,($FFFFFE22).w
 		move.b	d0,($FFFFFE1B).w
-		move.b	d0,($FFFFFFFC).w
+	;	move.b	d0,($FFFFFFFC).w
 		move.b	d0,($FFFFFE2C).w
 		move.b	d0,($FFFFFE2D).w
 		move.b	d0,($FFFFFE2E).w
@@ -7225,7 +7245,7 @@ Deform_GHZ_8:				; CODE XREF: Deform_GHZ+C4?j
 		asl.l	#8,d2
 		moveq	#0,d3
 		move.w	d0,d3
-		move.w	#$45,d1	; 'G'		; $47
+		move.w	#$47,d1	; 'G'		; $47
 		add.w	d4,d1
  
 Deform_GHZ_9:				; CODE XREF: Deform_GHZ+F4?j
@@ -7934,6 +7954,9 @@ S_H_NotGHZ2:
 		bne.w	S_H_NoExtendedCam	; if yes, branch
 
 S_H_BuzzIgnore:
+		tst.b	($FFFFF7CD).w
+		bne.s	S_H_ResetCamera
+
 		tst.b	($FFFFFFAF).w		; has a flag been set to do this? (Peelout / Spindash)
 		bne.s	S_H_PeeloutSpindash	; if yes, branch
 		move.w	($FFFFD014).w,d2	; load sonic's ground speed to d2
@@ -15038,9 +15061,14 @@ Obj4B_PlaySnd:
 Obj4B_Delete:				; XREF: Obj4B_Index
 		bsr.w	Obj4B_Animate		; still animate ring
 
+		cmpi.w	#$501,($FFFFFE10).w
+		beq.s	@conty
+
+
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
 		bne.w	Obj4B_ChkGHZ2		; if not, branch
 
+@conty:
 		tst.b	($FFFFFF7D).w
 		bne.s	@cont2
 		addi.w	#$10,$12(a0)
@@ -15058,7 +15086,14 @@ Obj4B_Delete:				; XREF: Obj4B_Index
 		tst.b	1(a0)
 		bmi.w	Obj4B_Return
 		
-		
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	Obj4B_ChkOptions
+		move.b	#$28,($FFFFF600).w	; load chapters screen
+		move.b	#$E0,d0
+		jmp	PlaySound_Special
+
+
+
 
 Obj4B_ChkOptions:
 		cmpi.w	#$0020,$8(a0)
@@ -15162,14 +15197,14 @@ Obj4B_ChkGHZ2:
 		clr.b	($FFFFFFB6).w
 
 		move.b	#1,($A130F1).l		; enable SRAM
-		cmpi.b	#$B6,($20001B).l	; does SRAM exist?
-		bne.s	Obj4B_NoSRAM		; if not, branch
-		move.b	#0,($A130F1).l		; disable SRAM
+	;	cmpi.b	#$B6,($20001B).l	; does SRAM exist?
+	;	bne.s	Obj4B_NoSRAM		; if not, branch
+	;	move.b	#0,($A130F1).l		; disable SRAM
 
-		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
-		move.b	#$C,($FFFFF600).w	; set to level
-		move.w	#1,($FFFFFE02).w	; restart level
-		rts
+	;	move.w	#$400,($FFFFFE10).w	; set level to SYZ1
+	;	move.b	#$C,($FFFFF600).w	; set to level
+	;	move.w	#1,($FFFFFE02).w	; restart level
+	;	rts
 
 Obj4B_NoSRAM:
 		move.b	#1,($200007).l		; set number for text to 1
@@ -15278,11 +15313,13 @@ Obj7C_NotSYZ1:
 		move.b	#6,$24(a1)	; delete giant ring object (Obj4B)
 
 		move.w	#0,($FFFFD000).w ; remove Sonic	object
+		move.w	$8(a1),($FFFFD008).w
+		
 		move.b	#$1C,($FFFFD01C).w ; make Sonic	invisible
 		move.b	#1,($FFFFF7CD).w ; stop	Sonic getting bonuses
 		clr.b	($FFFFFE2D).w	; remove invincibility
 		clr.b	($FFFFFE2C).w	; remove shield
-		clr.b	($FFFFFFFC).w
+	;	clr.b	($FFFFFFFC).w
 
 locret_9F76:
 		rts	
@@ -15701,11 +15738,11 @@ Obj2E_ChkShield:
 		bne.s	Obj2E_ChkInvinc
 		tst.b	($FFFFFFE7).w	; has sonic destroyed a S monitor?
 		bne.s	Obj2E_ChkInvinc	; if yes, don't give sonic a shield
-		tst.b	($FFFFFE2C).w	; is sonic already having a shield?
-		bne.s	Obj2E_Shield_Add ; if yes, branch
-		clr.b	($FFFFFFFC).w
-Obj2E_Shield_Add:
-		add.b	#1,($FFFFFFFC).w ; increase shield counter X with 1
+	;	tst.b	($FFFFFE2C).w	; is sonic already having a shield?
+	;	bne.s	Obj2E_Shield_Add ; if yes, branch
+	;	clr.b	($FFFFFFFC).w
+; Obj2E_Shield_Add:
+	;	add.b	#1,($FFFFFFFC).w ; increase shield counter X with 1
 		move.b	#1,($FFFFFE2C).w ; give	Sonic a	shield
 	
 	if RecordDemo=0
@@ -15788,7 +15825,27 @@ Obj2E_RingSound:
 
 Obj2E_ChkS:
 		cmpi.b	#7,d0		; does monitor contain 'S'
-		bne.s	Obj2E_ChkGoggles
+		bne.w	Obj2E_ChkGoggles
+
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	@cont
+		
+		tst.b	($FFFFFFE7).w
+		beq.s	@cont
+
+		movem.l	d0-a1,-(sp)
+		move.w	#$077A,d0
+		move.w	#$027F,d1
+		move.b	#$18,d2
+		bsr.w	Sub_ChangeChunk
+		move.w	#$086D,d0
+		move.w	#$018E,d1
+		move.b	#$2F,d2
+		bsr.w	Sub_ChangeChunk
+		movem.l	(sp)+,d0-a1
+		move.b	#1,($FFFFFF74).w
+
+@cont:
 		move.b	#1,($FFFFFFE7).w ; make sonic immortal
 
 	if RecordDemo=0
@@ -15802,7 +15859,7 @@ Obj2E_ChkS:
 		ori.b	#1,($FFFFFE1D).w ; update the ring counter
 		clr.b	($FFFFFE2D).w	; remove invinceblity
 		clr.b	($FFFFFE2C).w	; remove shield
-		clr.b	($FFFFFFFC).w	; clear multi shield counter
+	;	clr.b	($FFFFFFFC).w	; clear multi shield counter
 		cmpi.w	#$001,($FFFFFE10).w
 		bne.s	Obj2E_NotGHZ2
 		move.w	#$C3,d0		
@@ -18312,9 +18369,14 @@ Obj34_NotSBZ2:
 Obj34_NotGHZ3:
 		cmpi.w	#$301,($FFFFFE10).w ; check if level is	SLZ 2
 		bne.s	Obj34_NotSLZ2
-		moveq	#$11,d0		; load title card number $F (SLZ)
+		moveq	#$11,d0		; load title card number $11 (SLZ)
 		
 Obj34_NotSLZ2:
+		cmpi.w	#$302,($FFFFFE10).w ; check if level is	Special Stage 2
+		bne.s	Obj34_NotSS2
+		moveq	#$13,d0		; load title card number $13 (SS 2)
+		
+Obj34_NotSS2:
 		move.w	d0,d2
 		moveq	#4,d0		; set to SYZ config		
 		cmpi.w	#$502,($FFFFFE10).w ; check if level is	FZ
@@ -19234,6 +19296,19 @@ Obj36_Upright:				; XREF: Obj36_Solid
 		bpl.w	Obj36_Display
 
 Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	@conty
+		move.w	#$09E0,($FFFFD008).w	; teleport Sonic on X-axis
+		move.w	#$01AC,($FFFFD00C).w	; teleport Sonic on Y-axis
+		clr.w	($FFFFD010).w		; clear X-speed
+		clr.w	($FFFFD012).w		; clear Y-speed
+		move.w	#$C3,d0			; set giant ring sound
+		jsr	PlaySound		; play it
+		jsr	WhiteFlash2		; make a white flash
+		bsr	FixLevel
+		bra.s	Obj36_NotInhuman2
+
+@conty:
 		tst.b	($FFFFFE2D).w	; is Sonic invincible?
 		bne.w	Obj36_Display	; if yes, branch
 		tst.b	($FFFFFFE7).w		; is inhuman mode on?
@@ -20746,6 +20821,8 @@ locret_DE12:
 ; ===========================================================================
 
 Obj42_Type00:				; XREF: Obj42_Index2
+		jmp	DeleteObject	; no regular netron.
+
 		cmpi.b	#4,$1A(a0)	; has "appearing" animation finished?
 		bcc.s	Obj42_Fall	; is yes, branch
 		bset	#0,$22(a0)
@@ -27769,10 +27846,21 @@ revertspindash:
 		move.l	(sp)+,a0
 
 contin:
+		tst.w	($FFFFFFFA).w
+		beq.s	@cont
+		move.b	($FFFFF602).w,d0	; get button presses
+		andi.b	#$60,d0			; sort out any non A&C button presses
+		cmpi.b	#$60,d0			; is A and C pressed?
+		bne.w	Obj06_Display		; if not, branch
+		bra.s	@conty
+
+@cont:
 		move.b	($FFFFF602).w,d0	; get button presses
 		andi.b	#$70,d0			; sort out any non ABC button presses
 		cmpi.b	#$70,d0			; is A, B and C pressed?
-		bne.s	Obj06_Display		; if not, branch
+		bne.w	Obj06_Display		; if not, branch
+
+@conty:
 		move.w	($FFFFD008).w,d0	; get Sonic's X-pos
 		sub.w	$8(a0),d0		; substract the X-pos from the current object from it
 		addi.w	#$10,d0			; add $10 to it
@@ -27794,11 +27882,27 @@ contin:
 		clr.w	($FFFFD012).w		; clear Sonic's Y-speed
 		clr.w	($FFFFD014).w		; clear Sonic's interia
 
-		clr.b	($FFFFFFE7).w
 		clr.w	($FFFFFE20).w
 		clr.b	($FFFFFE1D).w
 		move.w	#$C3,d0			; set giant ring sound
 		jsr	PlaySound_Special	; play it
+
+		tst.b	($FFFFFFE7).w		; is Sonic in Inhuman Mode?
+		beq.s	@contx			; if not, branch
+		clr.b	($FFFFFFE7).w		; disabled Inhuman Mode
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	@contxy
+		move.b	#$91,d0
+		jsr	PlaySound
+		clr.b	($FFFFFF74).w
+
+@contxy:
+		move.w	d7,-(sp)		; back up d7
+		moveq	#3,d0			; load Sonic's pallet
+		jsr	PalLoad2		; restore sonic's palette
+		move.w	(sp)+,d7		; restore d7
+
+@contx:
 		jsr	WhiteFlash2		; make a white flash
 	;	jsr	FixLevel		; instantly move the camera
 
@@ -27840,11 +27944,104 @@ Map_Obj06:
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Object 07 - Blank
+; Object 07 - Info Monitors in the Tutorial level (SBZ 2)
 ; ---------------------------------------------------------------------------
 
 Obj07:
-		rts	; return
+		moveq	#0,d0			; clear d0
+		move.b	$24(a0),d0		; move routine counter to d0
+		move.w	Obj07_Index(pc,d0.w),d1 ; move the index to d1
+		jmp	Obj07_Index(pc,d1.w)	; find out the current position in the index
+; ===========================================================================
+Obj07_Index:	dc.w Obj07_Setup-Obj07_Index	; Set up the object (art etc.)	[$0]
+		dc.w Obj07_ChkDist-Obj07_Index	; Check distance		[$2]
+; ===========================================================================
+
+Obj07_Setup:
+		addq.b	#2,$24(a0)		; set to "Obj07_Display"
+		move.l	#Map_Obj06,4(a0)	; load mappings
+		move.b	#4,$18(a0)		; set priority
+		move.b	#4,1(a0)		; set render flag
+		move.b	#$56,$19(a0)		; set display width
+		move.w	#$07A2,2(a0)		; set art pointer, use palette line 1
+	;	move.b	#0,$30(a0)
+	;	move.l	a0,-(sp)
+	;	move.l	#$74400003,($C00004).l	; set VRAM location
+	;	lea	(Nem_HardPS).l,a0	; set art location
+	;	jsr	NemDec			; load art from nemesis
+	;	move.l	(sp)+,a0
+
+Obj07_ChkDist:
+		btst	#6,($FFFFF605).w	; is A pressed?
+		beq.w	Obj07_Display		; if not, branch
+
+		move.w	($FFFFD008).w,d0	; get Sonic's X-pos
+		sub.w	$8(a0),d0		; substract the X-pos from the current object from it
+		addi.w	#$10,d0			; add $10 to it
+		cmpi.w	#$20,d0			; is Sonic within $10 pixels of that object?
+		bhi.s	Obj07_Display		; if not, branch
+		move.w	($FFFFD00C).w,d0	; get Sonic's X-pos
+		sub.w	$C(a0),d0		; substract the X-pos from the current object from it
+		addi.w	#$10,d0			; add $10 to it
+		cmpi.w	#$20,d0			; is Sonic within $10 pixels of that object?
+		bhi.s	Obj07_Display		; if not, branch
+
+
+
+
+
+
+		clr.w	($FFFFD010).w		; clear Sonic's X-speed
+		clr.w	($FFFFD012).w		; clear Sonic's Y-speed
+		clr.w	($FFFFD014).w		; clear Sonic's interia
+
+		jsr	CheckIfMainLevel	; get level ID
+		lsl.w	#2,d5			; multiply it by 4
+		lea	(Obj07_Locations).l,a1	; get location
+		adda.w	d5,a1			; add result to it
+
+		move.w	#$C3,d0			; set giant ring sound
+		jsr	PlaySound_Special	; play it
+
+
+
+
+
+
+
+
+
+
+
+Obj07_Display:
+		bsr	DisplaySprite		; display sprite
+		move.w	8(a0),d0		; get X-pos
+		andi.w	#$FF80,d0		; keep it in multiples of 80 pixels
+		move.w	($FFFFF700).w,d1	; load horizontal camera position
+		subi.w	#$80,d1			; substract $80
+		andi.w	#$FF80,d1		; keep it in multiples of 80 pixels again
+		sub.w	d1,d0			; substract result from X-pos
+		cmpi.w	#$280,d0		; has object gone out of screen?
+		bhi.w	DeleteObject		; if yes, delete object
+		rts				; return
+; ---------------------------------------------------------------------------
+
+Obj07_Locations:	;XXXX   YYYY
+		dc.w	$18EA
+		dc.w	$18EA
+		dc.w	$18EA
+		dc.w	$17C0
+		dc.w	$038F
+		dc.w	$18EA
+		dc.w	$18EA
+		dc.w	$18EA
+		dc.w	$FFFF
+
+; ---------------------------------------------------------------------------
+
+Map_Obj07:
+	;	include	"_maps\HardPartSkipper.asm"
+		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 
@@ -28267,7 +28464,7 @@ S_D_20Rings:
 		jsr	PlaySound_Special	; set giant ring sound
 	;	jsr	HurtSonic		; make Sonic hurt
 		clr.b	($FFFFFE2C).w		; remove any shields
-		clr.b	($FFFFFFFC).w		; clear shield counter
+	;	clr.b	($FFFFFFFC).w		; clear shield counter
 		bsr	FixLevel
 ; ===========================================================================
 
@@ -29451,6 +29648,12 @@ Sonic_JumpDash:
 		bne.w	JD_End			; if yes, branch
 
 JD_NotMZ:
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	@cont
+		tst.b	($FFFFFF74).w
+		bne.w	JD_End
+
+@cont:
 		tst.b	($FFFFFFE5).w		; was AirFreeze flag set?
 		bne.w	JD_End			; if yes, branch
 		move.b	($FFFFF603).w,d0	; is B or C pressed? (part 1)
@@ -29749,6 +29952,12 @@ Sonic_SuperPeelOut:
 		bne.w	SPO_End			; if yes, branch
 
 SPO_NotMZ:
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	@cont
+		tst.b	($FFFFFF74).w
+		bne.w	SPO_End
+
+@cont:
 		tst.b	($FFFFFF99).w
 		beq.w	SPO_End
 		tst.b	($FFFFFEBC).w		; already peelouting?
@@ -29872,6 +30081,12 @@ Sonic_Spindash:
 		bne.w	locret2_1AC8C		; if yes, branch
 
 Spdsh_NotMZ:
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	@cont
+		tst.b	($FFFFFF74).w
+		bne.w	locret2_1AC8C
+
+@cont:
 		tst.b	$39(a0)			; already spindashing?
 		bne.s	loc2_1AC8E		; if set, branch
 		cmpi.b	#8,$1C(a0)		; is anim duck
@@ -33623,7 +33838,7 @@ Obj69_Animate:
 		addq.w	#1,d3
 		move.w	8(a0),d4
 		bsr	SolidObject
-		bra.w	MarkObjGone
+		jmp	MarkObjGone
 ; ===========================================================================
 
 Obj69_NotSolid:
@@ -33635,7 +33850,7 @@ Obj69_NotSolid:
 		clr.b	$25(a0)
 
 Obj69_Display:
-		bra.w	MarkObjGone
+		jmp	MarkObjGone
 ; ===========================================================================
 
 Obj69_Spinner:				; XREF: Obj69_Index
@@ -40927,9 +41142,9 @@ HurtSonic:
 		move.w	$C(a0),$C(a1)
 
 Hurt_Shield:
-		subq.b	#1,($FFFFFFFC).w ; sub 1 from shield X counter
-		bne.s	HS_NotEmpty	; if counter is not empty, branch
-		clr.b	($FFFFFFFC).w	 ; clear shield counter
+	;	subq.b	#1,($FFFFFFFC).w ; sub 1 from shield X counter
+	;	bne.s	HS_NotEmpty	; if counter is not empty, branch
+	;	clr.b	($FFFFFFFC).w	 ; clear shield counter
 	;	sub.b	#1,($FFFFFE2C).w ; sub 1 from shield counter
 		clr.b	($FFFFFE2C).w	 ; remove shield	
 
@@ -40989,7 +41204,7 @@ KillSonic:
 		tst.w	($FFFFFE08).w		; is debug mode	active?
 		bne.w	Kill_End		; if yes, branch
 		clr.b	($FFFFFE2C).w		; clear shield
-		clr.b	($FFFFFFFC).w
+	;	clr.b	($FFFFFFFC).w
 		clr.w	$14(a0)			; clear interia
 		moveq	#0,d0
 		move.w	#-$600,d0		; move sonic upwards (inhuman)
@@ -42712,7 +42927,7 @@ Obj09_GOAL:
 		move.w	(a1)+,d2		; set Sonic's Y-position
 
 @cont:
-		tst.w	($FFFFFF86).w		; did he pass a checkpoint ytt?
+		tst.w	($FFFFFF86).w		; did he pass a checkpoint yet?
 		beq.s	Obj09_CPTeleEnd		; if not, branch
 		move.w	($FFFFFF86).w,d1	; get saved X-pos
 		move.w	($FFFFFF88).w,d2	; get saved Y-pos
@@ -42733,10 +42948,13 @@ Obj09_NotSS2:
 		move.b	#$3F,($FF11BD).l	; restore red emerald
 		move.b	#$40,($FF11C1).l	; restore grey emerald
 		clr.b	($FFFFFE57).w		; clear emerald counter
-		move.w	#0,$12(a0)
 
 
 Obj09_NotSS1x:
+		clr.w	$10(a0)
+		clr.w	$12(a0)
+		clr.w	$14(a0)
+
 		jsr	(PlaySound_Special).l	; play sound
 		rts				; return
 ; ===========================================================================

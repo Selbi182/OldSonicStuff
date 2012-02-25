@@ -22,6 +22,7 @@
 		dc.w byte_CB8A-Map_obj34	; $10
 		dc.w byte_CA7AX-Map_obj34	; $11
 		dc.w byte_CADCX-Map_obj34	; $12
+		dc.w byte_CA7Axx-Map_obj34	; $13
 
 
 byte_C9FE:	dc.b $A	; GREEN HILL | NIGHT HILL
@@ -61,6 +62,14 @@ byte_CA7A:	dc.b 7	;  STAR LIGHT | SPECIAL
 		dc.b $F8, 5, 0, $10, $4		; E
 		dc.b $F8, 5, 0, 8, $14		; C
 		dc.b $F8, 1, 0, $20, $24	; I
+		dc.b $F8, 5, 0, 0, $2C		; A
+		dc.b $F8, 5, 0, $26, $3C	; L
+
+byte_CA7Axx	dc.b 6	;  STAR LIGHT | UNREAL
+		dc.b $F8, 5, 0, $46, $EC	; U
+		dc.b $F8, 5, 0, $2E, $FC	; N
+		dc.b $F8, 5, 0, $3A, $C	; R
+		dc.b $F8, 5, 0, $10, $1C	; E
 		dc.b $F8, 5, 0, 0, $2C		; A
 		dc.b $F8, 5, 0, $26, $3C	; L
 

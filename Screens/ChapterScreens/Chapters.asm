@@ -38,9 +38,14 @@ CS_ClrObjRam:
 @cont:
 		move.b	#0,($A130F1).l			; disable SRAM
 
+		cmpi.w	#$501,($FFFFFE10).w
+		beq.s	@contGHZ
+
 		tst.b	($FFFFFFA0).w			; is chapter ID 0?
 		bne.s	CS_NotOHDIGHZ			; if not, branch
 
+@contGHZ:
+		move.b	#0,($FFFFFFA0).w
 		move.l	#$40000000,($C00004).l		; Load art
 		lea	($C00000).l,a6
 		lea	(Art_OHDIGHZ).l,a1		; load art

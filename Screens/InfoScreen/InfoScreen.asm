@@ -140,7 +140,11 @@ Info_NoTextChange:
 		bne.s	Info_NoIntro		; if not, branch
 
 		move.b	#1,($A130F1).l		; enable SRAM
+		cmpi.b	#1,($200001).l
+		bgt.s	@conty
 		move.b	#1,($200001).l		; run first chapter screen
+
+@conty:
 		move.b	#0,($A130F1).l		; disable SRAM
 		move.b	#$28,($FFFFF600).w	; set to chapters screen ($28)
 		rts
