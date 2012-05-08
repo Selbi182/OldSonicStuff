@@ -46,9 +46,9 @@ StartText:
 
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	"  WITH  ADDITIONAL  ",$FF
+	dc.b	" WITH GRAPHICS AND  ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"   PROGRAMMING BY   ",$FF
+	dc.b	" SPECIAL HELP FROM  ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
@@ -127,24 +127,7 @@ StartText:
 
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	"    BETA TESTING    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"    THE SSRG IRC    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"     CHANNEL ON     ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"     BADNIK NET     ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-
-
-	dc.b	$0D						; Number of lines
-	dc.b	"                    ",$FF
-	dc.b	" SPECIAL THANKS  TO ",$FF
+	dc.b	" SPECIAL THANKS TO  ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
@@ -159,10 +142,25 @@ StartText:
 	dc.b	"                    ",$FF
 
 
+	dc.b	$0D						; Number of lines
+	dc.b	"                    ",$FF
+	dc.b	" SPECIAL THANKS TO  ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"    VLADIKCOMPER    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
 
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	"   ORIGINAL  GAME   ",$FF
+	dc.b	"   ORIGINAL GAME    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"         BY         ",$FF
 	dc.b	"                    ",$FF

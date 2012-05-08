@@ -2,16 +2,8 @@ To-Do:
 - The Star Light Update:
 	- Find a concept and implement it (easier said than done). (Update: Concept (sorta) found!)
 	- Find a proper name for the stage, create the sign, write the new story text, and create the new chapter screen.
+	- Finish the new Eggman/Bomb cutscene.
+	
+- Finish Tutorial Level by creating the info boxes (see Intro Script.txt).
 
 - Rewrite most of the embarrasing story texts and maybe redo its entire art to be more appealing. Also increase its speed.
-- Redesign "Finalor Place" to at least get rid of that grey background in the boss area. Making it longer wouldn't harm either.
-- A new life icon. That crazed Sonic is really starting to piss me off.
-- Finish (and actually create) the new Eggman/Bomb cutscene.
-- Finish Tutorial Level (see Intro Script.txt).
-
-- Create a straight version of the finished product if necessary (or even combine both).
-
-
-Ideas:
-- More cutscenes.
-- The S-Monitor should get a new level that solely is made for it (in a positive way, so completely unlike to Ruined Place).

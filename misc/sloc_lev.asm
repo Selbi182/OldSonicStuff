@@ -28,7 +28,7 @@
 		dc.w	$0038, $00EE	; SYZ 3
 		dc.w	$0080, $00A8	; SYZ 4
 
-		dc.w	$001A, $078C	; SBZ 1
+		dc.w	$01A0, $0160	; SBZ 1
 		dc.w	$001A, $078C	; SBZ 2
 		dc.w	$0B86, $05AC	; FZ
 		dc.w	$0080, $00A8	; Null

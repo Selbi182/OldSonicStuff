@@ -290,6 +290,12 @@ Info_NoDot1XX:
 		bra.s	Info_NoNumber1xx
 
 Info_NoQMark1xx:
+		cmpi.b	#"!",d3			; is current char an exclamation mark?
+		bne.s	Info_NoExMark1xx		; if not, branch
+		move.b	#$0A,d3
+		bra.s	Info_NoNumber1xx
+
+Info_NoExMark1xx:
 		cmpi.b	#$2C,d3			; is current char a comma?
 		bne.s	Info_NoComma1xx		; if not, branch
 		move.b	#$27,d3
