@@ -3184,7 +3184,7 @@ Pal_Null:		incbin	pallet\null.bin
 
 DelayProgram:				; XREF: PauseGame
 		move	#$2300,sr
-		jsr	EasterEgg_Epileptic
+	;	jsr	EasterEgg_Epileptic
 
 loc_29AC:
 		tst.b	($FFFFF62A).w
@@ -5281,6 +5281,10 @@ SignpostArtLoad:			; XREF: Level
 		beq.s	Signpost_Exit
 		cmp.w	($FFFFF728).w,d1
 		beq.s	Signpost_Exit
+		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
+		beq.s	Signpost_Exit		; if yes, branch
+		cmpi.w	#$301,($FFFFFE10).w	; is level SLZ2?
+		beq.s	Signpost_Exit		; if yes, branch
 		move.w	d1,($FFFFF728).w ; move	left boundary to current screen	position
 		moveq	#$12,d0
 		bra.w	LoadPLC2	; load signpost	patterns
@@ -6989,6 +6993,14 @@ LevSz_SonicPos:
 		move.w	d0,($FFFFD00C).w ; set Sonic's position on y-axis
 
 loc_60D0:				; XREF: LevSz_ChkLamp
+		clr.w	($FFFFF7A8).w		; reset Sonic's position tracking index
+		lea	($FFFFCB00).w,a2	; load the tracking array into a2
+		moveq	#63,d2			; begin a 64-step loop
+@looppoint:
+		move.w	d1,(a2)+		; fill in X
+		move.w	d0,(a2)+		; fill in Y
+		dbf	d2,@looppoint		; loop
+
 		subi.w	#$A0,d1
 		bcc.s	loc_60D8
 		moveq	#0,d1
@@ -10052,7 +10064,7 @@ Resize_MZ3boss:
 		move.w	#$210,($FFFFF726).w
 		cmpi.w	#$17F0,($FFFFF700).w
 		bcs.s	locret_70E8
-		bsr	SingleObjLoad
+		jsr	SingleObjLoad
 		bne.s	loc_70D0
 		move.b	#$73,0(a1)	; load MZ boss object
 		move.w	#$19F0,8(a1)
@@ -10086,58 +10098,83 @@ Resize_SLZ:				; XREF: Resize_Index
 		move.w	Resize_SLZx(pc,d0.w),d0
 		jmp	Resize_SLZx(pc,d0.w)
 ; ===========================================================================
-Resize_SLZx:	dc.w Resize_SLZ12-Resize_SLZx
-		dc.w Resize_SLZ12-Resize_SLZx
+Resize_SLZx:	dc.w Resize_SLZ1-Resize_SLZx
+		dc.w Resize_SLZ2-Resize_SLZx
 		dc.w Resize_SLZ3-Resize_SLZx
 ; ===========================================================================
 
-Resize_SLZ12:
+Resize_SLZ1:
 		rts	
 ; ===========================================================================
 
-Resize_SLZ3:
+Resize_SLZ2:
 		moveq	#0,d0
 		move.b	($FFFFF742).w,d0
 		move.w	off_7118(pc,d0.w),d0
 		jmp	off_7118(pc,d0.w)
 ; ===========================================================================
-off_7118:	dc.w Resize_SLZ3main-off_7118
-		dc.w Resize_SLZ3boss-off_7118
-		dc.w Resize_SLZ3end-off_7118
+off_7118:	dc.w Resize_SLZ2main-off_7118
+		dc.w Resize_SLZ2boss1-off_7118
+		dc.w Resize_SLZ2boss2-off_7118
+		dc.w Resize_SLZ2end-off_7118
 ; ===========================================================================
 
-Resize_SLZ3main:
-		cmpi.w	#$1E70,($FFFFF700).w
+Resize_SLZ2main:
+		cmpi.w	#$A0A,($FFFFD008).w
 		bcs.s	locret_7130
-		move.w	#$210,($FFFFF726).w
+		move.w	#$430,($FFFFF726).w
+		move.w	#$A10,($FFFFD008).w
+		clr.w	($FFFFF602).w
+		clr.w	($FFFFD010).w
+		clr.w	($FFFFD014).w
+		move.b	#$E0,d0
+		bsr	PlaySound_Special
+		move.b	#1,($FFFFF7CC).w		; lock controls
+		move.b	#1,($FFFFF7AA).w 		; lock screen
+		move.b	#1,($FFFFFFA9).w	; set flag
 		addq.b	#2,($FFFFF742).w
 
 locret_7130:
 		rts	
 ; ===========================================================================
 
-Resize_SLZ3boss:
-		cmpi.w	#$2000,($FFFFF700).w
-		bcs.s	locret_715C
-		bsr	SingleObjLoad
-		bne.s	loc_7144
-		move.b	#$7A,(a1)	; load SLZ boss	object
-
-loc_7144:
-		move.w	#$8C,d0
-		bsr	PlaySound	; play boss music
-		move.b	#1,($FFFFF7AA).w ; lock	screen
+Resize_SLZ2boss1:
+		btst	#1,($FFFFD022).w
+		bne.s	locret_715C
+		move.w	#$800,($FFFFF602).w ; make Sonic run to	the right
 		addq.b	#2,($FFFFF742).w
-		moveq	#$11,d0
-		bra.w	LoadPLC		; load boss patterns
+		rts
+; ===========================================================================
+
+Resize_SLZ2boss2:
+		cmpi.w	#$B00,($FFFFD008).w
+		bcs.s	locret_715C
+		clr.w	($FFFFF602).w
+		clr.w	($FFFFD010).w
+		clr.w	($FFFFD014).w
+
+		jsr	SingleObjLoad
+		move.b	#$5F,0(a1)
+		move.w	#$BD0,$8(a1)
+		move.w	#$04CC,$C(a1)
+		move.b	#30,($FFFFFF75).w
+
+
+		addq.b	#2,($FFFFF742).w
+		rts
 ; ===========================================================================
 
 locret_715C:
 		rts	
 ; ===========================================================================
 
-Resize_SLZ3end:
-		move.w	($FFFFF700).w,($FFFFF728).w
+Resize_SLZ2end:
+		move.w	#$A62,($FFFFF728).w
+		rts
+
+; ===========================================================================
+
+Resize_SLZ3:
 		rts
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -15183,7 +15220,8 @@ Obj4B_ChkIntro:
 Obj4B_ChkGHZ:
 		cmpi.w	#$04A0,$8(a0)
 		bne.s	Obj4B_ChkSpecial
-		move.w	#$000,($FFFFFE10).w	; set level to GHZ1
+	;	move.w	#$000,($FFFFFE10).w	; set level to GHZ1
+		move.w	#$301,($FFFFFE10).w
 		bra.w	Obj4B_PlayLevel
 
 Obj4B_ChkSpecial:
@@ -17872,7 +17910,7 @@ loc_BDC8:
 
 @contx:
 		move.b	#1,($FFFFFF92).w
-		jsr	EasterEgg_Epileptic
+	;	jsr	EasterEgg_Epileptic
 		move.b	#1,($A130F1).l		; enable SRAM
 		move.b	#1,($20001D).l		; enable grey mode flag
 		move.b	#0,($A130F1).l		; disable SRAM
@@ -25949,6 +25987,7 @@ Obj5F_Index:	dc.w Obj5F_Main-Obj5F_Index
 		dc.w Obj5F_Display-Obj5F_Index
 		dc.w Obj5F_End-Obj5F_Index
 		dc.w Obj5F_SBZ1-Obj5F_Index
+		dc.w Obj5F_BossDefeated-Obj5F_Index
 ; ===========================================================================
 
 Obj5F_Main:				; XREF: Obj5F_Index
@@ -25959,6 +25998,15 @@ Obj5F_Main:				; XREF: Obj5F_Index
 		move.b	#3,$18(a0)
 		move.b	#$C,$19(a0)
 
+		tst.b	($FFFFFFA9).w
+		beq.s	@conty
+		tst.b	($FFFFFF75).w
+		bne.s	@conty
+		move.b	#$A,$24(a0)
+		bra.w	Obj5F_BossDefeated
+
+@conty:
+		
 		cmpi.w	#$500,($FFFFFE10).w
 		bne.s	@cont
 		move.b	#8,$24(a0)
@@ -26001,6 +26049,9 @@ Obj5F_Index2:	dc.w Obj5F_Walk-Obj5F_Index2
 		dc.w Obj5F_Explode-Obj5F_Index2
 ; ===========================================================================
 
+BombWalkSpeed =	$C0
+BombWalkSpeed_Boss = $120
+
 Obj5F_Walk:				; XREF: Obj5F_Index2
 		bsr.w	Obj5F_ChkSonic
 		bmi	locret_11AD0
@@ -26010,12 +26061,19 @@ Obj5F_Walk:				; XREF: Obj5F_Index2
 		sub.w	8(a0),d0
 		bpl.s	Obj5F_Walk2
 		bclr	#0,$22(a0)		
-		move.w	#-$C0,$10(a0)	; move object to the left
+		move.w	#-BombWalkSpeed,$10(a0)	; move object to the left
+		tst.b	($FFFFFFA9).w
+		beq.s	Obj5F_Return
+		move.w	#-BombWalkSpeed_Boss,$10(a0)	; move object to the left
 		bra.s	Obj5F_Return
 
 Obj5F_Walk2:
 		bset	#0,$22(a0)
-		move.w	#$C0,$10(a0)	; move object to the right
+		move.w	#BombWalkSpeed,$10(a0)	; move object to the right
+		tst.b	($FFFFFFA9).w
+		beq.s	Obj5F_Return
+		move.w	#BombWalkSpeed_Boss,$10(a0)	; move object to the left
+
 
 Obj5F_Return:
 		bsr	ObjHitFloor
@@ -26058,7 +26116,20 @@ Obj5F_Explode:				; XREF: Obj5F_Index2
 		move.b	#0,$1C(a0)	; stop animation
 		move.b	#4,$18(a0)
 		subq.w	#1,$30(a0)
-		bpl.s	locret_11AD0
+		bpl.w	locret_11AD0
+
+		subq.b	#1,($FFFFFF75).w	; remove one life
+		bne.s	@conty
+		clr.w	($FFFFD010).w
+		clr.w	($FFFFD014).w
+		move.b	#1,($FFFFF7CC).w		; lock controls
+		move.b	#1,($FFFFFE2D).w		; make Sonic invincible
+		clr.b	($FFFFF602).w
+		clr.w	$10(a0)				; clear X-speed
+		move.b	#$A,$24(a0)
+	;	jmp	DeleteObject
+		rts
+@conty:
 
 		jsr	SingleObjLoad
 		move.b	#$5F,0(a1)	; load a new bomb object
@@ -26069,9 +26140,29 @@ Obj5F_Explode:				; XREF: Obj5F_Index2
 		move.b	#$3F,0(a0)	; change bomb into an explosion
 		move.b	#0,$24(a0)
 
+		cmpi.b	#1,($FFFFFFA9).w
+		bne.s	locret_11AD0
+		move.b	#2,($FFFFFFA9).w
+		move.b	#4,($FFFFD024).w
+		move.b	#$1A,($FFFFD01C).w
+		bset	#1,($FFFFD022).w
+		move.w	#-$200,($FFFFD010).w
+		subq.w	#1,($FFFFD008).w
+		move.w	#-$400,($FFFFD012).w
+		move.b	#$98,d0				; set boss music
+		jsr	PlaySound			; play it
+		move.b	#10,($FFFFD4E8).w		; camera shaking
+		clr.b	($FFFFF7CC).w			; unlock controls 1
+
 locret_11AD0:
 		rts	
 ; ===========================================================================
+
+BombFuseTime = 71
+BombFuseTime_Boss = 41
+
+BombDistance = $40
+BombDistance_Boss = $60
 
 Obj5F_ChkSonic:				; XREF: Obj5F_Walk; Obj5F_Wait
 		bsr	Obj5F_FaceSonic
@@ -26081,7 +26172,12 @@ Obj5F_ChkSonic:				; XREF: Obj5F_Walk; Obj5F_Wait
 		neg.w	d0
 
 loc_11ADE:
-		cmpi.w	#$40,d0
+		move.w	#BombDistance,d1
+		tst.b	($FFFFFFA9).w
+		beq.s	@cont
+		move.w	#BombDistance_Boss,d1
+@cont:
+		cmp.w	d1,d0
 		bcc.w	locret_11B5E
 		move.w	($FFFFD00C).w,d0
 		sub.w	$C(a0),d0
@@ -26089,12 +26185,23 @@ loc_11ADE:
 		neg.w	d0
 
 Obj5F_MakeFuse:
-		cmpi.w	#$40,d0
-		bcc.s	locret_11B5E
+		move.w	#BombDistance,d1
+		tst.b	($FFFFFFA9).w
+		beq.s	@contx
+		move.w	#BombDistance_Boss,d1
+@contx:
+		cmp.w	d1,d0
+		bcc.w	locret_11B5E
+
 		tst.w	($FFFFFE08).w
-		bne.s	locret_11B5E
+		bne.w	locret_11B5E
 		move.b	#4,$25(a0)
-		move.w	#71,$30(a0)	; set fuse time
+
+		move.w	#BombFuseTime,$30(a0)	; set fuse time
+		tst.b	($FFFFFFA9).w
+		beq.s	@cont
+		move.w	#BombFuseTime_Boss,$30(a0)	; set fuse time
+@cont:
 		clr.w	$10(a0)
 		move.b	#2,$1C(a0)
 		bsr.w	SingleObjLoad2
@@ -26113,7 +26220,11 @@ Obj5F_MakeFuse:
 		neg.w	$12(a1)
 
 loc_11B54:
-		move.w	#71,$30(a1)	; set fuse time
+		move.w	#BombFuseTime,$30(a1)	; set fuse time
+		tst.b	($FFFFFFA9).w
+		beq.s	@cont
+		move.w	#BombFuseTime_Boss,$30(a1)	; set fuse time
+@cont:
 		move.l	a0,$3C(a1)
 		moveq	#-1,d1
 
@@ -26121,7 +26232,96 @@ locret_11B5E:
 		rts	
 ; ===========================================================================
 
+Obj5F_BossDefeated:
+		moveq	#0,d0
+		move.b	($FFFFFF76).w,d0
+		move.w	off_7118x(pc,d0.w),d0
+		jmp	off_7118x(pc,d0.w)
+; ===========================================================================
+off_7118x:	dc.w Obj5F_BossDefeatedmain-off_7118x
+		dc.w Obj5F_BossDefeatedboss1-off_7118x
+		dc.w Obj5F_BossDefeatedboss2-off_7118x
+		dc.w Obj5F_BossDefeatedend-off_7118x
+; ===========================================================================
+
+Obj5F_BossDefeatedmain:
+		addq.b	#2,($FFFFFF76).w
+		move.b	#$E0,d0
+		jsr	PlaySound_Special
+		move.w	#180,($FFFFFF78).w
+		move.w	#80,($FFFFFF7A).w
+		bra.w	locret_715Cx
+; ===========================================================================
+
+Obj5F_BossDefeatedboss1:
+		subq.w	#1,($FFFFFF78).w
+		bne.w	locret_715Cx
+		addq.b	#2,($FFFFFF76).w
+		bra.w	locret_715Cx
+; ===========================================================================
+
+Obj5F_BossDefeatedboss2:
+		addq.b	#2,($FFFFFF76).w
+	;	move.w	#$D7,d0
+	;	jsr	(PlaySound_Special).l ;	play exploding bomb sound
+		bsr	SingleObjLoad
+	;	move.b	#1,($FFFFFFA3).w
+		move.b	#$3F,0(a1)	; load explosion object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+		move.b	#1,$30(a1)
+		jsr	(RandomNumber).l
+		move.w	d0,d1
+		moveq	#0,d1
+		move.b	d0,d1
+		lsr.b	#2,d1
+		subi.w	#$20,d1
+		add.w	d1,8(a1)
+		lsr.w	#8,d0
+		lsr.b	#3,d0
+		add.w	d0,$C(a1)
+		bra.s	locret_715Cx
+; ===========================================================================
+
+Obj5F_BossDefeatedend:
+		cmpi.w	#10,($FFFFFF7A).w
+		ble.s	Obj5F_BossDefeatedend2
+
+		move.w	($FFFFFF7A).w,($FFFFFF78).w
+		subq.b	#4,($FFFFFF76).w
+		subi.w	#10,($FFFFFF7A).w
+		move.w	#25,($FFFFFF7C).w
+		bra.s	locret_715Cx
+
+Obj5F_BossDefeatedend2:
+		subq.w	#1,($FFFFFF7C).w
+		beq.s	@cont
+		move.w	#4,($FFFFFF78).w
+		subq.b	#4,($FFFFFF76).w
+		bra.s	locret_715Cx
+
+@cont:
+		move.w	#$1FBF,($FFFFF72A).w
+		move.w	#-1,($FFFFFF7C).w
+		move.b	#0,($FFFFF7CC).w
+		move.b	#$84,d0
+		jsr	PlaySound
+		jmp	DeleteObject
+; ===========================================================================
+
+locret_715Cx:
+		lea	(Ani_obj5F).l,a1
+		bsr.w	AnimateSprite
+		bsr.w	MarkObjGone
+		bsr.w	DisplaySprite
+		rts	
+
+
+; ===========================================================================
+
 Obj5F_Display:				; XREF: Obj5F_Index
+		cmpi.b	#-1,($FFFFFF7C).w
+		beq.w	DeleteObject
 		bsr	Obj5F_FaceSonic
 		bsr.s	loc_11B70
 		lea	(Ani_obj5F).l,a1
@@ -26136,12 +26336,25 @@ loc_11B70:
 		rts	
 ; ===========================================================================
 
+BombPellets = 7
+BombPellets_Boss = 13
+
 loc_11B7C:
+		tst.b	($FFFFFF75).w
+		bne.s	@conty
+		rts
+
+@conty:
 		clr.w	$30(a0)
 		clr.b	$24(a0)
 		move.w	$34(a0),$C(a0)
-		moveq	#7,d6			; bomb pellets
+		moveq	#BombPellets,d6			; bomb pellets
+		tst.b	($FFFFFFA9).w
+		beq.s	@cont
+		moveq	#BombPellets_Boss,d6		; bomb pellets
+@cont
 		movea.l	a0,a1
+		move.b	#10,($FFFFD4E8).w		; camera shaking
 		bra.s	Obj5F_MakeShrap
 ; ===========================================================================
 
@@ -26340,7 +26553,7 @@ loc_11DDC:
 
 Obj60_Animate:
 		lea	(Ani_obj60).l,a1
-		bsr	AnimateSprite
+		jsr	AnimateSprite
 		bra.w	Obj60_ChkDel
 ; ===========================================================================
 
@@ -28087,10 +28300,14 @@ Obj07_Display:
 		beq.s	@cont2
 
 @contx:
+		tst.b	($FFFFFF92).w
+		bne.s	Obj07_MoveOn
 		tst.b	($FFFFF7CC).w
 		bne.s	Obj07_MoveOn
 
+
 ; Check for off moving
+@conteaster:
 		cmpi.b	#8,$1A(a0)
 		bge.s	@cont
 		addq.b	#1,$1A(a0)
@@ -28386,6 +28603,8 @@ Obj01_PeeloutCancel:
 		cmpi.w	#$400,($FFFFFE10).w		; is level SYZ1?
 		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
 		cmpi.w	#$101,($FFFFFE10).w		; is level LZ2?
+		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
+		cmpi.w	#$301,($FFFFFE10).w		; is level SLZ2?
 		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
 		cmpi.w	#$501,($FFFFFE10).w		; is level SBZ2?
 		beq.s	Obj01_EndOfCutscenesX		; if yes, branch
@@ -43886,8 +44105,12 @@ Obj21_Delete2:
 		jmp	DeleteObject		; delete object
 
 Obj21_Display2:
+		tst.b	($FFFFFF92).w
+		bne.s	@cont2
 		tst.b	($FFFFF7CC).w
 		beq.s	@cont
+
+@cont2:
 		rts
 
 @cont:
@@ -43994,8 +44217,12 @@ Obj21_Cont:
 		move.b	d0,$1A(a0)
 
 Obj21_Display:
+		tst.b	($FFFFFF92).w
+		bne.s	@cont2
 		tst.b	($FFFFF7CC).w
 		beq.s	@cont
+
+@cont2:
 		rts
 
 @cont:
