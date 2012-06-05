@@ -4152,7 +4152,13 @@ loc_3946:
 		bsr	NemDec
 
 		move.b	#$07,($FFFFD380).w	; load cropped screen object
-		
+		move.w	#$00D4,($FFFFD388).w		; set X-position
+		move.w	#$00F8,($FFFFD38A).w		; set Y-position
+		move.b	#$07,($FFFFD3C0).w	; load cropped screen object
+		move.w	#$0174,($FFFFD3C8).w		; set X-position
+		move.w	#$00F8,($FFFFD3CA).w		; set Y-position
+
+
 		cmpi.w	#$400,($FFFFFE10).w
 		bne.s	@cont
 		move.b	#0,($FFFFFF7F).w
@@ -4950,7 +4956,9 @@ MainLevelArray:
 ; ---------------------------------------------------------------------------
 
 ClearEverySpecialFlag:
-		clr.b	($FFFFFF74).w
+		clr.l	($FFFFFF74).w
+		clr.l	($FFFFFF78).w
+		clr.l	($FFFFFF7C).w
 		clr.b	($FFFFFF7F).w
 		clr.b	($FFFFFFEB).w
 		clr.b	($FFFFFF91).w
@@ -5281,13 +5289,13 @@ SignpostArtLoad:			; XREF: Level
 		beq.s	Signpost_Exit
 		cmp.w	($FFFFF728).w,d1
 		beq.s	Signpost_Exit
-		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
-		beq.s	Signpost_Exit		; if yes, branch
 		cmpi.w	#$301,($FFFFFE10).w	; is level SLZ2?
 		beq.s	Signpost_Exit		; if yes, branch
-		move.w	d1,($FFFFF728).w ; move	left boundary to current screen	position
 		moveq	#$12,d0
 		bra.w	LoadPLC2	; load signpost	patterns
+		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
+		beq.s	Signpost_Exit		; if yes, branch
+		move.w	d1,($FFFFF728).w ; move	left boundary to current screen	position
 ; ===========================================================================
 
 Signpost_Exit:
@@ -6132,6 +6140,11 @@ End_ClrRam3:
 		move.w	#$601,($FFFFFE10).w ; set level	number to 0601 (no flowers)
 		move.b	#1,($FFFFF7CC).w
 		move.b	#$07,($FFFFD380).w	; load cropped screen object
+		move.w	#$00D4,($FFFFD388).w		; set X-position
+		move.w	#$00F8,($FFFFD38A).w		; set Y-position
+		move.b	#$07,($FFFFD3C0).w	; load cropped screen object
+		move.w	#$0174,($FFFFD3C8).w		; set X-position
+		move.w	#$00F8,($FFFFD3CA).w		; set Y-position
 
 End_LoadData:
 		move.b	#4,($FFFFF62A).w
@@ -10157,7 +10170,7 @@ Resize_SLZ2boss2:
 		move.b	#$5F,0(a1)
 		move.w	#$BD0,$8(a1)
 		move.w	#$04CC,$C(a1)
-		move.b	#30,($FFFFFF75).w
+		move.b	#20,($FFFFFF75).w	; set lives
 
 
 		addq.b	#2,($FFFFF742).w
@@ -12837,7 +12850,7 @@ Obj27_NoCamShake:
 		move.w	$C(a0),d0	; move Y position to d0
 	;	sub.w	#$100,d0	; sub it by $100
 		move.w	d0,$C(a1)	; load Y position to a1
-		addi.w	#10,($FFFFFE20).w ; add 10 of rings you have
+		addi.w	#20,($FFFFFE20).w ; add 10 of rings you have
 		move.b	#$80,($FFFFFE1D).w ; update ring counter
 		move.b	#1,($FFFFFFF6).w
 
@@ -14886,16 +14899,16 @@ loc_9D62:
 Obj37_ResetCounter:			; XREF: Obj37_Loop
 		tst.b	$30(a0)
 		bne.s	Obj37_Bounce
-		cmpi.w	#10,($FFFFFE20).w	; do you have 10 rings?
-		blt.s	LoseRings_Under10	; if less than 10, branch
-		sub.w	#10,($FFFFFE20).w 	; substract 10 of rings you have
+		cmpi.w	#20,($FFFFFE20).w	; do you have 20 rings?
+		blt.s	LoseRings_Under20	; if less than 20, branch
+		subi.w	#20,($FFFFFE20).w 	; substract 20 of rings you have
 		move.b	#$80,($FFFFFE1D).w 	; update ring counter	
 		cmpi.b	#100,($FFFFFE20)	; check rings you have now and compare it with 100
 		blt.s	LoseRings_PlaySound 	; if your amount is over or excactly 100, branch
 		clr.b	($FFFFFE1B).w		; if you losed rings, so you have under 100 now, clear a flag i don't really understand
 		bra.s	LoseRings_PlaySound	; skip LoseRings_Under10
 
-LoseRings_Under10:
+LoseRings_Under20:
 		move.w	#0,($FFFFFE20).w 	; reset number of rings to 0
 		move.b	#$80,($FFFFFE1D).w 	; update ring counter
 
@@ -15034,6 +15047,10 @@ Obj4B_Main:				; XREF: Obj4B_Index
 Obj4B_Main_Cont:
 		move.l	#Map_obj4B,4(a0)
 		move.w	#$2400,2(a0)
+		cmpi.w	#$400,($FFFFFE10).w
+		bne.s	@cont
+		move.w	#$2422,2(a0)
+@cont:
 		ori.b	#4,1(a0)
 		move.b	#$40,$19(a0)
 		tst.b	1(a0)
@@ -15098,7 +15115,13 @@ Obj4B_NoEnemy:
 
 Obj4B_Collect:				; XREF: Obj4B_Index
 		move.l	a0,-(sp)
-		move.l	#$4C400002,($C00004).l
+		move.l	#$4C400002,d0
+		cmpi.w	#$400,($FFFFFE10).w
+		bne.s	@cont
+		move.l	#$50800002,d0
+
+@cont
+		move.l	d0,($C00004).l
 		lea	(Art_RingFlash).l,a0
 		move.w	#2687,d1
 
@@ -15220,8 +15243,7 @@ Obj4B_ChkIntro:
 Obj4B_ChkGHZ:
 		cmpi.w	#$04A0,$8(a0)
 		bne.s	Obj4B_ChkSpecial
-	;	move.w	#$000,($FFFFFE10).w	; set level to GHZ1
-		move.w	#$301,($FFFFFE10).w
+		move.w	#$000,($FFFFFE10).w	; set level to GHZ1
 		bra.w	Obj4B_PlayLevel
 
 Obj4B_ChkSpecial:
@@ -15255,8 +15277,8 @@ Obj4B_ChkSpecial2:
 Obj4B_ChkSLZ2:
 		cmpi.w	#$0EA0,$8(a0)
 		bne.s	Obj4B_ChkFZ
-	;	move.w	#$301,($FFFFFE10).w	; set level to SLZ2
-		move.w	#$500,($FFFFFE10).w	; set level to SLZ2
+		move.w	#$301,($FFFFFE10).w	; set level to SLZ2
+	;	move.w	#$500,($FFFFFE10).w	; set level to SBZ1
 		bsr	MakeChapterScreen
 		bra.s	Obj4B_PlayLevel
 
@@ -15333,6 +15355,11 @@ MakeChapterScreen:
 		bmi.s	MCS_NotSpecial
 		cmp.b	($200001).l,d5
 		bgt.s	MCS_DoChapter
+		cmpi.w	#$301,($FFFFFE10).w
+		bne.s	@cont
+		move.w	#$500,($FFFFFE10).w
+		bra.s	MCS_NotSpecial
+@cont:
 		cmpi.w	#$300,($FFFFFE10).w
 		beq.s	MCS_Special
 		cmpi.w	#$302,($FFFFFE10).w
@@ -15378,6 +15405,10 @@ Obj7C_Main:				; XREF: Obj7C_Index
 		addq.b	#2,$24(a0)
 		move.l	#Map_obj7C,4(a0)
 		move.w	#$2462,2(a0)
+		cmpi.w	#$400,($FFFFFE10).w
+		bne.s	@cont
+		move.w	#$2484,2(a0)
+@cont:
 		ori.b	#4,1(a0)
 		move.b	#0,$18(a0)
 		move.b	#$20,$19(a0)
@@ -15905,24 +15936,6 @@ Obj2E_ChkRings:
 		beq.w	ExtraLife
 
 Obj2E_RingSound:
-		move.w	#$B5,d0
-		jsr	(PlaySound).l	; play ring sound
-		move.w	#$B5,d0
-		jsr	(PlaySound).l	; play ring sound
-		move.w	#$B5,d0
-		jsr	(PlaySound).l	; play ring sound
-		move.w	#$B5,d0
-		jsr	(PlaySound).l	; play ring sound
-		move.w	#$B5,d0
-		jsr	(PlaySound).l	; play ring sound
-		move.w	#$B5,d0
-		jsr	(PlaySound).l	; play ring sound
-		move.w	#$B5,d0
-		jsr	(PlaySound).l	; play ring sound
-		move.w	#$B5,d0
-		jsr	(PlaySound).l	; play ring sound
-		move.w	#$B5,d0
-		jsr	(PlaySound).l	; play ring sound
 		move.w	#$B5,d0
 		jmp	(PlaySound).l	; play ring sound
 ; ===========================================================================
@@ -19892,6 +19905,8 @@ ObjectFall_Sonic:
 		addi.w	#$38,$12(a0)		; increase vertical speed
 		cmpi.w	#$301,($FFFFFE10).w	; is level SLZ 2?
 		bne.s	OFS_NoA			; if not, branch
+		tst.b	($FFFFFF77).w		; is flag enabled?
+		beq.s	OFS_NoA			; if not, branch
 		btst	#6,($FFFFF602).w	; is A pressed?
 		beq.s	OFS_NoA			; if not, branch
 		subi.w	#$38*2,$12(a0)		; decrease vertical speed
@@ -26192,6 +26207,9 @@ Obj5F_MakeFuse:
 @contx:
 		cmp.w	d1,d0
 		bcc.w	locret_11B5E
+		
+		tst.w	($FFFFD030).w
+		bne.w	locret_11B5E
 
 		tst.w	($FFFFFE08).w
 		bne.w	locret_11B5E
@@ -26295,15 +26313,18 @@ Obj5F_BossDefeatedend:
 
 Obj5F_BossDefeatedend2:
 		subq.w	#1,($FFFFFF7C).w
-		beq.s	@cont
+		beq.s	Obj5F_BossDelete
 		move.w	#4,($FFFFFF78).w
 		subq.b	#4,($FFFFFF76).w
 		bra.s	locret_715Cx
+; ===========================================================================
 
-@cont:
+Obj5F_BossDelete:
 		move.w	#$1FBF,($FFFFF72A).w
+		move.w	#$620,($FFFFF726).w
 		move.w	#-1,($FFFFFF7C).w
 		move.b	#0,($FFFFF7CC).w
+		move.b	#1,($FFFFFF77).w
 		move.b	#$84,d0
 		jsr	PlaySound
 		jmp	DeleteObject
@@ -28278,20 +28299,7 @@ Obj07_SkipCheck:
 		move.l	#Map_Obj07,4(a0)	; load mappings
 		move.w	#o7art,2(a0)		; set art pointer, use palette line 1
 
-		move.w	#$00D4,$8(a0)		; set X-position
-		move.w	#$00F8,$A(a0)		; set Y-position
-
-		jsr	SingleObjLoad
-		move.b	#$07,(a1)
-		move.b	#4,$24(a1)
-		move.w	#$0174,$8(a1)		; set X-position
-		move.w	#$00F8,$A(a1)		; set Y-position
-		move.b	#1,$22(a1)
-		move.w	#o7art,2(a1)		; set art pointer, use palette line 1
-		move.l	#Map_Obj07,4(a1)	; load mappings
-
 		move.b	#1,$1A(a0)
-		move.b	#1,$1A(a1)
 
 Obj07_Display:
 		cmpi.w	#$400,($FFFFFE10).w
@@ -42997,9 +43005,9 @@ Obj09_Get1Up:
 
 Obj09_ChkEmer:
 		cmpi.b	#$3B,d4		; is the item an emerald?
-		bcs.s	Obj09_ChkGhost
+		bcs.w	Obj09_ChkGhost
 		cmpi.b	#$40,d4
-		bhi.s	Obj09_ChkGhost
+		bhi.w	Obj09_ChkGhost
 		bsr	SS_RemoveCollectedItem
 		move.l	a1,4(a2)
 		move.b	#5,(a2)
@@ -43018,6 +43026,11 @@ Emershit:
 	;	jsr	SingleObjLoad
 	;	move.b	#$07,(a1)
 		move.b	#$07,($FFFFD380).w	; load cropped screen object
+		move.w	#$00D4,($FFFFD388).w		; set X-position
+		move.w	#$00F8,($FFFFD38A).w		; set Y-position
+		move.b	#$07,($FFFFD3C0).w	; load cropped screen object
+		move.w	#$0174,($FFFFD3C8).w		; set X-position
+		move.w	#$00F8,($FFFFD3CA).w		; set Y-position
 		move.b	#1,($FFFFF7CC).w
 		move.l	a0,-(sp)
 		move.l	#$72E00003,($C00004).l
@@ -43928,6 +43941,10 @@ loc_1C518:
 		lsr.w	#2,d0
 		ori.w	#$4000,d0
 		swap	d0
+		cmpi.w	#$400,($FFFFFE10).w
+		bne.s	@cont
+		addi.l	#$04400000,d0
+@cont:
 		move.l	d0,4(a6)
 		move.w	#$D,d1
 		bra.w	LoadTiles
@@ -45694,13 +45711,13 @@ Level_MZ3bg:	;incbin	levels\mz3bg.bin
 byte_697E6:	dc.b 0,	0, 0, 0
 byte_697EA:	dc.b 0,	0, 0, 0
 
-Level_SLZ1:	incbin	levels\slz1.bin
+Level_SLZ1:;	incbin	levels\slz1.bin
 		even
 Level_SLZbg:	incbin	levels\slzbg.bin
 		even
 Level_SLZ2:	incbin	levels\slz2.bin
 		even
-Level_SLZ3:	incbin	levels\slz3.bin
+Level_SLZ3:;	incbin	levels\slz3.bin
 		even
 byte_69B84:	dc.b 0,	0, 0, 0
 
@@ -45815,11 +45832,11 @@ ObjPos_MZ2:;	incbin	objpos\mz2.bin
 		even
 ObjPos_MZ3:;	incbin	objpos\mz3.bin
 		even
-ObjPos_SLZ1:	incbin	objpos\slz1.bin
+ObjPos_SLZ1:;	incbin	objpos\slz1.bin
 		even
 ObjPos_SLZ2:	incbin	objpos\slz2.bin
 		even
-ObjPos_SLZ3:	incbin	objpos\slz3.bin
+ObjPos_SLZ3:;	incbin	objpos\slz3.bin
 		even
 ObjPos_SYZ1:	incbin	objpos\syz1.bin
 		even

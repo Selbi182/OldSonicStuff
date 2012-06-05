@@ -73,18 +73,19 @@ byte_CA7Axx	dc.b 6	;  STAR LIGHT | UNREAL
 		dc.b $F8, 5, 0, 0, $2C		; A
 		dc.b $F8, 5, 0, $26, $3C	; L
 
-byte_CAA8:	dc.b $B	;  SPRING YARD | SPRING YARD
-		dc.b $F8, 5, 0, $3E, $A4	; S
-		dc.b $F8, 5, 0, $36, $B4	; P
-		dc.b $F8, 5, 0, $3A, $C4	; R
-		dc.b $F8, 1, 0, $20, $D4	; I
-		dc.b $F8, 5, 0, $2E, $DC	; N
-		dc.b $F8, 5, 0, $18, $EC	; G
-		dc.b $F8, 0, 0, $56, $FC	; Space
-		dc.b $F8, 5, 0, $4A, $C		; Y
-		dc.b $F8, 5, 0, 0, $1C		; A
-		dc.b $F8, 5, 0, $3A, $2C	; R
-		dc.b $F8, 5, 0, $0C, $3C	; D
+byte_CAA8:	dc.b $C	;  SPRING YARD | SELECTOR HUB
+		dc.b $F8, 5, 0, $3E, $8C	; S
+		dc.b $F8, 5, 0, $10, $9C	; E
+		dc.b $F8, 5, 0, $26, $AC	; L
+		dc.b $F8, 5, 0, $10, $BC	; E
+		dc.b $F8, 5, 0, 8, $CC		; C
+		dc.b $F8, 5, 0, $42, $DC	; T
+		dc.b $F8, 5, 0, $32, $EC	; O
+		dc.b $F8, 5, 0, $3A, $FC	; R
+		dc.b $F8, 0, 0, $56, $C	; Space
+		dc.b $F8, 5, 0, $1C, $1C	; H
+		dc.b $F8, 5, 0, $46, $2C	; U
+		dc.b $F8, 5, 0, 4, $3C		; B
 
 byte_CADC:	dc.b $A	;  SCRAP BRAIN | GREEN HILL
 		dc.b $F8, 5, 0, $18, $B4	; G
@@ -115,8 +116,17 @@ byte_CB10:	dc.b 5			; ZONE
 		dc.b $F8, 5, 0, 8, $2		;C
 		dc.b $F8, 5, 0, $10, $12	;E
 
-byte_CA7AX:	dc.b $0	;  STAR LIGHT | STAR LIGHT
-		dc.b 0
+byte_CA7AX:	dc.b $A	;  STAR LIGHT | SCAR NIGHT
+		dc.b $F8, 5, 0, $3E, $B4	; S
+		dc.b $F8, 5, 0, 8, $C4		; C
+		dc.b $F8, 5, 0, 0, $D4		; A
+		dc.b $F8, 5, 0, $3A, $E4	; R
+		dc.b $F8, 0, 0, $56, $F4	; Space
+		dc.b $F8, 5, 0, $2E, $4	; N
+		dc.b $F8, 1, 0, $20, $14	; I
+		dc.b $F8, 5, 0, $18, $1C	; G
+		dc.b $F8, 5, 0, $1C, $2C	; H
+		dc.b $F8, 5, 0, $42, $3C	; T
 ; ---------------------------------------------------------------------------
 
 byte_CB26:	dc.b 2			; ACT 1

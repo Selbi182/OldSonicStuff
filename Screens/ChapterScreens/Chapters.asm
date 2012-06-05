@@ -251,7 +251,7 @@ CS_ChkChapter5:
 CS_ChkChapter6:
 		cmpi.b	#6,($FFFFFFA0).w	; is this chapter 6?
 		bne.s	CS_ChkChapter7		; if not, branch
-		move.w	#$301,($FFFFFE10).w	; set level to SLZ2
+		move.w	#$500,($FFFFFE10).w	; set level to SBZ1
 		bra.s 	CS_PlayLevel
 
 CS_ChkChapter7:

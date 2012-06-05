@@ -19,8 +19,7 @@
 		dc.w	$0080, $00A8	; MZ 4
 
 		dc.w	$0038, $02CE	; SLZ 1
-	;	dc.w	$0034, $014E	; SLZ 2
-		dc.w	$0944, $01CC	; SLZ 2
+		dc.w	$0034, $014E	; SLZ 2
 		dc.w	$004A, $014E	; SLZ 3
 		dc.w	$0080, $00A8	; SLZ 4
 
@@ -30,7 +29,7 @@
 		dc.w	$0080, $00A8	; SYZ 4
 
 		dc.w	$01A0, $0160	; SBZ 1
-		dc.w	$001A, $078C	; SBZ 2
+		dc.w	$0100, $07AC	; SBZ 2
 		dc.w	$0B86, $05AC	; FZ
 		dc.w	$0080, $00A8	; Null
 

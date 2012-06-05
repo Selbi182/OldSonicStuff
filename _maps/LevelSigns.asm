@@ -2,11 +2,11 @@
 ; Sprite mappings - output from SonMapEd - Sonic 1 format
 ; --------------------------------------------------------------------------------
 
-SME_qVf1i:	
-		dc.w SME_qVf1i_A-SME_qVf1i, SME_qVf1i_88-SME_qVf1i	
-		dc.w SME_qVf1i_106-SME_qVf1i, SME_qVf1i_18E-SME_qVf1i	
-		dc.w SME_qVf1i_1C1-SME_qVf1i	
-SME_qVf1i_A:	dc.b $19	
+SME_s8ED1:	
+		dc.w SME_s8ED1_A-SME_s8ED1, SME_s8ED1_88-SME_s8ED1	
+		dc.w SME_s8ED1_106-SME_s8ED1, SME_s8ED1_18E-SME_s8ED1	
+		dc.w SME_s8ED1_20C-SME_s8ED1	
+SME_s8ED1_A:	dc.b $19	
 		dc.b $E0, 2, 8, $7E, $54	
 		dc.b $F0, 0, 8, $81, $4D	
 		dc.b $F0, 0, 0, $81, $C8	
@@ -32,7 +32,7 @@ SME_qVf1i_A:	dc.b $19
 		dc.b $18, 1, 0, $83, $C8	
 		dc.b $F8, 3, 8, $82, $4D	
 		dc.b $18, 1, 8, $82, $4D	
-SME_qVf1i_88:	dc.b $19	
+SME_s8ED1_88:	dc.b $19	
 		dc.b $E0, 2, 8, $7E, $54	
 		dc.b $F0, 0, 8, $81, $4D	
 		dc.b $F0, 0, 0, $81, $C8	
@@ -58,7 +58,7 @@ SME_qVf1i_88:	dc.b $19
 		dc.b $E0, 2, 0, $89, $D0	
 		dc.b $E0, 1, 0, $86, $4C	
 		dc.b $E0, 2, 0, $86, $C8	
-SME_qVf1i_106:	dc.b $1B	
+SME_s8ED1_106:	dc.b $1B	
 		dc.b $F0, $C, 0, $78, $22	
 		dc.b $E8, $C, 0, $72, $22	
 		dc.b $F0, $C, 0, $4B, $CB	
@@ -86,18 +86,33 @@ SME_qVf1i_106:	dc.b $1B
 		dc.b $F0, 4, 0, $7C, $42	
 		dc.b $E0, 2, 0, $86, $4D	
 		dc.b $E0, 2, 0, $86, $C8	
-SME_qVf1i_18E:	dc.b $A	
+SME_s8ED1_18E:	dc.b $19	
+		dc.b $F0, $C, 0, $78, $24	
+		dc.b $E8, $C, 0, $72, $24	
 		dc.b $E0, 2, 8, $7E, $54	
-		dc.b $F0, 0, 8, $81, $4D	
-		dc.b $F0, 0, 0, $81, $C8	
 		dc.b $E0, 2, 0, $7E, $C0	
 		dc.b $F8, 3, 0, $82, $C8	
 		dc.b $18, 1, 0, $83, $C8	
 		dc.b $F8, 3, 8, $82, $4D	
 		dc.b $18, 1, 8, $82, $4D	
-		dc.b $E0, 6, 0, $86, $C8	
-		dc.b $E0, 6, 0, $86, $44	
-SME_qVf1i_1C1:	dc.b $17	
+		dc.b $E0, $C, 0, $6C, $24	
+		dc.b $E0, 4, 0, $70, $44	
+		dc.b $E8, 4, 0, $76, $44	
+		dc.b $F0, 4, 0, $7C, $44	
+		dc.b $E0, 2, 0, $86, $4D	
+		dc.b $E0, $C, 0, $A4, $C8	
+		dc.b $E0, $C, 0, $A8, $E8	
+		dc.b $E0, $C, 0, $AC, 8	
+		dc.b $E8, $C, 0, $98, $C8	
+		dc.b $E8, $C, 0, $9C, $E8	
+		dc.b $E8, $C, 0, $A0, 8	
+		dc.b $F0, $C, 0, $8C, $C8	
+		dc.b $F0, $C, 0, $90, $E8	
+		dc.b $F0, $C, 0, $94, 8	
+		dc.b $E0, 2, 0, $86, $C8	
+		dc.b $F0, 0, 8, $81, $4D	
+		dc.b $F0, 0, 0, $81, $C8	
+SME_s8ED1_20C:	dc.b $17	
 		dc.b $E0, 2, 8, $7E, $54	
 		dc.b $F0, 0, 8, $81, $4D	
 		dc.b $F0, 0, 0, $81, $C8	

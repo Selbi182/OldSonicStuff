@@ -1,9 +1,8 @@
 To-Do:
 - The Star Light Update:
-	- Find a concept and implement it (easier said than done). (Update: Concept (sorta) found!)
-	- Find a proper name for the stage, create the sign, write the new story text, and create the new chapter screen.
-	- Finish the new Eggman/Bomb cutscene.
+	- Finish post-boss-level (where the gravity thing is).
+	- Write the new story text.
+	- Create art for the machine in the Eggman/Bomb cutscene.
 	
 - Finish Tutorial Level by creating the info boxes (see Intro Script.txt).
-
 - Rewrite most of the embarrasing story texts and maybe redo its entire art to be more appealing. Also increase its speed.

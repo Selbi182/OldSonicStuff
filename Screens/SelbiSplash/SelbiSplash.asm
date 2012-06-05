@@ -56,6 +56,7 @@ SelbiSplash_PalLoop:
 		bra.s	SelbiSplash_PalLoop
 		
 SelbiSplash_Music:
+		move.w	#$0EEE,($FFFFFB88).w
 	;	move.w	#SelbiSplash_MusicID,d0		; Play music
 	;	jsr	PlaySound
 		
@@ -157,6 +158,7 @@ SelbiSplash_DontChangePal:
 		movem.l	d0-a6,-(sp)
 
 SelbiSplash_LoadPRESENTS:
+		move.w	#$0CEE,($FFFFFB88).w
 		lea	($FF0000).l,a1			; Load screen mappings
 		lea	(Map2_SelbiSplash).l,a0
 		move.w	#0,d0

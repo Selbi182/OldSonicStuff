@@ -1,8 +1,9 @@
 *Before the screen fades in there's just a black screen with the bottom box and no music:*
 	"Hello, and welcome to Sonic ERaZor, the craziest journey you will ever take with a blue hedgehog!
-	I know you want to dive right into the action and get yourself slain by {insert fitting definition here}, but before you do so, there are a few things you should know:
+	I know you want to dive right into the action and get yourself tortured by explosions everywhere, but before you do so, there are a few things you should know:
 	Sonic ERaZor is not based on simply finding a way through the level and going from A to B, but also involves unique and completely wicked challenges, most of them somehow related to explosions.
-	But more importantly, there are a few mechanics you should get yourself comfortable with before you actually need them!"
+	But more importantly, there are a few mechanics you should get yourself comfortable with before you actually need them!
+	If you feel like you already know everything you need to know, just jump the giant ring to your left to skip this tutorial!"
 
 *Screen fades in and a big tutorial level starts:*
 	Box 1 - The Controls:
