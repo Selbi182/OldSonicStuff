@@ -73,16 +73,11 @@ byte_CA7Axx	dc.b 6	;  STAR LIGHT | UNREAL
 		dc.b $F8, 5, 0, 0, $2C		; A
 		dc.b $F8, 5, 0, $26, $3C	; L
 
-byte_CAA8:	dc.b $C	;  SPRING YARD | SELECTOR HUB
-		dc.b $F8, 5, 0, $3E, $8C	; S
-		dc.b $F8, 5, 0, $10, $9C	; E
-		dc.b $F8, 5, 0, $26, $AC	; L
-		dc.b $F8, 5, 0, $10, $BC	; E
-		dc.b $F8, 5, 0, 8, $CC		; C
-		dc.b $F8, 5, 0, $42, $DC	; T
-		dc.b $F8, 5, 0, $32, $EC	; O
-		dc.b $F8, 5, 0, $3A, $FC	; R
-		dc.b $F8, 0, 0, $56, $C	; Space
+byte_CAA8:	dc.b 7	;  SPRING YARD | UBERHUB
+		dc.b $F8, 5, 0, $46, $DC	; U
+		dc.b $F8, 5, 0, 4, $EC		; B
+		dc.b $F8, 5, 0, $10, $FC	; E
+		dc.b $F8, 5, 0, $3A, $C	; R
 		dc.b $F8, 5, 0, $1C, $1C	; H
 		dc.b $F8, 5, 0, $46, $2C	; U
 		dc.b $F8, 5, 0, 4, $3C		; B

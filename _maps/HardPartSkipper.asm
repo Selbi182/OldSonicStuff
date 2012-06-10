@@ -2,23 +2,14 @@
 ; Sprite mappings - output from SonMapEd - Sonic 1 format
 ; --------------------------------------------------------------------------------
 
-SME_iFwZ5:	
-		dc.w SME_iFwZ5_2-SME_iFwZ5	
-SME_iFwZ5_2:	dc.b $10
-		dc.b $F0, 0, 0, $C, $F0	
-		dc.b $F0, 0, 0, $D, $F8	
-		dc.b $F0, 0, 0, $E, 0	
-		dc.b $F0, 0, 0, $F, 8	
-		dc.b $F8, 0, 0, 8, $F0	
-		dc.b $F8, 0, 0, 9, $F8	
-		dc.b $F8, 0, 0, $A, 0	
-		dc.b $F8, 0, 0, $B, 8	
-		dc.b 0, 0, 0, 4, $F0	
-		dc.b 0, 0, 0, 5, $F8	
-		dc.b 0, 0, 0, 6, 0	
-		dc.b 0, 0, 0, 7, 8	
-		dc.b 8, 0, 0, 0, $F0	
-		dc.b 8, 0, 0, 1, $F8	
-		dc.b 8, 0, 0, 2, 0	
-		dc.b 8, 0, 0, 3, 8	
+SME_CHx9l:	
+		dc.w SME_CHx9l_6-SME_CHx9l, SME_CHx9l_C-SME_CHx9l	
+		dc.w SME_CHx9l_12-SME_CHx9l	
+SME_CHx9l_6:	dc.b 1	
+		dc.b $F0, $F, 0, 0, $F0	
+SME_CHx9l_C:	dc.b 1	
+		dc.b $F0, $F, 0, $10, $F0	
+SME_CHx9l_12:	dc.b 2	
+		dc.b $F6, 5, 0, $20, $F8	
+		dc.b $F0, $F, 0, $10, $F0	
 		even

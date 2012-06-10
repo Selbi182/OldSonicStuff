@@ -943,7 +943,7 @@ OpText_EasterEgg_Locked:
 		even
 
 OpText_EasterEgg_Unlocked:
-		dc.b	'EPILEPTIC MODE       ', $FF
+		dc.b	'ATMOSPHERIC MODE     ', $FF
 		even
 
 OpText_DeleteSRAM:

@@ -1,8 +1,13 @@
 To-Do:
 - The Star Light Update:
-	- Finish post-boss-level (where the gravity thing is).
-	- Write the new story text.
+	- Finish post-boss area (where the gravity thing is).
 	- Create art for the machine in the Eggman/Bomb cutscene.
-	
-- Finish Tutorial Level by creating the info boxes (see Intro Script.txt).
-- Rewrite most of the embarrasing story texts and maybe redo its entire art to be more appealing. Also increase its speed.
+	- Get new songs for:
+		- Bomb Boss
+		- Post-boss area
+
+- Tutorial Level:
+	- Create the on-screen info boxes (see Intro Script.txt).
+	- Do a level clean-up.
+
+- (Re)write most of the embarrasing story texts and maybe redo its entire art to be more appealing. Also increase its speed.

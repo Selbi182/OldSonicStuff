@@ -83,7 +83,7 @@ PLC_GHZ:	dc.w $A
 		dc.w $8880
 		dc.l Nem_Chopper	; chopper enemy
 		dc.w $8F60
-		dc.l Nem_Newtron	; newtron enemy
+		dc.l Nem_HardPS		; hard part skipper
 		dc.w $9360
 		dc.l Nem_Motobug	; motobug enemy
 		dc.w $9E00
@@ -132,7 +132,7 @@ PLC_LZ:		dc.w $B
 		dc.w $7880
 		dc.l Nem_Harpoon	; harpoon
 		dc.w $7980
-		dc.l Nem_Burrobot	; burrobot enemy
+		dc.l Nem_HardPS		; hard part skipper
 		dc.w $94C0
 PLC_LZ2:	dc.w $B
 		dc.l Nem_LzPole		; pole that breaks
@@ -181,7 +181,7 @@ PLC_MZ:		dc.w 9
 		dc.w $8F60
 		dc.l Nem_Basaran	; basaran enemy
 		dc.w $9700
-		dc.l Nem_Cater		; caterkiller enemy
+		dc.l Nem_HardPS		; hard part skipper
 		dc.w $9FE0
 PLC_MZ2:	dc.w 4
 		dc.l Nem_MzSwitch	; switch
@@ -248,17 +248,21 @@ PLC_SYZ2:	dc.w 1
 PLC_SBZ:	dc.w 3
 		dc.l Nem_SBZ		; SBZ main patterns
 		dc.w 0
+		dc.l Nem_HardPS_Tut	; hard part skipper
+		dc.w $6E40
 		dc.l Nem_SbzDoor1	; door
 		dc.w $5D00
 		dc.l Nem_Bomb		; bomb enemy
 		dc.w $8000
 		dc.l Nem_Buzz		; buzz bomber enemy
 		dc.w $8880
-PLC_SBZ2:	dc.w 1
+PLC_SBZ2:	dc.w 2
 		dc.l Nem_Electric	; electric orb
 		dc.w $8FC0
 		dc.l Nem_Spikes		; spikes
 		dc.w $A360
+		dc.l Nem_FlamePipe	; flaming pipe
+		dc.w $7B20
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - title card
 ; ---------------------------------------------------------------------------
