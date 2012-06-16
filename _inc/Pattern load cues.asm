@@ -245,13 +245,13 @@ PLC_SYZ2:	dc.w 1
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Scrap Brain
 ; ---------------------------------------------------------------------------
-PLC_SBZ:	dc.w 3
+PLC_SBZ:	dc.w 4
 		dc.l Nem_SBZ		; SBZ main patterns
 		dc.w 0
 		dc.l Nem_HardPS_Tut	; hard part skipper
 		dc.w $6E40
 		dc.l Nem_SbzDoor1	; door
-		dc.w $5D00
+		dc.w $5500		; VLADIK => Fixed from $5D00
 		dc.l Nem_Bomb		; bomb enemy
 		dc.w $8000
 		dc.l Nem_Buzz		; buzz bomber enemy

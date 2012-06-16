@@ -16,6 +16,7 @@
 ;				#SSRG on BadnikNET
 
 ; Special Thanks to:		MainMemory
+;				vladikcomper
 
 ; ------------------------------------------------------
 
@@ -2385,7 +2386,12 @@ PalCycle_MZ:				; XREF: PalCycle
 PalCycle_SLZ:				; XREF: PalCycle
 		subq.w	#1,($FFFFF634).w
 		bpl.s	locret_1A80
-		move.w	#7,($FFFFF634).w
+		move.w	#6,($FFFFF634).w
+		cmpi.w	#$3D0,($FFFFF726).w	; is boss playing?
+		bne.s	@cont
+		move.w	#2,($FFFFF634).w
+
+@cont:
 		move.w	($FFFFF632).w,d0
 		addq.w	#1,d0
 		cmpi.w	#6,d0
@@ -7742,6 +7748,12 @@ Deform_SLZ:
 		move.w	($FFFFFE04).w,d2
 		ori.w	#1,d2
 		add.w	d2,d2
+		cmpi.w	#$3D0,($FFFFF726).w	; is boss playing?
+		bne.s	@cont
+		move.w	d2,d5
+		lsr.w	#1,d5
+		add.w	d5,d2
+@cont:
 		neg.w	d2
 		move.w	d2,d0
 		asr.w	#3,d0
@@ -10228,7 +10240,7 @@ Resize_SLZ2boss2:
 		move.b	#$5F,0(a1)
 		move.w	#$BD0,$8(a1)
 		move.w	#$048C,$C(a1)
-		move.b	#25,($FFFFFF75).w	; set lives
+		move.b	#20,($FFFFFF75).w	; set lives
 
 
 		addq.b	#2,($FFFFF742).w
@@ -12417,7 +12429,7 @@ Obj2A_Index:	dc.w Obj2A_Main-Obj2A_Index
 Obj2A_Main:				; XREF: Obj2A_Index
 		addq.b	#2,$24(a0)
 		move.l	#Map_obj2A,4(a0)
-		move.w	#$42E8,2(a0)
+		move.w	#$4000+($5500/$20),2(a0)	; VLADIK => Pointer fixed
 		ori.b	#4,1(a0)
 		move.b	#8,$19(a0)
 		move.b	#4,$18(a0)
@@ -19971,6 +19983,16 @@ ObjectFall_Sonic:
 		add.l	d0,d2
 		move.w	$12(a0),d0
 		addi.w	#$38,$12(a0)		; increase vertical speed
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	@cont
+		cmpi.w	#$1B00,($FFFFD008).w
+		bmi.s	OFS_NoA
+		btst	#6,($FFFFF602).w	; is A pressed?
+		beq.s	OFS_NoA			; if not, branch
+		subi.w	#$38*2,$12(a0)		; decrease vertical speed
+		bra.s	OFS_NoA
+
+@cont:
 		cmpi.w	#$301,($FFFFFE10).w	; is level SLZ 2?
 		bne.s	OFS_NoA			; if not, branch
 		tst.b	($FFFFFF77).w		; is flag enabled?
@@ -26035,7 +26057,7 @@ BombFuseTime = 71
 BombFuseTime_Boss = 41
 
 BombDistance = $40
-BombDistance_Boss = $60
+BombDistance_Boss = $50
 
 BombPellets = 7
 BombPellets_Boss = 13
@@ -26345,6 +26367,7 @@ Obj5F_BossDefeatedboss2:
 		lsr.w	#8,d0
 		lsr.b	#3,d0
 		add.w	d0,$C(a1)
+		subq.w	#8,$C(a1)
 		bra.s	locret_715Cx
 ; ===========================================================================
 
@@ -28172,13 +28195,10 @@ Map_Obj03:
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Object 06 - Hard Part Skipper
+; Object 06 - Hard Part Skipper and Info Boxes in the Tutorial Level
 ; ---------------------------------------------------------------------------
 
 Obj06:
-	;	tst.b	($FFFFFF92).w		; is hard part skipper disabled?
-	;	beq.w	DeleteObject		; if yes, delete object instantly
-
 		moveq	#0,d0			; clear d0
 		move.b	$24(a0),d0		; move routine counter to d0
 		move.w	Obj06_Index(pc,d0.w),d1 ; move the index to d1
@@ -28211,13 +28231,7 @@ Obj06_Setup:
 		move.w	#$0372,2(a0)		; set art pointer, use palette line 1
 
 Obj06_ArtLocFound:
-	;	subi.w	#$D,$C(a0)		; move it a little bit upwards
 		move.b	#0,$30(a0)
-	;	move.l	a0,-(sp)
-	;	move.l	#$74000003,($C00004).l	; set VRAM location
-	;	lea	(Nem_HardPS).l,a0	; set art location
-	;	jsr	NemDec			; load art from nemesis
-	;	move.l	(sp)+,a0
 		tst.b	$28(a0)
 		beq.s	Obj06_ChkDist
 		move.b	#4,$24(a0)
@@ -28225,22 +28239,6 @@ Obj06_ArtLocFound:
 		bra.w	Obj06_InfoBox
 
 Obj06_ChkDist:
-	;	cmpi.b	#2,($FFFFD1DC).w
-	;	bne.s	revertspindash
-	;	move.b	#1,$30(a0)
-	;	rts
-
-;revertspindash:
-	;	tst.b	$30(a0)
-	;	beq.s	contin
-	;	move.b	#0,$30(a0)
-	;	move.l	a0,-(sp)
-	;	move.l	#$74000003,($C00004).l	; set VRAM location
-	;	lea	(Nem_HardPS).l,a0	; set art location
-	;	jsr	NemDec			; load art from nemesis
-	;	move.l	(sp)+,a0
-
-;contin:
 		tst.w	($FFFFFFFA).w
 		beq.s	@cont
 		move.b	($FFFFF602).w,d0	; get button presses
@@ -28299,7 +28297,7 @@ Obj06_ChkDist:
 
 @contx:
 		jsr	WhiteFlash2		; make a white flash
-	;	jsr	FixLevel		; instantly move the camera
+		jsr	FixLevel		; instantly move the camera
 
 Obj06_Display:
 		bsr	DisplaySprite		; display sprite
@@ -28332,10 +28330,12 @@ Obj06_ChkA:
 		andi.b	#$40,d0			; is A pressed? (part 2)
 		beq.s	Obj06_Display		; if not, branch
 
-		move.w	#$D9,d0
-		jsr	(PlaySound).l		; play up/down sound
+		moveq	#$FFFFFFD9,d0		; VLADIK => Optimized (couldn't resist =D)
+		jsr	PlaySound		; play up/down sound
 
-		bra.s	Obj06_Display
+		jsr	DisplaySprite		; VLADIK => Make sure sprite is displayed
+		move.b	$28(a0),d0		; VLADIK => Load hint number based on subtype
+		jmp	Tutorial_DisplayHint	; VLADIK => Display hint
 
 Obj06_NoA:
 		move.b	#1,$1A(a0)		; don't show A button
@@ -28837,7 +28837,7 @@ S_D_TeleNoInhuman:
 		
 		cmpi.w	#$4E0,$C(a0)		; is Sonic above the Y-location $3E0?
 		bmi.s	S_D_NoTeleport		; if yes, branch
-		cmpi.w	#20,($FFFFFE20).w	; do you have at least 20 rings?
+		cmpi.w	#10,($FFFFFE20).w	; do you have at least 10 rings?
 		bge.s	S_D_20Rings		; if yes, branch
 		clr.w	($FFFFFE10).w		; clear rings
 		ori.b	#$81,($FFFFFE1D).w	; update ring counter
@@ -28846,10 +28846,10 @@ S_D_TeleNoInhuman:
 ; ===========================================================================
 
 S_D_20Rings:
-		subi.w	#20,($FFFFFE20).w	; substract 20 rings
+		subi.w	#10,($FFFFFE20).w	; substract 10 rings
 		move.b	#$80,($FFFFFE1D).w	; update ring counter
 		move.b	#$1C,$1C(a0)		; make Sonic invisible
-		move.w	#$129E,8(a0)		; set new location for Sonic's X-pos
+		move.w	#$12A0,8(a0)		; set new location for Sonic's X-pos
 		move.w	#$21A,$C(a0)		; set new location for Sonic's Y-pos
 		clr.w	$10(a0)			; clear X-speed
 		clr.w	$12(a0)			; clear Y-speed
@@ -29980,6 +29980,7 @@ FixLevel:
 		jsr	LoadTilesFromStart	; make sure the correct tiles are being used
 		movem.l	(sp)+,d0-a6		; restore them
 		rts
+
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 
@@ -48598,6 +48599,8 @@ SegaPCM:	incbin	sound\segapcm.bin
 		include "Screens/OptionsScreen/OptionsScreen.asm"
 		include "Screens/InfoScreen/InfoScreen.asm"
 		include	"Screens/CreditsScreen/Credits.asm"
+		include	"Screens/TutorialBox/TutorialBox.asm"
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 
 ; ===========================================================================

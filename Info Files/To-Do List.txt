@@ -7,7 +7,10 @@ To-Do:
 		- Post-boss area
 
 - Tutorial Level:
-	- Create the on-screen info boxes (see Intro Script.txt).
+	- On-Screen Info Boxes:
+		- Make the first window appear automatically.
+		- Maybe get a completely new font.
 	- Do a level clean-up.
+	- Make the springs in the trial-and-error section not interferencing with each other.
 
 - (Re)write most of the embarrasing story texts and maybe redo its entire art to be more appealing. Also increase its speed.
