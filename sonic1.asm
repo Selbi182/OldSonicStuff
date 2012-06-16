@@ -9471,11 +9471,11 @@ LoadTilesFromStart2:			; CODE XREF: ROM:00003096?p
  
 loc_71FC:				; CODE XREF: LoadTilesFromStart2+22?j
 		movem.l	d4-d6,-(sp)
-		moveq	#0,d5
+		moveq	#-$10,d5				; moving up a tad
 		move.w	d4,d1
 		bsr	Calc_VRAM_Pos
 		move.w	d1,d4
-		moveq	#0,d5
+		moveq	#-$10,d5				; moving up a tad
 		moveq	#$1F,d6
 		bsr	DrawTiles_LR2
 		movem.l	(sp)+,d4-d6
@@ -29975,7 +29975,6 @@ FixLevel:
 		move.w	($FFFFD00C).w,d0	; load Sonic's Y-location into d0
 		subi.w	#112,d0			; substract 112 pixels from it (half of 224, vertical screen size)
 		move.w	d0,($FFFFF704).w	; put result into Y-camera location
-
 		movem.l	d0-a6,-(sp)		; backup all data and address registers
 		jsr	DeformBgLayer		; fix the background position
 		jsr	LoadTilesFromStart	; make sure the correct tiles are being used
