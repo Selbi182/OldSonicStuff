@@ -93,7 +93,7 @@ StartOfRom:
 
 Console:	dc.b 'SEGA MEGA DRIVE ' ; Hardware system ID
 
-Date:		dc.b '(C)SELBI 2010   ' ; Release date
+Date:		dc.b '(C)SELBI 2012   ' ; Release date
 Title_Local:	dc.b 'Sonic ERaZor                                    ' ; Domestic name
 Title_Int:	dc.b 'Sonic ERaZor                                    ' ; International name
 Serial:		dc.b 'SP 18201337-00' 	; Serial/version number
@@ -254,6 +254,7 @@ GameClrRAM:
 		move.b	$5(a1),($FFFFFF92).w
 		bpl.s	@cont2
 		clr.b	($FFFFFF92).w
+		andi.b	#1,($FFFFFF92).w
 
 @cont2:
 		move.b	$7(a1),($FFFFFF9C).w
@@ -264,11 +265,13 @@ GameClrRAM:
 		move.b	$9(a1),($FFFFFF93).w
 		bpl.s	@cont4
 		clr.b	($FFFFFF93).w
+		andi.b	#1,($FFFFFF93).w
 
 @cont4:
 		move.b	$B(a1),($FFFFFF94).w
 		bpl.s	@cont5
 		clr.b	($FFFFFF94).w
+		andi.b	#1,($FFFFFF94).w
 
 @cont5:
 		movep.w	$D(a1),d0
@@ -4110,6 +4113,26 @@ Level_WaterPal:
 		
 ; ---------------------------------
 Level_GetBgm:
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	Level_NoPreTut
+		move.b	#$99,d0
+		jsr	PlaySound_Special
+
+		moveq	#$E,d0		; use FZ pallet
+		bsr	PalLoad2	; load pallet (based on	d0)
+		move.w	#$0000,($FFFFFB40).w
+
+		move.b	#1,d0		; VLADIK => Load hint number
+		jsr	Tutorial_DisplayHint	; VLADIK => Display hint
+		
+		moveq	#0,d1
+		lea	($FFFFFB20).w,a1
+		move.w	#$17,d2
+	@clearpalafter:
+		move.l	d1,(a1)+
+		dbf	d2,@clearpalafter
+
+Level_NoPreTut:
 		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
 		beq.s	Level_NoMusic		; if yes, don't play music
 		bsr	PlayLevelMusic		; play level music
@@ -20784,6 +20807,23 @@ Obj41_Up:				; XREF: Obj41_Index
 		bset	#7,2(a0)		; otherwise make object high plane
 
 Obj41_NoHigh:
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	@cont
+		lea	($FFFFD000).w,a1
+		move.w	$8(a1),d0		; get Sonic's X-pos
+		sub.w	$8(a0),d0		; substract the X-pos from the current object from it
+		addi.w	#$10,d0			; add $10 to it
+		cmpi.w	#$20,d0			; is Sonic within $10 pixels of that object?
+		bhi.s	Obj41_Up_Return		; if not, branch
+		move.w	$C(a1),d0		; get Sonic's X-pos
+		sub.w	$C(a0),d0		; substract the X-pos from the current object from it
+		addi.w	#$1C,d0			; add $10 to it
+		cmpi.w	#$38,d0			; is Sonic within $10 pixels of that object?
+		bhi.s	Obj41_Up_Return		; if not, branch
+		jsr	sub_FC2C
+		bra.s	Obj41_BounceUp
+
+@cont:
 		move.w	#$1B,d1
 		move.w	#8,d2
 		move.w	#$10,d3
@@ -20791,6 +20831,8 @@ Obj41_NoHigh:
 		bsr	SolidObject
 		tst.b	$25(a0)		; is Sonic on top of the spring?
 		bne.s	Obj41_BounceUp	; if yes, branch
+
+Obj41_Up_Return:
 		rts	
 ; ===========================================================================
 
@@ -28297,7 +28339,7 @@ Obj06_ChkDist:
 
 @contx:
 		jsr	WhiteFlash2		; make a white flash
-		jsr	FixLevel		; instantly move the camera
+	;	jsr	FixLevel		; instantly move the camera
 
 Obj06_Display:
 		bsr	DisplaySprite		; display sprite
@@ -29822,6 +29864,8 @@ loc_13336:
 		cmpi.b	#4,($FFFFFE10).w ; is zone SYZ?
 		beq.s	BT_TopBoundary	; if yes, branch
 		cmpi.w	#$301,($FFFFFE10).w
+		beq.s	BT_TopBoundary
+		cmpi.w	#$501,($FFFFFE10).w
 		beq.s	BT_TopBoundary
 		cmpi.b	#1,($FFFFFE10).w ; is zone LZ?
 		bne.s	BT_Return	; if not, branch

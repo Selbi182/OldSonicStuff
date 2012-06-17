@@ -165,6 +165,7 @@ DH_MainLoop:
 	moveq	#$7F,d7
 	jsr	loc_D368
 	jsr	BuildSprites
+	jsr	PalCycle_Load
 
 	; Check if it's over
 	tst.b	_DH_WindowObj	; object window dead?
@@ -179,6 +180,10 @@ DH_Quit:
 	jsr	DelayProgram
 	movem.l	(sp)+,a5-a6
 	addq.w	#4,sp				; return controls to the game
+	cmp.b	#$99,($FFFFFFDE).w
+	bne.s	@cont
+	subq.w	#4,sp
+@cont:
 	jmp	ObjectsLoad			; reload objects
 
 ; ---------------------------------------------------------------
@@ -216,23 +221,47 @@ DH_DrawChar:
 	cmpi.b	#'.',d0
 	bne.s	@NoDot
 	move.b	#$26+$36,d0
-
 @NoDot:
+	cmpi.b	#':',d0
+	bne.s	@NoYDot
+	move.b	#$26+$36,d0
+	lea	Art_DH_FontY,a1
+@NoYDot:
 	cmpi.b	#',',d0
 	bne.s	@NoComma
 	move.b	#$27+$36,d0
-
 @NoComma:
+	cmpi.b	#';',d0
+	bne.s	@NoYComma
+	move.b	#$27+$36,d0
+	lea	Art_DH_FontY,a1
+@NoYComma:
 	cmpi.b	#'!',d0
 	bne.s	@NoExclemation
 	move.b	#$A+$36,d0
-
 @NoExclemation:
+	cmpi.b	#'1',d0
+	bne.s	@NoYExclemation
+	move.b	#$A+$36,d0
+	lea	Art_DH_FontY,a1
+@NoYExclemation:
 	cmpi.b	#'-',d0
 	bne.s	@NoHyphen
-	move.b	#$28+$36,d0
-
+	move.b	#$25+$36,d0
 @NoHyphen:
+	cmpi.b	#'_',d0
+	bne.s	@NoYHyphen
+	lea	Art_DH_FontY,a1
+	move.b	#$25+$36,d0
+@NoYHyphen:
+	cmpi.b	#'a',d0
+	blt.s	@NoYellow
+	cmpi.b	#'z',d0
+	bgt.s	@NoYellow
+	lea	Art_DH_FontY,a1
+	subi.b	#$20,d0
+@NoYellow:
+
 	subi.b	#$36,d0
 	lsl.w	#5,d0			; d0 = Char*$20
 	lea	(a1,d0.w),a1		; load this char's art 
@@ -506,6 +535,9 @@ Art_DH_WindowBorder:
 Art_DH_Font:
 	incbin	'Screens\TutorialBox\TutorialBox_Font.bin'
 
+Art_DH_FontY:
+	incbin	'Screens\TutorialBox\TutorialBox_FontYellow.bin'
+
 ; ===============================================================
 ; ---------------------------------------------------------------
 ; Hints Pointer List
@@ -521,6 +553,7 @@ Hints_List:
 	dc.l	Hint_7
 	dc.l	Hint_8
 	dc.l	Hint_9
+	dc.l	Hint_Pre
 
 ; ---------------------------------------------------------------
 ; Hints Scripts
@@ -535,10 +568,37 @@ _cls	= $FE	; clear window
 _end	= $FF	; finish hint
 
 ;		 --------------------
+Hint_Pre:
+	dc.b	'   WELCOME TO THE   ',_br
+	dc.b	'   tutorial place   ',_br
+	dc.b	_br,_delay,30
+	dc.b	'MONITORS LIKE THESE ',_br
+	dc.b	'ARE SPREAD AROUNND  ',_br
+	dc.b	'THIS LEVEL AND WILL ',_br
+	dc.b	'TELL YOU A LOT OF   ',_br
+	dc.b	'USEFUL INFORMATION! ',_br
+	dc.b	_pause,_cls
+
+	dc.b	'HOWEVER, IF YOU DO  ',_br
+	dc.b	'THINK YOU ALREADY   ',_br
+	dc.b	'KNOW EVERYTHING YOU ',_br
+	dc.b	'NEED TO KNOW, JUST  ',_br
+	dc.b	'JUMP INTO THE RING  ',_br
+	dc.b	'TO YOUR LEFT AND    ',_br
+	dc.b	'ENTER THE INSANITY  ',_br
+	dc.b	'RIGHT AWAY!         ',_br
+	dc.b	_pause,_cls
+
+	dc.b	'OTHERWISE, GO TO THE',_br
+	dc.b	'RIGHT AND BEGIN THE ',_br
+	dc.b	'TUTORIAL!           ',_br
+	dc.b	_pause,_end
+
+;		 --------------------
 Hint_1:
 	dc.b	'HELLO AND WELCOME TO',_br
 	dc.b	                    '',_br
-	dc.b	'    SONIC ERAZOR    ',_br
+	dc.b	'    sonic erazor    ',_br
 	dc.b	                    '',_delay,10,_br
 	dc.b	'THE CRAZIEST JOURNEY',_br
 	dc.b	'YOU WILL EVER TAKE  ',_br
@@ -559,7 +619,7 @@ Hint_1:
 	dc.b	'FEW THINGS YOU      ',_br
 	dc.b	'SHOULD GET YOURSELF ',_br
 	dc.b	'COMFORTABLE WITH    ',_br
-	dc.b	'FIRST.              ',_br
+	dc.b	'FIRST!              ',_br
 	dc.b	_pause,_cls
 
 	dc.b	'FIRST OFF, THIS GAME',_br
@@ -580,29 +640,19 @@ Hint_1:
 
 	dc.b	'BECAUSE TEARS OF    ',_br
 	dc.b	'FRUSTRATION SHOULD  ',_br
-	dc.b	'BE KEPT AT A        ',_br
-	dc.b	'MINIMUM, THIS LEVEL ',_br
-	dc.b	'WILL TEACH YOU THE  ',_br
-	dc.b	'BASICS FOR SOME OF  ',_br
-	dc.b	'THE CHALLANGES YOU  ',_br
-	dc.b	'WILL FACE.          ',_br
+	dc.b	'BE KEPT AT A MINIMUM',_br
+	dc.b	'THE FOLLOWING LEVEL ',_br
+	dc.b	'WILL TEACH YOU SOME ',_br
+	dc.b	'OF THE BASICS YOU   ',_br
+	dc.b	'WILL NEED TO KNOW   ',_br
+	dc.b	'LATER IN THE GAME.  ',_br
 	dc.b	_pause,_cls
 
-	dc.b	'IF YOU FEEL LIKE YOU',_br
-	dc.b	'ALREADY ARE GOOD TO ',_br
-	dc.b	'GO WITHOUT THIS     ',_br
-	dc.b	'TUTORIAL THOUGH,    ',_br
-	dc.b	'JUST JUMP INTO THE  ',_br
-	dc.b	'RING TO YOUR LEFT   ',_br
-	dc.b	'AND UNLEASH THE     ',_br
-	dc.b	'ULTIMATE INSANITY!  ',_br
-	dc.b	_pause,_cls
-	
-	dc.b	'     OTHERWISE,     ',_br
-	dc.b	                    '',_delay,10,_br
-	dc.b	                    '',_br
-	dc.b	                    '',_br
-	dc.b	'   LET US BEGIN !   ',_br
+	dc.b	_br,_br
+	dc.b	'   ALRIGHT THEN,    ',_br
+	dc.b	_delay,10,_br
+	dc.b	_br
+	dc.b	'   let us begin1    ',_br
 	dc.b	_pause,_end
 
 ;		 --------------------
@@ -616,7 +666,7 @@ Hint_2:
 	dc.b	_pause,_cls
 
 	dc.b	'YOU CAN ONLY JUMP   ',_br
-	dc.b	'WITH B AND C, AS A  ',_br
+	dc.b	'WITH b AND c, AS a  ',_br
 	dc.b	'IS REQUIRED FOR SOME',_br
 	dc.b	'MISCELLANEOUS       ',_br
 	dc.b	'ABILITIES, I WILL   ',_br
@@ -624,82 +674,84 @@ Hint_2:
 	dc.b	_pause,_cls
 
 	dc.b	'ON THE GROUND YOU   ',_br
-	dc.b	'CAN PERFORM BOTH A  ',_br
-	dc.b	'SPIN DASH BY        ',_br
-	dc.b	'PRESSING DOWN AND B ',_br
-	dc.b	'OR C.               ',_br
+	dc.b	'CAN PERFORM A SPIN  ',_br
+	dc.b	'DASH BY PRESSING    ',_br
+	dc.b	'down AND b OR c.    ',_br
 	dc.b	_pause,_cls
 	
-	dc.b	'THE SAME RULES APPLY',_br
+	dc.b	'SIMILAR RULES APPLY ',_br
 	dc.b	'TO THE SUPER PEEL   ',_br
 	dc.b	'OUT, WHICH CAN BE   ',_br
 	dc.b	'BE PERFORMED BY     ',_br
-	dc.b	'PRESSING UP AND B OR',_br
-	dc.b	'C.                  ',_br
+	dc.b	'PRESSING up AND b OR',_br
+	dc.b	'c.                  ',_br
 	dc.b	_pause,_cls
 
-	dc.b	'WHILE JUMPING YOU CAN',_br
-	dc.b	'DASH FORWARD AND     ',_br
-	dc.b	'PERFORM A HOMING     ',_br
+	dc.b	'WHILE JUMPING YOU   ',_br
+	dc.b	'CAN DASH FORWARD AND',_br
+	dc.b	'PERFORM A HOMING    ',_br
 	dc.b	'ATTACK BY PRESSING  ',_br
-	dc.b	'THE C BUTTON.       ',_br
+	dc.b	'THE c BUTTON.       ',_br
 	dc.b	_pause,_cls
 
 	dc.b	'BUT MORE IMPORTANT  ',_br
 	dc.b	'THAN FORWARD DASHING',_br
 	dc.b	'IS DOUBLE JUMPING,  ',_br
 	dc.b	'WHICH CAN BE USED BY',_br
-	dc.b	'PRESSING C AND UP   ',_br
+	dc.b	'PRESSING c AND up   ',_br
 	dc.b	'WHILE IN AIR OR     ',_br
 	dc.b	'SIMPLY BY PRESSING  ',_br
-	dc.b	'THE B BUTTON.       ',_br
+	dc.b	'THE b BUTTON.       ',_br
 	dc.b	_pause,_cls
 	
 	dc.b	'YOU MAY ALSO DASH   ',_br
 	dc.b	'DOWNWARDS BY HOLDING',_br
-	dc.b	'THE DOWN BUTTON     ',_br
-	dc.b	'WHILE JUMPING WITH  ',_br
-	dc.b	'THE B OR C BUTTONS. ',_br
+	dc.b	'THE down BUTTON     ',_br
+	dc.b	'WHILE PRESSING THE  ',_br
+	dc.b	'b OR c BUTTON.      ',_br
 	dc.b	_pause,_cls
 	
-	dc.b	_br,_br
-	dc.b	'EXPERIMENT WITH     ',_br
-	dc.b	'THESE ABILITIES TO  ',_br
-	dc.b	'REACH THE NEXT ROOM!',_br
+	dc.b	_br
+	dc.b	' go ahead and       ',_br
+	dc.b	' experiment with    ',_br
+	dc.b	' these abilities to ',_br
+	dc.b	' get to the next    ',_br
+	dc.b	' room1              ',_br
 	dc.b	_pause,_end
 
 ;		 --------------------
 Hint_3:
 	dc.b	'DESTROYING THIS     ',_br
 	dc.b	'MONITOR MAKES SONIC ',_br
-	dc.b	'ENTER THE SO-CALLED ',_br,_br
-	dc.b	'    INHUMAN MODE    ',_br
+	dc.b	'ENTER THE SO-CALLED ',_br
+	dc.b	_br
+	dc.b	'    inhuman mode    ',_br
 	dc.b	_pause,_cls
 
 	dc.b	'IT WILL MAKE YOU    ',_br
 	dc.b	'TOTALLY INVINCIBLE, ',_br
 	dc.b	'EVEN FROM BOTTOMLESS',_br
 	dc.b	'PITS AND BEING      ',_br
-	dc.b	'CRUSHED!            ',_br
+	dc.b	'CRUSHED TO DEATH!   ',_br
 	dc.b	_pause,_cls
 
 	dc.b	'ADDITIONALLY, BY    ',_br
-	dc.b	'PRESSING A YOU CAN  ',_br
+	dc.b	'PRESSING a YOU CAN  ',_br
 	dc.b	'SHOOT A SMALL BULLET',_br
 	dc.b	'WHICH, IF YOU TOUCH ',_br
 	dc.b	'IT, WILL PROPEL YOU ',_br
 	dc.b	'IN THE AIR. YOU CAN ',_br
 	dc.b	'CHANGE THE DIRECTION',_br
-	dc.b	'WITH YOUR D-PAD.    ',_br
+	dc.b	'WITH YOUR d_pad.    ',_br
 	dc.b	_pause,_cls
 
 	dc.b	_br
-	dc.b	'HAVE A LITTLE FLY   ',_br
-	dc.b	'AROUND AND FIND     ',_br
-	dc.b	'ANOTHER S-MONITOR   ',_br
-	dc.b	'IN THE UPPER PART OF',_br
-	dc.b	'THIS ROOM TO        ',_br
-	dc.b	'CONTINUE!           ',_br
+	dc.b	' have a little fly  ',_br
+	dc.b	' around and find    ',_br
+	dc.b	' another s_monitor  ',_br
+	dc.b	' in the upper part  ',_br
+	dc.b	' of this room to    ',_br
+	dc.b	' continue1          ',_br
 	dc.b	_pause,_end
 
 ;		 --------------------
@@ -720,7 +772,7 @@ Hint_4:
 	dc.b	'RINGS OVER TIME AND ',_br
 	dc.b	'VERY FAST WHEN YOU  ',_br
 	dc.b	'ARE STANDING ON THE ',_br
-	dc.b	'GROUND UNTIL YOU    ',_br
+	dc.b	'GROUND, UNTIL YOU   ',_br
 	dc.b	'REACH ZERO AND DIE! ',_br
 	dc.b	_pause,_cls
 
@@ -731,14 +783,21 @@ Hint_4:
 	dc.b	'PLACES.             ',_br
 	dc.b	_pause,_cls
 
-	dc.b	'GET THROUGH THAT    ',_br
-	dc.b	'NARROW SPOT TO      ',_br
-	dc.b	'CONTINUE! NORMALLY  ',_br
-	dc.b	'YOU WOULD NEED TO   ',_br
-	dc.b	'HURRY UP BEFORE YOUR',_br
-	dc.b	'RINGS RUN OUT, BUT  ',_br
-	dc.b	'WE WILL CUT THAT OUT',_br
-	dc.b	'FOR NOW.            ',_br
+	dc.b	_br,_br
+	dc.b	' get through that   ',_br
+	dc.b	' narrow spot to     ',_br
+	dc.b	' get to the next    ',_br
+	dc.b	' room and continue1 ',_br
+	dc.b	_pause,_cls
+
+	dc.b	' normally you would ',_br
+	dc.b	' need to hurry up   ',_br
+	dc.b	' before your rings  ',_br
+	dc.b	' run out; but for   ',_br
+	dc.b	' the sake of this   ',_br
+	dc.b	' tutorial; we will  ',_br
+	dc.b	' cut that out for   ',_br
+	dc.b	' now:               ',_br
 	dc.b	_pause,_end
 
 ;		 --------------------
@@ -757,14 +816,14 @@ Hint_5:
 Hint_6:
 	dc.b	'THIS DEVICE IS A    ',_br
 	dc.b	'SO-CALLED           ',_br,_br
-	dc.b	' HARD PART SKIPPER  ',_br
+	dc.b	' hard part skipper1 ',_br
 	dc.b	_pause,_cls
 
 	dc.b	'IF A CHALLENGE IS   ',_br
-	dc.b	'WAY TOO HARD FOR    ',_br
+	dc.b	'SIMPLY TOO HARD FOR ',_br
 	dc.b	'YOU, BUT YOU DO NOT ',_br
-	dc.b	'WANT TO USE CHEAT   ',_br
-	dc.b	'CODES, YOU CAN USE  ',_br
+	dc.b	'WANT TO USE CHEATS, ',_br
+	dc.b	'YOU CAN ALWAYS USE  ',_br
 	dc.b	'THIS DEVICE INSTEAD!',_br
 	dc.b	_pause,_cls
 
@@ -772,23 +831,23 @@ Hint_6:
 	dc.b	'YOUR DECISION, JUST ',_br
 	dc.b	'POSITION YOURSELF IN',_br
 	dc.b	'FRONT OF ONE AND    ',_br
-	dc.b	'PRESS THE A, B, AND ',_br
-	dc.b	'C BUTTONS AT THE    ',_br
+	dc.b	'PRESS THE a, b, AND ',_br
+	dc.b	'c BUTTONS AT THE    ',_br
 	dc.b	'SAME TIME.          ',_br
 	dc.b	_pause,_cls
 
 	dc.b	'KEEP IN MIND THAT   ',_br
 	dc.b	'YOU WILL LOSE ALL OF',_br
 	dc.b	'YOUR RINGS, SHIELDS,',_br
-	dc.b	'OR INVINCIBILIES IN ',_br
+	dc.b	'AND INVINCIBILIES IN',_br
 	dc.b	'THE PROCESS!        ',_br
 	dc.b	_pause,_cls
 
 	dc.b	_br
 	dc.b	_br
-	dc.b	' COME ON, TRY IT ON ',_br
-	dc.b	' THIS IMPOSSIBLE    ',_br
-	dc.b	' SPIKED TUBE!       ',_br
+	dc.b	' come on; try it on ',_br
+	dc.b	' this ridiculously  ',_br
+	dc.b	' spiked tube1       ',_br
 	dc.b	_pause,_end
 
 ;		 --------------------
@@ -797,9 +856,7 @@ Hint_7:
 	dc.b	'SOME CHALLENGES     ',_br
 	dc.b	'SIMPLY CANNOT BE    ',_br
 	dc.b	'COMPLETED WITHOUT   ',_br
-	dc.b	'TRIAL AND ERROR AND ',_br
-	dc.b	'TAKING ANY RISKS IN ',_br
-	dc.b	'ORDER TO SUCCEED.   ',_br
+	dc.b	'TRIAL AND ERROR.    ',_br
 	dc.b	_pause,_cls
 
 	dc.b	'DO NOT WORRY THOUGH,',_br
@@ -812,9 +869,9 @@ Hint_7:
 
 	dc.b	_br
 	dc.b	_br
-	dc.b	' FIND A WAY THROUGH ',_br
-	dc.b	' THIS ROOM TO       ',_br
-	dc.b	' CONTINUE!          ',_br
+	dc.b	' find a way through ',_br
+	dc.b	' this room to       ',_br
+	dc.b	' continue1          ',_br
 	dc.b	_pause,_end
 
 ;		 --------------------
@@ -828,41 +885,45 @@ Hint_8:
 	dc.b	_pause,_cls
 
 	dc.b	'THIS CAN BE DONE BY ',_br
-	dc.b	'HOLDING DOWN THE A  ',_br
-	dc.b	'BUTTON WHILE BEING  ',_br
+	dc.b	'HOLDING DOWN THE    ',_br
+	dc.b	'a BUTTON WHILE BEING',_br
 	dc.b	'IN AIR.             ',_br
 	dc.b	_pause,_cls
 
 	dc.b	_br
 	dc.b	_br
-	dc.b	'FLY UPWARDS TO FIND ',_br
-	dc.b	'THE LAST MONITOR AND',_br
-	dc.b	'FINALLY FINISH THIS ',_br
-	dc.b	'TUTORIAL!           ',_br
+	dc.b	' fly around to get  ',_br
+	dc.b	' to the final       ',_br
+	dc.b	' monitor and finish ',_br
+	dc.b	' this tutorial1     ',_br
 	dc.b	_pause,_end
 
 ;		 --------------------
 Hint_9:
 	dc.b	'AND THAT CONCLUDES  ',_br
-	dc.b	'THE TUTORIAL. YOU   ',_br
-	dc.b	'SHOULD NOW BE ABLE  ',_br
+	dc.b	'THIS TUTORIAL!      ',_br
+	dc.b	_delay,20,_br
+	dc.b	'YOU SHOULD BE ABLE  ',_br
 	dc.b	'TO FIGURE OUT THE   ',_br
 	dc.b	'REST ON YOUR OWN.   ',_br
 	dc.b	_pause,_cls
 
 	dc.b	'NOW GO OUT THERE AND',_br
-	dc.b	'HAVE FUN WITH THIS  ',_br
-	dc.b	'GAME, SONIC ERAZOR! ',_br
+	dc.b	'HAVE FUN WITH       ',_br
+	dc.b	_br
+	dc.b	'    sonic erazor    ',_br
 	dc.b	_br,_delay,30
 	dc.b	'I HOPE YOU WILL HAVE',_br
 	dc.b	'AS MUCH FUN AS I HAD',_br
 	dc.b	'CREATING IT!        ',_br
 	dc.b	_pause,_cls
 
-	dc.b	_br,_br
-	dc.b	'  CREATED BY SELBI  ',_br
-	dc.b	_br,_br,_delay,60
+	dc.b	'      BY selbi      ',_br
+	dc.b	_br,_delay,60
 	dc.b	'  THEY CALL ME THE  ',_br
 	dc.b	'    MICHAEL  BAY    ',_br
-	dc.b	'   OF SONIC GAMES   ',_br
+	dc.b	'   OF SONIC GAMES.  ',_br
+	dc.b	_br,_delay,120
+	dc.b	' AND VERY SOON YOU  ',_br
+	dc.b	' WILL ALSO SEE WHY. ',_br
 	dc.b	_pause,_end

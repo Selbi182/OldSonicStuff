@@ -280,6 +280,7 @@ Options_Check4:
 		cmpi.w	#4,d0		; have you selected item 4 (EXTENDED CAMERA)?
 		bne.s	Options_Not7	; if not, check for next numbers
 		bchg	#0,($FFFFFF93).w	; enable/disable extended camera
+		andi.b	#1,($FFFFFF93).w
 		bsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
@@ -288,6 +289,7 @@ Options_Not7:
 		cmpi.w	#7,d0		; have you selected item 7 (SONIC ART)?
 		bne.s	Options_Not10	; if not, check for next numbers
 		bchg	#0,($FFFFFF94).w	; change art style flag
+		andi.b	#1,($FFFFFF94).w
 		bsr	OptionsTextLoad
 		bra.w	OptionsScreen_MainLoop
 ; ===========================================================================
@@ -308,6 +310,7 @@ Opt10_YesEaster:
 		move.b	#0,($A130F1).l			; disable SRAM
 
 		bchg	#0,($FFFFFF92).w	; enable/disable hard part skipper
+		andi.b	#1,($FFFFFF92).w
 		tst.b	($FFFFFF92).w
 		bne.s	@contx
 
