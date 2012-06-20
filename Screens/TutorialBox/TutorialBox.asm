@@ -359,13 +359,49 @@ _DelayVal_Sh	= 1
 	bra.w	@LoadRow
 
 ; ---------------------------------------------------------------
+@InstantWrite:
+	move	#$2700,sr		; we *must* disable interrupts
+	movea.l	char_pos(a0),a2		; load last position in text
+
+@InstantWrite_Loop:
+	moveq	#0,d0
+	move.b	(a2)+,d0		; get a char
+	beq.s	@Call_LoadNextRow	; --
+	bmi.s	@InstantWrite_Flags	; --
+	cmpi.b	#' ',d0			; --
+	beq.s	@FF			; --
+	move.l	vram_pos(a0),(a6)	; setup VDP access
+	bsr	DH_DrawChar		; draw da char
+@FF	addi.w	#4*$20,vram_pos(a0)	; set pointer for next char (+4 tiles)
+	bra.s	@InstantWrite_Loop
+
+@InstantWrite_Flags:
+	cmpi.b	#$FC,d0
+	beq.s	@InstantWrite_SkipDelay	; if flag = '_delay', branch
+	cmpi.b	#$FD,d0
+	bne.s	@InstantWrite_Loop	; if flag != '_pause', ignore
+	subq.w	#1,a2			; position of '_pause' flag
+	move.l	a2,char_pos(a0)		; remember position
+	rts				; finish loop
+	
+@InstantWrite_SkipDelay:
+	addq.w	#1,a2			; skip delay value
+	bra.s	@InstantWrite_Loop
+
+@Call_LoadNextRow:
+	pea	@InstantWrite_Loop
+	bra.w	@LoadNextRow
+
+; ---------------------------------------------------------------
 @ProcessChar:
+	tst.b	Joypad|Press		; START pressed?
+	bmi.s	@InstantWrite
 	subq.w	#1,delay(a0)		; decrease delay counter
 	bne.w	@Return			; if time remains, branch
 
 	move.w	#_DelayVal,delay(a0)	; restore delay
 	move.b	Joypad|Held,d0
-	andi.b	#A+B+C+Start,d0		; A/B/C/Start held?
+	andi.b	#A+B+C,d0		; A/B/C held?
 	beq.s	@Retry			; if not, branch
 	move.w	#_DelayVal_Sh,delay(a0)	; restore short delay
 
@@ -569,33 +605,6 @@ _end	= $FF	; finish hint
 
 ;		 --------------------
 Hint_Pre:
-	dc.b	'   WELCOME TO THE   ',_br
-	dc.b	'   tutorial place   ',_br
-	dc.b	_br,_delay,30
-	dc.b	'MONITORS LIKE THESE ',_br
-	dc.b	'ARE SPREAD AROUNND  ',_br
-	dc.b	'THIS LEVEL AND WILL ',_br
-	dc.b	'TELL YOU A LOT OF   ',_br
-	dc.b	'USEFUL INFORMATION! ',_br
-	dc.b	_pause,_cls
-
-	dc.b	'HOWEVER, IF YOU DO  ',_br
-	dc.b	'THINK YOU ALREADY   ',_br
-	dc.b	'KNOW EVERYTHING YOU ',_br
-	dc.b	'NEED TO KNOW, JUST  ',_br
-	dc.b	'JUMP INTO THE RING  ',_br
-	dc.b	'TO YOUR LEFT AND    ',_br
-	dc.b	'ENTER THE INSANITY  ',_br
-	dc.b	'RIGHT AWAY!         ',_br
-	dc.b	_pause,_cls
-
-	dc.b	'OTHERWISE, GO TO THE',_br
-	dc.b	'RIGHT AND BEGIN THE ',_br
-	dc.b	'TUTORIAL!           ',_br
-	dc.b	_pause,_end
-
-;		 --------------------
-Hint_1:
 	dc.b	'HELLO AND WELCOME TO',_br
 	dc.b	                    '',_br
 	dc.b	'    sonic erazor    ',_br
@@ -653,6 +662,39 @@ Hint_1:
 	dc.b	_delay,10,_br
 	dc.b	_br
 	dc.b	'   let us begin1    ',_br
+	dc.b	_pause,_end
+
+;		 --------------------
+Hint_1:
+	dc.b	_br,_br
+	dc.b	'   WELCOME TO THE   ',_br
+	dc.b	_br
+	dc.b	'  tutorial  place1  ',_br
+	dc.b	_pause,_cls
+	
+	dc.b	'MONITORS LIKE THESE ',_br
+	dc.b	'ARE SPREAD AROUNND  ',_br
+	dc.b	'THIS LEVEL AND WILL ',_br
+	dc.b	'TELL YOU A LOT OF   ',_br
+	dc.b	'USEFUL INFORMATION, ',_br
+	dc.b	'SO BE SURE TO KEEP  ',_br
+	dc.b	'AN EYE OPEN FOR     ',_br
+	dc.b	'THEM!               ',_br
+	dc.b	_pause,_cls
+
+	dc.b	'HOWEVER, IF YOU FEEL',_br
+	dc.b	'LIKE YOU ALREADY    ',_br
+	dc.b	'KNOW EVERYTHING YOU ',_br
+	dc.b	'NEED TO KNOW, JUST  ',_br
+	dc.b	'JUMP INTO THE RING  ',_br
+	dc.b	'TO YOUR LEFT AND    ',_br
+	dc.b	'ENTER THE INSANITY  ',_br
+	dc.b	'RIGHT AWAY!         ',_br
+	dc.b	_pause,_cls
+
+	dc.b	'OTHERWISE, GO TO THE',_br
+	dc.b	'RIGHT AND BEGIN THE ',_br
+	dc.b	'TUTORIAL!           ',_br
 	dc.b	_pause,_end
 
 ;		 --------------------
@@ -906,6 +948,14 @@ Hint_9:
 	dc.b	'YOU SHOULD BE ABLE  ',_br
 	dc.b	'TO FIGURE OUT THE   ',_br
 	dc.b	'REST ON YOUR OWN.   ',_br
+	dc.b	_pause,_cls
+
+	dc.b	'JUST ONE WORD OF    ',_br
+	dc.b	'ADVICE, YOU CAN     ',_br
+	dc.b	'ALWAYS GO BACK TO   ',_br
+	dc.b	'THE OVERWORLD BY    ',_br
+	dc.b	'PRESSING a WHILE    ',_br
+	dc.b	'THE GAME IS PAUSED. ',_br
 	dc.b	_pause,_cls
 
 	dc.b	'NOW GO OUT THERE AND',_br

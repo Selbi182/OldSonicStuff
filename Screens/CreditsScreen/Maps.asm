@@ -60,6 +60,22 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
+	dc.b	$0D						; Number of lines
+	dc.b	"                    ",$FF
+	dc.b	"   AND ADDITIONAL   ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"   PROGRAMMING BY   ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"    VLADIKCOMPER    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+
 
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
@@ -86,7 +102,7 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"        SOTI        ",$FF
+	dc.b	"      SPANNER       ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
@@ -95,14 +111,14 @@ StartText:
 
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	"    MUSIC CREATED   ",$FF
+	dc.b	"  SOUND DRIVER AND  ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"         BY         ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
+	dc.b	"      MUSIC BY      ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"  EDUARDO KNUCKLES  ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"      EDUARDO       ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
@@ -134,23 +150,6 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"     MAINMEMORY     ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-
-
-	dc.b	$0D						; Number of lines
-	dc.b	"                    ",$FF
-	dc.b	" SPECIAL THANKS TO  ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"    VLADIKCOMPER    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF

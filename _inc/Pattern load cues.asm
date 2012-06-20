@@ -424,13 +424,15 @@ PLC_TryAgain:	dc.w 2
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Eggman on SBZ 2
 ; ---------------------------------------------------------------------------
-PLC_EggmanSBZ2:	dc.w 2
+PLC_EggmanSBZ2:	dc.w 3
 		dc.l Nem_Sbz2Eggman	; Eggman
 		dc.w $8000
 		dc.l Nem_LzSwitch	; switch
 		dc.w $9400
 		dc.l Nem_BombOld	; bomb enemy
 		dc.w $A660
+		dc.l Nem_BombMach	; bomb machine
+		dc.w $5600
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - final boss
 ; ---------------------------------------------------------------------------

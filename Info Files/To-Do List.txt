@@ -1,7 +1,9 @@
 To-Do:
 - The Star Light Update:
 	- Finish post-boss area (where the gravity thing is).
-	- Create art for the machine in the Eggman/Bomb cutscene.
+	- Fix graphical problems with the Eggman/Bomb cutscene machine:
+		- Fix palette rotation issues. I disabled it for now. (I can't simply disable it altogether, since the conveyor belts use it as well). 
+		- Animate the machine (I will need Markey for that once again).
 	- Get new songs for:
 		- Bomb Boss
 		- Post-boss area

@@ -124,30 +124,46 @@ byte_CA7AX:	dc.b $A	;  STAR LIGHT | SCAR NIGHT
 		dc.b $F8, 5, 0, $42, $3C	; T
 ; ---------------------------------------------------------------------------
 
-byte_CB26:	dc.b 2			; ACT 1
+byte_CB26:	dc.b 4			; ACT 1
 		dc.b 4,	$C, 0, $53, $EC
 		dc.b $F4, 2, 0,	$57, $C
-byte_CB31:	dc.b 2			; ACT 2
+		dc.b $F4, 6, 0, $66, $14	
+		dc.b $F4, 6, 0, $9B, $23
+byte_CB31:	dc.b 4			; ACT 2
 		dc.b 4,	$C, 0, $53, $EC
 		dc.b $F4, 6, 0,	$5A, 8
-byte_CB3C:	dc.b 2			; ACT 3
+		dc.b $F4, 6, 0, $66, $14	
+		dc.b $F4, 6, 0, $9B, $23
+byte_CB3C:	dc.b 4			; ACT 3
 		dc.b 4,	$C, 0, $53, $EC
 		dc.b $F4, 6, 0,	$60, 8
-byte_CB31X:	dc.b 2			; ACT 4
+		dc.b $F4, 6, 0, $66, $14	
+		dc.b $F4, 6, 0, $9B, $23
+byte_CB31X:	dc.b 4			; ACT 4
 		dc.b 4, $C, 0, $53, $EC	
-		dc.b $F4, $A, 0, $80, 6	
-byte_CB3CX:	dc.b 2			; ACT 5
+		dc.b $F4, $A, 0, $80, 6
+		dc.b $F4, 6, 0, $66, $14	
+		dc.b $F4, 6, 0, $9B, $23
+byte_CB3CX:	dc.b 4			; ACT 5
 		dc.b 4, $C, 0, $53, $EC	
-		dc.b $F4, 6, 0, $89, 7	
-byte_CB3CXX:	dc.b 2			; ACT 6
+		dc.b $F4, 6, 0, $89, 7
+		dc.b $F4, 6, 0, $66, $14	
+		dc.b $F4, 6, 0, $9B, $23
+byte_CB3CXX:	dc.b 4			; ACT 6
 		dc.b 4, $C, 0, $53, $EC	
-		dc.b $F4, 6, 0, $8F, 7	
-byte_CB3CXXX:	dc.b 2			; ACT 7
+		dc.b $F4, 6, 0, $8F, 7
+		dc.b $F4, 6, 0, $66, $14	
+		dc.b $F4, 6, 0, $9B, $23
+byte_CB3CXXX:	dc.b 4			; ACT 7
 		dc.b 4,	$C, 0, $53, $EC
-		dc.b $F4, 6, 0, $95, 7	
-byte_CB3CXXXX:	dc.b 2			; ACT 8
+		dc.b $F4, 6, 0, $95, 7
+		dc.b $F4, 6, 0, $66, $14	
+		dc.b $F4, 6, 0, $9B, $23
+byte_CB3CXXXX:	dc.b 4			; ACT 8
 		dc.b 4,	$C, 0, $53, $EC
-		dc.b $F4, 6, 0, $9B, 7	
+		dc.b $F4, 6, 0, $9B, 7
+		dc.b $F4, 6, 0, $66, $14	
+		dc.b $F4, 6, 0, $9B, $23
 byte_CB47:	dc.b $D			; Oval
 		dc.b $E4, $C, 0, $70, $F4
 		dc.b $E4, 2, 0,	$74, $14

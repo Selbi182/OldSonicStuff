@@ -217,9 +217,19 @@ CS_Loop:
 ; ---------------------------------------------------------------------------
 
 CS_EndLoop:
-		tst.b	($FFFFFFA0).w
-		beq.s	CS_PlayLevel
+	;	tst.b	($FFFFFFA0).w
+	;	beq.s	CS_PlayLevel
 
+		tst.b	($FFFFFFA0).w
+		bne.s	@cont
+		cmpi.w	#$30,($FFFFF614).w
+		bmi.w	CS_PlayLevel
+		move.b	#$95,d0
+		jsr	PlaySound
+		move.w	#$001,($FFFFFE10).w
+		bra.w	CS_PlayLevel
+
+@cont:
 		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
 		tst.b	($FFFFFF7D).w
 		beq.s	CS_PlayLevel

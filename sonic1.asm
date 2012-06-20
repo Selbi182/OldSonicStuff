@@ -244,8 +244,17 @@ GameClrRAM:
 		move.b	#1,($A130F1).l		; enable SRAM
 		lea	($200000).l,a1		; base of SRAM
 		cmpi.b	#$B6,$1B(a1)		; does SRAM exist?
-		bne.s	NoSRAM			; if not, branch
+		beq.s	SRAMFound		; if yes, branch
+		
+		moveq	#$00,d0
+		move.b	#3,d1
+@ForceSRAMToZero:
+		movep.l	d0,1(a1)
+		adda.w	#8,a1
+		dbf	d1,@ForceSRAMToZero
+		bra.w	NoSRAM
 
+SRAMFound:
 		move.b	$3(a1),($FFFFFFBC).w
 		bpl.s	@cont1
 		clr.b	($FFFFFFBC).w
@@ -2513,6 +2522,10 @@ loc_1B52:
 		move.w	d0,($FFFFF632).w
 		add.w	d0,d0
 		lea	($FFFFFB58).w,a1
+
+		cmpi.w	#$500,($FFFFFE10).w	; is this the cutscene?
+		beq.s	locret_1B64		; if yes, branch
+
 		move.l	(a0,d0.w),(a1)+
 		move.w	4(a0,d0.w),(a1)
 
@@ -4122,7 +4135,7 @@ Level_GetBgm:
 		bsr	PalLoad2	; load pallet (based on	d0)
 		move.w	#$0000,($FFFFFB40).w
 
-		move.b	#1,d0		; VLADIK => Load hint number
+		move.b	#10,d0		; VLADIK => Load hint number
 		jsr	Tutorial_DisplayHint	; VLADIK => Display hint
 		
 		moveq	#0,d1
@@ -4227,7 +4240,7 @@ loc_3946:
 		bne.s	@SBZcont2
 		lea	($FFFFD440).w,a1
 		move.b	#$5F,(a1)	; load walking bomb enemy
-		move.w	#$01D0,$8(a1)
+		move.w	#$01E4,$8(a1)
 		move.w	#$0150,$C(a1)
 
 		jsr	SingleObjLoad
@@ -9506,11 +9519,17 @@ LoadTilesFromStart2:			; CODE XREF: ROM:00003096?p
  
 loc_71FC:				; CODE XREF: LoadTilesFromStart2+22?j
 		movem.l	d4-d6,-(sp)
-		moveq	#-$10,d5				; moving up a tad
+		moveq	#0,d6
+		cmpi.b	#4,($FFFFF600).w ; is this the title screen?
+		beq.s	@cont
+		moveq	#-$10,d6
+
+@cont:
+		move.l	d6,d5				; moving up a tad
 		move.w	d4,d1
 		bsr	Calc_VRAM_Pos
 		move.w	d1,d4
-		moveq	#-$10,d5				; moving up a tad
+		move.l	d6,d5				; moving up a tad
 		moveq	#$1F,d6
 		bsr	DrawTiles_LR2
 		movem.l	(sp)+,d4-d6
@@ -15248,7 +15267,7 @@ Obj4B_NoCapsule:
 
 @cont:
 		move.b	#1,($FFFFFFB9).w
-		move.b	#60,($FFFFFFBA).w
+	;	move.b	#60,($FFFFFFBA).w
 		clr.w	($FFFFF73A).w
 		jsr	WhiteFlash4		; make white flash
 		clr.w	($FFFFFE20).w	; clear rings
@@ -15406,8 +15425,27 @@ Obj4B_SYZ_Return:
 Obj4B_ChkGHZ2:
 		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
 		bne.s	Obj4B_SetSS		; if not, branch
-		subq.b	#1,($FFFFFFBA).w
-		bpl.s	Obj4B_Return
+	;	subq.b	#1,($FFFFFFBA).w
+	;	bpl.s	Obj4B_Return
+
+		tst.b	($FFFFFF7D).w
+		bne.s	@cont2
+		addi.w	#$10,$12(a0)
+		move.b	#2,$38(a0)
+		cmpi.w	#$340,$12(a0)
+		bne.s	@cont
+		move.b	#1,($FFFFFF7D).w
+		bra	@cont
+@cont2:
+		subi.w	#$50,$12(a0)
+		move.b	#0,$38(a0)
+@cont:
+		jsr	SpeedToPos
+
+		tst.b	1(a0)
+		bmi.w	Obj4B_Return
+		
+		clr.b	($FFFFFF7D).w
 		clr.b	($FFFFFFB8).w
 		clr.b	($FFFFFFB7).w
 		clr.b	($FFFFFFB6).w
@@ -18983,12 +19021,45 @@ Obj39_ResetLvl:				; XREF: Obj39_ChgMode
 
 Obj39_Display:				; XREF: Obj39_ChgMode
 		bra.w	DisplaySprite
+
+; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Object 3A - Blank
+; Object 3A - Bomb Machine in Eggman Cutscene
 ; ---------------------------------------------------------------------------
 
 Obj3A:					; XREF: Obj_Index
-		rts
+		moveq	#0,d0
+		move.b	$24(a0),d0
+		move.w	Obj3A_Index(pc,d0.w),d1
+		jmp	Obj3A_Index(pc,d1.w)
+; ===========================================================================
+Obj3A_Index:	dc.w Obj3A_Main-Obj3A_Index
+		dc.w Obj3A_Action-Obj3A_Index
+; ===========================================================================
+
+Obj3A_Main:				; XREF: Obj6D_Index
+		addq.b	#2,$24(a0)
+		move.l	#Map_BombMachine,4(a0)
+		move.w	#$42B0,2(a0)
+		ori.b	#4,1(a0)
+
+Obj3A_Action:				; XREF: Obj6D_Index
+	;	movea.l	$30(a0),a2
+	;	cmpi.b	#6,$25(a2)
+	;	beq.s	@cont
+	;	move.b	#$18,$1A(a0)
+	;	bra.w	DisplaySprite
+
+; @cont:
+	;	lea	(Ani_obj3A).l,a1
+	;	bsr	AnimateSprite
+		bra.w	DisplaySprite
+
+; ---------------------------------------------------------------------------
+; Sprite mappings - Bomb Machine
+; ---------------------------------------------------------------------------
+Map_BombMachine:
+		include	"_maps\BombMachine.asm"
 ; ===========================================================================
 
 ; ---------------------------------------------------------------------------
@@ -20009,7 +20080,9 @@ ObjectFall_Sonic:
 		cmpi.w	#$501,($FFFFFE10).w
 		bne.s	@cont
 		cmpi.w	#$1B00,($FFFFD008).w
-		bmi.s	OFS_NoA
+		bcs.s	OFS_NoA
+		cmpi.w	#$2100,($FFFFD008).w
+		bcc.s	OFS_NoA
 		btst	#6,($FFFFF602).w	; is A pressed?
 		beq.s	OFS_NoA			; if not, branch
 		subi.w	#$38*2,$12(a0)		; decrease vertical speed
@@ -26141,6 +26214,7 @@ Obj5F_Main:				; XREF: Obj5F_Index
 		bne.s	@cont
 		move.b	#8,$24(a0)
 		move.w	#$533,2(a0)
+		move.l	#Map_obj5F_Cutscene,4(a0)
 		move.b	#$CD,d0
 		jsr	PlaySound_Special
 		bra.w	Obj5F_SBZ1
@@ -26564,6 +26638,8 @@ Ani_obj5F:
 Map_obj5F:
 	include "_maps\obj5F.asm"
 
+Map_obj5F_Cutscene:
+	include "_maps\obj5F_cutscene.asm"
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 60 - Orbinaut enemy (LZ, SLZ, SBZ)
@@ -39692,16 +39768,22 @@ Obj82_Main:				; XREF: Obj82_Index
 		moveq	#$1E,d0
 		jsr	LoadPLC		; load SBZ2 Eggman patterns
 
-		jsr	SingleObjLoad
-		move.b	#$6D,(a1)
-		move.w	#$01CC,$8(a1)
-		move.w	#$0164,$C(a1)
-		move.l	a0,$30(a1)
+	;	jsr	SingleObjLoad
+	;	move.b	#$6D,(a1)
+	;	move.w	#$01CC,$8(a1)
+	;	move.w	#$0164,$C(a1)
+	;	move.l	a0,$30(a1)
 		
+	;	jsr	SingleObjLoad
+	;	move.b	#$6D,(a1)
+	;	move.w	#$01CC,$8(a1)
+	;	move.w	#$0174,$C(a1)
+	;	move.l	a0,$30(a1)
+
 		jsr	SingleObjLoad
-		move.b	#$6D,(a1)
-		move.w	#$01CC,$8(a1)
-		move.w	#$0174,$C(a1)
+		move.b	#$3A,(a1)
+		move.w	#$01B4,$8(a1)
+		move.w	#$0128,$C(a1)
 		move.l	a0,$30(a1)
 
 	;	move.w	#$502,($FFFFFE10).w
@@ -39830,11 +39912,13 @@ Obj82_FindBlocks:
 		move.b	#$C3,d0
 		jsr	PlaySound
 
-		move.l	a0,-(sp)
-		move.l	#$66600002,($C00004).l
-		lea	(Nem_Bomb).l,a0
-		jsr	NemDec
-		move.l	(sp)+,a0
+	;	move.l	a0,-(sp)
+	;	move.l	#$66600002,($C00004).l
+	;	lea	(Nem_Bomb).l,a0
+	;	jsr	NemDec
+	;	move.l	(sp)+,a0
+	
+		move.b	#1,($FFFFD45A).w	; use second frame
 
 		addq.b	#2,$25(a0)
 		move.b	#1,$1C(a0)
@@ -43138,17 +43222,21 @@ Obj09_ChkRing:
 		move.l	a1,4(a2)
 
 Obj09_GetCont:
-		jsr	CollectRing
+		move.b	#0,($FF244A).l
+		move.b	#0,($FF24CA).l
+		move.b	#0,($FF254A).l
+		move.b	#0,($FF25CA).l
+	;	jsr	CollectRing
 		; check for SS1
 	;	bne.s	Obj09_NotSS1
 	;	move.b	#2,$3A(a0)	; mark ghost blocks as "solid"
 
-Obj09_NotSS1:
-		cmpi.w	#50,($FFFFFE20).w ; check if you have 50 rings
-		bcs.s	Obj09_NoCont
-		bset	#0,($FFFFFE1B).w
-		bne.s	Obj09_NoCont
-		addq.b	#1,($FFFFFE18).w ; add 1 to number of continues
+;Obj09_NotSS1:
+	;	cmpi.w	#50,($FFFFFE20).w ; check if you have 50 rings
+	;	bcs.s	Obj09_NoCont
+	;	bset	#0,($FFFFFE1B).w
+	;	bne.s	Obj09_NoCont
+	;	addq.b	#1,($FFFFFE18).w ; add 1 to number of continues
 	;	move.w	#$BF,d0
 	;	jsr	(PlaySound).l	; play extra continue sound
 
@@ -43231,7 +43319,7 @@ Obj09_ChkGhost:
 		jsr	(PlaySound_Special).l	; play it
 
 		bsr	SS_RemoveCollectedItem	; prepare removing code
-		bne.s	Obj09_CG_End		; if it's impossible branch
+	;	bne.s	Obj09_CG_End		; if it's impossible branch
 		move.b	#3,(a2)			; overwrite...
 		move.l	a1,4(a2)		; ...it
 		moveq	#0,d4			; clear d4
@@ -43240,30 +43328,39 @@ Obj09_ChkGhost:
 		cmpi.b	#$41,1(a1)
 		bne.s	@cont1
 		move.b	#0,1(a1)
-		move.b	#3,8(a2)			; overwrite...
-		move.l	a1,12(a2)		; ...it
+		move.b	#3,8(a2)
+		move.l	a1,4(a2)
+		addq.l	#1,4(a2)
+		addq.w	#8,a2
 
 @cont1:
 		cmpi.b	#$41,-1(a1)
 		bne.s	@cont2
 		move.b	#0,-1(a1)
-		move.b	#3,-8(a2)			; overwrite...
-		move.l	a1,-12(a2)		; ...it
+                move.b  #3,8(a2)
+                move.l  a1,4(a2)
+                subq.l  #1,4(a2)
+		addq.w	#8,a2
 
 @cont2:
 		cmpi.b	#$41,2(a1)
 		bne.s	@cont3
 		move.b	#0,2(a1)
-		move.b	#3,16(a2)			; overwrite...
-		move.l	a1,24(a2)		; ...it
+                move.b  #3,8(a2)
+                move.l  a1,4(a2)
+                addq.l  #2,4(a2)
+		addq.w	#8,a2
 
 @cont3:
 		cmpi.b	#$41,-2(a1)
 		bne.s	Obj09_CG_End
 		move.b	#0,-2(a1)
-		move.b	#3,-16(a2)			; overwrite...
-		move.l	a1,-24(a2)		; ...it
-		
+		move.b	#0,2(a1)
+                move.b  #3,8(a2)
+                move.l  a1,4(a2)
+                subq.l  #2,4(a2)
+		addq.w	#8,a2
+
 Obj09_CG_End:
 		rts				; return
 ; ===========================================================================
@@ -43503,6 +43600,13 @@ Obj09_IsSS2:
 		move.b	#$40,($FF11C1).l	; restore grey emerald
 		clr.b	($FFFFFE57).w		; clear emerald counter
 
+		move.b	#$2D,($FF244A).l
+		move.b	#$2E,($FF24CA).l
+		move.b	#$2F,($FF254A).l
+		move.b	#$30,($FF25CA).l
+		
+		move.b	#$3A,($FF1EC7).l
+
 Obj09_NotSS1x:
 		clr.w	$10(a0)
 		clr.w	$12(a0)
@@ -43602,6 +43706,11 @@ Obj09_ChkGlass:
 		bne.s	Obj09_NoGlass	; if not, branch
 
 Obj09_Glass:
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@cont
+		rts
+
+@cont:
 		bsr	SS_RemoveCollectedItem
 		bne.s	Obj09_GlassSnd
 		move.b	#6,(a2)
@@ -45681,6 +45790,8 @@ Nem_DEMO:	incbin	artnem\Art_DEMO.bin	; DEMO
 Nem_HardPS:	incbin	artnem\HardPartSkipper.bin ; Hard Part Skipper
 		even
 Nem_HardPS_Tut:	incbin	artnem\HardPartSkipper_Tutorial.bin ; Hard Part Skipper
+		even
+Nem_BombMach:	incbin	artnem\BombMachine.bin	; bomb machine
 		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - continue screen
