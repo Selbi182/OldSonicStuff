@@ -393,7 +393,7 @@ PLC_Ending:	dc.w $E
 		dc.w $78A0
 		dc.l Nem_EndSonic	; Sonic
 		dc.w $7C20
-		dc.l Nem_VSpring	; vertical spring
+		dc.l Nem_UMadBro	; U Mad Bro?!
 		dc.w $A480
 		dc.l Nem_Rabbit		; rabbit
 		dc.w $AA60

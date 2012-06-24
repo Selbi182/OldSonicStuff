@@ -841,6 +841,12 @@ OW_NotRightArrow:
 		bra.s	OW_DoWrite		; skip
 
 OW_NotEqual:
+		cmpi.b	#'-',d0			; is current character a "-"?
+		bne.s	OW_NotHyphen		; if not, branch
+		move.b	#$0B,d0			; set correct value for "-"
+		bra.s	OW_DoWrite		; skip
+
+OW_NotHyphen:
 		cmpi.b	#'$',d0			; is current character a "$"?
 		bne.s	OW_NotDollar		; if not, branch
 		move.b	#$0B,d0			; set correct value for "$"
@@ -924,7 +930,7 @@ GOTCO_Return:
 ; ---------------------------------------------------------------------------
 
 OpText_Header1:
-		dc.b	'========================', $FF
+		dc.b	'------------------------', $FF
 		even
 
 OpText_Header2:
