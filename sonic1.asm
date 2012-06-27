@@ -255,9 +255,9 @@ GameClrRAM:
 		bra.w	NoSRAM
 
 SRAMFound:
-		move.b	$3(a1),($FFFFFFBC).w
+		move.b	$3(a1),($FFFFFE12).w
 		bpl.s	@cont1
-		clr.b	($FFFFFFBC).w
+		clr.b	($FFFFFE12).w
 
 @cont1:
 		move.b	$5(a1),($FFFFFF92).w
@@ -2397,8 +2397,8 @@ PalCycle_MZ:				; XREF: PalCycle
 
 PalCycle_SLZ:				; XREF: PalCycle
 		subq.w	#1,($FFFFF634).w
-		bpl.s	locret_1A80
-		move.w	#6,($FFFFF634).w
+		bpl.w	locret_1A80
+		move.w	#5,($FFFFF634).w
 		cmpi.w	#$3D0,($FFFFF726).w	; is boss playing?
 		bne.s	@cont
 		move.w	#2,($FFFFF634).w
@@ -2422,9 +2422,43 @@ loc_1A60:
 		move.l	2(a0,d0.w),4(a1)
 
 locret_1A80:
-		rts	
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	PCSLZ_Red_End
+		moveq	#0,d1
+		addq.b	#1,($FFFFFFBC).w
+		cmpi.b	#14,($FFFFFFBC).w
+		bne.s	PCSLZ_Red_Cont
+		move.b	#0,($FFFFFFBC).w
+PCSLZ_Red_Cont:
+		move.b	($FFFFFFBC).w,d1
+		andi.w	#$000F,d1
+		add.b	d1,d1
+		lea	(PCSLZ_Red).l,a1
+		adda.w	d1,a1
+		lea	($FFFFFB44).w,a2
+		moveq	#4,d2
+PCSLZ_Red_Loop:
+		move.w	(a1),(a2)
+		adda.w	#14*2,a1
+		adda.w	#2,a2
+		dbf	d2,PCSLZ_Red_Loop
+		move.w	(a1),($FFFFFB5E).w
+
+PCSLZ_Red_End:
+		rts
+
 ; End of function PalCycle_SLZ
 
+; ---------------------------------------------------------------------------
+PCSLZ_Red:
+	dc.w	$0222, $0002, $0002, $0002, $0002, $0002, $0002, $0002, $0002, $0002, $0002, $0002, $0002, $0002
+	dc.w	$0444, $0224, $0004, $0004, $0004, $0004, $0004, $0004, $0004, $0004, $0004, $0004, $0004, $0224
+	dc.w	$0666, $0446, $0226, $0006, $0006, $0006, $0006, $0006, $0006, $0006, $0006, $0006, $0226, $0446
+	dc.w	$0888, $0668, $0448, $0228, $0008, $0008, $0008, $0008, $0008, $0008, $0008, $0228, $0448, $0668
+	dc.w	$0AAA, $088A, $066A, $044A, $022A, $000A, $000A, $000A, $000A, $000A, $022A, $044A, $066A, $088A
+	dc.w	$0EEE, $0CCE, $0AAE, $088E, $066E, $044E, $022E, $000E, $022E, $044E, $066E, $088E, $0AAE, $0CCE
+	even
+; ---------------------------------------------------------------------------
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
@@ -3484,7 +3518,10 @@ Sega_NoSound:
 		beq.s	Sega_WaitEnd	; if not, branch
 
 Sega_GotoTitle:
+		tst.b	($FFFFFE12).w
+		bne.s	@cont
 		move.b	#3,($FFFFFE12).w ; set lives to	3
+@cont:
 		clr.b	($FFFFFFBE).w
 		jmp	SelbiSplash
 	;	jmp	SSRGSplash
@@ -3714,7 +3751,10 @@ T_NoSRAM:
 
 PlayLevelX:
 		move.b	#$C,($FFFFF600).w ; set	screen mode to $0C (level)
+		tst.b	($FFFFFE12).w
+		bne.s	@cont
 		move.b	#3,($FFFFFE12).w ; set lives to	3
+@cont:
 		moveq	#0,d0
 	;	move.w	d0,($FFFFFE20).w ; clear rings
 		move.l	d0,($FFFFFE22).w ; clear time
@@ -3798,7 +3838,7 @@ loc_3422:
 		clr.b	($FFFFFE16).w	; clear	special	stage number
 
 Demo_LevelX:
-		move.b	#3,($FFFFFE12).w ; set lives to	3
+	;	move.b	#3,($FFFFFE12).w ; set lives to	3
 		moveq	#0,d0
 	;	move.w	d0,($FFFFFE20).w ; clear rings
 		move.l	d0,($FFFFFE22).w ; clear time
@@ -4031,6 +4071,8 @@ loc_37FC:
 		movep.w	d0,$D(a1)		; backup rings
 		move.l	($FFFFFE26).w,d0	; move rings to d0
 		movep.l	d0,$11(a1)		; backup rings
+		move.b	($FFFFFE12).w,d0
+		move.b	d0,$3(a1)
 		move.b	($FFFFFF8B).w,$19(a1)	; otherwise update check value
 		move.b	#$B6,$1B(a1)		; set "SRAM exists" flag
 		move.b	#0,($A130F1).l		; disable SRAM
@@ -4984,10 +5026,11 @@ MusicList:
 		dc.b	$83	; Ruined Place
 		dc.b	$82	; Labyrinth Place
 		dc.b	$89	; Special Stage 2 (Unused)
-		dc.b	$84	; >>Star Light Place<<
+		dc.b	$84	; Scar Night Place (Part 1)
 		dc.b	$8D	; Finalor Place
 		dc.b	$85	; Spring Yard Place (Overworld)
 		dc.b	$87	; Tutorial Place (SBZ 2)
+		dc.b	$84	; Scar Night Place (Part 2)
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
@@ -5031,11 +5074,12 @@ MainLevelArray:
 		dc.w	$300	; Special Stage (Yes, it uses SLZ's ID)
 		dc.w	$200	; Ruined Place
 		dc.w	$101	; Labyrinth Place
-		dc.w	$302	; Special Stage 2
-		dc.w	$301	; >>Star Light Place<<
+		dc.w	$401	; Special Stage 2
+		dc.w	$301	; Scar Night Place (Part 1)
 		dc.w	$502	; Finalor Place
 		dc.w	$400	; Spring Yard Place (Overworld)
 		dc.w	$501	; Tutorial Place (SBZ 2)
+		dc.w	$302	; Scar Night Place (Part 2)
 		dc.w	$FFFF	; None of the above
 		even
 ; ---------------------------------------------------------------------------
@@ -5048,7 +5092,9 @@ MainLevelArray:
 ; ---------------------------------------------------------------------------
 
 ClearEverySpecialFlag:
-		clr.l	($FFFFFF74).w
+		clr.w	($FFFFFF74).w
+		clr.b	($FFFFFF76).w
+		clr.b	($FFFFFF77).w
 		clr.l	($FFFFFF78).w
 		clr.l	($FFFFFF7C).w
 		clr.b	($FFFFFF7F).w
@@ -5591,7 +5637,7 @@ SS_EndClrObjRamX:
 		add.w	($FFFFFE20).w,d0	; add your new collected rings to it
 		move.w	d0,($FFFFFE20).w	; move result to rings counter
 
-		cmpi.w	#$302,($FFFFFE10).w
+		cmpi.w	#$401,($FFFFFE10).w
 		bne.s	@cont
 		bset	#4,($FFFFFF8B).w	; open second door
 		bra.s	@cont2
@@ -5601,9 +5647,9 @@ SS_EndClrObjRamX:
 @cont2:
 		move.b	#1,($A130F1).l		; enable SRAM
 		move.b	#3,($200007).l		; set number for text to 3
-		cmpi.w	#$302,($FFFFFE10).w
+		cmpi.w	#$401,($FFFFFE10).w
 		bne.s	@cont3
-		move.b	#6,($200007).l		; set number for text to 3
+		move.b	#6,($200007).l		; set number for text to 6
 
 @cont3:
 		move.b	#0,($A130F1).l		; disable SRAM
@@ -10622,7 +10668,7 @@ Obj11_Main:				; XREF: Obj11_Index
 		bcs.s	Obj11_Action
 
 Obj11_MakeBdg:
-		bsr	SingleObjLoad
+		jsr	SingleObjLoad
 		bne.s	Obj11_Action
 		addq.b	#1,$28(a0)
 		cmp.w	8(a0),d3
@@ -14786,7 +14832,7 @@ Obj25_NoRingsFall:
 		andi.w	#$FF80,d1
 		sub.w	d1,d0
 		cmpi.w	#$280,d0
-		bhi.s	Obj25_Delete
+		bhi.w	Obj25_Delete
 Obj25_DontDoThis:
 		rts	
 ; ===========================================================================
@@ -15438,7 +15484,7 @@ Obj4B_ChkLZ2:
 Obj4B_ChkSpecial2:
 		cmpi.w	#$0CB0,$8(a0)
 		bne.s	Obj4B_ChkSLZ2
-		move.w	#$302,($FFFFFE10).w	; set level to Special Stage 2
+		move.w	#$401,($FFFFFE10).w	; set level to Special Stage 2
 		bsr	MakeChapterScreen
 		rts
 
@@ -15549,7 +15595,7 @@ MakeChapterScreen:
 @cont:
 		cmpi.w	#$300,($FFFFFE10).w
 		beq.s	MCS_Special
-		cmpi.w	#$302,($FFFFFE10).w
+		cmpi.w	#$401,($FFFFFE10).w
 		bne.s	MCS_NotSpecial
 
 MCS_Special:
@@ -16205,25 +16251,29 @@ Obj2E_ChkGoggles: ;Power
 		bne.s	Obj2E_Goggles_NotMZ	; if not, branch
 		move.w	#$D1,d0			; set spinadsh sound
 		jmp	(PlaySound).l		; play spindash sound
-; ===========================================================================
 
 Obj2E_Goggles_NotMZ:
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	Obj2E_Goggles_NotSLZ3
+
+		move.b	#1,($FFFFFFE1).w	; disable blockers
+
+		movem.l	d0-a1,-(sp)
+		move.w	#$1480,d0
+		move.w	#$0380,d1
+		move.b	#$31,d2
+		bsr.w	Sub_ChangeChunk
+		movem.l	(sp)+,d0-a1
+
+		move.w	#$A9,d0
+		jmp	(PlaySound).l	; play blubb sound
+
+Obj2E_Goggles_NotSLZ3:
 		move.b	#50,($FFFFFFD2).w ; make current displayed rings falling
 		move.b	#1,($FFFFFFB1).w
 		bsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj2E_ChkEnd		; if SingleObjLoad is already in use, don't load obejct
 		move.b	#5,($FFFFD4E8).w
-		bra.s	Obj2E_ChkEnd
-; ===========================================================================
-
-		cmpi.w	#$200,($FFFFFE10).w ; is level MZ1?
-		beq.s	Obj2E_MZ1	; if yes, branch
-		move.b	#1,($FFFFFFE1).w ; enable goggle view through function
-
-Obj2E_MZ1:
-		move.b	#2,($FFFFFFB3).w
-		move.w	#$A9,d0
-		jmp	(PlaySound).l	; play blubb sound
 ; ===========================================================================
 
 Obj2E_ChkEnd:
@@ -18690,7 +18740,12 @@ Obj34_NotGHZ3:
 		moveq	#$11,d0		; load title card number $11 (SLZ)
 		
 Obj34_NotSLZ2:
-		cmpi.w	#$302,($FFFFFE10).w ; check if level is	Special Stage 2
+		cmpi.w	#$302,($FFFFFE10).w ; check if level is	SLZ 3
+		bne.s	Obj34_NotSLZ3
+		moveq	#$11,d0		; load title card number $11 (SLZ)
+		
+Obj34_NotSLZ3:
+		cmpi.w	#$401,($FFFFFE10).w ; check if level is	Special Stage 2
 		bne.s	Obj34_NotSS2
 		moveq	#$13,d0		; load title card number $13 (SS 2)
 		
@@ -18724,6 +18779,12 @@ Obj34_Loop:
 Obj34_ActNumber:
 		cmpi.b	#7,d0			; is act number on the loading schedule right now?
 		bne.s	Obj34_MakeSprite	; if not, branch
+		cmpi.w	#$302,($FFFFFE10).w ; check if level is	SLZ 3
+		bne.s	Obj34_NotSLZ3X
+		addq.b	#6,d0
+		bra.s	Obj34_MakeSprite
+		
+Obj34_NotSLZ3X:
 		jsr	CheckIfMainLevel	; check for main level and get ID
 		add.b	d5,d0			; add ID to frame ID
 		bra.s	Obj34_MakeSprite	; skip
@@ -20199,10 +20260,12 @@ ObjectFall_Sonic:
 		bra.s	OFS_NoA
 
 @cont:
-		cmpi.w	#$302,($FFFFFE10).w	; is level SLZ 3?
+		cmpi.w	#$302,($FFFFFE10).w	; is level SLZ 2?
 		bne.s	OFS_NoA			; if not, branch
 	;	tst.b	($FFFFFF77).w		; is flag enabled?
 	;	beq.s	OFS_NoA			; if not, branch
+	;	cmpi.w	#$1FBF,($FFFFF72A).w
+	;	bne.s	OFS_NoA
 		btst	#6,($FFFFF602).w	; is A pressed?
 		beq.s	OFS_NoA			; if not, branch
 		subi.w	#$38*2,$12(a0)		; decrease vertical speed
@@ -22384,10 +22447,10 @@ GTA_ChkLZ2:
 		move.b	#5,($200007).l		; set number for text to 5
 
 GTA_ChkSLZ2:
-		cmpi.w	#$301,($FFFFFE10).w	; is level SLZ2?
+		cmpi.w	#$302,($FFFFFE10).w	; is level SLZ3?
 		bne.s	GTA_NoDoor		; if not, branch
 		bset	#5,($FFFFFF8B).w	; unlock fifth door
-		move.b	#7,($200007).l		; set number for text to 6
+		move.b	#7,($200007).l		; set number for text to 7
 
 GTA_NoDoor:
 		move.b	#0,($A130F1).l		; disable SRAM
@@ -25843,6 +25906,12 @@ Obj71_Main:				; XREF: Obj71_Index
 		move.b	d1,$16(a0)	; set object height
 
 Obj71_Solid:				; XREF: Obj71_Index
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@cont
+		tst.b	($FFFFFFE1).w
+		bne.s	Obj71_ChkDel
+
+@cont:
 		bsr	ChkObjOnScreen
 		bne.s	Obj71_ChkDel
 		moveq	#0,d1
@@ -26631,6 +26700,7 @@ Obj5F_BossDelete:
 		move.w	#-1,($FFFFFF7C).w
 		move.b	#0,($FFFFF7CC).w
 		move.b	#1,($FFFFFF77).w
+		clr.b	($FFFFFE30).w
 		move.b	#$84,d0
 		jsr	PlaySound
 		jmp	DeleteObject
@@ -30906,6 +30976,7 @@ SD_End:
 ; ---------------------------------------------------------------------------
 
 Sonic_AirFreeze:
+		rts
 		btst	#4,($FFFFF602).w	; is B pressed?
 		beq.w	AM_End			; if not, branch
 		
@@ -31285,6 +31356,27 @@ locret_135A2:
 		rts	
 ; End of function Sonic_JumpAngle
 
+
+; ---------------------------------------------------------------------------
+SLZHitWall:
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@cont
+		move.w	#$0C40,($FFFFD008).w
+		move.w	#$0380,($FFFFD00C).w
+		clr.w	($FFFFD010).w
+		clr.w	($FFFFD012).w
+		clr.w	($FFFFD014).w
+		jsr	FixLevel
+		move.b	#2,($FFFFD01C).w
+		move.b	#$C3,d0
+		jsr	PlaySound_Special
+		bset	#1,$22(a0)
+
+@cont:
+		rts
+; ---------------------------------------------------------------------------
+
+
 ; ---------------------------------------------------------------------------
 ; Subroutine for Sonic to interact with	the floor after	jumping/falling
 ; ---------------------------------------------------------------------------
@@ -31312,6 +31404,7 @@ Sonic_Floor:				; XREF: Obj01_MdJump; Obj01_MdJump2
 		bpl.s	loc_135F0
 		sub.w	d1,8(a0)
 		move.w	#0,$10(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 
 loc_135F0:
 		bsr	sub_14EB4
@@ -31319,6 +31412,7 @@ loc_135F0:
 		bpl.s	loc_13602
 		add.w	d1,8(a0)
 		move.w	#0,$10(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 
 loc_13602:
 		bsr	Sonic_HitFloor
@@ -31338,6 +31432,7 @@ loc_1361E:
 		move.b	d3,$26(a0)
 		bsr	Sonic_ResetOnFloor
 		move.b	#0,$1C(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 		move.b	d3,d0
 		addi.b	#$20,d0
 		andi.b	#$40,d0
@@ -31358,6 +31453,7 @@ loc_1364E:
 
 loc_1365C:
 		move.w	#0,$10(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 		cmpi.w	#$FC0,$12(a0)
 		ble.s	loc_13670
 		move.w	#$FC0,$12(a0)
@@ -31378,6 +31474,7 @@ loc_13680:
 		bpl.s	loc_1369A
 		sub.w	d1,8(a0)
 		move.w	#0,$10(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 		move.w	$12(a0),$14(a0)
 		rts	
 ; ===========================================================================
@@ -31390,6 +31487,7 @@ loc_1369A:
 		tst.w	$12(a0)
 		bpl.s	locret_136B2
 		move.w	#0,$12(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 
 locret_136B2:
 		rts	
@@ -31407,6 +31505,7 @@ loc_136B4:
 		move.b	#0,$1C(a0)
 		move.w	#0,$12(a0)
 		move.w	$10(a0),$14(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 
 locret_136E0:
 		rts	
@@ -31418,6 +31517,7 @@ loc_136E2:
 		bpl.s	loc_136F4
 		sub.w	d1,8(a0)
 		move.w	#0,$10(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 
 loc_136F4:
 		bsr	sub_14EB4
@@ -31425,6 +31525,7 @@ loc_136F4:
 		bpl.s	loc_13706
 		add.w	d1,8(a0)
 		move.w	#0,$10(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 
 loc_13706:
 		bsr	Sonic_DontRunOnWalls
@@ -31436,6 +31537,7 @@ loc_13706:
 		andi.b	#$40,d0
 		bne.s	loc_13726
 		move.w	#0,$12(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 		rts	
 ; ===========================================================================
 
@@ -31458,6 +31560,7 @@ loc_1373E:
 		add.w	d1,8(a0)
 		move.w	#0,$10(a0)
 		move.w	$12(a0),$14(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 		rts	
 ; ===========================================================================
 
@@ -31469,6 +31572,7 @@ loc_13758:
 		tst.w	$12(a0)
 		bpl.s	locret_13770
 		move.w	#0,$12(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 
 locret_13770:
 		rts	
@@ -31486,6 +31590,7 @@ loc_13772:
 		move.b	#0,$1C(a0)
 		move.w	#0,$12(a0)
 		move.w	$10(a0),$14(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 
 locret_1379E:
 		rts	
@@ -31549,7 +31654,7 @@ loc_137E4:
 
 Obj01_Hurt:				; XREF: Obj01_Index
 		tst.b	($FFFFFFBC).w	; is AirMove enabled on TS?
-		beq.s	Obj01_Hurt_Normal ; if not, branch
+		bra.s	Obj01_Hurt_Normal ; if not, branch
 		btst	#4,($FFFFF605).w ; is button B pressed?
 		beq.s	Obj01_Hurt_Normal ; if not, branch
 		clr.b	($FFFFF7CC).w	; unlock controls
@@ -31688,6 +31793,11 @@ GameOver:				; XREF: Obj01_Death
 		move.b	#$A3,d0
 		jsr	PlaySound_Special ; play death sound
 		addq.b	#2,$24(a0)
+		cmpi.b	#$18,($FFFFF600).w
+		bne.s	@cont
+		bra.s	loc_138D4
+
+@cont:
 		clr.b	($FFFFFE1E).w	; stop time counter
 		addq.b	#1,($FFFFFE1C).w ; update lives	counter
 		subq.b	#1,($FFFFFE12).w ; subtract 1 from number of lives
@@ -36437,11 +36547,19 @@ Obj7D:					; XREF: Obj_Index
 		jmp	Obj7D_Index(pc,d1.w)
 ; ===========================================================================
 Obj7D_Index:	dc.w Obj7D_Main-Obj7D_Index
-		dc.w Obj7D_DelayDel-Obj7D_Index
+		dc.w Obj7D_Action-Obj7D_Index
+		dc.w Obj7D_Action2-Obj7D_Index
 ; ===========================================================================
 
 Obj7D_Main:				; XREF: Obj7D_Index
-		moveq	#$10,d2
+		addq.b	#2,$24(a0)
+		move.l	#Map_obj7D,4(a0)
+		move.w	#$27B2,2(a0)
+		ori.b	#4,1(a0)
+		move.b	#3,$18(a0)
+
+Obj7D_Action:
+		moveq	#$20,d2
 		move.w	d2,d3
 		add.w	d3,d3
 		lea	($FFFFD000).w,a1
@@ -36449,33 +36567,106 @@ Obj7D_Main:				; XREF: Obj7D_Index
 		sub.w	8(a0),d0
 		add.w	d2,d0
 		cmp.w	d3,d0
-		bcc.s	Obj7D_ChkDel
+		bcc.w	Obj7D_NoTouch
 		move.w	$C(a1),d1
 		sub.w	$C(a0),d1
 		add.w	d2,d1
 		cmp.w	d3,d1
-		bcc.s	Obj7D_ChkDel
-		tst.w	($FFFFFE08).w
-		bne.s	Obj7D_ChkDel
-		tst.b	($FFFFF7CD).w
-		bne.s	Obj7D_ChkDel
-		addq.b	#2,$24(a0)
-		move.l	#Map_obj7D,4(a0)
-		move.w	#$84B6,2(a0)
-		ori.b	#4,1(a0)
-		move.b	#0,$18(a0)
-		move.b	#$10,$19(a0)
-		move.b	$28(a0),$1A(a0)
-		move.w	#119,$30(a0)	; set display time to 2	seconds
+		bcc.w	Obj7D_NoTouch
+
 		move.w	#$C9,d0
 		jsr	(PlaySound_Special).l ;	play bonus sound
-		moveq	#0,d0
-		move.b	$28(a0),d0
-		add.w	d0,d0
-		move.w	Obj7D_Points(pc,d0.w),d0 ; load	bonus points array
-		bsr	AddPoints
+		jsr	SingleObjLoad
+		move.b	#$7D,(a1)
+		move.w	#$1C48,$8(a1)
+		move.w	#$0200,$C(a1)
+		move.b	#4,$24(a1)
+		move.l	#Map_obj7D,4(a1)
+		move.w	#$27B2,2(a1)
+		ori.b	#4,1(a1)
+		move.b	#3,$18(a1)
+		
+		addq.b	#1,($FFFFFFA0).w
+		cmpi.b	#1,($FFFFFFA0).w
+		bne.w	Obj7D_Delete
 
-Obj7D_ChkDel:
+		movem.l	d0-a1,-(sp)
+		move.w	#$1C80,d0
+		move.w	#$0280,d1
+		move.b	#$47,d2
+		jsr	Sub_ChangeChunk
+		move.w	#$1B80,d0
+		move.w	#$0280,d1
+		move.b	#$3B,d2
+		jsr	Sub_ChangeChunk
+		movem.l	(sp)+,d0-a1
+
+		bra.w	Obj7D_Delete
+
+Obj7D_NoTouch:
+		jsr	DisplaySprite
+		rts
+		move.w	8(a0),d0
+		andi.w	#$FF80,d0
+		move.w	($FFFFF700).w,d1
+		subi.w	#$80,d1
+		andi.w	#$FF80,d1
+		sub.w	d1,d0
+		cmpi.w	#$280,d0
+		bhi.w	Obj7D_Delete
+		rts
+; ===========================================================================
+
+Obj7D_Action2:
+		moveq	#$20,d2
+		move.w	d2,d3
+		add.w	d3,d3
+		lea	($FFFFD000).w,a1
+		move.w	8(a1),d0
+		sub.w	8(a0),d0
+		add.w	d2,d0
+		cmp.w	d3,d0
+		bcc.w	Obj7D_NoTouch2
+		move.w	$C(a1),d1
+		sub.w	$C(a0),d1
+		add.w	d2,d1
+		cmp.w	d3,d1
+		bcc.w	Obj7D_NoTouch2
+	
+		move.w	#$C9,d0
+		jsr	(PlaySound_Special).l ;	play bonus sound
+
+		addq.b	#1,($FFFFFFA0).w
+		cmpi.b	#6,($FFFFFFA0).w
+		bne.s	Obj7D_No6
+
+		movem.l	d0-a1,-(sp)
+		move.w	#$1D80,d0
+		move.w	#$0280,d1
+		move.b	#$18,d2
+		jsr	Sub_ChangeChunk
+		move.w	#$1E80,d0
+		move.w	#$0280,d1
+		move.b	#$21,d2
+		jsr	Sub_ChangeChunk
+		movem.l	(sp)+,d0-a1
+		bra.w	Obj7D_Delete
+
+Obj7D_No6:
+		jsr	SingleObjLoad
+		move.b	#$7D,(a1)
+		move.w	#$1DB8,$8(a1)
+		move.w	#$0200,$C(a1)
+		move.b	#2,$24(a1)
+		move.l	#Map_obj7D,4(a1)
+		move.w	#$27B2,2(a1)
+		ori.b	#4,1(a1)
+		move.b	#3,$18(a1)
+		bra.w	Obj7D_Delete
+
+Obj7D_NoTouch2:
+		jsr	DisplaySprite
+		rts
 		move.w	8(a0),d0
 		andi.w	#$FF80,d0
 		move.w	($FFFFF700).w,d1
@@ -36484,34 +36675,13 @@ Obj7D_ChkDel:
 		sub.w	d1,d0
 		cmpi.w	#$280,d0
 		bhi.s	Obj7D_Delete
-		rts	
+		rts
 ; ===========================================================================
 
 Obj7D_Delete:
 		jmp	DeleteObject
-; ===========================================================================
-Obj7D_Points:	dc.w 0			; Bonus	points array
-		dc.w 1000		; 10000 points
-		dc.w 100		; 1000 points
-		dc.w 10			; 100 points (fixed from 10 points)
-; ===========================================================================
 
-Obj7D_DelayDel:				; XREF: Obj7D_Index
-		subq.w	#1,$30(a0)	; subtract 1 from display time
-		bmi.s	Obj7D_Delete2	; if time is zero, branch
-		move.w	8(a0),d0
-		andi.w	#-$80,d0
-		move.w	($FFFFF700).w,d1
-		subi.w	#$80,d1
-		andi.w	#-$80,d1
-		sub.w	d1,d0
-		cmpi.w	#$280,d0
-		bhi.s	Obj7D_Delete2
-		jmp	DisplaySprite
-; ===========================================================================
-
-Obj7D_Delete2:
-		jmp	DeleteObject
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - hidden points at the end of	a level
@@ -42661,7 +42831,7 @@ SS_AlwaysStage12:
 		lea	SS_StartLoc(pc,d0.w),a1
 		move.w	(a1)+,($FFFFD008).w
 		move.w	(a1)+,($FFFFD00C).w
-		cmpi.w	#$302,($FFFFFE10).w
+		cmpi.w	#$401,($FFFFFE10).w
 		bne.s	SSAS_Not2
 		move.w	(a1)+,($FFFFD008).w
 		move.w	(a1)+,($FFFFD00C).w
@@ -43450,7 +43620,7 @@ Obj09_ChkEmer:
 
 		cmpi.b	#4,($FFFFFE57).w ; do you have all the emeralds?
 		beq.s	Emershit
-		cmpi.w	#$302,($FFFFFE10).w
+		cmpi.w	#$401,($FFFFFE10).w
 		bne.s	Obj09_NoSpecial2
 		cmpi.b	#2,($FFFFFE57).w ; do you have all the emeralds?
 		bne.s	Obj09_NoSpecial2
@@ -43746,7 +43916,7 @@ Obj09_GOAL:
 		lea	(SS1_StartLoc).l,a1
 		move.w	(a1)+,d1		; set Sonic's X-position
 		move.w	(a1)+,d2		; set Sonic's Y-position
-		cmpi.w	#$302,($FFFFFE10).w
+		cmpi.w	#$401,($FFFFFE10).w
 		bne.s	@cont
 		move.w	(a1)+,d1		; set Sonic's X-position
 		move.w	(a1)+,d2		; set Sonic's Y-position
@@ -43762,7 +43932,7 @@ Obj09_CPTeleEnd:
 		move.w	d2,$C(a0)		; restore Y-pos
 		jsr	WhiteFlash2
 
-		cmpi.w	#$302,($FFFFFE10).w
+		cmpi.w	#$401,($FFFFFE10).w
 		beq.s	Obj09_IsSS2
 		move.b	#$30,($FF1C28).l	; restore pink glass block
 		move.b	#$2F,($FF1DA7).l	; restore yellow glass block
@@ -43880,7 +44050,7 @@ Obj09_ChkGlass:
 		bne.s	Obj09_NoGlass	; if not, branch
 
 Obj09_Glass:
-		cmpi.w	#$302,($FFFFFE10).w
+		cmpi.w	#$401,($FFFFFE10).w
 		bne.s	@cont
 		rts
 

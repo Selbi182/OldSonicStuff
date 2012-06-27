@@ -234,6 +234,7 @@ Options_NoTextChange:
 		clr.b	($FFFFFFBC).w
 		clr.w	($FFFFFE20).w
 		clr.l	($FFFFFE26).w
+		clr.b	($FFFFFE12).w
 
 		move.b	#0,($A130F1).l		; disable SRAM
 

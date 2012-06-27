@@ -255,7 +255,7 @@ CS_ChkChapter4:
 CS_ChkChapter5:
 		cmpi.b	#5,($FFFFFFA0).w	; is this chapter 5?
 		bne.s	CS_ChkChapter6		; if not, branch
-		move.w	#$302,($FFFFFE10).w	; use correct stage
+		move.w	#$401,($FFFFFE10).w	; use correct stage
 		move.b	#$10,($FFFFF600).w	; set to special stage
 		rts
 CS_ChkChapter6:

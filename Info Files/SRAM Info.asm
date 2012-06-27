@@ -5,7 +5,7 @@ Offset		| Example Value	 | Description
  00		| xx		 |
 01		| 07		 | Current Chapter number
  02		| xx		 |
-03		| 00		 | [Unused] AirMove flag
+03		| 00		 | Lives
  04		| xx		 |
 05		| 00		 | Unlocked Easter Egg flag
  06		| xx		 |
