@@ -197,38 +197,30 @@ PLC_MZ2:	dc.w 4
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Star Light
 ; ---------------------------------------------------------------------------
-PLC_SLZ:	dc.w 8
+PLC_SLZ:	dc.w 6
 		dc.l Nem_SLZ		; SLZ main patterns
 		dc.w 0
 		dc.l Nem_Bomb		; bomb enemy
 		dc.w $8000
-		dc.l Nem_Orbinaut	; orbinaut enemy
+		dc.l Nem_SLZPlatform	; SLZ platform
 		dc.w $8520
-		dc.l Nem_MzFire		; fireballs
+		dc.l Nem_LzSwitch	; switch
 		dc.w $9000
-		dc.l Nem_SlzBlock	; block
-		dc.w $9C00
-		dc.l Nem_SlzWall	; breakable wall
-		dc.w $A260
 		dc.l Nem_Spikes		; spikes
 		dc.w $A360
 		dc.l Nem_HSpring	; horizontal spring
 		dc.w $A460
 		dc.l Nem_VSpring	; vertical spring
 		dc.w $A660
-PLC_SLZ2:	dc.w 4 ;5
+PLC_SLZ2:	dc.w 3
 		dc.l Nem_Seesaw		; seesaw
 		dc.w $6E80
 		dc.l Nem_Fan		; fan
 		dc.w $7400
 		dc.l Nem_Pylon		; foreground pylon
 		dc.w $7980
-	;	dc.l Nem_SlzSwing	; swinging platform
-	;	dc.w $7B80
-		dc.l Nem_SlzCannon	; fireball launcher
-		dc.w $9B00
-		dc.l Nem_SlzSpike	; spikeball
-		dc.w $9E00
+		dc.l Nem_Bonus		; bonus points
+		dc.w $96C0
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Spring Yard
 ; ---------------------------------------------------------------------------

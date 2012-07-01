@@ -2424,6 +2424,8 @@ loc_1A60:
 locret_1A80:
 		cmpi.w	#$302,($FFFFFE10).w
 		bne.s	PCSLZ_Red_End
+		tst.b	($FFFFFF77).w
+		beq.s	PCSLZ_Red_End
 		moveq	#0,d1
 		addq.b	#1,($FFFFFFBC).w
 		cmpi.b	#14,($FFFFFFBC).w
@@ -7858,13 +7860,25 @@ Deform_SLZ:
 
 		move.w	($FFFFFE04).w,d2
 		ori.w	#1,d2
-		add.w	d2,d2
+	;	add.w	d2,d2
+
+		cmpi.w	#$301,($FFFFFE10).w
+		bne.s	@cont
 		cmpi.w	#$3D0,($FFFFF726).w	; is boss playing?
 		bne.s	@cont
-		move.w	d2,d5
-		lsr.w	#1,d5
-		add.w	d5,d2
+
+		add.w	d2,d2
+		add.w	d2,d2
+
 @cont:
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@cont2
+		tst.b	($FFFFFF77).w
+		beq.s	@cont2
+
+		add.w	d2,d2
+
+@cont2:
 		neg.w	d2
 		move.w	d2,d0
 		asr.w	#3,d0
@@ -8233,6 +8247,10 @@ S_H_NoEnding:
 S_H_NotGHZ2:
 		tst.b	($FFFFFF93).w		; has extended cam been disabled via options?
 		bne.w	S_H_NoExtendedCam	; if yes, branch
+		cmpi.w	#$302,($FFFFFE10).w	; is this SLZ3?
+		bne.s	S_H_BuzzIgnore		; if not, branch
+		tst.b	($FFFFFF77).w		; is special mode enabled?
+		bne.s	S_H_ResetCamera		; if yes, branch
 
 S_H_BuzzIgnore:
 		tst.b	($FFFFF7CD).w
@@ -9593,21 +9611,22 @@ LoadTilesFromStart2:			; CODE XREF: ROM:00003096?p
 		moveq	#$F,d6
  
 loc_71FC:				; CODE XREF: LoadTilesFromStart2+22?j
-		movem.l	d4-d6,-(sp)
-		moveq	#0,d6
+		movem.l	d3-d6,-(sp)
+		moveq	#0,d3
 		cmpi.b	#4,($FFFFF600).w ; is this the title screen?
 		beq.s	@cont
-		moveq	#-$10,d6
+		moveq	#-$10,d3
+		addi.w	#$10,d4
 
 @cont:
-		move.l	d6,d5				; moving up a tad
+		move.l	d3,d5				; moving up a tad
 		move.w	d4,d1
 		bsr	Calc_VRAM_Pos
 		move.w	d1,d4
-		move.l	d6,d5				; moving up a tad
+		move.l	d3,d5				; moving up a tad
 		moveq	#$1F,d6
 		bsr	DrawTiles_LR2
-		movem.l	(sp)+,d4-d6
+		movem.l	(sp)+,d3-d6
 		addi.w	#$10,d4
 		dbf	d6,loc_71FC
 		rts	
@@ -10377,6 +10396,43 @@ Resize_SLZ2end:
 Resize_SLZ3:
 		move.w	#$620,($FFFFF726).w
 		move.w	#$A60,($FFFFF728).w
+
+		cmpi.w	#$2080,($FFFFD008).w
+		bcs.s	@cont3
+		bra.w	@contret
+
+@cont3:		
+		cmpi.w	#$1F00,($FFFFD008).w
+		bcs.s	locret_715C
+
+		cmpi.w	#$1FC0,($FFFFD008).w
+		bcs.s	@cont
+		
+		cmpi.w	#$49,($FFFFD00C).w
+		bcc.s	@cont2
+		move.b	#1,($FFFFF7CC).w
+		move.w	#$48,($FFFFD00C).w
+		move.w	#$200,($FFFFD010).w
+		move.w	#0,($FFFFD012).w
+		move.b	#$E,($FFFFD01C).w
+		bra.s	@contret
+
+@cont2:
+		move.b	#1,($FFFFF7CC).w
+		move.w	#$1FC0,($FFFFD008).w
+		move.w	#0,($FFFFD010).w
+		move.w	#-$E00,($FFFFD012).w
+		move.b	#7,($FFFFD01C).w
+		bra.s	@contret
+
+@cont:
+		move.b	#1,($FFFFF7CC).w
+		move.w	#$6E0,($FFFFD00C).w
+		move.w	#$300,($FFFFD010).w
+		move.w	#0,($FFFFD012).w
+		move.b	#$E,($FFFFD01C).w
+
+@contret:
 		rts
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -11586,9 +11642,9 @@ Obj18_NotSYZ:
 		cmpi.b	#3,($FFFFFE10).w ; check if level is SLZ
 		bne.s	Obj18_NotSLZ
 		move.l	#Map_obj18b,4(a0) ; SLZ	specific code
-		move.b	#$20,$19(a0)
-		move.w	#$4000,2(a0)
-		move.b	#3,$28(a0)
+	;	move.b	#$20,$19(a0)
+		move.w	#$4429,2(a0)
+	;	move.b	#3,$28(a0)
 
 Obj18_NotSLZ:
 		move.b	#4,1(a0)
@@ -11659,6 +11715,18 @@ Obj18_LZ2:
 @cont2:
 
 Obj18_NoMovingPlatforms:
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	Obj18_NoCheckpoint
+		tst.b	$1A(a0)
+		bne.s	Obj18_NoCheckpoint
+		move.b	#1,$1A(a0)
+		move.b	#$A1,d0
+		jsr	PlaySound_Special
+		move.w	8(a0),($FFFFFF86).w	; save Sonic's X-position
+		move.w	$C(a0),($FFFFFF88).w	; save Sonic's Y-position
+		subi.w	#$1C,($FFFFFF88).w
+
+Obj18_NoCheckpoint:
 		cmpi.b	#$40,$38(a0)
 		beq.s	loc_7F06
 		addq.b	#4,$38(a0)
@@ -11943,6 +12011,9 @@ Obj18_NotMZ2_2:
 	;	bclr	#3,($FFFFD022).w	; clear Sonic's "standing on object flag"
 
 Obj18_Delete:				; XREF: Obj18_Index
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	Obj18_NoDelete
+
 		bra.w	DeleteObject
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -13043,6 +13114,8 @@ Obj27_Main:				; XREF: Obj27_Index
 Obj27_NoCamShake:
 	;	tst.w	($FFFFFE20).w 	; do you have any rings?
 	;	beq.s	Obj27_Animate	; if not, branch
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	Obj27_Animate
 		bsr	SingleObjLoad
 		bne.s	Obj27_Animate
 		move.b	#$37,0(a1)	; load bouncing ring object
@@ -15900,6 +15973,8 @@ Obj26_Animate:				; XREF: Obj26_Index
 
 Obj26_Display:				; XREF: Obj26_Index
 		bsr	DisplaySprite
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	@cont
 		move.w	8(a0),d0
 		andi.w	#$FF80,d0
 		move.w	($FFFFF700).w,d1
@@ -15908,6 +15983,7 @@ Obj26_Display:				; XREF: Obj26_Index
 		sub.w	d1,d0
 		cmpi.w	#$280,d0
 		bhi.w	DeleteObject
+@cont:
 		rts	
 ; ===========================================================================
 
@@ -15988,6 +16064,11 @@ Obj2E_Main:				; XREF: Obj2E_Index
 		addq.w	#1,a1
 		move.l	a1,4(a0)
 		move.b	#100,$30(a0)		; set maximun delay
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@cont
+		move.b	#1,$30(a0)
+
+@cont:
 		btst	#1,($FFFFD022).w	; was Sonic on the ground as the monitor broke open?
 		bne.s	Obj2E_Move		; if not, branch
 		move.b	#1,$3F(a0)		; set flag
@@ -18118,6 +18199,11 @@ Obj32_Main:				; XREF: Obj32_Index
 		move.w	#$513,2(a0)	; SYZ, LZ and SBZ specific code
 
 loc_BD60:
+		cmpi.b	#$3,($FFFFFE10).w
+		bne.s	@cont
+		move.w	#$480,2(a0)
+
+@cont:
 		move.b	#4,1(a0)
 		move.b	#$10,$19(a0)
 		move.b	#4,$18(a0)
@@ -18132,6 +18218,10 @@ Obj32_Pressed:				; XREF: Obj32_Index
 		move.w	8(a0),d4
 		bsr	SolidObject
 		bclr	#0,$1A(a0)	; use "unpressed" frame
+		cmpi.b	#$3,($FFFFFE10).w
+		bne.s	@cont
+		move.b	#1,$1A(a0)
+@cont
 		move.b	$28(a0),d0
 		andi.w	#$F,d0
 		lea	($FFFFF7E0).w,a3
@@ -18165,10 +18255,11 @@ loc_BDC8:
 		beq.s	@contx
 
 		move.b	#0,($FFFFFF92).w
-		
-		moveq	#3,d0
-		jsr	PalLoad2	; load Sonic's pallet line
-		movem.l	(sp)+,d0-a7
+
+	;	movem.l	d0-a7,-(sp)
+	;	moveq	#3,d0
+	;	jsr	PalLoad2	; load Sonic's pallet line
+	;	movem.l	(sp)+,d0-a7
 
 		bra.s	@cont
 
@@ -18195,16 +18286,56 @@ DelFirstLine_Loop:
 		dbf	d2,DelFirstLine_Loop	; loop
 
 loc_BDD6:
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.w	@cont
+		tst.b	($FFFFFF77).w
+		bne.w	@cont
+		move.b	#1,($FFFFFF77).w
+		move.b	#$81,d0			; play music
+		jsr	PlaySound
+
+		lea	($FFFFDFC0).w,a1
+		move.b	#$7D,(a1)
+		move.w	#$1DB8,$8(a1)
+		move.w	#$0200,$C(a1)
+		move.b	#2,$24(a1)
+		move.l	#Map_obj7D,4(a1)
+		move.w	#$84B6,2(a1)
+		ori.b	#$84,1(a1)
+		move.b	#3,$18(a1)
+		move.b	#3,$1A(a1)
+
+		lea	($FFFFDF40).w,a1
+		move.b	#$26,(a1)
+		move.w	#$17F0,$8(a1)
+		move.w	#$03F0,$C(a1)
+		move.b	#2,$24(a1)
+		move.b	#$E,$16(a1)
+		move.b	#$E,$17(a1)
+		move.l	#Map_obj26,4(a1)
+		move.b	#8,$28(a1)
+		move.w	#$680,2(a1)
+		move.b	#$84,1(a1)
+		move.b	#3,$18(a1)
+		move.b	#$F,$19(a1)
+		move.b	#$46,$20(a1)
+		move.b	#8,$1C(a1)
+
+@cont:
+
 		bset	d3,(a3)
 		bset	#0,$1A(a0)	; use "pressed"	frame
+		cmpi.b	#$3,($FFFFFE10).w
+		bne.s	loc_BDDE
+		move.b	#4,$1A(a0)
 
 loc_BDDE:
-		btst	#5,$28(a0)
-		beq.s	Obj32_Display
-		subq.b	#1,$1E(a0)
-		bpl.s	Obj32_Display
-		move.b	#7,$1E(a0)
-		bchg	#1,$1A(a0)
+	;	btst	#5,$28(a0)
+	;	beq.s	Obj32_Display
+	;	subq.b	#1,$1E(a0)
+	;	bpl.s	Obj32_Display
+	;	move.b	#7,$1E(a0)
+	;	bchg	#1,$1A(a0)
 
 Obj32_Display:
 		bsr	DisplaySprite
@@ -20251,26 +20382,45 @@ ObjectFall_Sonic:
 		cmpi.w	#$501,($FFFFFE10).w
 		bne.s	@cont
 		cmpi.w	#$1B00,($FFFFD008).w
-		bcs.s	OFS_NoA
+		bcs.s	@cont3
 		cmpi.w	#$2100,($FFFFD008).w
-		bcc.s	OFS_NoA
+		bcc.s	@cont3
 		btst	#6,($FFFFF602).w	; is A pressed?
-		beq.s	OFS_NoA			; if not, branch
+		beq.s	@cont3			; if not, branch
 		subi.w	#$38*2,$12(a0)		; decrease vertical speed
-		bra.s	OFS_NoA
+		bra.s	@cont3
 
 @cont:
 		cmpi.w	#$302,($FFFFFE10).w	; is level SLZ 2?
-		bne.s	OFS_NoA			; if not, branch
-	;	tst.b	($FFFFFF77).w		; is flag enabled?
-	;	beq.s	OFS_NoA			; if not, branch
-	;	cmpi.w	#$1FBF,($FFFFF72A).w
-	;	bne.s	OFS_NoA
-		btst	#6,($FFFFF602).w	; is A pressed?
-		beq.s	OFS_NoA			; if not, branch
-		subi.w	#$38*2,$12(a0)		; decrease vertical speed
+		bne.s	@cont3			; if not, branch
+		
+		tst.b	($FFFFFF77).w
+		beq.s	@cont3
 
-OFS_NoA:
+		subi.w	#$38,$12(a0)		; revert speed change
+
+		moveq	#0,d4
+		
+
+		btst	#6,($FFFFF602).w	; is A pressed?
+		beq.s	@cont2x			; if not, branch
+		tst.w	$12(a0)
+		bmi.s	@cont2xx
+		subi.w	#$38,$12(a0)
+		bra.s	@cont3x
+	@cont2xx:
+		subi.w	#$1C,$12(a0)
+		bra.s	@cont3x
+@cont2x:
+		tst.w	$12(a0)
+		bpl.s	@cont3xx
+		addi.w	#$38,$12(a0)
+		bra.s	@cont3x
+	@cont3xx:
+		addi.w	#$1C,$12(a0)
+
+@cont3x:
+@cont3:
 		ext.l	d0
 		asl.l	#8,d0
 		add.l	d0,d3
@@ -26351,13 +26501,13 @@ Map_obj5Ea:
 BombWalkSpeed =	$C0
 BombWalkSpeed_Boss = $140
 
-BombFuseTime = 71
+BombFuseTime = 46
 BombFuseTime_Boss = 41
 
-BombDistance = $40
+BombDistance = $50
 BombDistance_Boss = $50
 
-BombPellets = 7
+BombPellets = 6
 BombPellets_Boss = 13
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
@@ -26368,12 +26518,12 @@ Obj5F:					; XREF: Obj_Index
 		move.w	Obj5F_Index(pc,d0.w),d1
 		jmp	Obj5F_Index(pc,d1.w)
 ; ===========================================================================
-Obj5F_Index:	dc.w Obj5F_Main-Obj5F_Index
-		dc.w Obj5F_Action-Obj5F_Index
-		dc.w Obj5F_Display-Obj5F_Index
-		dc.w Obj5F_End-Obj5F_Index
-		dc.w Obj5F_SBZ1-Obj5F_Index
-		dc.w Obj5F_BossDefeated-Obj5F_Index
+Obj5F_Index:	dc.w Obj5F_Main-Obj5F_Index		; [$0]
+		dc.w Obj5F_Action-Obj5F_Index		; [$2]
+		dc.w Obj5F_Display-Obj5F_Index		; [$4]
+		dc.w Obj5F_End-Obj5F_Index		; [$6]
+		dc.w Obj5F_SBZ1-Obj5F_Index		; [$8]
+		dc.w Obj5F_BossDefeated-Obj5F_Index	; [$A]
 ; ===========================================================================
 
 Obj5F_Main:				; XREF: Obj5F_Index
@@ -26384,6 +26534,8 @@ Obj5F_Main:				; XREF: Obj5F_Index
 		move.b	#3,$18(a0)
 		move.b	#$C,$19(a0)
 
+		cmpi.w	#$301,($FFFFFE10).w
+		bne.s	@conty
 		tst.b	($FFFFFFA9).w
 		beq.s	@conty
 		tst.b	($FFFFFF75).w
@@ -26439,31 +26591,40 @@ Obj5F_Index2:	dc.w Obj5F_Walk-Obj5F_Index2
 Obj5F_Walk:				; XREF: Obj5F_Index2
 		bsr.w	Obj5F_ChkSonic
 		bmi	locret_11AD0
-		move.b	#1,$1C(a0)
+		move.b	#0,$1C(a0)
 		moveq	#0,d0
 		move.w	($FFFFD008).w,d0
 		sub.w	8(a0),d0
 		bpl.s	Obj5F_Walk2
 		bclr	#0,$22(a0)		
-		move.w	#-BombWalkSpeed,$10(a0)	; move object to the left
+	;	move.w	#-BombWalkSpeed,$10(a0)	; move object to the left
 		tst.b	($FFFFFFA9).w
 		beq.s	Obj5F_Return
 		move.w	#-BombWalkSpeed_Boss,$10(a0)	; move object to the left
+		move.b	#1,$1C(a0)
 		bra.s	Obj5F_Return
 
 Obj5F_Walk2:
 		bset	#0,$22(a0)
-		move.w	#BombWalkSpeed,$10(a0)	; move object to the right
+	;	move.w	#BombWalkSpeed,$10(a0)	; move object to the right
 		tst.b	($FFFFFFA9).w
 		beq.s	Obj5F_Return
 		move.w	#BombWalkSpeed_Boss,$10(a0)	; move object to the left
-
+		move.b	#1,$1C(a0)
 
 Obj5F_Return:
 		bsr	ObjHitFloor
 		subi.w	#15,d1
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@cont
+		addi.w	#9,d1
+		cmpi.b	#3,$1C(a0)
+		beq.s	@contx
+
+@cont:
 		add.w	d1,$C(a0)	; match	object's position with the floor
 		bsr.w	SpeedToPos
+@contx:
 		rts
 ; ===========================================================================
 
@@ -26559,13 +26720,15 @@ loc_11ADE:
 @cont:
 		cmp.w	d1,d0
 		bcc.w	locret_11B5E
+
 		move.w	($FFFFD00C).w,d0
 		sub.w	$C(a0),d0
 		bcc.s	Obj5F_MakeFuse
 		neg.w	d0
 
 Obj5F_MakeFuse:
-		move.w	#BombDistance,d1
+	;	move.w	#BombDistance,d1
+		move.w	#$90,d1
 		tst.b	($FFFFFFA9).w
 		beq.s	@contx
 		move.w	#BombDistance_Boss,d1
@@ -26576,8 +26739,8 @@ Obj5F_MakeFuse:
 		tst.w	($FFFFD030).w
 		bne.w	locret_11B5E
 
-		tst.w	($FFFFFE08).w
-		bne.w	locret_11B5E
+	;	tst.w	($FFFFFE08).w
+	;	bne.w	locret_11B5E
 		move.b	#4,$25(a0)
 
 		move.w	#BombFuseTime,$30(a0)	; set fuse time
@@ -26597,7 +26760,7 @@ Obj5F_MakeFuse:
 		move.b	#4,$28(a1)
 		move.b	#3,$1C(a1)
 		move.b	#0,$18(a1)
-		move.b	#$30,$12(a1)	; load fuse object
+		move.w	#$30,$12(a1)	; load fuse object
 		tst.b	($FFFFFFA9).w
 		beq.s	@conty
 		move.w	#$50,$12(a1)
@@ -26669,7 +26832,7 @@ Obj5F_BossDefeatedboss2:
 		lsr.b	#3,d0
 		add.w	d0,$C(a1)
 		subq.w	#8,$C(a1)
-		bra.s	locret_715Cx
+		bra.w	locret_715Cx
 ; ===========================================================================
 
 Obj5F_BossDefeatedend:
@@ -26699,8 +26862,12 @@ Obj5F_BossDelete:
 		move.w	#$620,($FFFFF726).w
 		move.w	#-1,($FFFFFF7C).w
 		move.b	#0,($FFFFF7CC).w
-		move.b	#1,($FFFFFF77).w
+		move.b	#0,($FFFFFF77).w
 		clr.b	($FFFFFE30).w
+		clr.b	($FFFFFFA9).w
+		clr.b	($FFFFFF76).w
+		clr.b	($FFFFF7AA).w
+		move.b	#0,($FFFFFE2D).w		; disable invincibility
 		move.b	#$84,d0
 		jsr	PlaySound
 		jmp	DeleteObject
@@ -26713,12 +26880,17 @@ locret_715Cx:
 		bsr.w	DisplaySprite
 		rts	
 
-
 ; ===========================================================================
 
 Obj5F_Display:				; XREF: Obj5F_Index
-		cmpi.b	#-1,($FFFFFF7C).w
-		beq.w	DeleteObject
+		cmpi.w	#$301,($FFFFFE10).w
+		bne.s	@cont
+		cmpi.b	#3,$1C(a0)
+		bne.s	@cont
+		tst.b	($FFFFFF76).w
+		beq.s	@cont
+		jmp	DeleteObject
+@cont:
 		bsr	Obj5F_FaceSonic
 		bsr.s	loc_11B70
 		lea	(Ani_obj5F).l,a1
@@ -28785,7 +28957,14 @@ AfterImage:
 		bne.w	After_DoAfter		; if yes, branch
 		tst.b	($FFFFFFAD).w		; is Sonic performing a jumpdash or is on a spring?
 		bne.w	After_DoAfter		; if yes, branch
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@cont
+		tst.b	($FFFFFF77).w
+		beq.s	@cont
+		btst	#1,$22(a0)
+		bne.s	After_DoAfter
 
+@cont:
 		moveq	#0,d0			; clear d0
 		move.w	$10(a0),d0		; move X-speed to d0
 		bpl.s	After_X_Positive	; if speed is positive, branch
@@ -31360,17 +31539,89 @@ locret_135A2:
 ; ---------------------------------------------------------------------------
 SLZHitWall:
 		cmpi.w	#$302,($FFFFFE10).w
-		bne.s	@cont
+		bne.w	@cont
+		tst.b	($FFFFFF77).w
+		beq.w	@cont
+		tst.b	($FFFFF7CC).w
+		bne.w	@cont
 		move.w	#$0C40,($FFFFD008).w
-		move.w	#$0380,($FFFFD00C).w
+		move.w	#$0470,($FFFFD00C).w
+		tst.w	($FFFFFF86).w
+		beq.s	@contx
+		move.w	($FFFFFF86).w,$8(a0)	; get Sonic's X-position
+		move.w	($FFFFFF88).w,$C(a0)	; get Sonic's Y-position
+
+@contx:
 		clr.w	($FFFFD010).w
 		clr.w	($FFFFD012).w
 		clr.w	($FFFFD014).w
 		jsr	FixLevel
+		jsr	WhiteFlash2
 		move.b	#2,($FFFFD01C).w
 		move.b	#$C3,d0
 		jsr	PlaySound_Special
 		bset	#1,$22(a0)
+
+		tst.b	($FFFFFFE1).w
+		beq.s	@conty
+		clr.b	($FFFFFFE1).w
+
+		movem.l	d0-a1,-(sp)
+
+		lea	($FFFFDF40).w,a1
+		move.b	#2,$24(a1)
+		move.b	#8,$28(a1)
+		move.b	#$84,1(a1)
+		move.b	#$46,$20(a1)
+		move.b	#8,$1C(a1)
+
+		move.w	#$1480,d0
+		move.w	#$0380,d1
+		move.b	#$4F,d2
+		jsr	Sub_ChangeChunk
+		movem.l	(sp)+,d0-a1
+
+@conty:
+		tst.b	($FFFFFFA0).w
+		beq.w	@cont
+		clr.b	($FFFFFFA0).w
+		movem.l	d0-a1,-(sp)
+		lea	($FFFFDF80).w,a1
+		jsr	DeleteObject2
+		lea	($FFFFDFC0).w,a1
+		jsr	DeleteObject2
+
+		cmpi.w	#$1EE0,($FFFFFF86).w
+		beq.w	@contxx
+		lea	($FFFFDFC0).w,a1
+		move.b	#$7D,(a1)
+		move.w	#$1DB8,$8(a1)
+		move.w	#$0200,$C(a1)
+		move.b	#2,$24(a1)
+		move.l	#Map_obj7D,4(a1)
+		move.w	#$84B6,2(a1)
+		ori.b	#$84,1(a1)
+		move.b	#3,$18(a1)
+		move.b	#3,$1A(a1)
+		move.w	#$1B80,d0
+		move.w	#$0280,d1
+		move.b	#$50,d2
+		jsr	Sub_ChangeChunk
+		move.w	#$1C80,d0
+		move.w	#$0280,d1
+		move.b	#$0D,d2
+		jsr	Sub_ChangeChunk
+		move.w	#$1D80,d0
+		move.w	#$0280,d1
+		move.b	#$46,d2
+		jsr	Sub_ChangeChunk
+		move.w	#$1E80,d0
+		move.w	#$0280,d1
+		move.b	#$16,d2
+		jsr	Sub_ChangeChunk
+
+@contxx:
+		movem.l	(sp)+,d0-a1
 
 @cont:
 		rts
@@ -31418,7 +31669,8 @@ loc_13602:
 		bsr	Sonic_HitFloor
 		move.b	d1,($FFFFFFEF).w
 		tst.w	d1
-		bpl.s	locret_1367E
+		bpl.w	locret_1367E
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 		move.b	$12(a0),d2
 		addq.b	#8,d2
 		neg.b	d2
@@ -31448,6 +31700,7 @@ loc_1361E:
 loc_1364E:
 		move.w	#0,$12(a0)
 		move.w	$10(a0),$14(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 		rts	
 ; ===========================================================================
 
@@ -31463,6 +31716,7 @@ loc_13670:
 		tst.b	d3
 		bpl.s	locret_1367E
 		neg.w	$14(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 
 locret_1367E:
 		rts	
@@ -31548,6 +31802,7 @@ loc_13726:
 		tst.b	d3
 		bpl.s	locret_1373C
 		neg.w	$14(a0)
+		bsr.w	SLZHitWall	; teleport Sonic in SLZ3
 
 locret_1373C:
 		rts	
@@ -32144,6 +32399,13 @@ loc_13AFA:
 ; ===========================================================================
 
 SAnim_Push:				; XREF: SAnim_RollJump
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@cont
+		tst.b	($FFFFFF77).w
+		beq.s	@cont
+		jsr	SLZHitWall
+
+@cont:
 		move.w	$14(a0),d2	; get Sonic's speed
 		bmi.s	loc_13B1E
 		neg.w	d2
@@ -36554,9 +36816,10 @@ Obj7D_Index:	dc.w Obj7D_Main-Obj7D_Index
 Obj7D_Main:				; XREF: Obj7D_Index
 		addq.b	#2,$24(a0)
 		move.l	#Map_obj7D,4(a0)
-		move.w	#$27B2,2(a0)
-		ori.b	#4,1(a0)
+		move.w	#$84B6,2(a0)
+		ori.b	#$84,1(a0)
 		move.b	#3,$18(a0)
+		move.b	#3,$1A(a0)
 
 Obj7D_Action:
 		moveq	#$20,d2
@@ -36576,45 +36839,45 @@ Obj7D_Action:
 
 		move.w	#$C9,d0
 		jsr	(PlaySound_Special).l ;	play bonus sound
-		jsr	SingleObjLoad
+		
+		moveq	#10,d0
+		jsr	AddPoints
+
+		cmpi.b	#6,($FFFFFFA0).w
+		bge.s	@cont
+
+	;	jsr	SingleObjLoad
+		lea	($FFFFDF80).w,a1
 		move.b	#$7D,(a1)
 		move.w	#$1C48,$8(a1)
 		move.w	#$0200,$C(a1)
 		move.b	#4,$24(a1)
 		move.l	#Map_obj7D,4(a1)
-		move.w	#$27B2,2(a1)
-		ori.b	#4,1(a1)
+		move.w	#$84B6,2(a1)
+		ori.b	#$84,1(a1)
 		move.b	#3,$18(a1)
-		
+		move.b	#3,$1A(a1)
+
+@cont:
 		addq.b	#1,($FFFFFFA0).w
 		cmpi.b	#1,($FFFFFFA0).w
 		bne.w	Obj7D_Delete
 
 		movem.l	d0-a1,-(sp)
+		move.w	#$1B80,d0
+		move.w	#$0280,d1
+		move.b	#$2A,d2
+		jsr	Sub_ChangeChunk
 		move.w	#$1C80,d0
 		move.w	#$0280,d1
 		move.b	#$47,d2
-		jsr	Sub_ChangeChunk
-		move.w	#$1B80,d0
-		move.w	#$0280,d1
-		move.b	#$3B,d2
 		jsr	Sub_ChangeChunk
 		movem.l	(sp)+,d0-a1
 
 		bra.w	Obj7D_Delete
 
 Obj7D_NoTouch:
-		jsr	DisplaySprite
-		rts
-		move.w	8(a0),d0
-		andi.w	#$FF80,d0
-		move.w	($FFFFF700).w,d1
-		subi.w	#$80,d1
-		andi.w	#$FF80,d1
-		sub.w	d1,d0
-		cmpi.w	#$280,d0
-		bhi.w	Obj7D_Delete
-		rts
+		jmp	DisplaySprite
 ; ===========================================================================
 
 Obj7D_Action2:
@@ -36638,7 +36901,7 @@ Obj7D_Action2:
 
 		addq.b	#1,($FFFFFFA0).w
 		cmpi.b	#6,($FFFFFFA0).w
-		bne.s	Obj7D_No6
+		blt.s	Obj7D_No6
 
 		movem.l	d0-a1,-(sp)
 		move.w	#$1D80,d0
@@ -36653,29 +36916,21 @@ Obj7D_Action2:
 		bra.w	Obj7D_Delete
 
 Obj7D_No6:
-		jsr	SingleObjLoad
+	;	jsr	SingleObjLoad
+		lea	($FFFFDFC0).w,a1
 		move.b	#$7D,(a1)
 		move.w	#$1DB8,$8(a1)
 		move.w	#$0200,$C(a1)
 		move.b	#2,$24(a1)
 		move.l	#Map_obj7D,4(a1)
-		move.w	#$27B2,2(a1)
-		ori.b	#4,1(a1)
+		move.w	#$84B6,2(a1)
+		ori.b	#$84,1(a1)
 		move.b	#3,$18(a1)
+		move.b	#3,$1A(a1)
 		bra.w	Obj7D_Delete
 
 Obj7D_NoTouch2:
-		jsr	DisplaySprite
-		rts
-		move.w	8(a0),d0
-		andi.w	#$FF80,d0
-		move.w	($FFFFF700).w,d1
-		subi.w	#$80,d1
-		andi.w	#$FF80,d1
-		sub.w	d1,d0
-		cmpi.w	#$280,d0
-		bhi.s	Obj7D_Delete
-		rts
+		jmp	DisplaySprite
 ; ===========================================================================
 
 Obj7D_Delete:
@@ -37095,6 +37350,7 @@ locret_179AA:
 		moveq	#$12,d0
 		jsr	LoadPLC2	; load signpost	patterns
 		move.b	#1,($FFFFFF91).w
+		clr.b	($FFFFF7AA).w
 		jmp	DeleteObject
 ; ===========================================================================
 
@@ -46028,6 +46284,8 @@ Nem_SlzSwing:	incbin	artnem\slzswing.bin	; SLZ swinging platform
 Nem_SlzBlock:	incbin	artnem\slzblock.bin	; SLZ 32x32 block
 		even
 Nem_SlzCannon:	incbin	artnem\slzcanno.bin	; SLZ fireball launcher cannon
+		even
+Nem_SLZPlatform:incbin	artnem\SLZPlatform.bin	; SLZ platform
 		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - SYZ stuff
