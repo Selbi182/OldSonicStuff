@@ -156,18 +156,6 @@ OptionsScreen_MainLoop:
 		move.b	#4,($FFFFF62A).w
 		jsr	DelayProgram
 
-		move.b	#1,($A130F1).l			; enable SRAM
-		tst.b	($20001D).l			; has easter egg button been pressed?
-		beq.s	O_PalFine
-	
-		cmpi.l	#$088E066E,($FFFFFB48).w
-		beq.s	O_PalFine
-		moveq	#2,d0		; load Options screen pallet
-		jsr	PalLoad2
-O_PalFine:
-		move.b	#0,($A130F1).l			; disable SRAM
-
-
 		tst.w	($FFFFF614).w		; is timer empty?
 		bne.s	O_DontResetTimer	; if not, branch
 		move.w	#$618,($FFFFF614).w	; otherwise, reset it

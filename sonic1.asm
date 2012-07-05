@@ -1,22 +1,23 @@
-; /=====================================================\
-; º                    Sonic  ERaZor                    º
-; \=====================================================/
+; /======================================================\
+; º                     Sonic ERaZor                     º
+; \======================================================/
 
 ; =======================================================
-;-------------------------------------------------------
+; ------------------------------------------------------
 ; Leader/Programming:		Selbi
 
-; Addi. Programming and Art:	MarkeyJester
+; Graphics/Help:		MarkeyJester
+
+; Addi. Programming:		vladikcomper
 
 ; Music:			DalekSam
-;				SOTI
-;				EduardoKnuckles
+;				Spanner
+
+; Sound Driver:			EduardoKnuckles
 
 ; Beta Testing:			SonicVaan
-;				#SSRG on BadnikNET
 
 ; Special Thanks to:		MainMemory
-;				vladikcomper
 
 ; ------------------------------------------------------
 
@@ -4462,6 +4463,8 @@ L_ML_NoPalCycle:
 		beq.s	L_ML_NoSAL		; if yes, branch
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1?
 		beq.s	L_ML_NoSAL		; if yes, branch
+		cmpi.w	#$301,($FFFFFE10).w	; is level SLZ2?
+		beq.s	L_ML_NoSAL		; if yes, branch
 		bsr	SignpostArtLoad
 
 L_ML_NoSAL:
@@ -5416,8 +5419,9 @@ locret_4272:
 
 
 SignpostArtLoad:			; XREF: Level
-		tst.w	($FFFFFE08).w	; is debug mode	being used?
-		bne.w	Signpost_Exit	; if yes, branch
+		bra.w	Signpost_Exit
+	;	tst.w	($FFFFFE08).w	; is debug mode	being used?
+	;	bne.w	Signpost_Exit	; if yes, branch
 		cmpi.b	#2,($FFFFFE11).w ; is act number 02 (act 3)?
 		beq.s	Signpost_Exit	; if yes, branch
 		move.w	($FFFFF700).w,d0
@@ -5429,13 +5433,12 @@ SignpostArtLoad:			; XREF: Level
 		beq.s	Signpost_Exit
 		cmp.w	($FFFFF728).w,d1
 		beq.s	Signpost_Exit
-		cmpi.w	#$301,($FFFFFE10).w	; is level SLZ2?
-		beq.s	Signpost_Exit		; if yes, branch
+		
+		move.b	#$A0,d0
+		jsr	PlaySound_Special
 		moveq	#$12,d0
-		bra.w	LoadPLC2	; load signpost	patterns
-		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
-		beq.s	Signpost_Exit		; if yes, branch
-		move.w	d1,($FFFFF728).w ; move	left boundary to current screen	position
+		jmp	LoadPLC2	; load signpost	patterns
+	;	move.w	d1,($FFFFF728).w ; move	left boundary to current screen	position
 ; ===========================================================================
 
 Signpost_Exit:
@@ -10404,13 +10407,18 @@ Resize_SLZ3:
 @cont3:		
 		cmpi.w	#$1F00,($FFFFD008).w
 		bcs.s	locret_715C
+		
+		tst.b	($FFFFF7CC).w
+		bne.s	@cont5
+		moveq	#$12,d0
+		jsr	LoadPLC2	; load signpost	patterns
 
+@cont5:
 		cmpi.w	#$1FC0,($FFFFD008).w
 		bcs.s	@cont
 		
 		cmpi.w	#$49,($FFFFD00C).w
 		bcc.s	@cont2
-		move.b	#1,($FFFFF7CC).w
 		move.w	#$48,($FFFFD00C).w
 		move.w	#$200,($FFFFD010).w
 		move.w	#0,($FFFFD012).w
@@ -10421,8 +10429,25 @@ Resize_SLZ3:
 		move.b	#1,($FFFFF7CC).w
 		move.w	#$1FC0,($FFFFD008).w
 		move.w	#0,($FFFFD010).w
-		move.w	#-$E00,($FFFFD012).w
-		move.b	#7,($FFFFD01C).w
+
+		cmpi.w	#$6A0,($FFFFD00C).w
+		bcs.s	@cont2x
+		subq.w	#8,($FFFFFFB6).w
+		move.w	($FFFFFFB6).w,($FFFFD012).w
+		move.b	#2,($FFFFD01C).w
+		bra.s	@cont3x
+		
+@cont2x:
+		cmpi.w	#$8C,($FFFFD00C).w
+		bcc.s	@cont4x
+		addq.w	#8,($FFFFFFB6).w
+		move.w	($FFFFFFB6).w,($FFFFD012).w
+		move.b	#2,($FFFFD01C).w
+		bra.s	@cont3x
+@cont4x:
+		move.w	#-$C00,($FFFFD012).w
+		move.b	#$F,($FFFFD01C).w
+@cont3x:
 		bra.s	@contret
 
 @cont:
@@ -11643,7 +11668,7 @@ Obj18_NotSYZ:
 		bne.s	Obj18_NotSLZ
 		move.l	#Map_obj18b,4(a0) ; SLZ	specific code
 	;	move.b	#$20,$19(a0)
-		move.w	#$4429,2(a0)
+		move.w	#$44E0,2(a0)
 	;	move.b	#3,$28(a0)
 
 Obj18_NotSLZ:
@@ -15326,18 +15351,15 @@ Obj4B_Main:				; XREF: Obj4B_Index
 		move.w	$C(a0),$34(a0)
 		move.b	#5,$37(a0)
 		move.b	#5,$38(a0)
+		move.l	#Map_obj4B,4(a0)
+		move.w	#$2400,2(a0)
 
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
 		bne.s	Obj4B_Main_Cont		; if not, branch
 		move.w	#100,$30(a0)
+		move.w	#$2422,2(a0)
 
 Obj4B_Main_Cont:
-		move.l	#Map_obj4B,4(a0)
-		move.w	#$2400,2(a0)
-		cmpi.w	#$400,($FFFFFE10).w
-		bne.s	@cont
-		move.w	#$2422,2(a0)
-@cont:
 		ori.b	#4,1(a0)
 		move.b	#$40,$19(a0)
 		tst.b	1(a0)
@@ -15346,20 +15368,19 @@ Obj4B_Main_Cont:
 Obj4B_Okay:				; XREF: Obj4B_Main
 		addq.b	#2,$24(a0)
 		move.b	#2,$18(a0)
-	;	move.b	#$52,$20(a0)
 		move.w	#$C40,($FFFFF7BE).w
+; ---------------------------------------------------------------------------
 
 Obj4B_Animate:				; XREF: Obj4B_Index
 		subq.b	#1,$37(a0)
-		bpl	@cont
+		bpl.s	@cont
 		move.b	$38(a0),$37(a0)
 		addq.b	#1,$36(a0)
 		cmpi.b	#4,$36(a0)
 		bne.s	@cont
 		move.b	#0,$36(a0)
 
-@cont
-	;	move.b	($FFFFFEC3).w,$1A(a0)
+@cont:
 		move.b	$36(a0),$1A(a0)
 
 		tst.b	$3C(a0)
@@ -15424,15 +15445,6 @@ Obj4B_ArtLoadLoop:
 ; ===========================================================================
 
 Obj4B_NotGHZ1:
-		cmpi.b	#2,($FFFFFE11).w	; is act number = 3?
-		bne.s	Obj4B_NoCapsule		; if not, branch
-		tst.b	($FFFFFE1E).w		; is time counter stopped?
-		beq.s	Obj4B_NoCapsule		; if yes, branch
-		subq.b	#2,$24(a0)
-		bra.w	Obj4B_Animate
-; ===========================================================================
-
-Obj4B_NoCapsule:
 		subq.b	#2,$24(a0)
 		move.b	#0,$20(a0)
 		cmpi.w	#$000,($FFFFFE10).w
@@ -15442,7 +15454,6 @@ Obj4B_NoCapsule:
 
 @cont:
 		move.b	#1,($FFFFFFB9).w
-	;	move.b	#60,($FFFFFFBA).w
 		clr.w	($FFFFF73A).w
 		jsr	WhiteFlash4		; make white flash
 		clr.w	($FFFFFE20).w	; clear rings
@@ -15473,6 +15484,8 @@ Obj4B_Delete:				; XREF: Obj4B_Index
 		cmpi.w	#$501,($FFFFFE10).w
 		beq.s	@conty
 
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	@conty
 
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ 1?
 		bne.w	Obj4B_ChkGHZ2		; if not, branch
@@ -15496,11 +15509,20 @@ Obj4B_Delete:				; XREF: Obj4B_Index
 		bmi.w	Obj4B_Return
 		
 		cmpi.w	#$501,($FFFFFE10).w
-		bne.s	Obj4B_ChkOptions
+		bne.s	Obj4B_SNZ
 		move.b	#$28,($FFFFF600).w	; load chapters screen
 		move.b	#$E0,d0
 		jmp	PlaySound_Special
 
+Obj4B_SNZ:
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	Obj4B_ChkOptions
+		move.b	#$20,($FFFFF600).w	; load info screen
+		move.b	#1,($A130F1).l		; enable SRAM
+		move.b	#9,($200007).l		; set number for text to 8
+		move.b	#0,($A130F1).l		; disable SRAM
+		move.b	#$9D,d0
+		jmp	PlaySound
 
 
 
@@ -16166,7 +16188,11 @@ ExtraLife:
 
 @cont2:
 		cmpi.w	#$200,($FFFFFE10).w
+		beq.s	@contx
+		cmpi.w	#$302,($FFFFFE10).w
 		bne.s	@cont
+
+@contx:
 		addi.w	#30,($FFFFFE20).w
 		addq.b	#1,($FFFFFE1D).w 
 
@@ -18293,6 +18319,9 @@ loc_BDD6:
 		move.b	#1,($FFFFFF77).w
 		move.b	#$81,d0			; play music
 		jsr	PlaySound
+		
+		addi.w	#100,($FFFFFE20).w
+		move.b	#1,($FFFFFE1D).w ; update rings	counter
 
 		lea	($FFFFDFC0).w,a1
 		move.b	#$7D,(a1)
@@ -18307,7 +18336,7 @@ loc_BDD6:
 
 		lea	($FFFFDF40).w,a1
 		move.b	#$26,(a1)
-		move.w	#$17F0,$8(a1)
+		move.w	#$17E0,$8(a1)
 		move.w	#$03F0,$C(a1)
 		move.b	#2,$24(a1)
 		move.b	#$E,$16(a1)
@@ -19888,7 +19917,7 @@ Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
 		move.w	#$C3,d0			; set giant ring sound
 		jsr	PlaySound		; play it
 		jsr	WhiteFlash2		; make a white flash
-		bsr	FixLevel
+		jsr	FixLevel
 		bra.s	Obj36_NotInhuman2
 
 @conty:
@@ -19912,7 +19941,7 @@ Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
 		move.w	#$C3,d0			; set giant ring sound
 		jsr	PlaySound		; play it
 		jsr	WhiteFlash2		; make a white flash
-		bsr	FixLevel
+		jsr	FixLevel
 
 		subi.w	#10,($FFFFFE20).w ; remove 10 rings
 		addq.b	#1,($FFFFFE1D).w ; update
@@ -22458,6 +22487,11 @@ Obj0D_Main:				; XREF: Obj0D_Index
 		move.b	#4,1(a0)
 		move.b	#$18,$19(a0)
 		move.b	#4,$18(a0)
+
+		move.l	a0,-(sp)
+		moveq	#$12,d0
+		jsr	LoadPLC2	; load signpost	patterns
+		move.l	(sp)+,a0
 
 Obj0D_Touch:				; XREF: Obj0D_Index
 		move.w	($FFFFD008).w,d0
@@ -26867,6 +26901,7 @@ Obj5F_BossDelete:
 		clr.b	($FFFFFFA9).w
 		clr.b	($FFFFFF76).w
 		clr.b	($FFFFF7AA).w
+		clr.b	($FFFFFF7D).w
 		move.b	#0,($FFFFFE2D).w		; disable invincibility
 		move.b	#$84,d0
 		jsr	PlaySound
@@ -28731,6 +28766,10 @@ Obj06_Setup:
 		cmpi.w	#$101,($FFFFFE10).w
 		beq.s	Obj06_ArtLocFound
 
+		move.w	#$0490,2(a0)		; set art pointer, use palette line 1
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	Obj06_ArtLocFound
+
 		move.w	#$0372,2(a0)		; set art pointer, use palette line 1
 
 Obj06_ArtLocFound:
@@ -28761,12 +28800,12 @@ Obj06_ChkDist:
 		sub.w	$8(a0),d0		; substract the X-pos from the current object from it
 		addi.w	#$10,d0			; add $10 to it
 		cmpi.w	#$20,d0			; is Sonic within $10 pixels of that object?
-		bhi.s	Obj06_Display		; if not, branch
+		bhi.w	Obj06_Display		; if not, branch
 		move.w	($FFFFD00C).w,d0	; get Sonic's X-pos
 		sub.w	$C(a0),d0		; substract the X-pos from the current object from it
 		addi.w	#$10,d0			; add $10 to it
 		cmpi.w	#$20,d0			; is Sonic within $10 pixels of that object?
-		bhi.s	Obj06_Display		; if not, branch
+		bhi.w	Obj06_Display		; if not, branch
 
 		jsr	CheckIfMainLevel	; get level ID
 		lsl.w	#2,d5			; multiply it by 4
@@ -28778,11 +28817,42 @@ Obj06_ChkDist:
 		clr.w	($FFFFD012).w		; clear Sonic's Y-speed
 		clr.w	($FFFFD014).w		; clear Sonic's interia
 
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@contxx
+		move.b	#6,($FFFFFFA0).w
+		movem.l	d0-a1,-(sp)
+		move.w	#$1D80,d0
+		move.w	#$0280,d1
+		move.b	#$18,d2
+		jsr	Sub_ChangeChunk
+		move.w	#$1E80,d0
+		move.w	#$0280,d1
+		move.b	#$21,d2
+		jsr	Sub_ChangeChunk
+		move.w	#$1B80,d0
+		move.w	#$0280,d1
+		move.b	#$2A,d2
+		jsr	Sub_ChangeChunk
+		move.w	#$1C80,d0
+		move.w	#$0280,d1
+		move.b	#$47,d2
+		jsr	Sub_ChangeChunk
+		lea	($FFFFDF80).w,a1
+		jsr	DeleteObject2
+		lea	($FFFFDFC0).w,a1
+		jsr	DeleteObject2
+		movem.l	(sp)+,d0-a1
+		jsr	FixLevel		; instantly move the camera
+		move.b	#1,($FFFFFF77).w
+		move.b	#$81,d0			; play music
+		jsr	PlaySound
+
+
+@contxx:
 		clr.w	($FFFFFE20).w
 		clr.b	($FFFFFE1D).w
 		move.w	#$C3,d0			; set giant ring sound
 		jsr	PlaySound_Special	; play it
-
 		tst.b	($FFFFFFE7).w		; is Sonic in Inhuman Mode?
 		beq.s	@contx			; if not, branch
 		clr.b	($FFFFFFE7).w		; disabled Inhuman Mode
@@ -28848,14 +28918,15 @@ Obj06_NoA:
 Obj06_Locations:	;XXXX   YYYY
 		dc.w	$18EA, $036C	; Night Hill Place
 		dc.w	$FFFF, $FFFF	; Green Hill Place	(Unused)
-		dc.w	$FFFF, $FFFF	; Special Stage		(Unused)
+		dc.w	$FFFF, $FFFF	; Special Place		(Unused)
 		dc.w	$17C0, $028F	; Ruined Place
 		dc.w	$038F, $002E	; Labyrinth Place
 		dc.w	$FFFF, $FFFF	; Finalor Place		(Unused)
 		dc.w	$FFFF, $FFFF	; Spring Yard Place	(Unused)
-		dc.w	$FFFF, $FFFF
-		dc.w	$FFFF, $FFFF
+		dc.w	$FFFF, $FFFF	; Unreal Place		(Unused)
+		dc.w	$FFFF, $FFFF	; Scar Night Place (1)	(Unused)
 		dc.w	$101E, $036C	; Tutorial Place
+		dc.w	$1EE0, $0304	; Scar Night Place (2)
 
 ; ---------------------------------------------------------------------------
 
@@ -31544,6 +31615,17 @@ SLZHitWall:
 		beq.w	@cont
 		tst.b	($FFFFF7CC).w
 		bne.w	@cont
+
+		cmpi.w	#5,($FFFFFE20).w
+		bge.s	@yesrings
+		move.b	#0,($FFFFFE20).w
+		move.b	#$80,($FFFFFE1D).w
+		jmp	KillSonic
+
+@yesrings:
+		subi.w	#5,($FFFFFE20).w
+		move.b	#$80,($FFFFFE1D).w
+
 		move.w	#$0C40,($FFFFD008).w
 		move.w	#$0470,($FFFFD00C).w
 		tst.w	($FFFFFF86).w
@@ -31555,6 +31637,7 @@ SLZHitWall:
 		clr.w	($FFFFD010).w
 		clr.w	($FFFFD012).w
 		clr.w	($FFFFD014).w
+
 		jsr	FixLevel
 		jsr	WhiteFlash2
 		move.b	#2,($FFFFD01C).w
@@ -32013,6 +32096,8 @@ Obj01_Death_NoMS:
 
 Obj01_NotDrownAnim:
 		bsr	GameOver
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	Obj01_NoOF
 		tst.w	$12(a0)		; is Sonic moving upwards?
 		bmi.s	Obj01_NoOF	; if yes, branch
 		bsr	ObjHitFloor	; load from ObjHitFloor
@@ -37096,6 +37181,9 @@ loc_177E6:
 		tst.b	$22(a0)
 		bmi.w	loc_1784C
 
+		tst.b	($FFFFF7CC).w
+		bne.w	locret_1784A
+
 		tst.b	$20(a0)
 		bne.s	locret_1784A
 		tst.b	$3E(a0)
@@ -37437,6 +37525,12 @@ loc_17A3E:
 loc_17A46:
 		tst.b	$20(a1)
 		bne.s	loc_17A50
+		tst.b	($FFFFF7CC).w
+		beq.s	@cont
+		moveq	#4,d1
+		bra.s	loc_17A5A
+
+@cont:
 		moveq	#5,d1
 		bra.s	loc_17A5A
 ; ===========================================================================
@@ -37720,7 +37814,7 @@ Obj48_Display4:
 
 Obj48_Fall:
 		jsr	ObjHitFloor
-		subq.w	#8,d1
+		subq.w	#4,d1
 		cmp.w	$C(a0),d1
 		bcc.s	@cont
 		clr.w	$10(a0)
@@ -42343,6 +42437,8 @@ HurtSonic:
 		bne.s	Hurt_Shield	; if yes, branch
 		tst.w	($FFFFFE20).w	; does Sonic have any rings?
 		beq.w	Hurt_NoRings	; if not, branch
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	HS_NotEmpty
 		jsr	SingleObjLoad
 		bne.s	Hurt_Shield
 		move.b	#$37,0(a1)	; load bouncing	multi rings object
@@ -42521,6 +42617,11 @@ Kill_PlaySound:
 		jsr	(PlaySound_Special).l	; play the selected sound
 
 Kill_End:
+		cmpi.w	#$302,($FFFFFE10).w	; is level SlZ3?
+		bne.s	@cont			; if not, branch
+		addq.w	#4,sp			; make sure game branches back to the correct routine
+
+@cont:
 		moveq	#-1,d0			; sub 1 from d0, although I don't know why...
 		rts				; return
 ; End of function KillSonic

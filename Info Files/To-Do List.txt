@@ -1,15 +1,8 @@
 To-Do:
 - The Star Light Update:
-	- Finish post-boss area (where the gravity thing is):
-		- Find a way to make this level easier.
-		- Add check points.
-		- Finish "Loop 6 times" room at the end.
-
 	- Fix graphical problems with the Eggman/Bomb cutscene machine:
 		- Fix palette rotation issues. I disabled it for now. (I can't simply disable it altogether, since the conveyor belts use it as well). 
 		- Animate the machine (I will need Markey for that once again).
 	- Get new songs for:
 		- Bomb Boss
 		- Post-boss area
-
-- (Re)write most of the embarrasing story texts and maybe redo its entire art to be more appealing. Also increase its speed.

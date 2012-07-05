@@ -136,14 +136,13 @@ Info_NoTextChange:
 		move.b	($FFFFF605).w,d1
 		andi.b	#$80,d1
 		beq.s	InfoScreen_MainLoop	; if not, branch
+
 		cmpi.b	#1,($FFFFFF9C).w	; is this the intro-dialouge?
 		bne.s	Info_NoIntro		; if not, branch
-
 		move.b	#1,($A130F1).l		; enable SRAM
 		cmpi.b	#1,($200001).l
 		bgt.s	@conty
 		move.b	#1,($200001).l		; run first chapter screen
-
 @conty:
 		move.b	#0,($A130F1).l		; disable SRAM
 		move.b	#$28,($FFFFF600).w	; set to chapters screen ($28)
@@ -156,6 +155,14 @@ Info_NoIntro:
 		rts
 
 Info_NoEnding:
+		cmpi.b	#9,($FFFFFF9C).w	; is this the easter egg?
+		bne.s	Info_NoEaster		; if not, branch
+		move.w	#$302,($FFFFFE10).w	; set level to SLZ3
+		move.b	#$C,($FFFFF600).w
+		move.w	#1,($FFFFFE02).w	; restart level
+		rts
+
+Info_NoEaster:
 		clr.b	($FFFFFF95).w
 		clr.w	($FFFFFF96).w
 		clr.w	($FFFFFF98).w
@@ -662,161 +669,181 @@ Info_HeaderText3:	dc.b	'SONIC ERAZORX'
 ; ---------------------------------------------------------------------------
 
 InfoText_1:	; text after intro cutscene
-		dc.b	'ONE DAY SONIC DECIDED TO GO '
-		dc.b	' BACK TO GREEN HILL ZONE TO '
-		dc.b	' SEE IF EVERYTHING IS OKAY. '
-		dc.b	'                            '
-		dc.b	'AS SOON AS HE GOT THERE, HE '
-		dc.b	'WAS ATTACKED BY AN EVIL GREY'
-		dc.b	'   METALLIC BUZZ BOMBER!    '
-		dc.b	'                            '
-		dc.b	'     SONIC ESCAPED HIM.     '
-		dc.b	'HOWEVER, THE RING HE JUMPED '
-		dc.b	'IN SENT HIM TO SPRING YARD. '
-		dc.b	'                            '
-		dc.b	'NOW HE HAS TO USE THE RINGS '
-		dc.b	'THERE TO FIND BACK TO EGGMAN'
-		dc.b	'    TO STOP HIM AGAIN...    '
+		dc.b	' THE SPIKED SUCKER DECIDED  ' ;1
+		dc.b	'TO GO BACK TO THE HILLS AND ' ;1
+		dc.b	'CHECK OUT WHAT WAS GOING ON.' ;0
+		dc.b	'                            ' ;0
+		dc.b	'      WHEN SUDDENLY...      ' ;0
+		dc.b	'  EXPLOSIONS! EVERYWHERE!   ' ;1
+		dc.b	'A GRAY METALLIC BUZZ BOMBER ' ;1
+		dc.b	'SHOWERED EXPLODING BOMBS ON ' ;1
+		dc.b	' HIM! SONIC ESCAPED IT, BUT ' ;0
+		dc.b	' MINDLESSY FELL INTO A RING ' ;0
+		dc.b	'    TRAP AND LANDED IN A    ' ;0
+		dc.b	'STRANGE PARALLEL DIMENSION. ' ;1
+		dc.b	'                            ' ;0
+		dc.b	'HE NEEDS TO BLAST HIS WAY TO' ;0
+		dc.b	'  EGGMAN AND ESCAPE IT...   ' ;1
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
 
-InfoText_2:	; text after beating Green Hill Zone
-		dc.b	'SONIC WENT THROUGH THE ZONE '
-		dc.b	'AND FACED EVEN MORE METALLIC'
-		dc.b	'ENEMIES, ALL WANTING TO KILL'
-		dc.b	'    HIM WITH EXPLOSIONS!    '
-		dc.b	'                            '
-		dc.b	'   AFTER A MAD FIGHT WITH   '
-		dc.b	' A SPECIAL CRABMEAT, SONIC  '
-		dc.b	'  CONTINUED HIS WAY TO THE  '
-		dc.b	'GREEN HILL PLACE, HOPING IT '
-		dc.b	' IS NOT EXPLODING AS WELL.  '
-		dc.b	'   SAD BUT TRUE, THAT WAS   '
-		dc.b	'     EXACTLY THE CASE.      '
-		dc.b	'                            '
-		dc.b	'BACK IN SYZ, A RING BLOCKED '
-		dc.b	' HIS WAY TO RUINED PLACE... '
+InfoText_2:	; text after beating Night Hill Place
+		dc.b	'  TELEPORTING WATERFALLS,   ' ;1
+		dc.b	'  CRABMEATS WITH EXPLODING  ' ;0
+		dc.b	'  BALLS, AND THE ORIGINAL   ' ;1
+		dc.b	'GREEN HILL ZONE TRANSFORMED ' ;1
+		dc.b	'INTO HELL ITSELF. HOW COULD ' ;1
+		dc.b	'  THIS SITUATION POSSIBLY   ' ;1
+		dc.b	'     BECOME EVEN WORSE?     ' ;0
+		dc.b	'                            ' ;0
+		dc.b	'EGGMAN WITH 3 SPIKED BALLS! ' ;1
+		dc.b	'THE IRONY WAS TOO GREAT FOR ' ;1
+		dc.b	'SONIC, SO HE MADE IT QUICK. ' ;1
+		dc.b	'                            ' ;0
+		dc.b	'  BUT BACK IN THE UBERHUB,  ' ;0
+		dc.b	'A VERY SPECIAL RING BLOCKED ' ;1
+		dc.b	'   HIS WAY TO ADVANCE...    ' ;1
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
 
-InfoText_3:	; text after beating Special Stage
-		dc.b	'  SONIC WAS RAGING AND YOU  '
-		dc.b	'   ARE PROBABLY AS WELL.    '
-		dc.b	'                            '
-		dc.b	'SORRY FOR ANY DAMAGE TO YOUR'
-		dc.b	'      BRAIN, HONESTLY.      '
-		dc.b	'                            '
-		dc.b	' ANYWAY, AFTER BEATING THE  '
-		dc.b	'SPECIAL STAGE OF HELL, SONIC'
-		dc.b	' WAS FINALLY ABLE TO GO TO  '
-		dc.b	' RUINED PLACE, THINKING IT  '
-		dc.b	'   WILL BE EASY TO BEAT.    '
-		dc.b	'                            '
-		dc.b	'JUST BY ITS NAME, YOU SHOULD'
-		dc.b	'  BE ABLE TO REALIZE, THAT  '
-		dc.b	' THIS NOT THE CASE AT ALL.  '
+InfoText_3:	; text after beating Special Place
+		dc.b	'  IF I SEE SUCH A PATHETIC  ' ;0
+		dc.b	'  EXCUSE OF WHAT YOU CALL   ' ;1
+		dc.b	'SKILL AGAIN, I WILL GO AHEAD' ;0
+		dc.b	'AND DISABLE THE CHECKPOINTS ' ;1
+		dc.b	'UNTIL YOU CAN DO THIS STAGE ' ;1
+		dc.b	'   WHILE YOU ARE ASLEEP!    ' ;1
+		dc.b	'                            ' ;0
+		dc.b	'ANYWAY, 4 EMERALDS OUT OF 6 ' ;1
+		dc.b	'COLLECTED AND SONIC DOES NOT' ;0
+		dc.b	'EVEN KNOW WHY HE NEEDS THEM.' ;0
+		dc.b	'                            ' ;0
+		dc.b	' WELL, TRUTH TO BE TOLD, HE ' ;0
+		dc.b	'DOES NOT. BUT HEY, HOW ELSE ' ;1
+		dc.b	' DO YOU WANT ME TO END THIS ' ;0
+		dc.b	' STAGE? CANDY AND RAINBOWS? ' ;0
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
 
-InfoText_4:	; text after beating Marble Zone
-		dc.b	'WHO WOULD HAVE THOUGHT THAT '
-		dc.b	'  SPIKES CAN BE THAT BAD?   '
-		dc.b	'   SONIC SURELY WAS NOT.    '
-		dc.b	'                            '
-		dc.b	' ANYWAY, AFTER BEATING THIS '
-		dc.b	'HORRIBLE MAZE OF TELEPORTING'
-		dc.b	'  SPIKES, SONIC THOUGHT HE  '
-		dc.b	' WAS FINALLY ABLE TO PEACE  '
-		dc.b	'       OUT A LITTLE.        '
-		dc.b	'                            '
-		dc.b	'  DO YOU KNOW HOW IT FEELS  '
-		dc.b	'  WHEN YOUR OWN CAMERA MAN  '
-		dc.b	'TREATS YOU TO DEATH? IF NOT,'
-		dc.b	'  YOU WILL IN THE NEXT FEW  '
-		dc.b	'         MINUTES...         '
+InfoText_4:	; text after beating Ruined Place
+		dc.b	'THE NAME ITSELF WAS ALREADY ' ;1
+		dc.b	' A HINT FOR THE RUINS THAT  ' ;1
+		dc.b	'   LIE WITHIN THIS STAGE.   ' ;0
+		dc.b	'                            ' ;0
+		dc.b	' FLYING AROUND AND GETTING  ' ;1
+		dc.b	'TELEPORTED BY BLOOD-STAINED ' ;1
+		dc.b	' SPIKES WHILE RINGS RUN OUT ' ;0
+		dc.b	'  LIKE FUEL IN AN OLD CAR.  ' ;0
+		dc.b	'                            ' ;0
+		dc.b	' BUT DO NOT START THINKING  ' ;1
+		dc.b	'ABOUT A REST! SOMEONE NEEDS ' ;1
+		dc.b	'TO PAY THE CAMERA CREW, AND ' ;1
+		dc.b	'  AFTER SONIC LOST SO MANY  ' ;0
+		dc.b	' RINGS, HE COULD NO LONGER  ' ;1
+		dc.b	'PAY FOR THE FULL SERVICE... ' ;1
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
 
-InfoText_5:	; text after beating Labyrinth Zone
-		dc.b	'    I CANNOT TAKE IT ANY    '
-		dc.b	'      FUCKING MORE!!!       '
-		dc.b	'                            '
-		dc.b	' THAT IS WHAT SONIC THOUGHT '
-		dc.b	' AFTER FINALLY BEATING THE  '
-		dc.b	' HORRIBLE UNDERWATER LEVEL. '
-		dc.b	'                            '
-		dc.b	'AND THIS TIME GOD HEARD HIS '
-		dc.b	'  WISHES! THE STEP BETWEEN  '
-		dc.b	'ROBOTNIK AND SONIC WAS JUST '
-		dc.b	'    A SINGLE TUBE AWAY!     '
-		dc.b	'                            '
-		dc.b	'  BUT DO YOU REALLY THINK,  '
-		dc.b	' THAT THIS WILL MAKE STUFF  '
-		dc.b	'     EASIER? HELL NO...     '
+InfoText_5:	; text after beating Labyrinth Place
+		dc.b	' MAN, IF YOU COULD SEE YOUR ' ;0
+		dc.b	' FACE NOW! TOTALLY GODLIKE! ' ;0
+		dc.b	'                            ' ;0
+		dc.b	' WELL, THE CAMERA CREW WILL ' ;0
+		dc.b	'MAKE ENOUGH MONEY BY SELLING' ;0
+		dc.b	'  THE VIDEO RIGHTS OF THAT  ' ;0
+		dc.b	' LAST PATHETIC ACTIVITY OF  ' ;1
+		dc.b	'   YOURS TO SOME BIG FILM   ' ;0
+		dc.b	'COMPANY, SO SONIC IS NOW IN ' ;1
+		dc.b	'  CONTROL OVER THE CAMERA   ' ;1
+		dc.b	'      MOVEMENT AGAIN.       ' ;1
+		dc.b	'                            ' ;0
+		dc.b	'TOO BAD FOR HIM, HE WILL NOT' ;0
+		dc.b	'NEED THAT VERY MUCH FOR THE ' ;1
+		dc.b	'    NEXT FEW MINUTES...     ' ;1
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
 
-InfoText_6:	; text after beating Star Light Zone
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'  SPECIAL 2 PLACEHOLDER     '
-		dc.b	'               TEXT         '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'    ASJHDBAJHSBDJABSD       '
-		dc.b	'                            '
-		dc.b	'            ASVDJHGAVSJGHD  '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'                            '
+InfoText_6:	; text after beating Unreal Place
+		dc.b	'  YOUR FIRST THOUGHTS WERE  ' ;0
+		dc.b	'         NOT AGAIN!         ' ;0
+		dc.b	'  YOUR NEXT THOUGHTS WERE   ' ;1
+		dc.b	'          AGAIN...          ' ;0
+		dc.b	' AND AGAIN... AND AGAIN...  ' ;1
+		dc.b	'                            ' ;0
+		dc.b	' UNTIL YOU REACHED A CHECK  ' ;1
+		dc.b	' POINT! YES, 2 SECONDS TIME ' ;0
+		dc.b	' TO RELAX! BUT ONLY TO SAY  ' ;1
+		dc.b	' AGAIN AGAIN SHORTLY AFTER. ' ;0
+		dc.b	'                            ' ;0
+		dc.b	'   WELL, BRACE YOURSELF,    ' ;1
+		dc.b	'  BECAUSE I CAN ASSURE YOU  ' ;0
+		dc.b	' THAT WAS NOT THE LAST TIME ' ;0
+		dc.b	'  YOU SAID AGAIN TODAY...   ' ;1
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
 
-InfoText_7:	; text after beating Star Light Zone
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'  STAR LIGHT PLACEHOLDER    '
-		dc.b	'               TEXT         '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'    ASJHDBAJHSBDJABSD       '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'                            '
+InfoText_7:	; text after beating Scar Night Place
+		dc.b	'AWW, WOULD YOU LOOK AT THAT ' ;1
+		dc.b	'  NICE STAR FILLED SKY...   ' ;1
+		dc.b	'WHEN SUDDENLY IT GETS FILLED' ;0
+		dc.b	' WITH EXPLOSIONS OF THE NEW ' ;0
+		dc.b	'  WALKING BOMB PROTOTYPE!   ' ;1
+		dc.b	'RANDOM NUMBER GENERATORS ARE' ;0
+		dc.b	'     SUCH A COOL THING.     ' ;0
+		dc.b	'                            ' ;0
+		dc.b	' AND AFTER THAT WE HAD THE  ' ;1
+		dc.b	'HOT WIRE GAME SPACE EDITION,' ;0
+		dc.b	'  TERRIFYING TELEPORTING.   ' ;1
+		dc.b	'                            ' ;0
+		dc.b	'WELL, FEAR NOT MUCH LONGER, ' ;1
+		dc.b	'BECAUSE SOON EVERYTHING YOU ' ;1
+		dc.b	' HAVE SEEN WILL BE OVER...  ' ;1
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
 
 InfoText_8:	; text after jumping in the ring for the Ending Sequence
-		dc.b	'   THE WORLD IS RESCUED,    '
-		dc.b	'  SONIC ONCE AGAIN STOPPED  '
-		dc.b	' ROBOTNIK FROM TAKING OVER  '
-		dc.b	'         THE WORLD.         '
-		dc.b	'                            '
-		dc.b	' SO SONIC DECIDED TO MAKE A '
-		dc.b	'QUICK RUN THROUGH THE GREEN '
-		dc.b	'HILL ZONE AGAIN, SURROUNDED '
-		dc.b	'  BY TONS OF ANIMALS WHICH  '
-		dc.b	' SEEM TO LIKE TO JUMP INTO  '
-		dc.b	'     BOTTOMLESS PITS...     '
-		dc.b	'                            '
-		dc.b	'                            '
-		dc.b	'    THAT SAID, HOW WILL     '
-		dc.b	' EVERYTHING END WITH SONIC? '
+		dc.b	'   THE WORLD IS RESCUED!    ' ;1
+		dc.b	'  ANIMALS JUMP AROUND AND   ' ;1
+		dc.b	' SPERAD THEIR HAPPINESS BY  ' ;1
+		dc.b	'    JUMPING OFF CLIFFS!     ' ;1
+		dc.b	'                            ' ;0
+		dc.b	' SONIC DECIDED TO MAKE ONE  ' ;1
+		dc.b	'QUICK FINAL RUN THROUGH THE ' ;1
+		dc.b	'HILLS, WHERE IT ALL STARTED,' ;1
+		dc.b	' TO CELEBRATE HIS AND YOUR  ' ;1
+		dc.b	' HARD EFFORTS. WITHOUR YOUR ' ;0
+		dc.b	'   HELP, THIS WOULD HAVE    ' ;1
+		dc.b	'      NEVER HAPPENED!       ' ;1
+		dc.b	'                            ' ;0
+		dc.b	' NOW WATCH SONIC ARRIVE AT  ' ;1
+		dc.b	' HIS WELL DESERVED PARTY... ' ;0
+		dc.b	$FF
+		even
+; ---------------------------------------------------------------------------
+
+InfoText_9:	; hidden easter egg text found in Scar Night Place
+		dc.b	' I REMEMBER WHEN I STUCK MY ' ;0
+		dc.b	'DICK INSIDE TWEAKER. WHAT A ' ;1
+		dc.b	'MAGICAL DAY IT WAS! IRONFIST' ;0
+		dc.b	'   GOT SO JEALOUS. SO HE    ' ;1
+		dc.b	'DECIDED TO STICK HIS DICK IN' ;0
+		dc.b	'MICHAELMXM. HE ENJOYED THIS.' ;0
+		dc.b	'IT MADE HIM FEEL HOT. MAGGIE' ;0
+		dc.b	' THEN WALKED INTO THE ROOM, ' ;0
+		dc.b	' UNEXPECTINGLY. SHE GOT WET ' ;0
+		dc.b	' THE INSTANT SHE SAW SEANIE ' ;0
+		dc.b	'ON THE FLOOR NAKED. THEY HAD' ;0
+		dc.b	'  A MAGICAL NIGHT OF LOVE   ' ;1
+		dc.b	' MAKING. AND THEN, TWEAKER  ' ;1
+		dc.b	'DIED AND EVERYONE WAS HAPPY.' ;0
+		dc.b	'          THE END!          ' ;0
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
@@ -831,52 +858,58 @@ Info_Continue:
 ; Scroll positions
 ; ---------------------------------------------------------------------------
 
-ScrollText_1:	dc.b	1, 0, 0, 0
-		dc.b	1, 0, 1, 0
-		dc.b	0, 1, 1, 0
-		dc.b	1, 0, 0
+ScrollText_1:
+		dc.b	1,1,0,0,0
+		dc.b	1,1,1,0,0
+		dc.b	0,1,0,0,1
 		even
 
-ScrollText_2:	dc.b	1, 0, 0, 0
-		dc.b	0, 0, 1, 0
-		dc.b	1, 1, 0, 1
-		dc.b	0, 1, 0
+ScrollText_2:
+		dc.b	1,0,1,1,1
+		dc.b	1,0,0,1,1
+		dc.b	1,0,0,1,1
 		even
 
-ScrollText_3:	dc.b	0, 1, 0, 0
-		dc.b	0, 0, 1, 0
-		dc.b	1, 1, 1, 0
-		dc.b	0, 0, 1
+ScrollText_3:
+		dc.b	0,1,0,1,1
+		dc.b	1,0,1,0,0
+		dc.b	0,0,1,0,0
 		even
 
-ScrollText_4:	dc.b	1, 1, 1, 0
-		dc.b	0, 0, 0, 1
-		dc.b	1, 0, 0, 0
-		dc.b	0, 0, 0
+ScrollText_4:
+		dc.b	1,1,0,0,1
+		dc.b	1,0,0,0,1
+		dc.b	1,1,0,1,1
 		even
 
-ScrollText_5:	dc.b	0, 1, 0, 0
-		dc.b	1, 0, 0, 1
-		dc.b	0, 1, 1, 0
-		dc.b	0, 1, 0
+ScrollText_5:
+		dc.b	0,0,0,0,0
+		dc.b	0,1,0,1,1
+		dc.b	1,0,0,1,1
 		even
 
-ScrollText_6:	dc.b	0, 0, 0, 0
-		dc.b	0, 0, 0, 0
-		dc.b	0, 0, 0, 0
-		dc.b	0, 0, 0
+ScrollText_6:
+		dc.b	0,0,1,0,1
+		dc.b	0,1,0,1,0
+		dc.b	0,1,0,0,1
 		even
 
-ScrollText_7:	dc.b	0, 0, 0, 0
-		dc.b	0, 0, 0, 0
-		dc.b	0, 0, 0, 0
-		dc.b	0, 0, 0
+ScrollText_7:
+		dc.b	1,1,0,0,1
+		dc.b	0,0,0,1,0
+		dc.b	1,0,1,1,1
 		even
 
-ScrollText_8:	dc.b	1, 0, 1, 0
-		dc.b	0, 0, 1, 1
-		dc.b	0, 1, 0, 0
-		dc.b	0, 1, 0
+ScrollText_8:
+		dc.b	1,1,1,1,0
+		dc.b	1,1,1,1,0
+		dc.b	1,1,0,1,0
+		even
+
+ScrollText_9:
+		dc.b	0,1,0,1,0
+		dc.b	0,0,0,0,0
+		dc.b	0,1,1,0,0
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================

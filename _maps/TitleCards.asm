@@ -131,7 +131,7 @@ byte_CB26:	dc.b 4			; ACT 1
 		dc.b $F4, 6, 0, $9B, $23
 byte_CB31:	dc.b 4			; ACT 2
 		dc.b 4,	$C, 0, $53, $EC
-		dc.b $F4, 6, 0,	$5A, 8
+		dc.b $F4, 6, 0,	$5A, 7
 		dc.b $F4, 6, 0, $66, $14	
 		dc.b $F4, 6, 0, $9B, $23
 byte_CB3C:	dc.b 4			; ACT 3
@@ -141,9 +141,9 @@ byte_CB3C:	dc.b 4			; ACT 3
 		dc.b $F4, 6, 0, $9B, $23
 byte_CB31X:	dc.b 4			; ACT 4
 		dc.b 4, $C, 0, $53, $EC	
-		dc.b $F4, $A, 0, $80, 6
-		dc.b $F4, 6, 0, $66, $14	
-		dc.b $F4, 6, 0, $9B, $23
+		dc.b $F4, $A, 0, $80, 7
+		dc.b $F4, 6, 0, $66, $15	
+		dc.b $F4, 6, 0, $9B, $24
 byte_CB3CX:	dc.b 4			; ACT 5
 		dc.b 4, $C, 0, $53, $EC	
 		dc.b $F4, 6, 0, $89, 7
