@@ -1306,6 +1306,8 @@ loc_13BE:
 ; ===========================================================================
 
 PG_ChkHUD:
+		cmpi.w	#$501,($FFFFFE10).w
+		beq.s	PG_NotGHZ2
 		tst.b	($FFFFD040).w		; is HUD already loaded?
 		bne.s	PG_NotGHZ2		; if yes, allow to pause
 		rts				; return
@@ -1355,11 +1357,18 @@ Pal_MBW_Loop:
 loc_13CA:
 		move.b	#5,($FFFFF62A).w	; stop system
 		bsr	DelayProgram		; stop system
+
+		cmpi.w	#$501,($FFFFFE10).w
+		beq.s	Pause_ChkBC
+		cmpi.w	#$400,($FFFFFE10).w
+		beq.s	Pause_ChkBC
 		btst	#6,($FFFFF605).w 	; is button A pressed?
 		beq.s	Pause_ChkBC		; if not, branch
 		move.w	#$400,($FFFFFE10).w	; set level to SYZ1
 		move.b	#$C,($FFFFF600).w	; set to level
 		move.w	#1,($FFFFFE02).w	; restart level
+		jsr	ClearEverySpecialFlag
+		clr.b	($FFFFFFE7).w
 		bra.s	loc_1404		; skip to loc_1404
 ; ===========================================================================
 
@@ -2493,14 +2502,16 @@ locret_1AC6:
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
 PalCycle_SBZ:
-		lea	(Pal_SBZCycList).l,a2
-		tst.b	($FFFFFE11).w
-		beq.s	loc_1ADA
 		lea	(Pal_SBZCycList2).l,a2
-
-loc_1ADA:
 		lea	($FFFFF650).w,a1
 		move.w	(a2)+,d1
+
+
+		cmpi.w	#$500,($FFFFFE10).w
+		bne.s	loc_1AE0
+		tst.b	($FFFFFF86).w
+		beq.s	loc_1AE0
+		move.w	#7,d1
 
 loc_1AE0:
 		subq.b	#1,(a1)
@@ -2531,7 +2542,7 @@ loc_1B06:				; XREF: PalCycle_SBZ
 		subq.w	#1,($FFFFF634).w
 		bpl.s	locret_1B64
 		lea	(Pal_SBZCyc4).l,a0
-		move.w	#1,($FFFFF634).w
+		move.w	#2,($FFFFF634).w
 		tst.b	($FFFFFE11).w
 		beq.s	loc_1B2E
 		lea	(Pal_SBZCyc10).l,a0
@@ -2559,10 +2570,6 @@ loc_1B52:
 		move.w	d0,($FFFFF632).w
 		add.w	d0,d0
 		lea	($FFFFFB58).w,a1
-
-		cmpi.w	#$500,($FFFFFE10).w	; is this the cutscene?
-		beq.s	locret_1B64		; if yes, branch
-
 		move.l	(a0,d0.w),(a1)+
 		move.w	4(a0,d0.w),(a1)
 
@@ -3252,6 +3259,7 @@ Pal_LZSonWater:		incbin	pallet\son_lzuw.bin
 Pal_SpeContinue:	incbin	pallet\sscontin.bin
 Pal_Ending:		incbin	pallet\ending.bin
 Pal_Null:		incbin	pallet\null.bin
+Pal_BCutscene:		incbin	pallet\bombcutscene.bin
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to	delay the program by ($FFFFF62A) frames
@@ -4386,6 +4394,12 @@ Level_WaterPal2:
 		bsr	PalLoad4_Water
 
 Level_Delay:
+		cmpi.b	#3,($FFFFFE10).w
+		bne.s	@cont
+		jsr	SingleObjLoad
+		move.b	#$5C,(a1)
+
+@cont:
 		move.w	#3,d1
 
 Level_DelayLoop:
@@ -9771,6 +9785,11 @@ MainLoadBlockLoad:			; XREF: Level; EndingSequence
 		move.w	(a2),d0
 		andi.w	#$FF,d0
 
+		cmpi.w	#$500,($FFFFFE10).w
+		bne.s	MLB_NotBCut
+		moveq	#$15,d0
+
+MLB_NotBCut:
 		cmpi.w	#$001,($FFFFFE10).w	; is level GHZ2?
 		bne.s	MLB_NotGHZ2		; if not, branch
 		moveq	#$D,d0			; use GHZ2 pallet
@@ -10415,7 +10434,7 @@ Resize_SLZ3:
 
 @cont5:
 		cmpi.w	#$1FC0,($FFFFD008).w
-		bcs.s	@cont
+		bcs.w	@cont
 		
 		cmpi.w	#$49,($FFFFD00C).w
 		bcc.s	@cont2
@@ -10423,7 +10442,7 @@ Resize_SLZ3:
 		move.w	#$200,($FFFFD010).w
 		move.w	#0,($FFFFD012).w
 		move.b	#$E,($FFFFD01C).w
-		bra.s	@contret
+		bra.w	@contret
 
 @cont2:
 		move.b	#1,($FFFFF7CC).w
@@ -10441,6 +10460,11 @@ Resize_SLZ3:
 		cmpi.w	#$8C,($FFFFD00C).w
 		bcc.s	@cont4x
 		addq.w	#8,($FFFFFFB6).w
+		tst.w	($FFFFFFB6).w
+		bmi.s	@cont5x
+		move.w	#-8,($FFFFFFB6).w
+
+@cont5x:
 		move.w	($FFFFFFB6).w,($FFFFD012).w
 		move.b	#2,($FFFFD01C).w
 		bra.s	@cont3x
@@ -18332,7 +18356,7 @@ loc_BDD6:
 		move.w	#$84B6,2(a1)
 		ori.b	#$84,1(a1)
 		move.b	#3,$18(a1)
-		move.b	#3,$1A(a1)
+		move.b	#0,$1A(a1)
 
 		lea	($FFFFDF40).w,a1
 		move.b	#$26,(a1)
@@ -19336,47 +19360,94 @@ Obj3A:					; XREF: Obj_Index
 Obj3A_Index:	dc.w Obj3A_Main-Obj3A_Index
 		dc.w Obj3A_Machine-Obj3A_Index
 		dc.w Obj3A_Needle-Obj3A_Index
+		dc.w Obj3A_Wheel-Obj3A_Index
+		dc.w Obj3A_Scale-Obj3A_Index
 ; ===========================================================================
 
 Obj3A_Main:				; XREF: Obj6D_Index
 		addq.b	#2,$24(a0)
 		move.l	#Map_BombMachine,4(a0)
-		move.w	#$42B0,2(a0)
+		move.w	#$22B0,2(a0)
 		ori.b	#4,1(a0)
-		move.b	#0,$18(a0)
+		move.b	#1,$18(a0)
 
 		jsr	SingleObjLoad
 		move.b	#$3A,(a1)
 		move.b	#4,$24(a1)
-		move.b	#1,$1A(a1)
+		move.b	#4,$1A(a1)
 		move.b	#0,$18(a1)
 		move.l	#Map_BombMachine,4(a1)
-		move.w	#$42B0,2(a1)
+		move.w	#$22B0,2(a1)
 		ori.b	#4,1(a1)
 		move.w	$8(a0),$8(a1)
 		move.w	$C(a0),$C(a1)
+		move.b	#1,$1C(a1)
+
+		jsr	SingleObjLoad
+		move.b	#$3A,(a1)
+		move.b	#6,$24(a1)
+		move.b	#8,$1A(a1)
+		move.b	#0,$18(a1)
+		move.l	#Map_BombMachine,4(a1)
+		move.w	#$22B0,2(a1)
+		ori.b	#4,1(a1)
+		move.w	$8(a0),$8(a1)
+		move.w	$C(a0),$C(a1)
+		move.b	#2,$1C(a1)
+
+		jsr	SingleObjLoad
+		move.b	#$3A,(a1)
+		move.b	#8,$24(a1)
+		move.b	#$B,$1A(a1)
+		move.b	#0,$18(a1)
+		move.l	#Map_BombMachine,4(a1)
+		move.w	#$22B0,2(a1)
+		ori.b	#4,1(a1)
+		move.w	$8(a0),$8(a1)
+		move.w	$C(a0),$C(a1)
+		move.b	#3,$1C(a1)
+		move.l	a1,($FFFFFF8A).w
+		rts
 
 
 Obj3A_Machine:				; XREF: Obj6D_Index
-	;	movea.l	$30(a0),a2
-	;	cmpi.b	#6,$25(a2)
-	;	beq.s	@cont
-	;	move.b	#1,$1A(a0)
-	;	bra.w	DisplaySprite
-
+		tst.b	($FFFFFF86).w
+		bne.s	@cont
+		move.b	#0,$1A(a0)
+		bra.w	DisplaySprite
 @cont:
 		lea	(Ani_BombMachine).l,a1
 		bsr	AnimateSprite
 		bra.w	DisplaySprite
 
-Obj3A_Needle:
-	;	movea.l	$30(a0),a2
-	;	cmpi.b	#6,$25(a2)
-	;	bne.s	@cont
-	;	move.b	#2,$1A(a0)
+; ---------------------------------------------------------------------------
 
-;@cont:
-		rts
+Obj3A_Needle:
+		tst.b	($FFFFFF86).w
+		bne.s	@cont
+		move.b	#4,$1A(a0)
+		bra.w	DisplaySprite
+@cont:
+		move.w	#$42B0,2(a0)
+		lea	(Ani_BombMachine).l,a1
+		bsr	AnimateSprite
+		bra.w	DisplaySprite
+; ---------------------------------------------------------------------------
+
+Obj3A_Wheel:
+		tst.b	($FFFFFF86).w
+		bne.s	@cont
+		move.b	#8,$1A(a0)
+		bra.w	DisplaySprite
+@cont:
+		lea	(Ani_BombMachine).l,a1
+		bsr	AnimateSprite
+		bra.w	DisplaySprite
+; ---------------------------------------------------------------------------
+
+Obj3A_Scale:
+		lea	(Ani_BombMachine).l,a1
+		bsr	AnimateSprite
 		bra.w	DisplaySprite
 
 ; ---------------------------------------------------------------------------
@@ -19387,7 +19458,13 @@ Map_BombMachine:
 
 Ani_BombMachine:
 		dc.w A_BM1-Ani_BombMachine
-A_BM1:		dc.b 5, 0, 3, 2, 1, $FF
+		dc.w A_BM2-Ani_BombMachine
+		dc.w A_BM3-Ani_BombMachine
+		dc.w A_BM4-Ani_BombMachine
+A_BM1:		dc.b 4, 0, 1, 3, $FF
+A_BM2:		dc.b 2, 5, 6, 7, $FF
+A_BM3:		dc.b 3, 8, 9, $A, $B, $FF
+A_BM4:		dc.b 3, $C, $D, $E, $F, $10, $11, $12, $13, $FE, 2
 		even
 ; ===========================================================================
 
@@ -22534,6 +22611,7 @@ Obj0D_Spin:				; XREF: Obj0D_Index
 		cmpi.b	#3,$1C(a0)	; have 3 spin cycles completed?
 		bne.s	Obj0D_Sparkle	; if not, branch
 		addq.b	#2,$24(a0)
+		move.w	#90,$30(a0)	; set after spin time to 1.5 seconds
 
 Obj0D_Sparkle:
 		subq.w	#1,$32(a0)	; subtract 1 from time delay
@@ -22576,14 +22654,14 @@ Obj0D_SparkPos:	dc.b -$18,-$10		; x-position, y-position
 ; ===========================================================================
 
 Obj0D_SonicRun:				; XREF: Obj0D_Index
+		tst.w	$30(a0)
+		beq.s	@cont
+		subq.w	#1,$30(a0)
+		bra.w	locret_ECEE
+@cont:
 		tst.w	($FFFFFE08).w	; is debug mode	on?
 		bne.w	locret_ECEE	; if yes, branch
-		btst	#1,($FFFFD022).w
-		bne.s	loc_EC70
-		move.b	#1,($FFFFF7CC).w ; lock	controls
-		move.w	#$800,($FFFFF602).w ; make Sonic run to	the right
 
-loc_EC70:
 		tst.b	($FFFFD000).w	; is sonic stil on the screen?
 		beq.s	loc_EC86	; if yes, branch
 		move.w	($FFFFD008).w,d0
@@ -27015,15 +27093,31 @@ Obj5F_SBZ1:
 		jsr	ObjectFall
 		jsr	SpeedToPos
 
+		tst.b	($FFFFFF86).w
+		beq.s	@contx
+		cmpi.w	#$0200,$C(a0)
+		blt.s	@cont
+		bra.s	@conty
+
+@contx:
 		cmpi.w	#$0240,$C(a0)
 		blt.s	@cont
+
+@conty:
 		move.w	#$0150,$C(a0)
 		clr.w	$12(a0)
 		move.b	#$CD,d0
 		jsr	PlaySound_Special
+		movea.l	($FFFFFF8A).w,a1
+		move.b	#0,$1B(a1)
 
 @cont:
+		tst.w	($FFFFFF8A).w
+		beq.s	@cont2
 		bra.w	DisplaySprite
+
+@cont2:
+		rts
 ; ===========================================================================
 
 Ani_obj5F:
@@ -31650,7 +31744,6 @@ SLZHitWall:
 		clr.b	($FFFFFFE1).w
 
 		movem.l	d0-a1,-(sp)
-
 		lea	($FFFFDF40).w,a1
 		move.b	#2,$24(a1)
 		move.b	#8,$28(a1)
@@ -31667,8 +31760,9 @@ SLZHitWall:
 @conty:
 		tst.b	($FFFFFFA0).w
 		beq.w	@cont
-		clr.b	($FFFFFFA0).w
 		movem.l	d0-a1,-(sp)
+
+		clr.b	($FFFFFFA0).w
 		lea	($FFFFDF80).w,a1
 		jsr	DeleteObject2
 		lea	($FFFFDFC0).w,a1
@@ -31685,7 +31779,7 @@ SLZHitWall:
 		move.w	#$84B6,2(a1)
 		ori.b	#$84,1(a1)
 		move.b	#3,$18(a1)
-		move.b	#3,$1A(a1)
+		move.b	#0,$1A(a1)
 		move.w	#$1B80,d0
 		move.w	#$0280,d1
 		move.b	#$50,d2
@@ -36925,7 +37019,7 @@ Obj7D_Action:
 		move.w	#$C9,d0
 		jsr	(PlaySound_Special).l ;	play bonus sound
 		
-		moveq	#10,d0
+		moveq	#1,d0
 		jsr	AddPoints
 
 		cmpi.b	#6,($FFFFFFA0).w
@@ -36941,7 +37035,8 @@ Obj7D_Action:
 		move.w	#$84B6,2(a1)
 		ori.b	#$84,1(a1)
 		move.b	#3,$18(a1)
-		move.b	#3,$1A(a1)
+		move.b	($FFFFFFA0).w,$1A(a1)
+		addq.b	#1,$1A(a1)
 
 @cont:
 		addq.b	#1,($FFFFFFA0).w
@@ -36984,6 +37079,9 @@ Obj7D_Action2:
 		move.w	#$C9,d0
 		jsr	(PlaySound_Special).l ;	play bonus sound
 
+		moveq	#1,d0
+		jsr	AddPoints
+
 		addq.b	#1,($FFFFFFA0).w
 		cmpi.b	#6,($FFFFFFA0).w
 		blt.s	Obj7D_No6
@@ -37011,7 +37109,7 @@ Obj7D_No6:
 		move.w	#$84B6,2(a1)
 		ori.b	#$84,1(a1)
 		move.b	#3,$18(a1)
-		move.b	#3,$1A(a1)
+		move.b	($FFFFFFA0).w,$1A(a1)
 		bra.w	Obj7D_Delete
 
 Obj7D_NoTouch2:
@@ -40456,27 +40554,14 @@ Obj82_Main:				; XREF: Obj82_Index
 		moveq	#$1E,d0
 		jsr	LoadPLC		; load SBZ2 Eggman patterns
 
-	;	jsr	SingleObjLoad
-	;	move.b	#$6D,(a1)
-	;	move.w	#$01CC,$8(a1)
-	;	move.w	#$0164,$C(a1)
-	;	move.l	a0,$30(a1)
-		
-	;	jsr	SingleObjLoad
-	;	move.b	#$6D,(a1)
-	;	move.w	#$01CC,$8(a1)
-	;	move.w	#$0174,$C(a1)
-	;	move.l	a0,$30(a1)
-
 		jsr	SingleObjLoad
 		move.b	#$3A,(a1)
 		move.w	#$01B4,$8(a1)
 		move.w	#$0128,$C(a1)
 		move.l	a0,$30(a1)
 
-	;	move.w	#$502,($FFFFFE10).w
 		lea	Obj82_ObjData(pc),a2
-		move.w	#$70,8(a0)
+		move.w	#$50,8(a0)
 		move.w	#$1A5,$C(a0)
 		move.b	#$F,$20(a0)
 		move.b	#$10,$21(a0)
@@ -40530,7 +40615,7 @@ Obj82_ChkSonic:				; XREF: Obj82_EggIndex
 		move.b	#1,$1C(a0)	; make eggman laugh
 
 @cont:
-		move.w	#$80,$10(a0)
+		move.w	#$B0,$10(a0)
 		cmpi.w	#$140,d0
 		blt.s	loc_19934
 		addq.b	#2,$25(a0)
@@ -40569,12 +40654,12 @@ loc_19976:
 		addi.w	#$24,$12(a0)
 		tst.w	$12(a0)
 		bmi.s	Obj82_FindBlocks
-		cmpi.w	#$193,$C(a0)
+		cmpi.w	#$194,$C(a0)
 		bcs.s	Obj82_FindBlocks
 		move.w	#$5357,$28(a0)
-		cmpi.w	#$199,$C(a0)
+		cmpi.w	#$19A,$C(a0)
 		bcs.s	Obj82_FindBlocks
-		move.w	#$199,$C(a0)
+		move.w	#$19A,$C(a0)
 		clr.w	$12(a0)
 
 Obj82_FindBlocks:
@@ -40599,6 +40684,8 @@ Obj82_FindBlocks:
 		
 		move.b	#$C3,d0
 		jsr	PlaySound
+		
+		move.b	#1,($FFFFFF86).w
 
 	;	move.l	a0,-(sp)
 	;	move.l	#$66600002,($C00004).l
@@ -40610,7 +40697,7 @@ Obj82_FindBlocks:
 
 		addq.b	#2,$25(a0)
 		move.b	#1,$1C(a0)
-		move.w	#4*60,$30(a0)	; set time delay to 4 seconds
+		move.w	#5*60,$30(a0)	; set time delay to 5 seconds
 
 loc_199D0:
 	;	bra.w	loc_19934
@@ -45291,8 +45378,8 @@ HudUpdate:
 
 @NoDemo:
 	if DontAllowDebug=0
-		tst.w	($FFFFFFFA).w	; is debug mode	on?
-		bne.w	HudDebug	; if yes, branch
+	;	tst.w	($FFFFFFFA).w	; is debug mode	on?
+	;	bne.w	HudDebug	; if yes, branch
 	endif
 		tst.b	($FFFFFE1F).w	; does the score need updating?
 		beq.s	Hud_ChkRings	; if not, branch

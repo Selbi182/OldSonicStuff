@@ -64,3 +64,6 @@
 	dc.l Pal_InfoScreen
 	dc.w $FB00
 	dc.w $1F
+	dc.l Pal_BCutscene
+	dc.w $FB20
+	dc.w $1F

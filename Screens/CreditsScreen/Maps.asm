@@ -27,6 +27,7 @@ CreditsMaps:
 	dc.l	EndText-StartText				; number of sections
 
 StartText:
+	; 1
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
 	dc.b	"  CREATED AND MAIN  ",$FF
@@ -43,7 +44,7 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
-
+	; 2
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
 	dc.b	" WITH GRAPHICS AND  ",$FF
@@ -60,6 +61,7 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
+	; 3
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
 	dc.b	"   AND ADDITIONAL   ",$FF
@@ -76,39 +78,24 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
-
+	; 4
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	"    MUSIC CREATED   ",$FF
+	dc.b	"   MUSIC CREATED    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"         BY         ",$FF
-	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"      DALEKSAM      ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-
-	dc.b	$0D						; Number of lines
-	dc.b	"                    ",$FF
-	dc.b	"    MUSIC CREATED   ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"         BY         ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"      SPANNER       ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
 
+	; 5
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
 	dc.b	"  SOUND DRIVER AND  ",$FF
@@ -125,11 +112,12 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
+	; 6
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
 	dc.b	" MAIN BETA TESTING  ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
+	dc.b	"         BY         ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
@@ -141,22 +129,41 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
+	; 7
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	" SPECIAL THANKS TO  ",$FF
+	dc.b	"   SPECIAL THANKS   ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
+	dc.b	"         TO         ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"     MAINMEMORY     ",$FF
 	dc.b	"                    ",$FF
+	dc.b	"       JORGE        ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+
+	; 8
+	dc.b	$0D						; Number of lines
+	dc.b	"                    ",$FF
+	dc.b	"   ONE HOT NIGHT    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"      STORY BY      ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"      TONGARA       ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
+	; 9
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
 	dc.b	"   ORIGINAL GAME    ",$FF
@@ -173,16 +180,17 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
+	; 10
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	"    THANKS  FOR     ",$FF
+	dc.b	"     THANKS FOR     ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"      PLAYING       ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"    PRESS  START    ",$FF
+	dc.b	"    PRESS START     ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"     TO  RETURN     ",$FF
+	dc.b	"     TO RETURN      ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"   TO SEGA SCREEN   ",$FF
 	dc.b	"                    ",$FF

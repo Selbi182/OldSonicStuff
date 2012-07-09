@@ -80,7 +80,54 @@ CJSM_Repeat:
 CJSM_Repeat2:
 		move.l	d0,(a1)+				; dump to scroll buffer
 		dbf	d1,CJSM_Repeat2				; repeat til all scanlines are written to
-		rts						; return
+
+
+		lea	(CJSM_FO_Array).l,a2	; load base address for the check array
+@FOL_FixOddLoop:
+		moveq	#0,d1			; clear d1
+		moveq	#0,d2			; clear d2
+		moveq	#0,d3			; clear d3
+
+		move.b	(a2),d1			; get current Text ID
+		cmp.b	($FFFFFF91).w,d1	; does it match with the current text ID?
+		bne.s	@FOL_ReLoop		; if not branch
+		move.b	1(a2),d2		; get current Row ID
+		lsl.w	#6,d2			; multiply it by $40
+		lea	($FFFFCC00).w,a1	; load scroll buffer address
+		add.w	d2,a1			; add it to the SBA
+		move.w	#$000F,d3		; repeat 16 times
+@FOL_Loop:	addi.l	#$00080000,(a1)+	; move a tad to the right
+		dbf	d3,@FOL_Loop		; loop
+@FOL_ReLoop:
+		addq.w	#2,a2			; go to next check
+		tst.b	(a2)			; end of list reached?
+		bpl.s	@FOL_FixOddLoop		; if not, repeat
+		rts				; otherwise, return
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+CJSM_FO_Array:
+		;	Text, Row
+		dc.b	 1, 8
+		dc.b	 2, 1
+		dc.b	 2, 3
+		dc.b	 4, 1
+		dc.b	 4, 9
+		dc.b	 5, 8
+		dc.b	 6, 1
+		dc.b	 6, 7
+		dc.b	 7, 9
+		dc.b	 8, 1
+		dc.b	 8, 8
+		dc.b	 9, 1
+		dc.b	10, 3
+		dc.b	10, 6
+		dc.b	10, 8
+		dc.b	$FF, $FF
+		even
+; ---------------------------------------------------------------------------
+; ===========================================================================
+
 
 ; ---------------------------------------------------------------------------
 ; ===========================================================================

@@ -23,4 +23,7 @@
 	dc.b 3,	3
 	dc.w Pal_SBZCyc8+4
 	dc.w $FB7C
+	dc.b 3, 8
+	dc.w Pal_SBZCyc2
+	dc.w $FB32
 	even
