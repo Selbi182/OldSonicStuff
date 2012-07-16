@@ -15,7 +15,7 @@ NG42_Header:
 	smpsHeaderFM	NG42_FM2,	smpsPitch01lo,	$14
 	smpsHeaderFM	NG42_FM3,	smpsPitch01lo,	$17
 	smpsHeaderFM	NG42_FM4,	smpsPitch01lo,	$17
-	smpsHeaderFM	NG42_FM5,	smpsPitch01lo,	$14
+	smpsHeaderFM	NG42_FM5,	smpsPitch01lo,	$1B
 	smpsHeaderPSG	NG42_PSG1,	smpsPitch03lo,	$02,	$00
 
 NG42_Call01:
@@ -614,12 +614,11 @@ NG42_Call44:
 	smpsReturn
 
 NG42_Voices:
-	dc.b		$3D,$01,$01,$02,$01,$4C,$0F,$50,$12,$0B,$05,$01,$02,$01,$00,$00
-	dc.b		$00,$2F,$2F,$2F,$1F,$1C,$80,$86,$80;			Voice 00
-	;dc.b		$38,$33,$01,$51,$01,$10,$13,$1A,$1B,$0F,$1F,$1F,$1F,$01,$01,$01
-	;dc.b		$01,$33,$03,$03,$08,$16,$1A,$19,$80;			Voice 00
+	dc.b	$3d,$12,$14,$12,$11,$50,$1b,$1b,$1a,$f,$a,$a,$a,$5,$7,$8
+	dc.b	$6,$1f,$1f,$1f,$1f,$15,$8b,$80,$80	; Voice 3 (PSIV-PS1Dungeon2-2:FM1 Lead Synth (Mod $01, $01, $05, $04))
 	dc.b		$38,$33,$01,$51,$01,$10,$13,$1A,$1B,$0F,$1F,$1F,$1F,$01,$01,$01
 	dc.b		$01,$33,$03,$03,$08,$16,$1A,$19,$80;			Voice 01
+
 	dc.b		$3A,$31,$20,$41,$61,$8F,$8F,$8E,$54,$0E,$03,$0E,$03,$00,$00,$00
 	dc.b		$00,$13,$F3,$13,$0A,$17,$21,$19,$80;			Voice 02
 	even

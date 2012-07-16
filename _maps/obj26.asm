@@ -42,5 +42,5 @@ SME_O_S1T_81:	dc.b 2
 		dc.b $F6, 5, 0, $20, $F8	
 		dc.b $F0, $F, 0, 0, $F0	
 SME_O_S1T_8C:	dc.b 1	
-		dc.b $FF, $D, 0, $38, $F0	
+		dc.b $00, $D, 0, $38, $F0	
 		even

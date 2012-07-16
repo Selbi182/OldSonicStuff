@@ -642,7 +642,7 @@ Hint_Pre:
 	dc.b	'OF THE MOST RAGE    ',_br
 	dc.b	'INDUCING, UNIQUE,   ',_br
 	dc.b	'AND EXPLOSIVE       ',_br
-	dc.b	'CHALLANGES EVER     ',_br
+	dc.b	'CHALLENGES EVER     ',_br
 	dc.b	'CREATED FOR A SONIC ',_br
 	dc.b	'GAME!               ',_br
 	dc.b	_pause,_cls
@@ -669,11 +669,11 @@ Hint_1:
 	dc.b	_br,_br
 	dc.b	'   WELCOME TO THE   ',_br
 	dc.b	_br
-	dc.b	'  tutorial  place1  ',_br
+	dc.b	'   tutorial place   ',_br
 	dc.b	_pause,_cls
 	
 	dc.b	'MONITORS LIKE THESE ',_br
-	dc.b	'ARE SPREAD AROUNND  ',_br
+	dc.b	'ARE SPREAD AROUND   ',_br
 	dc.b	'THIS LEVEL AND WILL ',_br
 	dc.b	'TELL YOU A LOT OF   ',_br
 	dc.b	'USEFUL INFORMATION, ',_br
@@ -881,8 +881,8 @@ Hint_6:
 	dc.b	'KEEP IN MIND THAT   ',_br
 	dc.b	'YOU WILL LOSE ALL OF',_br
 	dc.b	'YOUR RINGS, SHIELDS,',_br
-	dc.b	'AND INVINCIBILIES IN',_br
-	dc.b	'THE PROCESS!        ',_br
+	dc.b	'AND INVINCIBILITIES ',_br
+	dc.b	'IN THE PROCESS!     ',_br
 	dc.b	_pause,_cls
 
 	dc.b	_br

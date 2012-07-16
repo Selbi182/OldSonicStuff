@@ -678,7 +678,7 @@ InfoText_1:	; text after intro cutscene
 		dc.b	'A GRAY METALLIC BUZZ BOMBER ' ;1
 		dc.b	'SHOWERED EXPLODING BOMBS ON ' ;1
 		dc.b	' HIM! SONIC ESCAPED IT, BUT ' ;0
-		dc.b	' MINDLESSY FELL INTO A RING ' ;0
+		dc.b	'MINDLESSLY FELL INTO A RING ' ;1
 		dc.b	'    TRAP AND LANDED IN A    ' ;0
 		dc.b	'STRANGE PARALLEL DIMENSION. ' ;1
 		dc.b	'                            ' ;0
@@ -811,14 +811,14 @@ InfoText_7:	; text after beating Scar Night Place
 InfoText_8:	; text after jumping in the ring for the Ending Sequence
 		dc.b	'   THE WORLD IS RESCUED!    ' ;1
 		dc.b	'  ANIMALS JUMP AROUND AND   ' ;1
-		dc.b	' SPERAD THEIR HAPPINESS BY  ' ;1
+		dc.b	' SPREAD THEIR HAPPINESS BY  ' ;1
 		dc.b	'    JUMPING OFF CLIFFS!     ' ;1
 		dc.b	'                            ' ;0
 		dc.b	' SONIC DECIDED TO MAKE ONE  ' ;1
 		dc.b	'QUICK FINAL RUN THROUGH THE ' ;1
 		dc.b	'HILLS, WHERE IT ALL STARTED,' ;1
 		dc.b	' TO CELEBRATE HIS AND YOUR  ' ;1
-		dc.b	' HARD EFFORTS. WITHOUR YOUR ' ;0
+		dc.b	' HARD EFFORTS. WITHOUT YOUR ' ;0
 		dc.b	'   HELP, THIS WOULD HAVE    ' ;1
 		dc.b	'      NEVER HAPPENED!       ' ;1
 		dc.b	'                            ' ;0
@@ -837,7 +837,7 @@ InfoText_9:	; hidden easter egg text found in Scar Night Place
 		dc.b	'MICHAELMXM. HE ENJOYED THIS.' ;0
 		dc.b	'IT MADE HIM FEEL HOT. MAGGIE' ;0
 		dc.b	' THEN WALKED INTO THE ROOM, ' ;0
-		dc.b	' UNEXPECTINGLY. SHE GOT WET ' ;0
+		dc.b	' UNEXPECTEDLY. SHE GOT WET  ' ;1
 		dc.b	' THE INSTANT SHE SAW SEANIE ' ;0
 		dc.b	'ON THE FLOOR NAKED. THEY HAD' ;0
 		dc.b	'  A MAGICAL NIGHT OF LOVE   ' ;1
@@ -860,7 +860,7 @@ Info_Continue:
 
 ScrollText_1:
 		dc.b	1,1,0,0,0
-		dc.b	1,1,1,0,0
+		dc.b	1,1,1,0,1
 		dc.b	0,1,0,0,1
 		even
 
@@ -908,7 +908,7 @@ ScrollText_8:
 
 ScrollText_9:
 		dc.b	0,1,0,1,0
-		dc.b	0,0,0,0,0
+		dc.b	0,0,0,1,0
 		dc.b	0,1,1,0,0
 		even
 ; ---------------------------------------------------------------------------

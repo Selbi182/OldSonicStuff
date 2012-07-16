@@ -54,8 +54,8 @@ Align:		macro
 ;Don't allow debug mode, not even with Game Genie.
 ; 0 - No
 ; 1 - Yes
-DebugModeDefault = 1
-DontAllowDebug = 0
+DebugModeDefault = 0
+DontAllowDebug = 1
 ;=================================================
 ;Enable Demo Recording. (In RAM at $FFFFD200)
 ;Also disables Stars and Shields
@@ -67,7 +67,7 @@ AutoDEMO = 0
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened
-DoorsAlwaysOpen = 1
+DoorsAlwaysOpen = 0
 ;=================================================
 
 ; ---------------------------------------------------------------------------
@@ -2509,7 +2509,7 @@ PalCycle_SBZ:
 
 		cmpi.w	#$500,($FFFFFE10).w
 		bne.s	loc_1AE0
-		tst.b	($FFFFFF86).w
+		tst.b	($FFFFFFC8).w
 		beq.s	loc_1AE0
 		move.w	#7,d1
 
@@ -7866,6 +7866,7 @@ Deform_MZ_6:				; CODE XREF: Deform_MZ+E4?j
 ; ===========================================================================
 
 DSLZ_Pos = $120
+DSLZ_PosX = $000
 
 Deform_SLZ:
 		move.w	#DSLZ_Pos,($FFFFF70C).w
@@ -7886,6 +7887,7 @@ Deform_SLZ:
 
 		add.w	d2,d2
 		add.w	d2,d2
+		move.w	#DSLZ_PosX,($FFFFF70C).w
 
 @cont:
 		cmpi.w	#$302,($FFFFFE10).w
@@ -7894,6 +7896,7 @@ Deform_SLZ:
 		beq.s	@cont2
 
 		add.w	d2,d2
+		move.w	#DSLZ_Pos,($FFFFF70C).w
 
 @cont2:
 		neg.w	d2
@@ -8273,6 +8276,15 @@ S_H_BuzzIgnore:
 		tst.b	($FFFFF7CD).w
 		bne.s	S_H_ResetCamera
 
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	@cont
+		cmpi.w	#$1B00,($FFFFD008).w
+		bcs.s	@cont
+		cmpi.w	#$2100,($FFFFD008).w
+		bcc.s	@cont
+		bra.s	S_H_ResetCamera
+
+@cont:
 		tst.b	($FFFFFFAF).w		; has a flag been set to do this? (Peelout / Spindash)
 		bne.s	S_H_PeeloutSpindash	; if yes, branch
 		move.w	($FFFFD014).w,d2	; load sonic's ground speed to d2
@@ -9633,6 +9645,8 @@ loc_71FC:				; CODE XREF: LoadTilesFromStart2+22?j
 		cmpi.b	#4,($FFFFF600).w ; is this the title screen?
 		beq.s	@cont
 		moveq	#-$10,d3
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@cont
 		addi.w	#$10,d4
 
 @cont:
@@ -12711,10 +12725,21 @@ Obj2A_OpenShut:				; XREF: Obj2A_Index
 		bcs.s	Obj2A_Animate
 		sub.w	d1,d0
 		sub.w	d1,d0
-		bra.s	Obj2A_NotSYZ1x
+
+		cmp.w	8(a0),d0
+		bcc.s	Obj2A_Animate
+
+Obj2A_SYZ1:
+		add.w	d1,d0
+		cmp.w	8(a0),d0
+		bcc.s	loc_899A
+		btst	#0,$22(a0)
+		bne.s	Obj2A_Animate
+		bra.s	Obj2A_Open
+; ===========================================================================
 
 Obj2A_NotSYZ1:
-		move.w	#$40,d1		; set minimum distance between door and Sonic
+		move.w	#$40,d1
 		clr.b	$1C(a0)		; use "closing"	animation
 		move.w	($FFFFD008).w,d0
 		add.w	d1,d0
@@ -12722,16 +12747,8 @@ Obj2A_NotSYZ1:
 		bcs.s	Obj2A_Animate
 		sub.w	d1,d0
 		sub.w	d1,d0
-
-		cmp.w	8(a0),d0
-		bcc.s	Obj2A_Open
-		bra.s	Obj2A_SYZ1
-
-Obj2A_NotSYZ1x:
 		cmp.w	8(a0),d0
 		bcc.s	Obj2A_Animate
-
-Obj2A_SYZ1:
 		add.w	d1,d0
 		cmp.w	8(a0),d0
 		bcc.s	loc_899A
@@ -13164,6 +13181,8 @@ Obj27_NoCamShake:
 	;	tst.w	($FFFFFE20).w 	; do you have any rings?
 	;	beq.s	Obj27_Animate	; if not, branch
 		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	Obj27_Animate
+		cmpi.w	#$501,($FFFFFE10).w
 		beq.s	Obj27_Animate
 		bsr	SingleObjLoad
 		bne.s	Obj27_Animate
@@ -18341,7 +18360,7 @@ loc_BDD6:
 		tst.b	($FFFFFF77).w
 		bne.w	@cont
 		move.b	#1,($FFFFFF77).w
-		move.b	#$81,d0			; play music
+		move.b	#$9B,d0			; play music
 		jsr	PlaySound
 		
 		addi.w	#100,($FFFFFE20).w
@@ -19406,12 +19425,12 @@ Obj3A_Main:				; XREF: Obj6D_Index
 		move.w	$8(a0),$8(a1)
 		move.w	$C(a0),$C(a1)
 		move.b	#3,$1C(a1)
-		move.l	a1,($FFFFFF8A).w
+		move.l	a1,($FFFFFFC4).w
 		rts
 
 
 Obj3A_Machine:				; XREF: Obj6D_Index
-		tst.b	($FFFFFF86).w
+		tst.b	($FFFFFFC8).w
 		bne.s	@cont
 		move.b	#0,$1A(a0)
 		bra.w	DisplaySprite
@@ -19423,7 +19442,7 @@ Obj3A_Machine:				; XREF: Obj6D_Index
 ; ---------------------------------------------------------------------------
 
 Obj3A_Needle:
-		tst.b	($FFFFFF86).w
+		tst.b	($FFFFFFC8).w
 		bne.s	@cont
 		move.b	#4,$1A(a0)
 		bra.w	DisplaySprite
@@ -19435,7 +19454,7 @@ Obj3A_Needle:
 ; ---------------------------------------------------------------------------
 
 Obj3A_Wheel:
-		tst.b	($FFFFFF86).w
+		tst.b	($FFFFFFC8).w
 		bne.s	@cont
 		move.b	#8,$1A(a0)
 		bra.w	DisplaySprite
@@ -20015,12 +20034,15 @@ Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
 @cont:
 		clr.w	($FFFFD010).w		; clear X-speed
 		clr.w	($FFFFD012).w		; clear Y-speed
+
 		move.w	#$C3,d0			; set giant ring sound
 		jsr	PlaySound		; play it
 		jsr	WhiteFlash2		; make a white flash
 		jsr	FixLevel
-
 		subi.w	#10,($FFFFFE20).w ; remove 10 rings
+		bpl.s	@contyy
+		move.w	#0,($FFFFFE20).w
+@contyy:
 		addq.b	#1,($FFFFFE1D).w ; update
 
 	;	clr.w	($FFFFFE20).w		; clear rings
@@ -20485,48 +20507,38 @@ ObjectFall_Sonic:
 		add.l	d0,d2
 		move.w	$12(a0),d0
 		addi.w	#$38,$12(a0)		; increase vertical speed
+
 		cmpi.w	#$501,($FFFFFE10).w
-		bne.s	@cont
+		bne.s	@OFS_ChkSLZ
 		cmpi.w	#$1B00,($FFFFD008).w
-		bcs.s	@cont3
+		bcs.s	@OFS_FallEnd
 		cmpi.w	#$2100,($FFFFD008).w
-		bcc.s	@cont3
-		btst	#6,($FFFFF602).w	; is A pressed?
-		beq.s	@cont3			; if not, branch
-		subi.w	#$38*2,$12(a0)		; decrease vertical speed
-		bra.s	@cont3
-
-@cont:
-		cmpi.w	#$302,($FFFFFE10).w	; is level SLZ 2?
-		bne.s	@cont3			; if not, branch
-		
+		bcc.s	@OFS_FallEnd
+		bra.s	@OFS_TutSpeed
+	@OFS_ChkSLZ:
+		cmpi.w	#$302,($FFFFFE10).w
+		bne.s	@OFS_FallEnd
 		tst.b	($FFFFFF77).w
-		beq.s	@cont3
-
-		subi.w	#$38,$12(a0)		; revert speed change
-
-		moveq	#0,d4
-		
-
-		btst	#6,($FFFFF602).w	; is A pressed?
-		beq.s	@cont2x			; if not, branch
-		tst.w	$12(a0)
-		bmi.s	@cont2xx
+		beq.s	@OFS_FallEnd
+@OFS_TutSpeed:
 		subi.w	#$38,$12(a0)
-		bra.s	@cont3x
-	@cont2xx:
-		subi.w	#$1C,$12(a0)
-		bra.s	@cont3x
-@cont2x:
+		btst	#6,($FFFFF602).w
+		beq.s	@OFS_NoA
 		tst.w	$12(a0)
-		bpl.s	@cont3xx
+		bmi.s	@OFS_Negative
+		subi.w	#$38,$12(a0)
+		bra.s	@OFS_FallEnd
+	@OFS_Negative:
+		subi.w	#$1C,$12(a0)
+		bra.s	@OFS_FallEnd
+@OFS_NoA:
+		tst.w	$12(a0)
+		bpl.s	@OFS_Positve
 		addi.w	#$38,$12(a0)
-		bra.s	@cont3x
-	@cont3xx:
+		bra.s	@OFS_FallEnd
+	@OFS_Positve:
 		addi.w	#$1C,$12(a0)
-
-@cont3x:
-@cont3:
+@OFS_FallEnd:
 		ext.l	d0
 		asl.l	#8,d0
 		add.l	d0,d3
@@ -22677,12 +22689,13 @@ loc_EC86:
 ; Subroutine unlock the doors in SYZ1 after you finish a normal level.
 
 ; About: ($FFFFFF8B).w
-; Bit 0 = GHZ | Special Stage
-; Bit 1 = Special Stage | MZ
+; Bit 0 = GHZ | SS1
+; Bit 1 = SS1 | MZ
 ; Bit 2 = MZ | LZ
-; Bit 3 = LZ | SLZ
-; Bit 4 = SLZ | FZ
-; Bit 5 = FZ | Ending Sequence and credits
+; Bit 3 = LZ | SS2
+; Bit 4 = SS2 | SLZ
+; Bit 5 = SLZ | FZ
+; Bit 6 = FZ | Ending Sequence and credits
 ; ---------------------------------------------------------------------------
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
@@ -23270,7 +23283,7 @@ Obj40_Main:				; XREF: Obj40_Index
 		move.b	#8,$17(a0)
 		move.b	#$C,$20(a0)
 		bsr	ObjectFall
-		bsr	ObjHitFloor
+		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	locret_F68A
 		add.w	d1,$C(a0)	; match	object's position with the floor
@@ -26808,7 +26821,7 @@ Obj5F_Explode:				; XREF: Obj5F_Index2
 		move.w	#-$200,($FFFFD010).w
 		subq.w	#1,($FFFFD008).w
 		move.w	#-$400,($FFFFD012).w
-		move.b	#$98,d0				; set boss music
+		move.b	#$96,d0				; set boss music
 		jsr	PlaySound			; play it
 		move.b	#10,($FFFFD4E8).w		; camera shaking
 		clr.b	($FFFFF7CC).w			; unlock controls 1
@@ -26913,10 +26926,26 @@ Obj5F_BossDefeatedmain:
 		jsr	PlaySound_Special
 		move.w	#180,($FFFFFF78).w
 		move.w	#80,($FFFFFF7A).w
+
+		bset	#0,($FFFFD022).w
+		move.w	($FFFFD008).w,d0
+		cmp.w	$8(a0),d0
+		bcc.s	@cont
+		bclr	#0,($FFFFD022).w
+		clr.w	($FFFFFF8C).w
+		clr.w	($FFFFFF8E).w
+		clr.b	($FFFFFFEB).w
+
+@cont:
 		bra.w	locret_715Cx
 ; ===========================================================================
 
 Obj5F_BossDefeatedboss1:
+		btst	#1,($FFFFD022).w
+		bne.s	@cont
+		move.b	#0,($FFFFD01B).w
+
+@cont:
 		subq.w	#1,($FFFFFF78).w
 		bne.w	locret_715Cx
 		addq.b	#2,($FFFFFF76).w
@@ -27093,7 +27122,7 @@ Obj5F_SBZ1:
 		jsr	ObjectFall
 		jsr	SpeedToPos
 
-		tst.b	($FFFFFF86).w
+		tst.b	($FFFFFFC8).w
 		beq.s	@contx
 		cmpi.w	#$0200,$C(a0)
 		blt.s	@cont
@@ -27108,11 +27137,11 @@ Obj5F_SBZ1:
 		clr.w	$12(a0)
 		move.b	#$CD,d0
 		jsr	PlaySound_Special
-		movea.l	($FFFFFF8A).w,a1
+		movea.l	($FFFFFFC4).w,a1
 		move.b	#0,$1B(a1)
 
 @cont:
-		tst.w	($FFFFFF8A).w
+		tst.w	($FFFFFFC4).w
 		beq.s	@cont2
 		bra.w	DisplaySprite
 
@@ -28875,6 +28904,9 @@ Obj06_ArtLocFound:
 		bra.w	Obj06_InfoBox
 
 Obj06_ChkDist:
+		tst.b	($FFFFFFB1).w
+		bpl.w	Obj06_Display
+
 		tst.w	($FFFFFFFA).w
 		beq.s	@cont
 		move.b	($FFFFF602).w,d0	; get button presses
@@ -28938,7 +28970,7 @@ Obj06_ChkDist:
 		movem.l	(sp)+,d0-a1
 		jsr	FixLevel		; instantly move the camera
 		move.b	#1,($FFFFFF77).w
-		move.b	#$81,d0			; play music
+		move.b	#$9B,d0			; play music
 		jsr	PlaySound
 
 
@@ -28980,6 +29012,8 @@ Obj06_Display:
 ; ---------------------------------------------------------------------------
 
 Obj06_InfoBox:
+		tst.b	($FFFFFFB1).w
+		bpl.s	Obj06_Display
 		move.b	#2,$1A(a0)		; show A button
 		move.w	($FFFFD008).w,d0	; get Sonic's X-pos
 		sub.w	$8(a0),d0		; substract the X-pos from the current object from it
@@ -40685,7 +40719,7 @@ Obj82_FindBlocks:
 		move.b	#$C3,d0
 		jsr	PlaySound
 		
-		move.b	#1,($FFFFFF86).w
+		move.b	#1,($FFFFFFC8).w
 
 	;	move.l	a0,-(sp)
 	;	move.l	#$66600002,($C00004).l
@@ -44147,7 +44181,6 @@ Obj09_ChkGhost:
                 move.b  #3,8(a2)
                 move.l  a1,4(a2)
                 subq.l  #2,4(a2)
-		addq.w	#8,a2
 
 Obj09_CG_End:
 		rts				; return
@@ -45417,7 +45450,7 @@ Hud_ChkTime:
 		tst.w	($FFFFF63A).w	; is the game paused?
 		bne.s	Hud_ChkLives	; if yes, branch
 		lea	($FFFFFE22).w,a1
-		cmpi.l	#$9633B,(a1)+	; is the time 999? ($93B3B)
+		cmpi.l	#$9631D,(a1)+	; is the time 999? ($93B3B)
 		beq.w	TimeOver	; if yes, branch
 		addq.b	#1,-(a1)
 		cmpi.b	#30,(a1)
