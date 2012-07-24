@@ -54,8 +54,8 @@ Align:		macro
 ;Don't allow debug mode, not even with Game Genie.
 ; 0 - No
 ; 1 - Yes
-DebugModeDefault = 1
-DontAllowDebug = 0
+DebugModeDefault = 0
+DontAllowDebug = 1
 ;=================================================
 ;Enable Demo Recording. (In RAM at $FFFFD200)
 ;Also disables Stars and Shields
@@ -12588,6 +12588,11 @@ Map_obj1C:
 ; ---------------------------------------------------------------------------
 
 Obj1D:					; XREF: Obj_Index
+		cmpi.w	#$502,($FFFFFE10).w
+		beq.s	@cont
+		jmp	DeleteObject
+
+@cont:
 		moveq	#0,d0
 		move.b	$24(a0),d0
 		move.w	Obj1D_Index(pc,d0.w),d1
@@ -19961,6 +19966,7 @@ Obj36_Explode_Spring:
 		jsr	PlaySound_Special		; play boost SFX
 		jsr	SingleObjLoad
 		move.b	#$3F,0(a1)			; change bomb into an explosion
+		move.b	#1,$30(a1)
 		move.w	$8(a0),$8(a1)
 		move.w	$C(a0),$C(a1)
 		jmp	DeleteObject
