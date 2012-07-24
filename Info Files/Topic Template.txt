@@ -10,6 +10,7 @@ This version, originally titled '[I]The SLZ Update[/I]', turned out into somethi
 
 [list][*]Added 3 new levels, of which one is a special one.
 [*]Added 2 new bosses.
+[*]Remixed or added many new songs.
 [*]Rewrote all story texts - now featuring more terrible humor.
 [*]Added a system so people will no longer have an excuse for being bad.
 [*]Added too much unnecessary extras throughout the game.

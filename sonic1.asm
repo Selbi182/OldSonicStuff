@@ -54,8 +54,8 @@ Align:		macro
 ;Don't allow debug mode, not even with Game Genie.
 ; 0 - No
 ; 1 - Yes
-DebugModeDefault = 0
-DontAllowDebug = 1
+DebugModeDefault = 1
+DontAllowDebug = 0
 ;=================================================
 ;Enable Demo Recording. (In RAM at $FFFFD200)
 ;Also disables Stars and Shields
@@ -244,7 +244,7 @@ GameClrRAM:
 		moveq	#0,d0			; clear d0
 		move.b	#1,($A130F1).l		; enable SRAM
 		lea	($200000).l,a1		; base of SRAM
-		cmpi.b	#$B6,$1B(a1)		; does SRAM exist?
+		cmpi.b	#$6B,$1B(a1)		; does SRAM exist?
 		beq.s	SRAMFound		; if yes, branch
 		
 		moveq	#$00,d0
@@ -3729,7 +3729,7 @@ T_PalSkip_2:
 
 StartGame:
 		move.b	#1,($A130F1).l		; enable SRAM
-		cmpi.b	#$B6,($20001B).l	; does SRAM exist?
+		cmpi.b	#$6B,($20001B).l	; does SRAM exist?
 		beq.s	T_NoSRAM		; if not, branch
 
 		move.b	#1,($A130F1).l		; enable SRAM
@@ -4085,7 +4085,7 @@ loc_37FC:
 		move.b	($FFFFFE12).w,d0
 		move.b	d0,$3(a1)
 		move.b	($FFFFFF8B).w,$19(a1)	; otherwise update check value
-		move.b	#$B6,$1B(a1)		; set "SRAM exists" flag
+		move.b	#$6B,$1B(a1)		; set "SRAM exists" flag
 		move.b	#0,($A130F1).l		; disable SRAM
 
 Level_NoSRAM:
@@ -8282,6 +8282,8 @@ S_H_BuzzIgnore:
 		bcs.s	@cont
 		cmpi.w	#$2100,($FFFFD008).w
 		bcc.s	@cont
+		tst.b	($FFFFFFEB).w
+		beq.s	@cont
 		bra.s	S_H_ResetCamera
 
 @cont:
@@ -10684,9 +10686,6 @@ off_72D8:	dc.w Resize_FZmain-off_72D8, Resize_FZboss-off_72D8
 ; ===========================================================================
 
 Resize_FZmain:
-		move.w	#$810,($FFFFF726).w
-		cmpi.w	#$A00,($FFFFF700).w
-		bcs.s	@cont
 		move.w	#$510,($FFFFF726).w
 
 @cont:
@@ -10697,6 +10696,7 @@ Resize_FZmain:
 		bsr	LoadPLC		; load FZ boss patterns
 
 loc_72F4:
+		rts
 		bra.s	loc_72C2
 ; ===========================================================================
 
@@ -10730,7 +10730,7 @@ Resize_FZend2:
 		bra.s	loc_72C2
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Ending sequence dynamic screen resizing (empty)
+; Ending sequence dynamic screen resizing
 ; ---------------------------------------------------------------------------
 
 Resize_Ending:				; XREF: Resize_Index
@@ -12584,8 +12584,7 @@ Map_obj1C:
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Object 1D - switch that activates when Sonic touches it
-; (this	is not used anywhere in	the game)
+; Object 1D - Exploding scenery object used in Final Place.
 ; ---------------------------------------------------------------------------
 
 Obj1D:					; XREF: Obj_Index
@@ -12596,29 +12595,42 @@ Obj1D:					; XREF: Obj_Index
 ; ===========================================================================
 Obj1D_Index:	dc.w Obj1D_Main-Obj1D_Index
 		dc.w Obj1D_Action-Obj1D_Index
-		dc.w Obj1D_Delete-Obj1D_Index
 ; ===========================================================================
 
 Obj1D_Main:				; XREF: Obj1D_Index
 		addq.b	#2,$24(a0)
-		move.l	#Map_obj1D,4(a0)
-		move.w	#$4000,2(a0)
-		move.b	#4,1(a0)
-		move.w	$C(a0),$30(a0)	; save position	on y-axis
-		move.b	#$10,$19(a0)
-		move.b	#5,$18(a0)
 
-Obj1D_Action:				; XREF: Obj1D_Index
-		move.w	$30(a0),$C(a0)	; restore position on y-axis
-		move.w	#$10,d1
-		jsr	obj1D_ChkTouch
-		beq.s	Obj1D_ChkDel
-		addq.w	#2,$C(a0)	; move object 2	pixels
-		moveq	#1,d0
-		move.w	d0,($FFFFF7E0).w ; set switch 0	as "pressed"
+		moveq	#22,d0		; set base cooldown time to 20 frames
+		move.b	$28(a0),d1	; get object subtype (range: 0-A)
+		add.b	d1,d1		; multiply it by 2
+		sub.b	d1,d0		; substract from cooldown time
+		move.b	d0,$30(a0)	; backup value
+		move.b	d0,$32(a0)	; backup value
 
-Obj1D_ChkDel:
-		bsr	DisplaySprite
+Obj1D_Action:
+		subq.b	#1,$32(a0)	; substract 1 from cooldown timer
+		bpl.s	Obj1D_ChkDelete	; has the time run out? if not, branch
+		move.b	$30(a0),$32(a0)	; reset cooldown
+
+		move.b	$28(a0),($FFFFD4E8).w		; camera shaking
+
+		bsr	SingleObjLoad
+		bne.s	Obj1D_ChkDelete
+		move.b	#$3F,0(a1)	; load explosion object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+		jsr	(RandomNumber).l
+		move.b	#1,$30(a1)
+		move.w	d0,d1
+		moveq	#0,d1
+		move.b	d0,d1
+		subi.w	#$80,d1
+		add.w	d1,8(a1)
+		lsr.w	#8,d0
+		add.w	d0,$C(a1)
+		subi.w	#$50,$C(a1)
+
+Obj1D_ChkDelete:				; XREF: Obj1D_Index
 		move.w	8(a0),d0
 		andi.w	#$FF80,d0
 		move.w	($FFFFF700).w,d1
@@ -12626,54 +12638,10 @@ Obj1D_ChkDel:
 		andi.w	#$FF80,d1
 		sub.w	d1,d0
 		cmpi.w	#$280,d0
-		bhi.w	Obj1D_Delete
-		rts	
+		bhi.w	DeleteObject
+		rts
 ; ===========================================================================
 
-Obj1D_Delete:				; XREF: Obj1D_Index
-		bsr	DeleteObject
-		rts	
-; ---------------------------------------------------------------------------
-; Subroutine to	check if Sonic touches the object
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
-
-
-Obj1D_ChkTouch:				; XREF: Obj1D_Action
-		lea	($FFFFD000).w,a1
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
-		add.w	d1,d0
-		bmi.s	loc_8918
-		add.w	d1,d1
-		cmp.w	d1,d0
-		bcc.s	loc_8918
-		move.w	$C(a1),d2
-		move.b	$16(a1),d1
-		ext.w	d1
-		add.w	d2,d1
-		move.w	$C(a0),d0
-		subi.w	#$10,d0
-		sub.w	d1,d0
-		bhi.s	loc_8918
-		cmpi.w	#-$10,d0
-		bcs.s	loc_8918
-		moveq	#-1,d0
-		rts	
-; ===========================================================================
-
-loc_8918:
-		moveq	#0,d0
-		rts	
-; End of function Obj1D_ChkTouch
-
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Sprite mappings - object 1D
-; ---------------------------------------------------------------------------
-Map_obj1D:
-		include	"_maps\obj1D.asm"
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -13184,6 +13152,8 @@ Obj27_NoCamShake:
 		beq.s	Obj27_Animate
 		cmpi.w	#$501,($FFFFFE10).w
 		beq.s	Obj27_Animate
+		cmpi.w	#$001,($FFFFFE10).w
+		beq.s	Obj27_Animate
 		bsr	SingleObjLoad
 		bne.s	Obj27_Animate
 		move.b	#$37,0(a1)	; load bouncing ring object
@@ -13238,6 +13208,13 @@ Obj3F_Main:				; XREF: Obj3F_Index
 		move.w	#$5A0,2(a0)
 		move.b	#4,1(a0)
 		move.b	#1,$18(a0)
+		cmpi.w	#$502,($FFFFFE10).w
+		bne.s	@cont2
+		tst.b	($FFFFF7AA).w
+		bne.s	@cont2
+		move.b	#3,$18(a0)
+
+@cont2:
 		tst.b	($FFFFF7AA).w	; is boss mode on?
 		bne.s	Obj3F_NotHarmful	; if yes, branch
 		tst.b	$30(a0)
@@ -15499,8 +15476,8 @@ Obj4B_NotGHZ1:
 		move.b	#1,($FFFFFFB9).w
 		clr.w	($FFFFF73A).w
 		jsr	WhiteFlash4		; make white flash
-		clr.w	($FFFFFE20).w	; clear rings
-		clr.l	($FFFFFE26).w	; clear score
+	;	clr.w	($FFFFFE20).w	; clear rings
+	;	clr.l	($FFFFFE26).w	; clear score
 
 Obj4B_NotGHZ2:
 		clr.b	($FFFFFFE7).w
@@ -15553,6 +15530,11 @@ Obj4B_Delete:				; XREF: Obj4B_Index
 		
 		cmpi.w	#$501,($FFFFFE10).w
 		bne.s	Obj4B_SNZ
+		tst.w	($FFFFFE20).w
+		bne.s	@contyy
+		move.w	#100,($FFFFFE20).w
+
+@contyy:
 		move.b	#$28,($FFFFF600).w	; load chapters screen
 		move.b	#$E0,d0
 		jmp	PlaySound_Special
@@ -15691,7 +15673,7 @@ Obj4B_ChkGHZ2:
 		clr.b	($FFFFFFB6).w
 
 		move.b	#1,($A130F1).l		; enable SRAM
-	;	cmpi.b	#$B6,($20001B).l	; does SRAM exist?
+	;	cmpi.b	#$6B,($20001B).l	; does SRAM exist?
 	;	bne.s	Obj4B_NoSRAM		; if not, branch
 	;	move.b	#0,($A130F1).l		; disable SRAM
 
@@ -16373,11 +16355,13 @@ Obj2E_ChkS:
 		move.b	#3,($FFFFD2DC).w
 	endif
 
+		cmpi.w	#$001,($FFFFFE10).w
+		beq.s	@cont2
 		add.w	#100,($FFFFFE20).w	; be kind and give you 100 rings
 		ori.b	#1,($FFFFFE1D).w ; update the ring counter
 		moveq	#100,d0		; add 1000 ...
 		jsr	AddPoints	; ... points
-
+@cont2:
 		clr.b	($FFFFFE2D).w	; remove invinceblity
 		clr.b	($FFFFFE2C).w	; remove shield
 	;	clr.b	($FFFFFFFC).w	; clear multi shield counter
@@ -18360,7 +18344,7 @@ loc_BDD6:
 		tst.b	($FFFFFF77).w
 		bne.w	@cont
 		move.b	#1,($FFFFFF77).w
-		move.b	#$9B,d0			; play music
+		move.b	#$96,d0			; play music
 		jsr	PlaySound
 		
 		addi.w	#100,($FFFFFE20).w
@@ -20524,6 +20508,7 @@ ObjectFall_Sonic:
 		subi.w	#$38,$12(a0)
 		btst	#6,($FFFFF602).w
 		beq.s	@OFS_NoA
+		move.b	#1,($FFFFFFEB).w
 		tst.w	$12(a0)
 		bmi.s	@OFS_Negative
 		subi.w	#$38,$12(a0)
@@ -26821,7 +26806,7 @@ Obj5F_Explode:				; XREF: Obj5F_Index2
 		move.w	#-$200,($FFFFD010).w
 		subq.w	#1,($FFFFD008).w
 		move.w	#-$400,($FFFFD012).w
-		move.b	#$96,d0				; set boss music
+		move.b	#$9B,d0				; set boss music
 		jsr	PlaySound			; play it
 		move.b	#10,($FFFFD4E8).w		; camera shaking
 		clr.b	($FFFFF7CC).w			; unlock controls 1
@@ -28970,7 +28955,7 @@ Obj06_ChkDist:
 		movem.l	(sp)+,d0-a1
 		jsr	FixLevel		; instantly move the camera
 		move.b	#1,($FFFFFF77).w
-		move.b	#$9B,d0			; play music
+		move.b	#$96,d0			; play music
 		jsr	PlaySound
 
 
@@ -47661,8 +47646,12 @@ return_PlayPCM:
 ; ---------------------------------------------------------------------------
 
 Sound_81to9F:				; XREF: Sound_ChkValue
-		cmpi.b	#$88,d7		; is "extra life" music	played?
+		cmpi.b	#$93,d7		; is "emerald collected" music played?
+		beq.s	@cont		; if yes, branch
+		cmpi.b	#$88,d7		; is "extra life" music played?
 		bne.s	loc_72024	; if not, branch
+
+@cont:
 		tst.b	$27(a6)
 		bne.w	loc_721B6
 		lea	$40(a6),a5
@@ -47689,7 +47678,10 @@ loc_72012:
 		move.l	(a0)+,(a1)+
 		dbf	d0,loc_72012
 
+		cmpi.b	#$93,d7		; is "emerald collected" music played?
+		beq.s	@cont		; if yes, branch
 		move.b	#$80,$27(a6)
+@cont:
 		clr.b	0(a6)
 		bra.s	loc_7202C
 ; ===========================================================================
@@ -49398,17 +49390,17 @@ Music94:	incbin	sound\music94.bin
 		even
 Music95:	include	"sound\DalekSam\KEN.asm"
 		even
-Music96:	incbin	sound\music82.bin
+Music96:	include	"sound\ORNBASE.asm"
 		even
 Music97:	include	"sound\DalekSam\RHYTHM.asm"
 		even
-Music98:	incbin	sound\EK\bosspinch.bin
+Music98:	include	"sound\EK\bosspinch.asm"
 		even
 Music99:	include	"sound\EK\m41-MZ3.asm"
 		even
 Music9A:        incbin	sound\musicMarkey1.bin
 		even
-Music9B:	include	"sound\DalekSam\STAGSelbi.asm"
+Music9B:	include	"sound\EK\bosspinch2.asm"
 		even
 Music9C:	incbin	sound\music9C.bin
 		even

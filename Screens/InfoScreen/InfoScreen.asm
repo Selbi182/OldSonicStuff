@@ -789,21 +789,21 @@ InfoText_6:	; text after beating Unreal Place
 ; ---------------------------------------------------------------------------
 
 InfoText_7:	; text after beating Scar Night Place
-		dc.b	'AWW, WOULD YOU LOOK AT THAT ' ;1
-		dc.b	'  NICE STAR FILLED SKY...   ' ;1
-		dc.b	'WHEN SUDDENLY IT GETS FILLED' ;0
-		dc.b	' WITH EXPLOSIONS OF THE NEW ' ;0
-		dc.b	'  WALKING BOMB PROTOTYPE!   ' ;1
-		dc.b	'RANDOM NUMBER GENERATORS ARE' ;0
-		dc.b	'     SUCH A COOL THING.     ' ;0
+		dc.b	'REMEMBER THAT TIME WHEN YOU ' ;1
+		dc.b	'WERE FASCINATED BY THOSE HOT' ;0
+		dc.b	'    WIRE GAMES AS CHILD?    ' ;0
 		dc.b	'                            ' ;0
-		dc.b	' AND AFTER THAT WE HAD THE  ' ;1
-		dc.b	'HOT WIRE GAME SPACE EDITION,' ;0
-		dc.b	'  TERRIFYING TELEPORTING.   ' ;1
+		dc.b	'NOW PUT A HEDGEHOG, WALKING ' ;1
+		dc.b	'  BOMBS, RED BLINKING AND   ' ;1
+		dc.b	' TELEPORTING WALLS, AND AN  ' ;1
+		dc.b	' INCREDIBLY INAPPROPRIATED  ' ;1
+		dc.b	'  EASTER EGG IN IT AND YOU  ' ;0
+		dc.b	'HAVE THE PERFECT RECIPE FOR ' ;1
+		dc.b	'A NORMAL SONIC ERAZOR LEVEL.' ;0
 		dc.b	'                            ' ;0
 		dc.b	'WELL, FEAR NOT MUCH LONGER, ' ;1
-		dc.b	'BECAUSE SOON EVERYTHING YOU ' ;1
-		dc.b	' HAVE SEEN WILL BE OVER...  ' ;1
+		dc.b	'   BECAUSE VERY SOON THIS   ' ;0
+		dc.b	'  INSANITY WILL BE OVER...  ' ;0
 		dc.b	$FF
 		even
 ; ---------------------------------------------------------------------------
@@ -895,9 +895,9 @@ ScrollText_6:
 		even
 
 ScrollText_7:
-		dc.b	1,1,0,0,1
-		dc.b	0,0,0,1,0
-		dc.b	1,0,1,1,1
+		dc.b	1,0,0,0,1
+		dc.b	1,1,1,0,1
+		dc.b	0,0,1,0,0
 		even
 
 ScrollText_8:

@@ -11,7 +11,7 @@ M41_SBZ2song2_Header:
 ;	Channel Setup	FM	PSG
 	smpsHeaderChan	$06,	$03
 ;	Tempo Setup	divider	modifier
-	smpsHeaderTempo	$02,	$09
+	smpsHeaderTempo	$02,	$12
 
 ;	DAC Pointer	location
 	smpsHeaderDAC	M41_SBZ2song2_DAC
@@ -909,340 +909,155 @@ M41_SBZ2song2_Jump04:
 	smpsJump	M41_SBZ2song2_Jump04
 
 ; DAC Data
+M41SNR = $8F
+M41BSD = $81
+
 M41_SBZ2song2_DAC:
 ;	Panning	?	direction	amsfms
 	smpsPan		panCentre,	$00
-	dc.b		$90,	$04,	$9D,	$01,	$03,	$90,	$04
+	dc.b		M41BSD,	$04,	M41SNR,	$01,	$03,	M41BSD,	$04
 M41_SBZ2song2_Jump05:
 ;	Panning	?	direction	amsfms
 	smpsPan		panCentre,	$00
-	dc.b		dVLowTimpani,	$08,	$9D,	$01,	$03,	$90,	$08,	$04
-	dc.b		$9D,	$01,	$07,	$90,	$08,	$9D,	$01,	$03
-	dc.b		$90,	$08,	$04,	$9D,	$01,	$07,	$90,	$08
-	dc.b		$9D,	$01,	$03,	$90,	$08,	$04,	$9D,	$01
-	dc.b		$07,	$90,	$08,	$9D,	$01,	$03,	$90,	$08
-	dc.b		$04,	$9D,	$01,	$07,	$90,	$08,	$9D,	$01
-	dc.b		$03,	$90,	$08,	$04,	$9D,	$01,	$07,	$90
-	dc.b		$08,	$9D,	$01,	$03,	$90,	$08,	$04,	$9D
-	dc.b		$01,	$07,	$90,	$08,	$9D,	$01,	$03,	$90
-	dc.b		$08,	$04,	$9D,	$01,	$07,	$90,	$04,	$9D
+	dc.b		dVLowTimpani,	$08,	M41SNR,	$01,	$03,	M41BSD,	$08,	$04
+	dc.b		M41SNR,	$01,	$07,	M41BSD,	$08,	M41SNR,	$01,	$03
+	dc.b		M41BSD,	$08,	$04,	M41SNR,	$01,	$07,	M41BSD,	$08
+	dc.b		M41SNR,	$01,	$03,	M41BSD,	$08,	$04,	M41SNR,	$01
+	dc.b		$07,	M41BSD,	$08,	M41SNR,	$01,	$03,	M41BSD,	$08
+	dc.b		$04,	M41SNR,	$01,	$07,	M41BSD,	$08,	M41SNR,	$01
+	dc.b		$03,	M41BSD,	$08,	$04,	M41SNR,	$01,	$07,	M41BSD
+	dc.b		$08,	M41SNR,	$01,	$03,	M41BSD,	$08,	$04,	M41SNR
+	dc.b		$01,	$07,	M41BSD,	$08,	M41SNR,	$01,	$03,	M41BSD
+	dc.b		$08,	$04,	M41SNR,	$01,	$07,	M41BSD,	$04,	M41SNR
 	dc.b		$01,	$07,	$01,	$0B,	$93,	$04,	$04,	dVLowTimpani
-	dc.b		$08,	$9D,	$01,	$03,	$90,	$08,	$04,	$9D
-	dc.b		$01,	$07,	$90,	$08,	$9D,	$01,	$03,	$90
-	dc.b		$08,	$04,	$9D,	$01,	$07,	$90,	$08,	$9D
-	dc.b		$01,	$03,	$90,	$08,	$04,	$9D,	$01,	$07
-	dc.b		$90,	$08,	$9D,	$01,	$03,	$90,	$08,	$04
-	dc.b		$9D,	$01,	$07,	$90,	$02,	nRst,	$04,	$02
-	dc.b		$9D,	$01,	$03,	$90,	$02,	nRst,	$04,	$02
-	dc.b		$90,	$02,	nRst,	$9D,	$01,	$05,	nRst,	$02
-	dc.b		$90,	nRst,	$04,	$02,	$9D,	$01,	$03,	$90
-	dc.b		$02,	nRst,	$04,	$02,	$90,	$02,	nRst,	$9D
-	dc.b		$01,	$05,	nRst,	$02,	$90,	nRst,	$04,	$02
-	dc.b		$9D,	$01,	$03,	$90,	$02,	nRst,	$04,	$02
-	dc.b		$90,	$02,	nRst,	$9D,	$01,	$05,	nRst,	$02
-	dc.b		$90,	nRst,	$9D,	$01,	$05,	nRst,	$02,	$9D
-	dc.b		$01,	$05,	nRst,	$02,	$90,	$04,	$9D,	$01
-	dc.b		$03,	$90,	$02,	nRst,	dVLowTimpani,	$08,	$9D,	$01
-	dc.b		$03,	$90,	$02,	nRst,	$04,	$02,	$90,	$02
-	dc.b		nRst,	$9D,	$01,	$05,	nRst,	$02,	$90,	nRst
-	dc.b		$04,	$02,	$9D,	$01,	$03,	$90,	$02,	nRst
-	dc.b		$04,	$02,	$90,	$02,	nRst,	$9D,	$01,	$05
-	dc.b		nRst,	$02,	$90,	nRst,	$04,	$02,	$9D,	$01
-	dc.b		$03,	$90,	$02,	nRst,	$04,	$02,	$90,	$02
-	dc.b		nRst,	$9D,	$01,	$05,	nRst,	$02,	$90,	nRst
-	dc.b		$04,	$02,	$9D,	$01,	$03,	$90,	$02,	nRst
-	dc.b		$04,	$02,	$90,	$02,	nRst,	$9D,	$04,	$01
-	dc.b		$03,	dVLowTimpani,	$08,	$9D,	$01,	$03,	$90,	$02
-	dc.b		nRst,	$04,	$02,	$90,	$02,	nRst,	$9D,	$01
-	dc.b		$05,	nRst,	$02,	$90,	nRst,	$04,	$02,	$9D
-	dc.b		$01,	$03,	$90,	$02,	nRst,	$04,	$02,	$90
-	dc.b		$02,	nRst,	$9D,	$01,	$05,	nRst,	$02,	$90
-	dc.b		$08,	$9D,	$01,	$03,	$90,	$02,	nRst,	$04
-	dc.b		$02,	$90,	$02,	nRst,	$9D,	$01,	$05,	nRst
-	dc.b		$02,	$90,	nRst,	$04,	$02,	$9D,	$01,	$03
-	dc.b		$90,	$02,	nRst,	$04,	$02,	$9D,	$01,	$03
+	dc.b		$08,	M41SNR,	$01,	$03,	M41BSD,	$08,	$04,	M41SNR
+	dc.b		$01,	$07,	M41BSD,	$08,	M41SNR,	$01,	$03,	M41BSD
+	dc.b		$08,	$04,	M41SNR,	$01,	$07,	M41BSD,	$08,	M41SNR
+	dc.b		$01,	$03,	M41BSD,	$08,	$04,	M41SNR,	$01,	$07
+	dc.b		M41BSD,	$08,	M41SNR,	$01,	$03,	M41BSD,	$08,	$04
+	dc.b		M41SNR,	$01,	$07,	M41BSD,	$02,	nRst,	$04,	$02
+	dc.b		M41SNR,	$01,	$03,	M41BSD,	$02,	nRst,	$04,	$02
+	dc.b		M41BSD,	$02,	nRst,	M41SNR,	$01,	$05,	nRst,	$02
+	dc.b		M41BSD,	nRst,	$04,	$02,	M41SNR,	$01,	$03,	M41BSD
+	dc.b		$02,	nRst,	$04,	$02,	M41BSD,	$02,	nRst,	M41SNR
+	dc.b		$01,	$05,	nRst,	$02,	M41BSD,	nRst,	$04,	$02
+	dc.b		M41SNR,	$01,	$03,	M41BSD,	$02,	nRst,	$04,	$02
+	dc.b		M41BSD,	$02,	nRst,	M41SNR,	$01,	$05,	nRst,	$02
+	dc.b		M41BSD,	nRst,	M41SNR,	$01,	$05,	nRst,	$02,	M41SNR
+	dc.b		$01,	$05,	nRst,	$02,	M41BSD,	$04,	M41SNR,	$01
+	dc.b		$03,	M41BSD,	$02,	nRst,	dVLowTimpani,	$08,	M41SNR,	$01
+	dc.b		$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41BSD,	$02
+	dc.b		nRst,	M41SNR,	$01,	$05,	nRst,	$02,	M41BSD,	nRst
+	dc.b		$04,	$02,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst
+	dc.b		$04,	$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$05
+	dc.b		nRst,	$02,	M41BSD,	nRst,	$04,	$02,	M41SNR,	$01
+	dc.b		$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41BSD,	$02
+	dc.b		nRst,	M41SNR,	$01,	$05,	nRst,	$02,	M41BSD,	nRst
+	dc.b		$04,	$02,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst
+	dc.b		$04,	$02,	M41BSD,	$02,	nRst,	M41SNR,	$04,	$01
+	dc.b		$03,	dVLowTimpani,	$08,	M41SNR,	$01,	$03,	M41BSD,	$02
+	dc.b		nRst,	$04,	$02,	M41BSD,	$02,	nRst,	M41SNR,	$01
+	dc.b		$05,	nRst,	$02,	M41BSD,	nRst,	$04,	$02,	M41SNR
+	dc.b		$01,	$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41BSD
+	dc.b		$02,	nRst,	M41SNR,	$01,	$05,	nRst,	$02,	M41BSD
+	dc.b		$08,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst,	$04
+	dc.b		$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$05,	nRst
+	dc.b		$02,	M41BSD,	nRst,	$04,	$02,	M41SNR,	$01,	$03
+	dc.b		M41BSD,	$02,	nRst,	$04,	$02,	M41SNR,	$01,	$03
 	dc.b		$01,	$03,	$01,	$03,	dVLowTimpani,	$02,	nRst,	$04
-	dc.b		$02,	$9D,	$01,	$03,	$90,	$02,	nRst,	$04
-	dc.b		$02,	$90,	$02,	nRst,	$9D,	$01,	$05,	nRst
-	dc.b		$02,	$90,	nRst,	$04,	$02,	$9D,	$01,	$03
-	dc.b		$90,	$02,	nRst,	$04,	$02,	$90,	$02,	nRst
-	dc.b		$9D,	$01,	$05,	nRst,	$02,	$90,	nRst,	$04
-	dc.b		$02,	$9D,	$01,	$03,	$90,	$02,	nRst,	$04
-	dc.b		$02,	$90,	$02,	nRst,	$9D,	$01,	$05,	nRst
-	dc.b		$02,	$90,	nRst,	$04,	$02,	$9D,	$01,	$03
-	dc.b		$90,	$02,	nRst,	$04,	$02,	$90,	$02,	nRst
-	dc.b		$9D,	$01,	$03,	$01,	$03,	$90,	$02,	nRst
-	dc.b		$04,	$02,	$9D,	$01,	$03,	$90,	$02,	nRst
-	dc.b		$04,	$02,	$90,	$02,	nRst,	$9D,	$01,	$05
-	dc.b		nRst,	$02,	$90,	nRst,	$04,	$02,	$9D,	$01
-	dc.b		$03,	$90,	$02,	nRst,	$04,	$02,	$90,	$02
-	dc.b		nRst,	$9D,	$01,	$05,	nRst,	$02,	$90,	nRst
-	dc.b		$04,	$02,	$9D,	$01,	$03,	$90,	$02,	nRst
-	dc.b		$04,	$02,	$90,	$02,	nRst,	$9D,	$01,	$05
-	dc.b		nRst,	$02,	$90,	nRst,	$04,	$02,	$9D,	$01
-	dc.b		$03,	$90,	$02,	nRst,	$04,	$02,	$9D,	$01
-	dc.b		$03,	$02,	nRst,	$02,	$9D,	$01,	$03,	dVLowTimpani
-	dc.b		$08,	$9D,	$01,	$03,	$90,	$02,	nRst,	$04
-	dc.b		$02,	$90,	$02,	nRst,	$9D,	$01,	$05,	nRst
-	dc.b		$02,	$90,	nRst,	$04,	$02,	$9D,	$01,	$03
-	dc.b		$90,	$02,	nRst,	$04,	$02,	$90,	$02,	nRst
-	dc.b		$9D,	$01,	$05,	nRst,	$02,	$90,	nRst,	$04
-	dc.b		$02,	$9D,	$01,	$03,	$90,	$02,	nRst,	$04
-	dc.b		$02,	$90,	$02,	nRst,	$9D,	$01,	$05,	nRst
-	dc.b		$02,	$90,	nRst,	$04,	$02,	$9D,	$01,	$03
-	dc.b		$90,	$02,	nRst,	$04,	$02,	$90,	$02,	nRst
-	dc.b		$9D,	$01,	$03,	$01,	$03,	dVLowTimpani,	$08,	$9D
-	dc.b		$01,	$03,	$90,	$02,	nRst,	$04,	$02,	$90
-	dc.b		$02,	nRst,	$9D,	$01,	$05,	nRst,	$02,	$90
-	dc.b		nRst,	$04,	$02,	$9D,	$01,	$03,	$90,	$02
-	dc.b		nRst,	$04,	$02,	$90,	$02,	nRst,	$9D,	$01
-	dc.b		$05,	nRst,	$02,	$90,	nRst,	$04,	$02,	$9D
-	dc.b		$01,	$03,	$90,	$02,	nRst,	$04,	$02,	$90
-	dc.b		$02,	nRst,	$9D,	$01,	$05,	nRst,	$02,	$90
-	dc.b		nRst,	$04,	$02,	$9D,	$01,	$03,	$90,	$02
-	dc.b		nRst,	$04,	$02,	$9D,	$01,	$03,	$02,	nRst
-	dc.b		$02,	$9D,	$01,	$03,	dVLowTimpani,	$08,	$9D,	$01
-	dc.b		$03,	$90,	$02,	nRst,	$04,	$02,	$90,	$02
-	dc.b		nRst,	$9D,	$01,	$05,	nRst,	$02,	$90,	nRst
-	dc.b		$04,	$02,	$9D,	$01,	$03,	$90,	$02,	nRst
-	dc.b		$04,	$02,	$90,	$02,	nRst,	$9D,	$01,	$05
-	dc.b		nRst,	$02,	$90,	nRst,	$04,	$02,	$9D,	$01
-	dc.b		$03,	$90,	$02,	nRst,	$04,	$02,	$90,	$02
-	dc.b		nRst,	$9D,	$01,	$05,	nRst,	$02,	$90,	nRst
-	dc.b		$04,	$02,	$9D,	$01,	$03,	$90,	$02,	nRst
-	dc.b		$04,	$02,	$90,	$02,	nRst,	$9D,	$01,	$03
-	dc.b		$01,	$03,	dVLowTimpani,	$08,	$9D,	$01,	$03,	$90
-	dc.b		$02,	nRst,	$04,	$02,	$90,	$02,	nRst,	$9D
-	dc.b		$01,	$05,	nRst,	$02,	dVLowTimpani,	$08,	$9D,	$01
-	dc.b		$03,	$90,	$02,	nRst,	$04,	$02,	$90,	$02
-	dc.b		nRst,	$9D,	$01,	$05,	nRst,	$02,	$90,	nRst
-	dc.b		$04,	$02,	$9D,	$01,	$03,	$90,	$02,	nRst
-	dc.b		$04,	$02,	$90,	$02,	nRst,	$9D,	$01,	$05
-	dc.b		nRst,	$02,	$90,	nRst,	$04,	$02,	$9D,	$01
-	dc.b		$03,	$90,	$02,	nRst,	$04,	$02,	$9D,	$01
+	dc.b		$02,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst,	$04
+	dc.b		$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$05,	nRst
+	dc.b		$02,	M41BSD,	nRst,	$04,	$02,	M41SNR,	$01,	$03
+	dc.b		M41BSD,	$02,	nRst,	$04,	$02,	M41BSD,	$02,	nRst
+	dc.b		M41SNR,	$01,	$05,	nRst,	$02,	M41BSD,	nRst,	$04
+	dc.b		$02,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst,	$04
+	dc.b		$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$05,	nRst
+	dc.b		$02,	M41BSD,	nRst,	$04,	$02,	M41SNR,	$01,	$03
+	dc.b		M41BSD,	$02,	nRst,	$04,	$02,	M41BSD,	$02,	nRst
+	dc.b		M41SNR,	$01,	$03,	$01,	$03,	M41BSD,	$02,	nRst
+	dc.b		$04,	$02,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst
+	dc.b		$04,	$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$05
+	dc.b		nRst,	$02,	M41BSD,	nRst,	$04,	$02,	M41SNR,	$01
+	dc.b		$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41BSD,	$02
+	dc.b		nRst,	M41SNR,	$01,	$05,	nRst,	$02,	M41BSD,	nRst
+	dc.b		$04,	$02,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst
+	dc.b		$04,	$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$05
+	dc.b		nRst,	$02,	M41BSD,	nRst,	$04,	$02,	M41SNR,	$01
+	dc.b		$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41SNR,	$01
+	dc.b		$03,	$02,	nRst,	$02,	M41SNR,	$01,	$03,	dVLowTimpani
+	dc.b		$08,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst,	$04
+	dc.b		$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$05,	nRst
+	dc.b		$02,	M41BSD,	nRst,	$04,	$02,	M41SNR,	$01,	$03
+	dc.b		M41BSD,	$02,	nRst,	$04,	$02,	M41BSD,	$02,	nRst
+	dc.b		M41SNR,	$01,	$05,	nRst,	$02,	M41BSD,	nRst,	$04
+	dc.b		$02,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst,	$04
+	dc.b		$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$05,	nRst
+	dc.b		$02,	M41BSD,	nRst,	$04,	$02,	M41SNR,	$01,	$03
+	dc.b		M41BSD,	$02,	nRst,	$04,	$02,	M41BSD,	$02,	nRst
+	dc.b		M41SNR,	$01,	$03,	$01,	$03,	dVLowTimpani,	$08,	M41SNR
+	dc.b		$01,	$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41BSD
+	dc.b		$02,	nRst,	M41SNR,	$01,	$05,	nRst,	$02,	M41BSD
+	dc.b		nRst,	$04,	$02,	M41SNR,	$01,	$03,	M41BSD,	$02
+	dc.b		nRst,	$04,	$02,	M41BSD,	$02,	nRst,	M41SNR,	$01
+	dc.b		$05,	nRst,	$02,	M41BSD,	nRst,	$04,	$02,	M41SNR
+	dc.b		$01,	$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41BSD
+	dc.b		$02,	nRst,	M41SNR,	$01,	$05,	nRst,	$02,	M41BSD
+	dc.b		nRst,	$04,	$02,	M41SNR,	$01,	$03,	M41BSD,	$02
+	dc.b		nRst,	$04,	$02,	M41SNR,	$01,	$03,	$02,	nRst
+	dc.b		$02,	M41SNR,	$01,	$03,	dVLowTimpani,	$08,	M41SNR,	$01
+	dc.b		$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41BSD,	$02
+	dc.b		nRst,	M41SNR,	$01,	$05,	nRst,	$02,	M41BSD,	nRst
+	dc.b		$04,	$02,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst
+	dc.b		$04,	$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$05
+	dc.b		nRst,	$02,	M41BSD,	nRst,	$04,	$02,	M41SNR,	$01
+	dc.b		$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41BSD,	$02
+	dc.b		nRst,	M41SNR,	$01,	$05,	nRst,	$02,	M41BSD,	nRst
+	dc.b		$04,	$02,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst
+	dc.b		$04,	$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$03
+	dc.b		$01,	$03,	dVLowTimpani,	$08,	M41SNR,	$01,	$03,	M41BSD
+	dc.b		$02,	nRst,	$04,	$02,	M41BSD,	$02,	nRst,	M41SNR
+	dc.b		$01,	$05,	nRst,	$02,	dVLowTimpani,	$08,	M41SNR,	$01
+	dc.b		$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41BSD,	$02
+	dc.b		nRst,	M41SNR,	$01,	$05,	nRst,	$02,	M41BSD,	nRst
+	dc.b		$04,	$02,	M41SNR,	$01,	$03,	M41BSD,	$02,	nRst
+	dc.b		$04,	$02,	M41BSD,	$02,	nRst,	M41SNR,	$01,	$05
+	dc.b		nRst,	$02,	M41BSD,	nRst,	$04,	$02,	M41SNR,	$01
+	dc.b		$03,	M41BSD,	$02,	nRst,	$04,	$02,	M41SNR,	$01
 	dc.b		$03,	$01,	$03,	$01,	$03
 ;	Jump?To	?	location
 	smpsJump	M41_SBZ2song2_Jump05
 
 M41_SBZ2song2_Voices:
 ;	Voice 00
-;	$34,$33,$41,$7E,$74,$5B,$9F,$5F,$1F,$04,$07,$07,$08,$00,$00,$00,$00,$FF,$FF,$EF,$FF,$23,$90,$29,$97
-;				#
-	smpsVcAlgorithm		$04
-	smpsVcFeedback		$06
-;				op1	op2	op3	op4
-	smpsVcDetune		$07,	$07,	$04,	$03
-	smpsVcCoarseFreq	$04,	$0E,	$01,	$03
-	smpsVcRateScale		$00,	$01,	$02,	$01
-	smpsVcAttackRate	$1F,	$1F,	$1F,	$1B
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$08,	$07,	$07,	$04
-	smpsVcDecayRate2	$00,	$00,	$00,	$00
-	smpsVcDecayLevel	$0F,	$0E,	$0F,	$0F
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$97,	$29,	$90,	$23
-
+	dc.b	$3a,$31,$20,$41,$61,$8f,$8f,$8e,$54,$e,$3,$e,$3,$0,$0,$0
+	dc.b	$0,$13,$f3,$13,$a,$18,$22,$1b,$80	; Voice 2 (DangerousSeed-3rdTube-3:FM1 Lead (Mod $1E, $01, $05, $05))
 ;	Voice 01
-;	$3A,$61,$3C,$14,$31,$9C,$DB,$9C,$DA,$04,$09,$04,$03,$03,$01,$03,$00,$1F,$0F,$0F,$AF,$21,$20,$31,$80
-;				#
-	smpsVcAlgorithm		$02
-	smpsVcFeedback		$07
-;				op1	op2	op3	op4
-	smpsVcDetune		$03,	$01,	$03,	$06
-	smpsVcCoarseFreq	$01,	$04,	$0C,	$01
-	smpsVcRateScale		$03,	$02,	$03,	$02
-	smpsVcAttackRate	$1A,	$1C,	$1B,	$1C
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$03,	$04,	$09,	$04
-	smpsVcDecayRate2	$00,	$03,	$01,	$03
-	smpsVcDecayLevel	$0A,	$00,	$00,	$01
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$80,	$31,	$20,	$21
-
+	dc.b	$3a,$31,$20,$41,$61,$8f,$8f,$8e,$54,$e,$3,$e,$3,$0,$0,$0
+	dc.b	$0,$13,$f3,$13,$a,$18,$22,$1b,$80	; Voice 2 (DangerousSeed-3rdTube-3:FM1 Lead (Mod $1E, $01, $05, $05))
 ;	Voice 02
-;	$04,$72,$42,$32,$32,$1F,$1F,$1F,$1F,$00,$00,$00,$00,$00,$00,$00,$00,$00,$07,$00,$07,$23,$80,$23,$80
-;				#
-	smpsVcAlgorithm		$04
-	smpsVcFeedback		$00
-;				op1	op2	op3	op4
-	smpsVcDetune		$03,	$03,	$04,	$07
-	smpsVcCoarseFreq	$02,	$02,	$02,	$02
-	smpsVcRateScale		$00,	$00,	$00,	$00
-	smpsVcAttackRate	$1F,	$1F,	$1F,	$1F
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$00,	$00,	$00,	$00
-	smpsVcDecayRate2	$00,	$00,	$00,	$00
-	smpsVcDecayLevel	$00,	$00,	$00,	$00
-	smpsVcReleaseRate	$07,	$00,	$07,	$00
-	smpsVcTotalLevel	$80,	$23,	$80,	$23
-
+	dc.b	$20,$fb,$0,$31,$1,$1e,$1f,$1f,$1f,$c,$11,$11,$c,$2,$c,$2
+	dc.b	$1,$1d,$25,$36,$6,$11,$2e,$10,$80	; Voice 2 (G:\Sam\hax\music\airpassage_2.tfi)
 ;	Voice 03
-;	$3D,$01,$01,$01,$01,$8E,$52,$14,$4C,$08,$08,$0E,$03,$00,$00,$00,$00,$1F,$1F,$1F,$1F,$1B,$80,$80,$9B
-;				#
-	smpsVcAlgorithm		$05
-	smpsVcFeedback		$07
-;				op1	op2	op3	op4
-	smpsVcDetune		$00,	$00,	$00,	$00
-	smpsVcCoarseFreq	$01,	$01,	$01,	$01
-	smpsVcRateScale		$01,	$00,	$01,	$02
-	smpsVcAttackRate	$0C,	$14,	$12,	$0E
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$03,	$0E,	$08,	$08
-	smpsVcDecayRate2	$00,	$00,	$00,	$00
-	smpsVcDecayLevel	$01,	$01,	$01,	$01
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$9B,	$80,	$80,	$1B
-
+	dc.b	$3b,$51,$71,$61,$41,$51,$16,$18,$1a,$5,$1,$1,$0,$9,$1,$1
+	dc.b	$1,$17,$97,$27,$87,$1c,$22,$15,$7f	; Voice 1 (nineko-String)
 ;	Voice 04
-;	$3A,$60,$66,$60,$61,$1F,$94,$1F,$1F,$0F,$10,$05,$0D,$07,$06,$06,$07,$2F,$4F,$1F,$5F,$21,$14,$28,$80
-;				#
-	smpsVcAlgorithm		$02
-	smpsVcFeedback		$07
-;				op1	op2	op3	op4
-	smpsVcDetune		$06,	$06,	$06,	$06
-	smpsVcCoarseFreq	$01,	$00,	$06,	$00
-	smpsVcRateScale		$00,	$00,	$02,	$00
-	smpsVcAttackRate	$1F,	$1F,	$14,	$1F
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$0D,	$05,	$10,	$0F
-	smpsVcDecayRate2	$07,	$06,	$06,	$07
-	smpsVcDecayLevel	$05,	$01,	$04,	$02
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$80,	$28,	$14,	$21
-
+	dc.b	$20,$36,$35,$30,$31,$df,$df,$9f,$9f,$7,$6,$9,$6,$7,$6,$6
+	dc.b	$8,$20,$10,$10,$f8,$19,$37,$13,$80	; Voice 0 (Oerg-Bass)
 ;	Voice 05
-;	$2C,$74,$74,$34,$34,$1F,$12,$1F,$1F,$00,$00,$00,$00,$00,$01,$00,$01,$0F,$3F,$0F,$3F,$16,$90,$17,$90
-;				#
-	smpsVcAlgorithm		$04
-	smpsVcFeedback		$05
-;				op1	op2	op3	op4
-	smpsVcDetune		$03,	$03,	$07,	$07
-	smpsVcCoarseFreq	$04,	$04,	$04,	$04
-	smpsVcRateScale		$00,	$00,	$00,	$00
-	smpsVcAttackRate	$1F,	$1F,	$12,	$1F
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$00,	$00,	$00,	$00
-	smpsVcDecayRate2	$01,	$00,	$01,	$00
-	smpsVcDecayLevel	$03,	$00,	$03,	$00
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$90,	$17,	$90,	$16
-
+	dc.b	$20,$fb,$0,$31,$1,$1e,$1f,$1f,$1f,$c,$11,$11,$c,$2,$c,$2
+	dc.b	$1,$1d,$25,$36,$6,$11,$2e,$10,$80	; Voice 2 (G:\Sam\hax\music\airpassage_2.tfi)
 ;	Voice 06
-;	$08,$0A,$70,$30,$00,$1F,$1F,$5F,$5F,$12,$0E,$0A,$0A,$00,$04,$04,$03,$2F,$2F,$2F,$2F,$24,$2D,$13,$80
-;				#
-	smpsVcAlgorithm		$00
-	smpsVcFeedback		$01
-;				op1	op2	op3	op4
-	smpsVcDetune		$00,	$03,	$07,	$00
-	smpsVcCoarseFreq	$00,	$00,	$00,	$0A
-	smpsVcRateScale		$01,	$01,	$00,	$00
-	smpsVcAttackRate	$1F,	$1F,	$1F,	$1F
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$0A,	$0A,	$0E,	$12
-	smpsVcDecayRate2	$03,	$04,	$04,	$00
-	smpsVcDecayLevel	$02,	$02,	$02,	$02
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$80,	$13,	$2D,	$24
-
+	dc.b	$08,$0A,$70,$30,$00,$1F,$1F,$5F,$5F,$12,$0E,$0A,$0A,$00,$04,$04,$03,$2F,$2F,$2F,$2F,$24,$2D,$13,$80
 ;	Voice 07
-;	$3D,$01,$02,$02,$02,$1F,$08,$8A,$0A,$08,$08,$08,$08,$00,$01,$00,$00,$0F,$1F,$1F,$1F,$1F,$88,$88,$87
-;				#
-	smpsVcAlgorithm		$05
-	smpsVcFeedback		$07
-;				op1	op2	op3	op4
-	smpsVcDetune		$00,	$00,	$00,	$00
-	smpsVcCoarseFreq	$02,	$02,	$02,	$01
-	smpsVcRateScale		$00,	$02,	$00,	$00
-	smpsVcAttackRate	$0A,	$0A,	$08,	$1F
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$08,	$08,	$08,	$08
-	smpsVcDecayRate2	$00,	$00,	$01,	$00
-	smpsVcDecayLevel	$01,	$01,	$01,	$00
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$87,	$88,	$88,	$1F
-
+	dc.b	$3D,$01,$02,$02,$02,$1F,$08,$8A,$0A,$08,$08,$08,$08,$00,$01,$00,$00,$0F,$1F,$1F,$1F,$1F,$88,$88,$87
 ;	Voice 08
-;	$3C,$31,$52,$50,$30,$52,$53,$52,$53,$08,$00,$08,$00,$04,$00,$04,$00,$1F,$0F,$1F,$0F,$1A,$80,$16,$80
-;				#
-	smpsVcAlgorithm		$04
-	smpsVcFeedback		$07
-;				op1	op2	op3	op4
-	smpsVcDetune		$03,	$05,	$05,	$03
-	smpsVcCoarseFreq	$00,	$00,	$02,	$01
-	smpsVcRateScale		$01,	$01,	$01,	$01
-	smpsVcAttackRate	$13,	$12,	$13,	$12
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$00,	$08,	$00,	$08
-	smpsVcDecayRate2	$00,	$04,	$00,	$04
-	smpsVcDecayLevel	$00,	$01,	$00,	$01
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$80,	$16,	$80,	$1A
-
+	dc.b	$3C,$31,$52,$50,$30,$52,$53,$52,$53,$08,$00,$08,$00,$04,$00,$04,$00,$1F,$0F,$1F,$0F,$1A,$80,$16,$80
 ;	Voice 09
-;	$38,$02,$02,$02,$01,$1F,$11,$11,$10,$00,$00,$00,$02,$01,$01,$01,$01,$0F,$0F,$0F,$3F,$2C,$22,$22,$83
-;				#
-	smpsVcAlgorithm		$00
-	smpsVcFeedback		$07
-;				op1	op2	op3	op4
-	smpsVcDetune		$00,	$00,	$00,	$00
-	smpsVcCoarseFreq	$01,	$02,	$02,	$02
-	smpsVcRateScale		$00,	$00,	$00,	$00
-	smpsVcAttackRate	$10,	$11,	$11,	$1F
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$02,	$00,	$00,	$00
-	smpsVcDecayRate2	$01,	$01,	$01,	$01
-	smpsVcDecayLevel	$03,	$00,	$00,	$00
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$83,	$22,	$22,	$2C
-
+	dc.b	$38,$02,$02,$02,$01,$1F,$11,$11,$10,$00,$00,$00,$02,$01,$01,$01,$01,$0F,$0F,$0F,$3F,$2C,$22,$22,$83
 ;	Voice 0A
-;	$38,$35,$05,$10,$01,$14,$14,$10,$0E,$05,$08,$02,$08,$00,$00,$00,$00,$9F,$0F,$0F,$1F,$25,$31,$2A,$80
-;				#
-	smpsVcAlgorithm		$00
-	smpsVcFeedback		$07
-;				op1	op2	op3	op4
-	smpsVcDetune		$00,	$01,	$00,	$03
-	smpsVcCoarseFreq	$01,	$00,	$05,	$05
-	smpsVcRateScale		$00,	$00,	$00,	$00
-	smpsVcAttackRate	$0E,	$10,	$14,	$14
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$08,	$02,	$08,	$05
-	smpsVcDecayRate2	$00,	$00,	$00,	$00
-	smpsVcDecayLevel	$01,	$00,	$00,	$09
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$80,	$2A,	$31,	$25
-
+	dc.b	$38,$35,$05,$10,$01,$14,$14,$10,$0E,$05,$08,$02,$08,$00,$00,$00,$00,$9F,$0F,$0F,$1F,$25,$31,$2A,$80
 ;	Voice 0B
-;	$37,$52,$31,$34,$50,$1F,$1F,$1F,$1F,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$0F,$0F,$0F,$80,$87,$87,$87
-;				#
-	smpsVcAlgorithm		$07
-	smpsVcFeedback		$06
-;				op1	op2	op3	op4
-	smpsVcDetune		$05,	$03,	$03,	$05
-	smpsVcCoarseFreq	$00,	$04,	$01,	$02
-	smpsVcRateScale		$00,	$00,	$00,	$00
-	smpsVcAttackRate	$1F,	$1F,	$1F,	$1F
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$00,	$00,	$00,	$00
-	smpsVcDecayRate2	$00,	$00,	$00,	$00
-	smpsVcDecayLevel	$00,	$00,	$00,	$00
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$87,	$87,	$87,	$80
-
+	dc.b	$37,$52,$31,$34,$50,$1F,$1F,$1F,$1F,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$0F,$0F,$0F,$80,$87,$87,$87
 ;	Voice 0C
-;	$06,$61,$03,$32,$71,$1F,$1F,$1F,$1F,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$0F,$0F,$0F,$1E,$85,$80,$80
-;				#
-	smpsVcAlgorithm		$06
-	smpsVcFeedback		$00
-;				op1	op2	op3	op4
-	smpsVcDetune		$07,	$03,	$00,	$06
-	smpsVcCoarseFreq	$01,	$02,	$03,	$01
-	smpsVcRateScale		$00,	$00,	$00,	$00
-	smpsVcAttackRate	$1F,	$1F,	$1F,	$1F
-	smpsVcAmpMod		$00,	$00,	$00,	$00
-	smpsVcDecayRate1	$00,	$00,	$00,	$00
-	smpsVcDecayRate2	$00,	$00,	$00,	$00
-	smpsVcDecayLevel	$00,	$00,	$00,	$00
-	smpsVcReleaseRate	$0F,	$0F,	$0F,	$0F
-	smpsVcTotalLevel	$80,	$80,	$85,	$1E
+	dc.b	$06,$61,$03,$32,$71,$1F,$1F,$1F,$1F,$00,$00,$00,$00,$00,$00,$00,$00,$0F,$0F,$0F,$0F,$1E,$85,$80,$80
 	even
