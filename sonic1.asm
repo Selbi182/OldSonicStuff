@@ -1310,10 +1310,13 @@ PG_ChkHUD:
 		beq.s	PG_NotGHZ2
 		tst.b	($FFFFD040).w		; is HUD already loaded?
 		bne.s	PG_NotGHZ2		; if yes, allow to pause
+		cmpi.b	#$10,($FFFFF600).w
+		beq.s	PG_NotGHZ2
 		rts				; return
 ; ===========================================================================
 
 PG_NotGHZ2:
+
 		move.w	#1,($FFFFF63A).w	; freeze time
 		tst.b	($FFFFFFB5).w		; is flag set?
 		bne.s	loc_13CA		; if yes, branch
@@ -4179,6 +4182,9 @@ Level_WaterPal:
 		
 ; ---------------------------------
 Level_GetBgm:
+		move.b	#$E3,d0
+		jsr	PlaySound_Special
+
 		cmpi.w	#$501,($FFFFFE10).w
 		bne.s	Level_NoPreTut
 		move.b	#$99,d0
@@ -5117,6 +5123,8 @@ ClearEverySpecialFlag:
 		clr.l	($FFFFFF78).w
 		clr.l	($FFFFFF7C).w
 		clr.b	($FFFFFF7F).w
+		clr.w	($FFFFFF86).w
+		clr.w	($FFFFFF88).w
 		clr.b	($FFFFFFEB).w
 		clr.b	($FFFFFF91).w
 		clr.l	($FFFFFFA0).w	; clear RAM adresses $FFA0-$FFA3 (4 flags)
@@ -16064,9 +16072,11 @@ Obj26_BO_NoHome:
 		move.b	$1C(a0),$1C(a1)
 
 Obj26_Explode:
+		cmpi.w	#$001,($FFFFFE10).w
+		beq.s	@cont
 		moveq	#10,d0		; add 1000 ...
 		jsr	AddPoints	; ... points
-
+@cont:
 		bsr	SingleObjLoad
 		bne.s	Obj26_SetBroken
 		move.b	#$27,0(a1)	; load explosion object
@@ -16780,7 +16790,7 @@ Obj2B_ChgAni:
 		move.w	$C(a0),$C(a1)
 
 Obj2B_NotInhumanCrush:
-		bsr	BossDefeated3
+		bsr	BossDefeated4
 		move.b	#1,$1C(a0)	; use fast animation
 	
 locret_ABB6:
@@ -16854,6 +16864,30 @@ BossDefeated3:
 locret_178A22XX:
 		rts	
 ; End of function BossDefeated
+
+BossDefeated4:
+		move.b	($FFFFFE0F).w,d0
+		andi.b	#7,d0
+		bne.s	locret_178A22XXX
+		bsr	SingleObjLoad
+		bne.s	locret_178A22XX
+		move.b	#$3F,0(a1)	; load explosion object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+		jsr	(RandomNumber).l
+		move.w	d0,d1
+		moveq	#0,d1
+		move.b	d0,d1
+		lsr.b	#2,d1
+		subi.w	#$20,d1
+		add.w	d1,8(a1)
+		lsr.w	#8,d0
+		lsr.b	#3,d0
+		add.w	d0,$C(a1)
+
+locret_178A22XXX:
+		rts	
+
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -22561,6 +22595,13 @@ Obj0D_Index:	dc.w Obj0D_Main-Obj0D_Index
 ; ===========================================================================
 
 Obj0D_Main:				; XREF: Obj0D_Index
+		cmpi.w	#$200,($FFFFFE10).w
+		bne.s	@cont
+		cmpi.w	#$1200,($FFFFF700).w
+		bcc.s	@cont
+		rts
+
+@cont:
 		addq.b	#2,$24(a0)
 		move.l	#Map_obj0D,4(a0)
 		move.w	#$680,2(a0)
@@ -26687,7 +26728,7 @@ Obj5F_Action:				; XREF: Obj5F_Index
 		move.w	Obj5F_Index2(pc,d0.w),d1
 		jsr	Obj5F_Index2(pc,d1.w)
 		lea	(Ani_obj5F).l,a1
-		bsr.w	AnimateSprite
+		jsr	AnimateSprite
 
 		move.w	8(a0),d0
 		andi.w	#$FF80,d0
@@ -45402,8 +45443,8 @@ HudUpdate:
 
 @NoDemo:
 	if DontAllowDebug=0
-	;	tst.w	($FFFFFFFA).w	; is debug mode	on?
-	;	bne.w	HudDebug	; if yes, branch
+		tst.w	($FFFFFFFA).w	; is debug mode	on?
+		bne.w	HudDebug	; if yes, branch
 	endif
 		tst.b	($FFFFFE1F).w	; does the score need updating?
 		beq.s	Hud_ChkRings	; if not, branch

@@ -878,6 +878,15 @@ Hint_6:
 	dc.b	'SAME TIME.',_br
 	dc.b	_pause,_cls
 
+	dc.b	'THIS ALSO WORKS FOR',_br
+	dc.b	'SPECIAL STAGES,',_br
+	dc.b	'ALTHOUGH YOU CAN DO',_br
+	dc.b	'THIS AT ANY TIME IN',_br
+	dc.b	'THE LEVEL JUST BY',_br
+	dc.b	'PRESSING a, b, AND c',_br
+	dc.b	'AT THE SAME TIME.',_br
+	dc.b	_pause,_cls
+
 	dc.b	'KEEP IN MIND THAT',_br
 	dc.b	'YOU WILL LOSE ALL OF',_br
 	dc.b	'YOUR RINGS, SHIELDS,',_br
