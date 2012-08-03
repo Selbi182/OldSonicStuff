@@ -121,8 +121,8 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"     SONICVAAN      ",$FF
 	dc.b	"                    ",$FF
+	dc.b	"     SONICVAAN      ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
@@ -155,9 +155,9 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
 	dc.b	"      TONGARA       ",$FF
 	dc.b	"                    ",$FF
+	dc.b	"        EVA         ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
@@ -172,10 +172,10 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"                    ",$FF
 	dc.b	"     SONIC TEAM     ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"        SEGA        ",$FF
+	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF

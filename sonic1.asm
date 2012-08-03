@@ -13890,6 +13890,7 @@ Obj1F_NoCamShake:
 
 Obj1F_BossDefeated:
 		move.b	#1,($FFFFF7CC).w		; lock controls
+		clr.b	($FFFFFFEB).w
 		clr.b	($FFFFF602).w
 		move.b	#1,($FFFFFFD5).w		; set flag 3
 		clr.w	$10(a0)				; clear X-speed

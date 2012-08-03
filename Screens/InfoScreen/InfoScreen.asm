@@ -835,10 +835,10 @@ InfoText_9:	; hidden easter egg text found in Scar Night Place
 		dc.b	'   GOT SO JEALOUS. SO HE    ' ;1
 		dc.b	'DECIDED TO STICK HIS DICK IN' ;0
 		dc.b	'MICHAELMXM. HE ENJOYED THIS.' ;0
-		dc.b	'IT MADE HIM FEEL HOT. MAGGIE' ;0
+		dc.b	'IT MADE HIM FEEL HOT. HITOMI' ;0
 		dc.b	' THEN WALKED INTO THE ROOM, ' ;0
 		dc.b	' UNEXPECTEDLY. SHE GOT WET  ' ;1
-		dc.b	' THE INSTANT SHE SAW SEANIE ' ;0
+		dc.b	' THE INSTANT SHE SAW ASHISH ' ;0
 		dc.b	'ON THE FLOOR NAKED. THEY HAD' ;0
 		dc.b	'  A MAGICAL NIGHT OF LOVE   ' ;1
 		dc.b	' MAKING. AND THEN, TWEAKER  ' ;1
