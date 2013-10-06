@@ -109,7 +109,7 @@ PLC_GHZ2:	dc.w 5
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - Labyrinth
 ; ---------------------------------------------------------------------------
-PLC_LZ:		dc.w $B
+PLC_LZ:		dc.w $A
 		dc.l Nem_LZ		; LZ main patterns
 		dc.w 0
 		dc.l Nem_LzBlock1	; block
@@ -118,8 +118,8 @@ PLC_LZ:		dc.w $B
 		dc.w $3E00
 		dc.l Nem_Splash		; waterfalls and splash
 		dc.w $4B20
-		dc.l Nem_Water		; water	surface
-		dc.w $6000
+	;	dc.l Nem_Water		; water	surface
+	;	dc.w $6000
 		dc.l Nem_LzSpikeBall	; spiked ball
 		dc.w $6200
 		dc.l Nem_FlapDoor	; flapping door
@@ -134,7 +134,7 @@ PLC_LZ:		dc.w $B
 		dc.w $7980
 		dc.l Nem_HardPS		; hard part skipper
 		dc.w $94C0
-PLC_LZ2:	dc.w $B
+PLC_LZ2:	dc.w $A
 		dc.l Nem_LzPole		; pole that breaks
 		dc.w $7BC0
 		dc.l Nem_LzDoor2	; large	horizontal door
@@ -151,8 +151,8 @@ PLC_LZ2:	dc.w $B
 		dc.w $90C0
 		dc.l Nem_LzSwitch	; switch
 		dc.w $A1E0
-		dc.l Nem_Cork		; cork block
-		dc.w $A000
+	;	dc.l Nem_Cork		; cork block
+	;	dc.w $A000
 		dc.l Nem_Spikes		; spikes
 		dc.w $A360
 		dc.l Nem_HSpring	; horizontal spring
@@ -290,9 +290,11 @@ PLC_Signpost:	dc.w 1
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - beta special stage warp effect
 ; ---------------------------------------------------------------------------
-PLC_Warp:	dc.w 0
+PLC_Warp:	dc.w 1
 		dc.l Nem_Stars		; invincibility	stars
 		dc.w $AB80
+		dc.l Nem_Explode	; explosion
+		dc.w $B400
 ; ---------------------------------------------------------------------------
 ; Pattern load cues - special stage
 ; ---------------------------------------------------------------------------

@@ -89,6 +89,7 @@ Options_MakeF0s:
 		clr.b	($FFFFFF95).w
 		clr.w	($FFFFFF96).w
 		clr.b	($FFFFFF98).w
+		clr.w	($FFFFFFB8).w
 		move.w	#21,($FFFFFF9A).w
 		clr.w	($FFFFFF9C).w
 		move.b	#$81,($FFFFFF84).w
@@ -113,11 +114,31 @@ Options_ClrVram:
 		move.w	#19,($FFFFFF82).w	; set position to 4
 
 		jsr	Pal_FadeTo
-		bra.s	OptionsScreen_MainLoop
+		bra.w	OptionsScreen_MainLoop
 
 ; ===========================================================================
 
 Options_PalCycle:
+		addq.w	#2,($FFFFFE04).w
+		move.w	($FFFFFE04).w,d0
+		jsr	CalcSine
+		addi.w	#$100,d0
+		tst.w	d0
+		bne.s	@cont
+		addq.w	#4,($FFFFFFB8).w
+		cmpi.w	#12,($FFFFFFB8).w
+		bne.s	@cont
+		clr.w	($FFFFFFB8).w
+		
+@cont:
+		lsr.w	#5,d0
+		move.w	($FFFFFFB8).w,d1
+		lsl.w	d1,d0
+		andi.w	#$EEE,d0
+		move.w	d0,($FFFFFB40).w
+
+
+
 
 PalLocationO = $FFFFFB20
 
@@ -937,11 +958,11 @@ OpText_SonicArt:
 		even
 
 OpText_EasterEgg_Locked:
-		dc.b	'?????????????????    ', $FF
+		dc.b	'???????????????      ', $FF
 		even
 
 OpText_EasterEgg_Unlocked:
-		dc.b	'ATMOSPHERIC MODE     ', $FF
+		dc.b	'NONSTOP INHUMAN      ', $FF
 		even
 
 OpText_DeleteSRAM:

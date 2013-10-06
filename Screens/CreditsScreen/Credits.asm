@@ -14,6 +14,12 @@ CreditsJest:
 
 		move.b	#4,($FFFFF62A).w
 		jsr	DelayProgram
+		
+		move.w	#120,d0
+	@delay:
+		move.b	#4,($FFFFF62A).w
+		jsr	DelayProgram
+		dbf	d0,@delay
 
 		move.l	#$40000000,($C00004).l			; set VDP to V-Ram write mode with address
 		lea	(Art_Credits).l,a0			; load address of compressed art
@@ -21,7 +27,7 @@ CreditsJest:
 
 		lea	($00FF0000).l,a1			; set destination
 		lea	(Map_Credits).l,a0			; set mappings location
-		move.w	#(295*$A)+11,d1				; set number of loops (10 blocks)
+		move.w	#(295*11)+11,d1				; set number of loops (10 blocks)
 
 CJ_MapsLoop:
 		move.b	(a0)+,(a1)+				; load data
@@ -117,13 +123,13 @@ CJSM_FO_Array:
 		dc.b	 6, 1
 		dc.b	 6, 7
 		dc.b	 7, 9
-		dc.b	 8, 1
-		dc.b	 8, 8
-		dc.b	 8, 10
-		dc.b	 9, 1
-		dc.b	10, 3
-		dc.b	10, 6
-		dc.b	10, 8
+	;	dc.b	 8, 1
+		dc.b	 9, 8
+		dc.b	 9, 10
+		dc.b	10, 1
+		dc.b	11, 3
+		dc.b	11, 6
+		dc.b	11, 8
 		dc.b	$FF, $FF
 		even
 ; ---------------------------------------------------------------------------
@@ -135,7 +141,7 @@ CJSM_FO_Array:
 ; ---------------------------------------------------------------------------
 ; Mapping
 
-MoveOffSpeed = $0008
+MoveOffSpeed = $0010
 OffScreenPos = $0040
 ; ---------------------------------------------------------------------------
 
@@ -201,19 +207,23 @@ CJML_RunLetter:
 ; ---------------------------------------------------------------------------
 
 CJML_ScrollIn:
-		cmpi.b	#10,($FFFFFF91).w
+		cmpi.b	#11,($FFFFFF91).w
 		bne.s	CJML_NormalScreen
 
 CJML_FinalLoop:
 		addq.b	#1,($FFFFFE04).w			; increase frame counter
-		btst	#0,($FFFFFE04).w
-		bne.s	ycont
+	;	btst	#0,($FFFFFE04).w
+	;	bne.s	ycont
 
 		subi.w	#1,($FFFFFFA0).w			; decrease X scroll position left
 		move.w	($FFFFFFA0).w,d0			; load scroll position
 		andi.w	#$01FF,d0				; keep within the X line
 		cmp.w	#$0000,d0				; has it reached in screen?
-		beq	CJML_FinalLoop2				; if so, branch
+		bne	ycont
+		move.b	#1,($A130F1).l				; enable SRAM
+		move.b	#1,($20001D).l				; unlock hidden feature
+		move.b	#0,($A130F1).l				; disable SRAM
+		bra	CJML_FinalLoop2				; if so, branch
 
 ycont:
 		move.b	#$04,($FFFFF62A).w			; set V-Blank routine to run
@@ -224,8 +234,8 @@ ycont:
 CJML_FinalLoop2:
 		move.b	#$04,($FFFFF62A).w
 		jsr	DelayProgram
-		tst.b	($FFFFF605).w
-		bmi.s	CJML_End
+		tst.b	($FFFFF605).w				; test button input
+		bmi.s	CJML_End				; is start pressed? if yes, branch
 		bra	CJML_FinalLoop2
 
 CJML_NormalScreen:

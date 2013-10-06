@@ -618,7 +618,7 @@ Hint_Pre:
 	dc.b	'I KNOW YOU WANT TO',_br
 	dc.b	'DIVE RIGHT INTO THE',_br
 	dc.b	'ACTION AND GET YOUR',_br
-	dc.b	'BRAIN SLAIN APART BY',_br
+	dc.b	'BRAIN BLOWN APART BY',_br
 	dc.b	'BY INSANITY AND',_br
 	dc.b	'EXPLOSIVE MADNESS.',_br
 	dc.b	_pause,_cls
@@ -649,12 +649,12 @@ Hint_Pre:
 
 	dc.b	'BECAUSE TEARS OF',_br
 	dc.b	'FRUSTRATION SHOULD',_br
-	dc.b	'BE KEPT AT A MINIMUM',_br
+	dc.b	'BE KEPT TO A MINIMUM',_br
 	dc.b	'THE FOLLOWING LEVEL',_br
 	dc.b	'WILL TEACH YOU SOME',_br
 	dc.b	'OF THE BASICS YOU',_br
-	dc.b	'WILL NEED TO KNOW',_br
-	dc.b	'LATER IN THE GAME.',_br
+	dc.b	'NEED TO KNOW LATER',_br
+	dc.b	'IN THE GAME.',_br
 	dc.b	_pause,_cls
 
 	dc.b	_br,_br
@@ -676,24 +676,24 @@ Hint_1:
 	dc.b	'ARE SPREAD AROUND',_br
 	dc.b	'THIS LEVEL AND WILL',_br
 	dc.b	'TELL YOU A LOT OF',_br
-	dc.b	'USEFUL INFORMATION,',_br
+	dc.b	'HELPFUL INFORMATION,',_br
 	dc.b	'SO BE SURE TO KEEP',_br
-	dc.b	'AN EYE OPEN FOR',_br
+	dc.b	'AN EYE OUT FOR',_br
 	dc.b	'THEM!',_br
 	dc.b	_pause,_cls
 
 	dc.b	'HOWEVER, IF YOU FEEL',_br
 	dc.b	'LIKE YOU ALREADY',_br
 	dc.b	'KNOW EVERYTHING YOU',_br
-	dc.b	'NEED TO KNOW, JUST',_br
-	dc.b	'JUMP INTO THE RING',_br
-	dc.b	'TO YOUR LEFT AND',_br
-	dc.b	'ENTER THE INSANITY',_br
-	dc.b	'RIGHT AWAY!',_br
+	dc.b	'NEED TO, JUST JUMP',_br
+	dc.b	'INTO THE RING TO',_br
+	dc.b	'YOUR LEFT AND ENTER',_br
+	dc.b	'THE INSANITY RIGHT',_br
+	dc.b	'AWAY!',_br
 	dc.b	_pause,_cls
 
 	dc.b	'OTHERWISE, GO TO THE',_br
-	dc.b	'RIGHT AND BEGIN THE',_br
+	dc.b	'RIGHT AND START THE',_br
 	dc.b	'TUTORIAL!',_br
 	dc.b	_pause,_end
 
@@ -711,7 +711,7 @@ Hint_2:
 	dc.b	'WITH b AND c, AS a',_br
 	dc.b	'IS REQUIRED FOR SOME',_br
 	dc.b	'MISCELLANEOUS',_br
-	dc.b	'ABILITIES, I WILL',_br
+	dc.b	'ACTIONS I WILL',_br
 	dc.b	'EXPLAIN LATER.',_br
 	dc.b	_pause,_cls
 
@@ -739,7 +739,7 @@ Hint_2:
 	dc.b	'BUT MORE IMPORTANT',_br
 	dc.b	'THAN FORWARD DASHING',_br
 	dc.b	'IS DOUBLE JUMPING,',_br
-	dc.b	'WHICH CAN BE USED BY',_br
+	dc.b	'WHICH CAN BE DONE BY',_br
 	dc.b	'PRESSING c AND up',_br
 	dc.b	'WHILE IN AIR OR',_br
 	dc.b	'SIMPLY BY PRESSING',_br
@@ -764,15 +764,15 @@ Hint_2:
 ;		 --------------------
 Hint_3:
 	dc.b	'DESTROYING THIS',_br
-	dc.b	'MONITOR MAKES SONIC',_br
+	dc.b	'MONITOR LETS SONIC',_br
 	dc.b	'ENTER THE SO-CALLED',_br
 	dc.b	_br
 	dc.b	'    inhuman mode',_br
 	dc.b	_pause,_cls
 
 	dc.b	'IT WILL MAKE YOU',_br
-	dc.b	'TOTALLY INVINCIBLE,',_br
-	dc.b	'EVEN FROM BOTTOMLESS',_br
+	dc.b	'FULLY INVULNERABLE,',_br
+	dc.b	'EVEN TO BOTTOMLESS',_br
 	dc.b	'PITS AND BEING',_br
 	dc.b	'CRUSHED TO DEATH!',_br
 	dc.b	_pause,_cls
@@ -804,16 +804,16 @@ Hint_4:
 	dc.b	'INVINCIBLE AND YOU',_br
 	dc.b	'CAN STILL SHOOT',_br
 	dc.b	'BULLETS, BUT YOU',_br
-	dc.b	'WILL LOSE ALL OF',_br
+	dc.b	'WILL LOSE ALL YOUR',_br
 	dc.b	'OTHER ABILITIES.',_br
 	dc.b	_pause,_cls
 
-	dc.b	'BUT MORE IMPORTANT',_br
-	dc.b	'IS THE FACT, THAT',_br
-	dc.b	'YOU WILL SLOWLY LOSE',_br
+	dc.b	'HOWEVER, MORE',_br
+	dc.b	'IMPORTANTLY, YOU',_br
+	dc.b	'WILL SLOWLY LOSE',_br
 	dc.b	'RINGS OVER TIME AND',_br
-	dc.b	'VERY FAST WHEN YOU',_br
-	dc.b	'ARE STANDING ON THE',_br
+	dc.b	'RAPIDLY WHEN YOU',_br
+	dc.b	'ARE TOUCHING THE',_br
 	dc.b	'GROUND, UNTIL YOU',_br
 	dc.b	'REACH ZERO AND DIE!',_br
 	dc.b	_pause,_cls
@@ -826,7 +826,7 @@ Hint_4:
 	dc.b	_pause,_cls
 
 	dc.b	_br,_br
-	dc.b	' get through that',_br
+	dc.b	' go through that',_br
 	dc.b	' narrow spot to',_br
 	dc.b	' get to the next',_br
 	dc.b	' room and continue1',_br
@@ -837,8 +837,8 @@ Hint_4:
 	dc.b	' before your rings',_br
 	dc.b	' run out; but for',_br
 	dc.b	' the sake of this',_br
-	dc.b	' tutorial; we will',_br
-	dc.b	' cut that out for',_br
+	dc.b	' tutorial it has',_br
+	dc.b	' been disabled for',_br
 	dc.b	' now:',_br
 	dc.b	_pause,_end
 
@@ -848,8 +848,8 @@ Hint_5:
 	dc.b	'DURING THIS SPECIAL',_br
 	dc.b	'INHUMAN MODE WILL',_br
 	dc.b	'TELEPORT YOU BACK TO',_br
-	dc.b	'WHERE YOU STARTED',_br
-	dc.b	'AND REMOVE A FEW',_br
+	dc.b	'WHERE YOU STARTED,',_br
+	dc.b	'AT THE COST OF A FEW',_br
 	dc.b	'RINGS, SO YOU SHOULD',_br
 	dc.b	'COLLECT MANY!',_br
 	dc.b	_pause,_end
@@ -890,7 +890,7 @@ Hint_6:
 	dc.b	'KEEP IN MIND THAT',_br
 	dc.b	'YOU WILL LOSE ALL OF',_br
 	dc.b	'YOUR RINGS, SHIELDS,',_br
-	dc.b	'AND INVINCIBILITIES',_br
+	dc.b	'AND INVINCIBILITY',_br
 	dc.b	'IN THE PROCESS!',_br
 	dc.b	_pause,_cls
 
@@ -915,7 +915,7 @@ Hint_7:
 	dc.b	'NOT EXIST ANYWHERE',_br
 	dc.b	'IN THIS GAME, SO DO',_br
 	dc.b	'NOT BE AFRAID TO BE',_br
-	dc.b	'MANIAC!',_br
+	dc.b	'A MANIAC!',_br
 	dc.b	_pause,_cls
 
 	dc.b	_br
@@ -937,8 +937,8 @@ Hint_8:
 
 	dc.b	'THIS CAN BE DONE BY',_br
 	dc.b	'HOLDING DOWN THE',_br
-	dc.b	'a BUTTON WHILE BEING',_br
-	dc.b	'IN AIR.',_br
+	dc.b	'a BUTTON WHILE IN',_br
+	dc.b	'AIR.',_br
 	dc.b	_pause,_cls
 
 	dc.b	_br

@@ -54,8 +54,8 @@ Align:		macro
 ;Don't allow debug mode, not even with Game Genie.
 ; 0 - No
 ; 1 - Yes
-DebugModeDefault = 0
-DontAllowDebug = 1
+DebugModeDefault = 1
+DontAllowDebug = 0
 ;=================================================
 ;Enable Demo Recording. (In RAM at $FFFFD200)
 ;Also disables Stars and Shields
@@ -67,7 +67,7 @@ AutoDEMO = 0
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened
-DoorsAlwaysOpen = 0
+DoorsAlwaysOpen = 1
 ;=================================================
 
 ; ---------------------------------------------------------------------------
@@ -1227,7 +1227,7 @@ SDL_Loop:
 
 PlaySound:
 		tst.b	($FFFFFF92).w
-		beq.s	@cont
+		bra.s	@cont
 		cmpi.b	#$A0,d0
 		blt.s	@cont
 		cmpi.b	#$E0,d0
@@ -1254,7 +1254,7 @@ PlaySound:
 
 PlaySound_Special:
 		tst.b	($FFFFFF92).w
-		beq.s	@cont
+		bra.s	@cont
 		cmpi.b	#$A0,d0
 		blt.s	@cont
 		cmpi.b	#$E0,d0
@@ -4147,7 +4147,7 @@ Level_ClrVars3:
 		clr.w	($FFFFC800).w
 		move.l	#$FFFFC800,($FFFFC8FC).w
 
-		move.b	#$10,($FFFFD4C0).w	; load camera shaking object
+	;	move.b	#$10,($FFFFD4C0).w	; load camera shaking object
 
 		cmpi.b	#1,($FFFFFE10).w ; is level LZ?
 		bne.s	Level_LoadPal	; if not, branch
@@ -4222,6 +4222,10 @@ Level_NoMusic2:
 		clr.b	($FFFFFF99).w
 		clr.w	($FFFFFFCE).w	; clear extended camera counter
 		bsr	ClearEverySpecialFlag
+
+
+		tst.b	($FFFFFF92).w
+		bne.s	Level_NoTitleCard2
 		cmpi.w	#$001,($FFFFFE10).w
 		beq.s	Level_NoTitleCard
 		cmpi.w	#$500,($FFFFFE10).w
@@ -4235,6 +4239,17 @@ Level_NoMusic2:
 		move.b	#$34,($FFFFD080).w ; load title	card object
 		bra.s	Level_TtlCard
 ; ===========================================================================
+
+Level_NoTitleCard2:
+	;	moveq	#0,d0
+	;	move.b	($FFFFFE10).w,d0
+	;	addi.w	#$15,d0
+	;	jsr	(LoadPLC).l	; load animal patterns (level no. + $15)
+		moveq	#3,d0
+		bsr	PalLoad2	; load Sonic's pallet line
+		moveq	#$13,d0
+		jsr	LoadPLC		; load star patterns
+		bra.s	Level_TtlCard
 
 Level_NoTitleCard:
 		moveq	#3,d0
@@ -5117,6 +5132,8 @@ MainLevelArray:
 ; ---------------------------------------------------------------------------
 
 ClearEverySpecialFlag:
+		clr.l	($FFFFFF60).w
+		clr.l	($FFFFFF64).w
 		clr.w	($FFFFFF74).w
 		clr.b	($FFFFFF76).w
 		clr.b	($FFFFFF77).w
@@ -7386,29 +7403,57 @@ loc_628E:
 		move.w	($FFFFF70C).w,($FFFFF618).w
 		move.w	($FFFFF718).w,($FFFFF620).w
 		move.w	($FFFFF71C).w,($FFFFF61E).w
+;
+;
+;Deform_Cameraing:
+;		tst.b	($FFFFD4C0+$30).w	; test if flag in Obj10 was being set
+;		beq.s	Deform_NoCamShake	; if not, don't shake the camera
+;		cmpi.w	#$601,($FFFFFE10).w	; is this the ending sequence?
+;		beq.s	Deform_NoCamShake	; if yes, don't make the shaking
+;		moveq	#0,d0			; clear d0
+;		move.w	($FFFFFE04).w,d0	; copy game frame timer to d0
+;		andi.w	#$3F,d0			; and it by $3F
+;		lea	Deform_CamMovingData(pc),a1 ; load camera moving data
+;		lea	(a1,d0.w),a1		; somehow modify a1
+;		muls.w	#500,d0
+;		moveq	#0,d0			; clear d0 again
+;		move.b	(a1)+,d0		; set d0 to (a1)+
+;		add.w	d0,($FFFFF616).w	; $F616 = Plane A Y-pos for prev. frame
 
+;Deform_NoCamShake:
 
-Deform_Cameraing:
-		tst.b	($FFFFD4C0+$30).w	; test if flag in Obj10 was being set
-		beq.s	Deform_NoCamShake	; if not, don't shake the camera
-		cmpi.w	#$601,($FFFFFE10).w	; is this the ending sequence?
-		beq.s	Deform_NoCamShake	; if yes, don't make the shaking
-		moveq	#0,d0			; clear d0
-		move.w	($FFFFFE04).w,d0	; copy game frame timer to d0
-		andi.w	#$3F,d0			; and it by $3F
-		lea	Deform_CamMovingData(pc),a1 ; load camera moving data
-		lea	(a1,d0.w),a1		; somehow modify a1
-		muls.w	#500,d0
-		moveq	#0,d0			; clear d0 again
-		move.b	(a1)+,d0		; set d0 to (a1)+
-		add.w	d0,($FFFFF616).w	; $F616 = Plane A Y-pos for prev. frame
+GenerateCameraShake:
+		tst.b	($FFFFFF64).w
+		beq.s	@cont
+		subq.b	#1,($FFFFFF64).w
+		jsr	RandomNumber		; random number
+		swap	d0
+		move.w	d0,d1
+		swap	d0
+		andi.w	#$0005,d0			; limit to 15
+		andi.w	#$0005,d1			; limit to 15
+		subi.w	#$0003,d0
+		subi.w	#$0003,d1
+		move.w	d0,($FFFFFF60).w
+		move.w	d1,($FFFFFF62).w
 
-Deform_NoCamShake:
+@cont:
+		tst.b	($FFFFFF64).w
+		beq.s	@contxx
+		move.w	($FFFFFF62).w,d0
+		add.w	d0,($FFFFF700).w	; backup for sprite shaking
+@contxx:
 		moveq	#0,d0
 		move.b	($FFFFFE10).w,d0
 		add.w	d0,d0
 		move.w	Deform_Index(pc,d0.w),d0
-		jmp	Deform_Index(pc,d0.w)
+		jsr	Deform_Index(pc,d0.w)
+		tst.b	($FFFFFF64).w
+		beq.s	@contxxx
+		move.w	($FFFFFF62).w,d0	; backup for sprite shaking
+		sub.w	d0,($FFFFF700).w
+@contxxx:
+		rts
 ; End of function DeformBgLayer
 
 ; ===========================================================================
@@ -8509,6 +8554,12 @@ loc_6656:
 		clr.w	($FFFFF73C).w
 
 @cont:
+		tst.b	($FFFFFF64).w
+		beq.s	@contx
+		move.w	($FFFFFF60).w,d0	; backup for sprite shaking
+		add.w	d0,d1	; add to camera shaking
+		bra	ScrVert_ShakeCam	; ~~
+@contx
 		rts	
 ; ===========================================================================
 
@@ -8602,10 +8653,44 @@ loc_6700:
 		bra.s	loc_6724
 ; ===========================================================================
 
-loc_6720:
-		move.w	($FFFFF72E).w,d1
+ScrVert_ShakeCam:
+		move.w	($FFFFF704).w,d1
+		bra.s	ScrVert_ShakeCam2
 
+; ---------------------------------------------------------------------------
+loc_6720:
+		move.w	($FFFFF72E).w,d1	; set y-pos to bottom boundary
+
+; ---------------------------------------------------------------------------
 loc_6724:
+		tst.b	($FFFFFF64).w
+		beq.s	contx
+
+ScrVert_ShakeCam2:
+		move.w	($FFFFFF60).w,d0	; backup for sprite shaking
+		add.w	d0,d0
+	;	add.w	d0,($FFFFF70C).w
+		move.w	($FFFFFF60).w,d0	; backup for sprite shaking
+		add.w	d0,d1	; add to camera shaking
+		move.w	($FFFFFF66).w,d5
+		addi.w	#$10,d5
+		cmp.w	d5,d1
+		bcs.s	@contx
+		move.w	d5,d1
+		bra.s	@contxx
+
+@contx:
+		subi.w	#$20,d5
+		cmp.w	d5,d1
+		bcc.s	@contxx
+		move.w	d5,d1
+
+@contxx:
+		tst.w	d1
+		bpl.s	contx
+		moveq	#0,d1
+contx:
+
 		move.w	($FFFFF704).w,d4
 		swap	d1
 		move.l	d1,d3
@@ -8617,6 +8702,9 @@ loc_6724:
 
 @cont:
 		move.l	d1,($FFFFF704).w
+
+		move.w	($FFFFF704).w,($FFFFFF66).w
+
 		move.w	($FFFFF704).w,d0
 		andi.w	#$10,d0
 		move.b	($FFFFF74B).w,d1
@@ -11765,6 +11853,30 @@ Obj18_Action:				; XREF: Obj18_Index
 ; ===========================================================================
 
 Obj18_Action2:				; XREF: Obj18_Index
+		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1?
+		bne.s	Obj18_NotSYZX
+		btst	#1,($FFFFF605).w
+		beq.s	Obj18_NotSYZX
+		move.w	($FFFFD010).w,d0
+		bpl.s	@cont
+		neg.w	d0
+@cont:
+		cmpi.w	#$100,d0
+		bgt.s	Obj18_NotSYZX
+		move.b	#10,($FFFFFF64).w		; camera shaking
+		bsr	SingleObjLoad
+		bne.s	Obj18_NotSYZX
+		move.b	#$3F,(a1)
+		move.w	$8(a0),$8(a1)
+		move.w	$C(a0),$C(a1)
+		move.b	#1,$30(a1)
+		bclr	#3,($FFFFD022).w
+		bset	#1,($FFFFD022).w
+		move.b	#2,($FFFFD01C).w
+		jmp	DeleteObject
+
+
+Obj18_NotSYZX:
 		cmpi.w	#$101,($FFFFFE10).w	; is level LZ2?
 		beq.s	Obj18_LZ2		; if yes, branch
 		cmpi.w	#$201,($FFFFFE10).w	; is level MZ2?
@@ -12625,7 +12737,7 @@ Obj1D_Action:
 		bpl.s	Obj1D_ChkDelete	; has the time run out? if not, branch
 		move.b	$30(a0),$32(a0)	; reset cooldown
 
-		move.b	$28(a0),($FFFFD4E8).w		; camera shaking
+		move.b	$28(a0),($FFFFFF64).w		; camera shaking
 
 		bsr	SingleObjLoad
 		bne.s	Obj1D_ChkDelete
@@ -13133,42 +13245,28 @@ Obj27_Index:	dc.w Obj27_LoadAnimal-Obj27_Index
 Obj27_LoadAnimal:			; XREF: Obj27_Index
 		addq.b	#2,$24(a0)
 		bsr	SingleObjLoad
-		bra.s	Obj27_Main
-		move.b	#$28,0(a1)	; load animal object
+		bne.w	Obj27_Main
+		move.b	#$27,0(a1)	; load animal object
 		move.w	8(a0),8(a1)
 		move.w	$C(a0),$C(a1)
 		move.w	$3E(a0),$3E(a1)
-
-Obj27_Main:				; XREF: Obj27_Index
-		addq.b	#2,$24(a0)
-		move.l	#Map_obj27,4(a0)
-		move.w	#$5A0,2(a0)
-		move.b	#4,1(a0)
-		move.b	#1,$18(a0)
-		move.b	#0,$20(a0)
-		move.b	#$C,$19(a0)
-		move.b	#7,$1E(a0)	; set frame duration to	7 frames
-		move.b	#0,$1A(a0)
-		move.w	#$C1,d0
-		jsr	(PlaySound_Special).l ;	play breaking enemy sound
-	;	moveq	#1,d0		; add 10 ...
-	;	bsr	AddPoints	; ... points
-		
-		bsr	SingleObjLoad		; load from SingleObjLoad
-		bne.s	Obj27_NoCamShake	; if SingleObjLoad is already in use, don't load obejct
-		move.b	#10,($FFFFD4E8).w	
-
-Obj27_NoCamShake:
-	;	tst.w	($FFFFFE20).w 	; do you have any rings?
-	;	beq.s	Obj27_Animate	; if not, branch
-		cmpi.w	#$302,($FFFFFE10).w
-		beq.s	Obj27_Animate
-		cmpi.w	#$501,($FFFFFE10).w
-		beq.s	Obj27_Animate
-		cmpi.w	#$001,($FFFFFE10).w
-		beq.s	Obj27_Animate
+		move.b	#2,$24(a1)
 		bsr	SingleObjLoad
-		bne.s	Obj27_Animate
+		bne.s	Obj27_Main
+		move.b	#$27,0(a1)	; load animal object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+		move.w	$3E(a0),$3E(a1)
+		move.b	#2,$24(a1)
+
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	Obj27_Main
+		cmpi.w	#$501,($FFFFFE10).w
+		beq.s	Obj27_Main
+		cmpi.w	#$001,($FFFFFE10).w
+		beq.s	Obj27_Main
+		bsr	SingleObjLoad
+		bne.s	Obj27_Main
 		move.b	#$37,0(a1)	; load bouncing ring object
 		move.w	$8(a0),$8(a1)	; load X position to a1
 		moveq	#0,d0		; clear d0
@@ -13177,9 +13275,40 @@ Obj27_NoCamShake:
 		move.w	d0,$C(a1)	; load Y position to a1
 		addi.w	#20,($FFFFFE20).w ; add 10 of rings you have
 		move.b	#$80,($FFFFFE1D).w ; update ring counter
-		move.b	#1,($FFFFFFF6).w
+		move.b	#1,$35(a1)
+
+
+
+Obj27_Main:				; XREF: Obj27_Index
+		addq.b	#2,$24(a0)
+		move.l	#Map_obj27,4(a0)
+		move.w	#$5A0,2(a0)
+		move.b	#4,1(a0)
+		move.b	#1,$18(a0)
+
+		bsr	RandomDirection
+
+
+		move.b	#0,$20(a0)
+		move.b	#$C,$19(a0)
+		move.b	#4,$1E(a0)	; set frame duration to	7 frames
+		move.b	#0,$1A(a0)
+		move.w	#$C1,d0
+		jsr	(PlaySound_Special).l ;	play breaking enemy sound
+	;	moveq	#1,d0		; add 10 ...
+	;	bsr	AddPoints	; ... points
+		
+		bsr	SingleObjLoad		; load from SingleObjLoad
+		bne.s	Obj27_NoCamShake	; if SingleObjLoad is already in use, don't load obejct
+		move.b	#10,($FFFFFF64).w	
+
+Obj27_NoCamShake:
+	;	tst.w	($FFFFFE20).w 	; do you have any rings?
+	;	beq.s	Obj27_Animate	; if not, branch
 
 Obj27_Animate:				; XREF: Obj27_Index
+		jsr	SpeedToPos
+		subi.w	#$10,$12(a0)
 		bclr	#7,2(a0)		; make object low plane
 		tst.b	($FFFFFFA6).w		; is flag set?
 		beq.s	Obj27_NoHigh		; if not, branch
@@ -13188,13 +13317,25 @@ Obj27_Animate:				; XREF: Obj27_Index
 Obj27_NoHigh:
 		subq.b	#1,$1E(a0)	; subtract 1 from frame	duration
 		bpl.s	Obj27_Display
-		move.b	#7,$1E(a0)	; set frame duration to	7 frames
+		move.b	#4,$1E(a0)	; set frame duration to	7 frames
 		addq.b	#1,$1A(a0)	; next frame
-		cmpi.b	#5,$1A(a0)	; is the final frame (05) displayed?
+		cmpi.b	#6,$1A(a0)	; is the final frame (05) displayed?
 		beq.w	DeleteObject	; if yes, branch
 
 Obj27_Display:
 		bra.w	DisplaySprite
+; ===========================================================================
+
+RandomDirection:
+		bsr	RandomNumber
+		andi.l	#$01FF01FF,d0
+		subi.w	#$FF,d0
+		move.w	d0,$10(a0)
+		swap	d0
+		subi.w	#$FF,d0
+		move.w	d0,$12(a0)
+		rts
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 3F - explosion	from a destroyed boss, bomb or cannonball
@@ -13212,15 +13353,37 @@ Obj3F:					; XREF: Obj_Index
 		jmp	Obj3F_Index(pc,d1.w)
 ; ===========================================================================
 Obj3F_Index:	dc.w Obj3F_Main-Obj3F_Index
+		dc.w Obj3F_Main2-Obj3F_Index
 		dc.w Obj27_Animate-Obj3F_Index
 ; ===========================================================================
 
 Obj3F_Main:				; XREF: Obj3F_Index
+		bsr	SingleObjLoad
+		bne.s	Obj3F_Main2
+		move.b	#$3F,0(a1)	; load animal object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+		move.w	$3E(a0),$3E(a1)
+		move.b	#2,$24(a1)
+		move.b	$30(a0),$30(a1)
+		bsr	SingleObjLoad
+		bne.s	Obj3F_Main2
+		move.b	#$3F,0(a1)	; load animal object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+		move.w	$3E(a0),$3E(a1)
+		move.b	#2,$24(a1)
+		move.b	$30(a0),$30(a1)
+
+Obj3F_Main2:
 		addq.b	#2,$24(a0)
 		move.l	#Map_obj3F,4(a0)
 		move.w	#$5A0,2(a0)
 		move.b	#4,1(a0)
 		move.b	#1,$18(a0)
+
+		bsr	RandomDirection
+
 		cmpi.w	#$502,($FFFFFE10).w
 		bne.s	@cont2
 		tst.b	($FFFFF7AA).w
@@ -13244,14 +13407,14 @@ Obj3F_Main:				; XREF: Obj3F_Index
 
 Obj3F_NotHarmful:
 		move.b	#$C,$19(a0)
-		move.b	#7,$1E(a0)
+		move.b	#4,$1E(a0)
 		move.b	#0,$1A(a0)
 		
 		tst.b	$30(a0)
 		bne.s	Obj3F_NoCamShake
 		bsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj3F_NoCamShake	; if SingleObjLoad is already in use, don't load obejct
-		move.b	#10,($FFFFD4E8).w
+		move.b	#10,($FFFFFF64).w
 
 Obj3F_NoCamShake:
 		tst.b	($FFFFFFA3).w	; was object created by a crabmeat?
@@ -13874,7 +14037,7 @@ Obj1F_Timesup:
 
 		bsr	SingleObjLoad			; load from SingleObjLoad
 		bne.s	Obj1F_NoCamShake		; if SingleObjLoad is already in use, don't load object
-		move.b	#$F0,($FFFFD4E8).w
+		move.b	#$F0,($FFFFFF64).w
 
 Obj1F_NoCamShake:
 	;	move.w	($FFFFF700).w,($FFFFF728).w	; lock screen
@@ -14542,12 +14705,33 @@ Obj22_XChk:
 Obj22_YChk:
 		cmpi.w	#$15,d1			; is sonic within $15 pixels of the object?
 		bge.w	Obj22_End		; if not, branch
+	;	bsr	BossDefeated3		; load random explosion (harmful)
+
+		move.b	($FFFFFE0F).w,d0
+		andi.b	#7,d0
+		bne.s	Obj22_Return2
+		move.b	#1,($FFFFFFA3).w
+		bsr	SingleObjLoad
+		bne.s	Obj22_Return2
+		move.b	#$3F,0(a1)	; load explosion object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+	;	move.b	#1,$30(a1)
+		jsr	(RandomNumber).l
+		move.w	d0,d1
+		moveq	#0,d1
+		move.b	d0,d1
+		lsr.b	#2,d1
+		subi.w	#$20,d1
+		add.w	d1,8(a1)
+		lsr.w	#8,d0
+		lsr.b	#3,d0
+		add.w	d0,$C(a1)
 		move.b	#$C4,d0			; load explosion sound
 		jsr	PlaySound_Special	; play explosion sound
 		move.b	#1,($FFFFFFA3).w	; shake camera without sound
 		move.w	#$D7,d0			; load exploding bomb sound
 		jsr	PlaySound_Special	; play exploding bomb sound
-		bsr	BossDefeated3		; load random explosion (harmful)
 
 Obj22_Return2:
 		rts				; return
@@ -14761,6 +14945,8 @@ MyObjectIsOffscreen:
 ; ===========================================================================
 
 Obj23_Explode:				; XREF: Obj23_FromBuzz
+		move.b	#10,($FFFFFF64).w		; camera shaking
+
 		bsr	SingleObjLoad
 		bne.s	Obj23_NoExplode
 		move.b	#$3F,0(a1)
@@ -15154,7 +15340,7 @@ Obj37_CountRings:			; XREF: Obj37_Index
 		movea.l	a0,a1
 		moveq	#0,d5
 		move.w	($FFFFFE20).w,d5 ; check number	of rings you have
-		tst.b	($FFFFFFF6).w	; was object loaded with Object 27?
+		tst.b	$35(a0)		; was object loaded with Object 27?
 		beq.s	No2B		; if not, branch
 		move.w	#6,d5		; if yes, set d5 to 6
 		bra.s	loc_9CDE
@@ -15257,7 +15443,7 @@ LoseRings_Under20:
 		move.b	#$80,($FFFFFE1D).w 	; update ring counter
 
 LoseRings_PlaySound:
-		tst.b	($FFFFFFF6).w	; was object loaded with Object 27?
+		tst.b	$35(a0)	; was object loaded with Object 27?
 		beq.s	CheckA7		; if not, branch
 		bra.s	Obj37_Bounce
 		
@@ -15984,7 +16170,7 @@ loc_A20A:
 		bpl.s	loc_A220
 		sub.w	d3,$C(a1)
 		bsr	loc_74AE
-		move.b	#2,$25(a0)
+	;	move.b	#2,$25(a0)
 		bra.w	Obj26_Animate
 ; ===========================================================================
 
@@ -16081,7 +16267,7 @@ Obj26_Explode:
 		bsr	SingleObjLoad
 		bne.s	Obj26_SetBroken
 		move.b	#$27,0(a1)	; load explosion object
-		addq.b	#2,$24(a1)
+	;	addq.b	#2,$24(a1)
 		move.w	8(a0),8(a1)
 		move.w	$C(a0),$C(a1)
 
@@ -16423,7 +16609,7 @@ Obj2E_Goggles_NotSLZ3:
 		move.b	#1,($FFFFFFB1).w
 		bsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj2E_ChkEnd		; if SingleObjLoad is already in use, don't load obejct
-		move.b	#5,($FFFFD4E8).w
+		move.b	#5,($FFFFFF64).w
 ; ===========================================================================
 
 Obj2E_ChkEnd:
@@ -18004,7 +18190,7 @@ loc_B8A8:				; XREF: Obj31_Type00
 		bpl.s	Obj31_Restart
 		bsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj31_NoCamShake	; if SingleObjLoad is already in use, don't load obejct
-		move.b	#10,($FFFFD4E8).w
+		move.b	#10,($FFFFFF64).w
 
 Obj31_NoCamShake:
 		move.w	#$BD,d0
@@ -18062,7 +18248,7 @@ loc_B938:				; XREF: Obj31_Type01
 		bpl.s	loc_B97C
 		bsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	Obj31_NoCamShake2	; if SingleObjLoad is already in use, don't load obejct
-		move.b	#10,($FFFFD4E8).w
+		move.b	#10,($FFFFFF64).w
 
 Obj31_NoCamShake2:
 		move.w	#$BD,d0
@@ -20696,6 +20882,12 @@ loc_D672:
 		move.w	d0,d1
 		move.w	8(a0),d3
 		sub.w	(a1),d3
+
+		tst.b	($FFFFFF64).w
+		beq.s	@contxx
+		sub.w	($FFFFFF62).w,d3	; backup for sprite shaking
+@contxx:
+
 		add.w	d3,d0
 		add.w	d1,d1
 		addi.w	#$140,d1
@@ -26856,7 +27048,7 @@ Obj5F_Explode:				; XREF: Obj5F_Index2
 		move.w	#-$400,($FFFFD012).w
 		move.b	#$9B,d0				; set boss music
 		jsr	PlaySound			; play it
-		move.b	#10,($FFFFD4E8).w		; camera shaking
+		move.b	#10,($FFFFFF64).w		; camera shaking
 		clr.b	($FFFFF7CC).w			; unlock controls 1
 
 locret_11AD0:
@@ -27095,7 +27287,7 @@ loc_11B7C:
 		moveq	#BombPellets_Boss,d6		; bomb pellets
 @cont
 		movea.l	a0,a1
-		move.b	#10,($FFFFD4E8).w		; camera shaking
+		move.b	#10,($FFFFFF64).w		; camera shaking
 		bra.s	Obj5F_MakeShrap
 ; ===========================================================================
 
@@ -29045,8 +29237,8 @@ Obj06_Display:
 ; ---------------------------------------------------------------------------
 
 Obj06_InfoBox:
-		tst.b	($FFFFFFB1).w
-		bpl.s	Obj06_Display
+		btst	#1,($FFFFD022).w
+		bne.s	Obj06_NoA
 		move.b	#2,$1A(a0)		; show A button
 		move.w	($FFFFD008).w,d0	; get Sonic's X-pos
 		sub.w	$8(a0),d0		; substract the X-pos from the current object from it
@@ -29708,6 +29900,16 @@ Obj01_JD_Minus:
 
 ; Start of S monitor code
 Obj01_ChkS:
+		tst.b	($FFFFFF92).w
+		beq.s	@contx
+		move.b	#1,($FFFFFFE7).w ; make sonic immortal
+		move.b	#$38,($FFFFD280).w ; load stars	object ($3803)
+		move.b	#1,($FFFFD29C).w
+		move.b	#$38,($FFFFD2C0).w ; load stars	object ($3804)
+		move.b	#3,($FFFFD2DC).w
+		move.w	#100,($FFFFFE20).w
+
+@contx:
 		tst.b	($FFFFFFE7).w		; has sonic destroyed a S monitor?
 		beq.w	Obj01_ChkInvin		; if not, branch
 		tst.w	($FFFFFE20).w		; do you have any rings left?
@@ -33162,6 +33364,8 @@ Obj38_Stars:				; XREF: Obj38_Index
 		beq.s	Obj38_Delete2	; if not, branch
 
 Obj38_IfYes:
+		tst.w	($FFFFD000).w
+		beq.s	Obj38_Delete
 		move.w	($FFFFF7A8).w,d0
 		move.b	$1C(a0),d1
 		subq.b	#1,d1
@@ -41160,7 +41364,7 @@ loc_19EC6:
 
 		jsr	SingleObjLoad		; load from SingleObjLoad
 		bne.s	loc_19F10		; if SingleObjLoad is already in use, don't load obejct
-		move.b	#$FF,($FFFFD4E8).w
+		move.b	#$FF,($FFFFFF64).w
 
 loc_19F10:
 		tst.w	$32(a0)
@@ -44597,6 +44801,7 @@ Obj09_NoGlass:
 ; ---------------------------------------------------------------------------
 
 Obj10:
+		jmp	DeleteObject
 		moveq	#0,d0			; clear d0
 		move.b	$24(a0),d0		; move routine counter to d0
 		move.w	Obj10_Index(pc,d0.w),d1 ; move the index to d1
@@ -47110,7 +47315,7 @@ loc_71B5A:
 loc_71B82:
 		lea	($FFF000).l,a6
 		tst.b	($FFFFFF92).w	; is atmospheric mode enabled?
-		beq.s	@cont		; if not, branch
+		bra.s	@cont		; if not, branch
 		clr.b	$40(a6)		; mute DAC channel
 
 @cont:

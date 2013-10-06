@@ -695,7 +695,7 @@ InfoText_2:	; text after beating Night Hill Place
 		dc.b	'GREEN HILL ZONE TRANSFORMED ' ;1
 		dc.b	'INTO HELL ITSELF. HOW COULD ' ;1
 		dc.b	'  THIS SITUATION POSSIBLY   ' ;1
-		dc.b	'     BECOME EVEN WORSE?     ' ;0
+		dc.b	'     BECOME ANY WORSE?      ' ;1
 		dc.b	'                            ' ;0
 		dc.b	'EGGMAN WITH 3 SPIKED BALLS! ' ;1
 		dc.b	'THE IRONY WAS TOO GREAT FOR ' ;1
@@ -729,7 +729,7 @@ InfoText_3:	; text after beating Special Place
 ; ---------------------------------------------------------------------------
 
 InfoText_4:	; text after beating Ruined Place
-		dc.b	'THE NAME ITSELF WAS ALREADY ' ;1
+		dc.b	'    THE NAME ITSELF WAS     ' ;1
 		dc.b	' A HINT FOR THE RUINS THAT  ' ;1
 		dc.b	'   LIE WITHIN THIS STAGE.   ' ;0
 		dc.b	'                            ' ;0
@@ -755,7 +755,7 @@ InfoText_5:	; text after beating Labyrinth Place
 		dc.b	' WELL, THE CAMERA CREW WILL ' ;0
 		dc.b	'MAKE ENOUGH MONEY BY SELLING' ;0
 		dc.b	'  THE VIDEO RIGHTS OF THAT  ' ;0
-		dc.b	' LAST PATHETIC ACTIVITY OF  ' ;1
+		dc.b	'  LAST PATHETIC ATTEMPT OF  ' ;0
 		dc.b	'   YOURS TO SOME BIG FILM   ' ;0
 		dc.b	'COMPANY, SO SONIC IS NOW IN ' ;1
 		dc.b	'  CONTROL OVER THE CAMERA   ' ;1
@@ -777,8 +777,8 @@ InfoText_6:	; text after beating Unreal Place
 		dc.b	'                            ' ;0
 		dc.b	' UNTIL YOU REACHED A CHECK  ' ;1
 		dc.b	' POINT! YES, 2 SECONDS TIME ' ;0
-		dc.b	' TO RELAX! BUT ONLY TO SAY  ' ;1
-		dc.b	' AGAIN AGAIN SHORTLY AFTER. ' ;0
+		dc.b	'  TO RELAX! WAIT... NOPE,   ' ;1
+		dc.b	'AGAIN. AND AGAIN. AND AGAIN.' ;0
 		dc.b	'                            ' ;0
 		dc.b	'   WELL, BRACE YOURSELF,    ' ;1
 		dc.b	'  BECAUSE I CAN ASSURE YOU  ' ;0
@@ -796,12 +796,12 @@ InfoText_7:	; text after beating Scar Night Place
 		dc.b	'NOW PUT A HEDGEHOG, WALKING ' ;1
 		dc.b	'  BOMBS, RED BLINKING AND   ' ;1
 		dc.b	' TELEPORTING WALLS, AND AN  ' ;1
-		dc.b	' INCREDIBLY INAPPROPRIATED  ' ;1
+		dc.b	'  INCREDIBLY INAPPROPRIATE  ' ;0
 		dc.b	'  EASTER EGG IN IT AND YOU  ' ;0
 		dc.b	'HAVE THE PERFECT RECIPE FOR ' ;1
 		dc.b	'A NORMAL SONIC ERAZOR LEVEL.' ;0
 		dc.b	'                            ' ;0
-		dc.b	'WELL, FEAR NOT MUCH LONGER, ' ;1
+		dc.b	' WELL, FEAR NOT ANY LONGER, ' ;0
 		dc.b	'   BECAUSE VERY SOON THIS   ' ;0
 		dc.b	'  INSANITY WILL BE OVER...  ' ;0
 		dc.b	$FF
@@ -835,10 +835,10 @@ InfoText_9:	; hidden easter egg text found in Scar Night Place
 		dc.b	'   GOT SO JEALOUS. SO HE    ' ;1
 		dc.b	'DECIDED TO STICK HIS DICK IN' ;0
 		dc.b	'MICHAELMXM. HE ENJOYED THIS.' ;0
-		dc.b	'IT MADE HIM FEEL HOT. HITOMI' ;0
+		dc.b	'IT MADE HIM FEEL HOT. MAGGIE' ;0
 		dc.b	' THEN WALKED INTO THE ROOM, ' ;0
 		dc.b	' UNEXPECTEDLY. SHE GOT WET  ' ;1
-		dc.b	' THE INSTANT SHE SAW ASHISH ' ;0
+		dc.b	' THE INSTANT SHE SAW SEANIE ' ;0
 		dc.b	'ON THE FLOOR NAKED. THEY HAD' ;0
 		dc.b	'  A MAGICAL NIGHT OF LOVE   ' ;1
 		dc.b	' MAKING. AND THEN, TWEAKER  ' ;1
@@ -866,7 +866,7 @@ ScrollText_1:
 
 ScrollText_2:
 		dc.b	1,0,1,1,1
-		dc.b	1,0,0,1,1
+		dc.b	1,1,0,1,1
 		dc.b	1,0,0,1,1
 		even
 
@@ -884,7 +884,7 @@ ScrollText_4:
 
 ScrollText_5:
 		dc.b	0,0,0,0,0
-		dc.b	0,1,0,1,1
+		dc.b	0,0,0,1,1
 		dc.b	1,0,0,1,1
 		even
 
@@ -896,8 +896,8 @@ ScrollText_6:
 
 ScrollText_7:
 		dc.b	1,0,0,0,1
-		dc.b	1,1,1,0,1
-		dc.b	0,0,1,0,0
+		dc.b	1,1,0,0,1
+		dc.b	0,0,0,0,0
 		even
 
 ScrollText_8:

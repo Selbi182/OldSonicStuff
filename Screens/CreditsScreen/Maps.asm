@@ -149,7 +149,24 @@ StartText:
 	; 8
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
-	dc.b	"   ONE HOT NIGHT    ",$FF
+	dc.b	"  ADDITIONAL TEXT   ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"      HELP BY       ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"       KAIDAN       ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"       ABCRON       ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+	dc.b	"                    ",$FF
+
+	; 9
+	dc.b	$0D						; Number of lines
+	dc.b	"                    ",$FF
+	dc.b	"     EASTER EGG     ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"      STORY BY      ",$FF
 	dc.b	"                    ",$FF
@@ -157,13 +174,13 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"      TONGARA       ",$FF
 	dc.b	"                    ",$FF
-	dc.b	"        EVA         ",$FF
+	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
-	; 9
+	; 10
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
 	dc.b	"   ORIGINAL GAME    ",$FF
@@ -180,7 +197,7 @@ StartText:
 	dc.b	"                    ",$FF
 	dc.b	"                    ",$FF
 
-	; 10
+	; 11
 	dc.b	$0D						; Number of lines
 	dc.b	"                    ",$FF
 	dc.b	"     THANKS FOR     ",$FF
