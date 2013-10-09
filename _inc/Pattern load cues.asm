@@ -210,9 +210,11 @@ PLC_SLZ:	dc.w 5
 		dc.w $A460
 		dc.l Nem_VSpring	; vertical spring
 		dc.w $A660
-PLC_SLZ2:	dc.w 3
+PLC_SLZ2:	dc.w 4
 		dc.l Nem_Pylon		; foreground pylon
 		dc.w $7980
+		dc.l Nem_GiantBomb	; giant bomb
+		dc.w $8580
 		dc.l Nem_Bonus		; bonus points
 		dc.w $96C0
 		dc.l Nem_SLZPlatform	; SLZ platform

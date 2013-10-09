@@ -2289,6 +2289,13 @@ loc_1938:				; XREF: loc_1928
 
 
 PalCycle_Load:				; XREF: Demo; Level_MainLoop; End_MainLoop
+		cmpi.b	#6,($FFFFD024).w	; is Sonic dying?
+		blt.s	PCL_Load		; if not, branch
+		tst.b	($FFFFFFB1).w		; is white flash?
+		beq.s	PCL_Load		; if not, branch
+		rts
+
+PCL_Load:
 		moveq	#0,d2
 		moveq	#0,d0
 		move.b	($FFFFFE10).w,d0 ; get level number
@@ -7421,6 +7428,7 @@ loc_628E:
 ;		add.w	d0,($FFFFF616).w	; $F616 = Plane A Y-pos for prev. frame
 
 ;Deform_NoCamShake:
+ShakePw1 = $0007
 
 GenerateCameraShake:
 		tst.b	($FFFFFF64).w
@@ -7430,10 +7438,16 @@ GenerateCameraShake:
 		swap	d0
 		move.w	d0,d1
 		swap	d0
-		andi.w	#$0005,d0			; limit to 15
-		andi.w	#$0005,d1			; limit to 15
-		subi.w	#$0003,d0
-		subi.w	#$0003,d1
+		andi.w	#ShakePw1,d0			; limit to 15
+		andi.w	#ShakePw1,d1			; limit to 15
+		btst	#0,($FFFFFE05).w
+		beq.s	@x
+		neg.w	d0
+@x:
+		btst	#0,($FFFFFE05).w
+		beq.s	@y
+		neg.w	d1
+@y:
 		move.w	d0,($FFFFFF60).w
 		move.w	d1,($FFFFFF62).w
 
@@ -8457,7 +8471,7 @@ loc_6610:
 
 ScrollVertical:				; XREF: DeformBgLayer
 		cmpi.w	#$301,($FFFFFE10).w	; is level SLZ2?
-		bne.s	SV_NotSLZ2		; if not, branch
+		bra.s	SV_NotSLZ2		; if not, branch
 		tst.b	($FFFFFF75).w
 		beq.s	SV_NotSLZ2
 		rts
@@ -10925,7 +10939,7 @@ Obj11_Action:				; XREF: Obj11_Index
 		jsr	obj11_Bend
 
 Obj11_Display:
-		bsr	DisplaySprite
+		jsr	DisplaySprite
 		bra.w	Obj11_ChkDel
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
@@ -16548,6 +16562,29 @@ Obj2E_ChkS:
 		move.b	#1,($FFFFFF74).w
 
 @cont:
+		cmpi.w	#$200,($FFFFFE10).w
+		bne.s	@contxx
+
+		movem.l	d0-a1,-(sp)		; backup a1
+
+		move.w	#$118E,d0
+		move.w	#$02D5,d1
+		move.b	#$20,d2
+		bsr	Sub_ChangeChunk
+
+		move.w	#$1252,d0
+		move.w	#$02D5,d1
+		move.b	#$20,d2
+		bsr	Sub_ChangeChunk
+
+		move.w	#$1239,d0
+		move.w	#$01AB,d1
+		move.b	#$20,d2
+		bsr	Sub_ChangeChunk
+
+		movem.l	(sp)+,d0-a1		; restore a1
+
+@contxx:
 		move.b	#1,($FFFFFFE7).w ; make sonic immortal
 
 	if RecordDemo=0
@@ -19285,60 +19322,54 @@ Obj34_NotGHZ1:
 		bra.w	Obj34_Display
 ; ===========================================================================
 
-MoveOffSpeed = 4
+MoveOffSpeedX = 5
+MoveOffSpeedY = 1
 
 Obj34_ChkPos2:				; XREF: Obj34_Wait
 		cmpi.b	#1,$3F(a0)	; is current object Zone Name?
-		beq.s	Obj34_IsZone	; if yes, branch
-		cmpi.b	#3,$3F(a0)	; is current object Act?
-		bne.s	Obj34_NotZone2	; if not, branch
-		addq.w	#MoveOffSpeed,$A(a0)	; move Act number downwards
-		addq.w	#MoveOffSpeed,$8(a0)
-		cmpi.w	#$200,$A(a0)
-		bgt.s	Obj34_ChangeArt
-		bra.w	Obj34_Display
-
-Obj34_IsZone:
-		subq.w	#MoveOffSpeed,$A(a0)	; move Zone to the upwards
-		subq.w	#MoveOffSpeed,$8(a0)
-		cmpi.w	#$40,$A(a0)
+		bne.s	Obj34_NotIsZone	; if yes, branch
+		subq.w	#MoveOffSpeedY,$A(a0)
+		subq.w	#MoveOffSpeedX,$8(a0)
+		cmpi.w	#$40,$8(a0)
 		blt.s	Obj34_ChangeArt
 		bra.w	Obj34_Display
 
-Obj34_NotZone2:
-		tst.b	1(a0)
-		bpl.s	Obj34_ChangeArt
-		moveq	#MoveOffSpeed,d1	; speed of the items to move away (20)
-		move.w	$32(a0),d0
-		cmp.w	8(a0),d0	; has item reached the finish position?
-		beq.s	Obj34_ChangeArt	; if yes, branch
-		bge.s	Obj34_Move2
-		neg.w	d1
-
-Obj34_Move2:
-		add.w	d1,8(a0)	; change item's position
-		cmpi.w	#$400,($FFFFFE10).w	; is current level SYZ1?
-		beq.s	@cont1			; if not, branch´
-		cmpi.w	#$501,($FFFFFE10).w	; is current level SBZ2?
-		bne.s	Obj34_DoOval		; if not, branch
-
-@cont1:
-		cmpi.b	#4,$3F(a0)		; is current object the Act Number?
-		beq.s	Obj34_NoOvalOnY		; if yes, branch
-
-Obj34_DoOval:
-		sub.w	d1,$A(a0)	; move object to the upwards
-
-Obj34_NoOvalOnY:
-		move.w	8(a0),d0
-		bmi.s	locret_C412
-		cmpi.w	#$200,d0	; has item moved beyond	$200 on	x-axis?
-		bcc.s	locret_C412	; if yes, branch
+Obj34_NotIsZone:
+		cmpi.b	#2,$3F(a0)	; is current object Place?
+		bne.s	Obj34_NotIsPlace	; if yes, branch
+		addq.w	#MoveOffSpeedY,$A(a0)
+		subq.w	#MoveOffSpeedX,$8(a0)
+		cmpi.w	#$40,$8(a0)
+		blt.w	Obj34_JustDelete
 		bra.w	Obj34_Display
-; ===========================================================================
 
-locret_C412:
-		rts	
+Obj34_NotIsPlace:
+		cmpi.b	#3,$3F(a0)	; is current object Act?
+		bne.s	Obj34_NotIsAct	; if not, branch
+		addq.w	#MoveOffSpeedY,$A(a0)
+		addq.w	#MoveOffSpeedX,$8(a0)
+		cmpi.w	#$200,$8(a0)
+		bgt.w	Obj34_JustDelete
+		bra.w	Obj34_Display
+
+Obj34_NotIsAct:
+		cmpi.b	#4,$3F(a0)	; is current object the Oval?
+		bne.s	Obj34_NotIsOval	; if not, branch
+		subq.w	#MoveOffSpeedY,$A(a0)
+		cmpi.w	#$400,($FFFFFE10).w
+		beq.s	@cont1
+		cmpi.w	#$501,($FFFFFE10).w
+		bne.s	@cont2
+@cont1:
+		addq.w	#MoveOffSpeedY,$A(a0)
+@cont2:
+		addq.w	#MoveOffSpeedX,$8(a0)
+		cmpi.w	#$200,$8(a0)
+		bgt.w	Obj34_JustDelete
+		bra.w	Obj34_Display
+
+Obj34_NotIsOval:
+		rts
 ; ===========================================================================
 
 Obj34_ChangeArt:			; XREF: Obj34_ChkPos2
@@ -19599,6 +19630,7 @@ Obj3A_Main:				; XREF: Obj6D_Index
 		move.w	#$22B0,2(a0)
 		ori.b	#4,1(a0)
 		move.b	#1,$18(a0)
+		move.b	#$14,$1A(a0)
 
 		jsr	SingleObjLoad
 		move.b	#$3A,(a1)
@@ -19642,7 +19674,7 @@ Obj3A_Main:				; XREF: Obj6D_Index
 Obj3A_Machine:				; XREF: Obj6D_Index
 		tst.b	($FFFFFFC8).w
 		bne.s	@cont
-		move.b	#0,$1A(a0)
+		move.b	#$14,$1A(a0)
 		bra.w	DisplaySprite
 @cont:
 		lea	(Ani_BombMachine).l,a1
@@ -20117,6 +20149,12 @@ Obj36_Solid:				; XREF: Obj36_Index
 		bne.s	Obj36_NotInhuman
 		tst.b	($FFFFFFE7).w ; is inhuman mode on?
 		beq.s	Obj36_NotInhuman ; if not, branch
+		tst.b	($FFFFFF92).w
+		beq.s	@cont
+		cmpi.w	#$1190,$8(a0)
+		bne.s	@cont
+		bra.w	Obj36_Explode
+@cont:
 		tst.b	($FFFFFFB3).w	; was a spike already destroyed?
 		bne.s	Obj36_NotInhuman ; if yes, branch
 		tst.b	1(a0)		; is spike on screen?
@@ -20161,6 +20199,8 @@ Sub_ChangeChunk:
 ; ===========================================================================
 
 Obj36_Explode:
+		move.b	#1,($FFFFFFB3).w
+		bra.s	Obj36_Explode_Spring
 		movem.l	d0-a1,-(sp)		; backup a1
 
 		move.w	#$118E,d0
@@ -20180,9 +20220,9 @@ Obj36_Explode:
 
 		movem.l	(sp)+,d0-a1		; restore a1
 
-		move.b	#1,($FFFFFFB3).w
 
 Obj36_Explode_Spring:
+		move.b	#10,($FFFFFF64).w
 		move.b	#$C4,d0				; load boost SFX
 		jsr	PlaySound_Special		; play boost SFX
 		jsr	SingleObjLoad
@@ -20234,6 +20274,8 @@ Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
 		beq.s	Obj36_NotInhuman2	; if not, branch
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		bne.s	Obj36_NotInhuman2	; if not, branch
+		tst.b	($FFFFFF92).w
+		bne.s	Obj36_NotInhuman2
 		move.w	#$12DD,($FFFFD008).w	; teleport Sonic on X-axis
 		move.w	#$008C,($FFFFD00C).w	; teleport Sonic on Y-axis
 		tst.b	($FFFFFF73).w
@@ -23641,7 +23683,7 @@ Obj40_DoCheckX:
 Obj40_DoCheck:
 		jsr	obj40_CheckSonicPos
 		bsr	SpeedToPos
-		bsr	ObjHitFloor
+		jsr	ObjHitFloor
 		cmpi.w	#-8,d1
 		blt.s	Obj40_Pause
 		cmpi.w	#$C,d1
@@ -23818,7 +23860,7 @@ loc_F828:
 
 loc_F82C:
 		not.w	d3
-		bsr	ObjHitWallLeft
+		jsr	ObjHitWallLeft
 		tst.w	d1
 		bmi.s	loc_F828
 
@@ -26878,8 +26920,10 @@ Obj5F_Index:	dc.w Obj5F_Main-Obj5F_Index		; [$0]
 
 Obj5F_Main:				; XREF: Obj5F_Index
 		addq.b	#2,$24(a0)
-		move.l	#Map_obj5F,4(a0)
-		move.w	#$400,2(a0)
+	;	move.l	#Map_obj5F,4(a0)
+		move.l	#Map_obj5F_Giant,4(a0)
+	;	move.w	#$400,2(a0)
+		move.w	#$42C,2(a0)
 		ori.b	#4,1(a0)
 		move.b	#3,$18(a0)
 		move.b	#$C,$19(a0)
@@ -27110,10 +27154,10 @@ Obj5F_MakeFuse:
 		move.b	#4,$28(a1)
 		move.b	#3,$1C(a1)
 		move.b	#0,$18(a1)
-		move.w	#$30,$12(a1)	; load fuse object
+		move.w	#$60,$12(a1)	; load fuse object
 		tst.b	($FFFFFFA9).w
 		beq.s	@conty
-		move.w	#$50,$12(a1)
+		move.w	#$70,$12(a1)
 
 @conty:
 		btst	#1,$22(a0)
@@ -27198,6 +27242,7 @@ Obj5F_BossDefeatedboss2:
 		lsr.b	#3,d0
 		add.w	d0,$C(a1)
 		subq.w	#8,$C(a1)
+		move.b	#10,($FFFFFF64).w
 		bra.w	locret_715Cx
 ; ===========================================================================
 
@@ -27250,6 +27295,45 @@ locret_715Cx:
 ; ===========================================================================
 
 Obj5F_Display:				; XREF: Obj5F_Index
+		cmpi.b	#3,$1C(a0)
+		bne.s	@conty
+		move.b	($FFFFFE05).w,d0
+		andi.b	#$0B,d0
+		tst.b	d0
+		bne.s	@conty
+		jsr	SingleObjLoad
+		bne.s	@conty
+		move.b	#$5F,0(a1)	; load fuse object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+		move.b	#4,$28(a1)
+		move.b	#5,$1C(a1)
+		move.b	#1,$18(a1)
+		jsr	RandomNumber
+		andi.l	#$01FF01FF,d0
+		subi.w	#$FF,d0
+		asl.w	#1,d0
+		move.w	d0,$10(a1)
+		swap	d0
+		subi.w	#$FF,d0
+		move.w	d0,$12(a1)
+		move.w	$30(a0),d0
+		lsr.w	#1,d0
+		move.w	#BombFuseTime_Boss,d1
+		sub.w	d0,d1
+		move.w	d1,$30(a1)	; set fuse time
+
+@conty:
+		cmpi.b	#5,$1C(a0)
+		bne.s	@contx
+		subi.w	#10,$12(a0)
+		tst.b	($FFFFFFA9).w
+		beq.s	@contx
+		tst.b	($FFFFFF75).w
+		bne.s	@contx
+		jmp	DeleteObject
+
+@contx:
 		cmpi.w	#$301,($FFFFFE10).w
 		bne.s	@cont
 		cmpi.b	#3,$1C(a0)
@@ -27287,6 +27371,8 @@ loc_11B7C:
 		moveq	#BombPellets_Boss,d6		; bomb pellets
 @cont
 		movea.l	a0,a1
+		cmpi.b	#5,$1C(a0)
+		beq.s	Obj5F_MakeShrap
 		move.b	#10,($FFFFFF64).w		; camera shaking
 		bra.s	Obj5F_MakeShrap
 ; ===========================================================================
@@ -27351,7 +27437,8 @@ Obj5F_SBZ1:
 		beq.s	@contx
 		cmpi.w	#$0200,$C(a0)
 		blt.s	@cont
-		bra.s	@conty
+		move.w	#$0128,$C(a0)
+		bra.s	@contz
 
 @contx:
 		cmpi.w	#$0240,$C(a0)
@@ -27359,6 +27446,7 @@ Obj5F_SBZ1:
 
 @conty:
 		move.w	#$0150,$C(a0)
+@contz:
 		clr.w	$12(a0)
 		move.b	#$CD,d0
 		jsr	PlaySound_Special
@@ -27382,6 +27470,9 @@ Ani_obj5F:
 ; ---------------------------------------------------------------------------
 Map_obj5F:
 	include "_maps\obj5F.asm"
+
+Map_obj5F_Giant:
+	include "_maps\GiantBomb.asm"
 
 Map_obj5F_Cutscene:
 	include "_maps\obj5F_cutscene.asm"
@@ -30987,6 +31078,8 @@ WF_Return:
 Sonic_JumpDash:
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		bne.s	JD_NotMZ		; if not, branch
+		tst.b	($FFFFFF92).w
+		bne.s	JD_NotMZ
 		tst.b	($FFFFFFE7).w		; is inhuman mode on?
 		bne.w	JD_End			; if yes, branch
 
@@ -31008,8 +31101,12 @@ JD_NotMZ:
 		move.b	#1,($FFFFFFEB).w	; if not, set jumpdash flag
 		tst.b	($FFFFF7AA).w		; is boss mode on?
 		bne.s	JD_NoWhiteFlash		; if yes, branch
+		tst.b	($FFFFFF92).w
+		bne.s	@contx
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		beq.s	JD_NoWhiteFlash		; if yes, branch
+
+@contx:
 		bsr	WhiteFlash		; make white flash
 
 JD_NoWhiteFlash:
@@ -31291,6 +31388,8 @@ DD_End:
 Sonic_SuperPeelOut:
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		bne.s	SPO_NotMZ		; if not, branch
+		tst.b	($FFFFFF92).w
+		bne.s	SPO_NotMZ
 		tst.b	($FFFFFFE7).w		; is inhuman mode on?
 		bne.w	SPO_End			; if yes, branch
 
@@ -31418,6 +31517,8 @@ SPO_End:
 Sonic_Spindash:
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		bne.s	Spdsh_NotMZ		; if not, branch
+		tst.b	($FFFFFF92).w
+		bne.s	Spdsh_NotMZ
 		tst.b	($FFFFFF73).w
 		bne.s	Spdsh_NotMZ
 		tst.b	($FFFFFFE7).w		; is inhuman mode on?
@@ -34898,7 +34999,7 @@ Obj66_Action:				; XREF: Obj66_Index
 		move.w	d2,d3
 		addq.w	#1,d3
 		move.w	8(a0),d4
-		bsr	SolidObject
+		jsr	SolidObject
 		btst	#5,$22(a0)
 		beq.w	Obj66_Display
 		lea	($FFFFD000).w,a1
@@ -46745,6 +46846,8 @@ Nem_SlzBlock:	incbin	artnem\slzblock.bin	; SLZ 32x32 block
 Nem_SlzCannon:	incbin	artnem\slzcanno.bin	; SLZ fireball launcher cannon
 		even
 Nem_SLZPlatform:incbin	artnem\SLZPlatform.bin	; SLZ platform
+		even
+Nem_GiantBomb:	incbin	artnem\GiantBomb.bin	; Giant Bomb
 		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - SYZ stuff
