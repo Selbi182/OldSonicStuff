@@ -5141,6 +5141,7 @@ MainLevelArray:
 ClearEverySpecialFlag:
 		clr.l	($FFFFFF60).w
 		clr.l	($FFFFFF64).w
+		clr.l	($FFFFFF68).w
 		clr.w	($FFFFFF74).w
 		clr.b	($FFFFFF76).w
 		clr.b	($FFFFFF77).w
@@ -10524,8 +10525,8 @@ Resize_SLZ2boss2:
 		move.b	#$5F,0(a1)
 		move.w	#$BD0,$8(a1)
 		move.w	#$048C,$C(a1)
-		move.b	#20,($FFFFFF75).w	; set lives
-
+		move.b	#21,($FFFFFF75).w	; set lives
+		move.b	($FFFFFF75).w,($FFFFFF68).w
 
 		addq.b	#2,($FFFFF742).w
 		rts
@@ -13958,6 +13959,7 @@ Obj1F_Main:				; XREF: Obj1F_Index
 		move.b	#(1*2),$21(a0)		; set number of	hits to	1
 	else
 		move.b	#(12*2),$21(a0)		; set number of	hits to	12
+		move.b	$21(a0),($FFFFFF68).w
 	endif
 		bra.s	Obj1F_NotGHZ1_Cont	; skip
 
@@ -14085,6 +14087,10 @@ Obj1F_BossDefeated:
 ; ===========================================================================
 
 Obj1F_BossDelete:
+
+		move.b	#0,($FFFFFF68).w
+		move.b	#1,($FFFFFE1C).w
+
 		move.b	#0,($FFFFF7CC).w		; unlock controls
 
 		tst.b	($FFFFFFE7).w		; is Sonic in Inhuman Mode?
@@ -14122,6 +14128,7 @@ Obj1F_CheckDefeated:
 		bne.w	Obj1F_NotGHZ1_WF		; if yes, branch
 		tst.b	$3E(a0)				; is timer empty?
 		bne.s	loc_17F70X			; if not, branch
+		move.b	$21(a0),($FFFFFF68).w
 		subq.b	#1,$21(a0)			; sub 1 from lives
 		bpl.s	loc_17F70XY			; if he still has lives left, branch
 		move.b	#4,$25(a0)			; set to boss defeated
@@ -14172,6 +14179,7 @@ loc_17F7EX:
 		bne.s	Obj1F_NotGHZ1_WF		; if it isn't empty, branch
 		move.b	#$F,$20(a0)			; set normal touch response
 		subq.b	#1,$21(a0)			; sub 1 from lives
+		move.b	$21(a0),($FFFFFF68).w
 		cmpi.b	#2,$21(a0)			; only having 2 lives left?
 		bpl.s	Obj1F_NotGHZ1_WF		; if more, branch
 		move.b	#4,$25(a0)			; set to boss defeated
@@ -14300,6 +14308,7 @@ loc_17F7EXX:
 		bne.s	Obj1F_NotGHZ1_WFX		; if it isn't empty, branch
 		move.b	#$F,$20(a0)			; set normal touch response
 		subq.b	#1,$21(a0)			; sub 1 from lives
+		move.b	$21(a0),($FFFFFF68).w
 		cmpi.b	#2,$21(a0)			; only having 2 lives left?
 		bpl.s	Obj1F_NotGHZ1_WFX		; if more, branch
 		move.b	#4,$25(a0)			; set to boss defeated
@@ -26131,7 +26140,14 @@ Obj5C_Display:				; XREF: Obj5C_Index
 		neg.w	d1
 		addi.w	#$100,d1
 		move.w	d1,$A(a0)
+		
+		cmpi.w	#$A00,($FFFFF700).w
+		blt.s	@cont
+		cmpi.w	#$B00,($FFFFF700).w
+		bgt.s	@cont
+		rts
 
+@cont:
 		bra.w	DisplaySprite
 ; ===========================================================================
 
@@ -26916,6 +26932,7 @@ Obj5F_Index:	dc.w Obj5F_Main-Obj5F_Index		; [$0]
 		dc.w Obj5F_End-Obj5F_Index		; [$6]
 		dc.w Obj5F_SBZ1-Obj5F_Index		; [$8]
 		dc.w Obj5F_BossDefeated-Obj5F_Index	; [$A]
+		dc.w Obj5F_Display_Spark-Obj5F_Index	; [$C]
 ; ===========================================================================
 
 Obj5F_Main:				; XREF: Obj5F_Index
@@ -26995,6 +27012,13 @@ Obj5F_Walk:				; XREF: Obj5F_Index2
 		tst.b	($FFFFFFA9).w
 		beq.s	Obj5F_Return
 		move.w	#-BombWalkSpeed_Boss,$10(a0)	; move object to the left
+		moveq	#0,d0
+		moveq	#0,d1
+		move.b	($FFFFFF75).w,d0
+		move.b	#20,d1
+		sub.b	d0,d1
+		lsl.w	#4,d1
+		sub.w	d1,$10(a0)
 		move.b	#1,$1C(a0)
 		bra.s	Obj5F_Return
 
@@ -27004,6 +27028,12 @@ Obj5F_Walk2:
 		tst.b	($FFFFFFA9).w
 		beq.s	Obj5F_Return
 		move.w	#BombWalkSpeed_Boss,$10(a0)	; move object to the left
+		moveq	#0,d1
+		move.b	($FFFFFF75).w,d0
+		move.b	#20,d1
+		sub.b	d0,d1
+		lsl.w	#4,d1
+		add.w	d1,$10(a0)
 		move.b	#1,$1C(a0)
 
 Obj5F_Return:
@@ -27058,7 +27088,12 @@ Obj5F_Explode:				; XREF: Obj5F_Index2
 		bpl.w	locret_11AD0
 
 		subq.b	#1,($FFFFFF75).w	; remove one life
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	@conty
+		move.b	($FFFFFF75).w,($FFFFFF68).w
+		tst.b	($FFFFFF75).w
 		bne.s	@conty
+		move.b	#1,($FFFFFE1C).w
 		clr.w	($FFFFD010).w
 		clr.w	($FFFFD014).w
 		move.b	#1,($FFFFF7CC).w		; lock controls
@@ -27178,6 +27213,11 @@ locret_11B5E:
 ; ===========================================================================
 
 Obj5F_BossDefeated:
+		cmpi.b	#0,$1C(a0)
+		beq.s	@cont
+		jmp	DeleteObject
+
+@cont:
 		moveq	#0,d0
 		move.b	($FFFFFF76).w,d0
 		move.w	off_7118x(pc,d0.w),d0
@@ -27253,13 +27293,13 @@ Obj5F_BossDefeatedend:
 		move.w	($FFFFFF7A).w,($FFFFFF78).w
 		subq.b	#4,($FFFFFF76).w
 		subi.w	#10,($FFFFFF7A).w
-		move.w	#25,($FFFFFF7C).w
+		move.w	#20,($FFFFFF7C).w
 		bra.s	locret_715Cx
 
 Obj5F_BossDefeatedend2:
 		subq.w	#1,($FFFFFF7C).w
 		beq.s	Obj5F_BossDelete
-		move.w	#4,($FFFFFF78).w
+		move.w	#7,($FFFFFF78).w
 		subq.b	#4,($FFFFFF76).w
 		bra.s	locret_715Cx
 ; ===========================================================================
@@ -27306,7 +27346,7 @@ Obj5F_Display:				; XREF: Obj5F_Index
 		move.b	#$5F,0(a1)	; load fuse object
 		move.w	8(a0),8(a1)
 		move.w	$C(a0),$C(a1)
-		move.b	#4,$28(a1)
+		move.b	#$C,$28(a1)
 		move.b	#5,$1C(a1)
 		move.b	#1,$18(a1)
 		jsr	RandomNumber
@@ -27347,6 +27387,20 @@ Obj5F_Display:				; XREF: Obj5F_Index
 		lea	(Ani_obj5F).l,a1
 		jsr	AnimateSprite
 		bra.w	MarkObjGone
+; ===========================================================================
+
+Obj5F_Display_Spark:
+		subq.w	#1,$30(a0)
+		bmi.s	@cont
+		subi.w	#10,$12(a0)
+		jsr	SpeedToPos
+		lea	(Ani_obj5F).l,a1
+		jsr	AnimateSprite
+		bsr.w	MarkObjGone
+		bra.w	DisplaySprite
+
+@cont:
+		jmp	DeleteObject
 ; ===========================================================================
 
 loc_11B70:
@@ -37599,6 +37653,7 @@ loc_17772:
 		move.w	$C(a0),$38(a0)
 	;	move.b	#$F,$20(a0)
 		move.b	#15,$21(a0)	; set number of	hits to	15
+		move.b	$21(a0),($FFFFFF68).w
 
 Obj3D_ShipMain:				; XREF: Obj3D_Index
 		moveq	#0,d0
@@ -37655,14 +37710,14 @@ loc_177E6:
 		bne.w	locret_1784A
 
 		tst.b	$20(a0)
-		bne.s	locret_1784A
+		bne.w	locret_1784A
 		tst.b	$3E(a0)
 		bne.s	Obj3D_ShipFlash
 		move.b	#$20,$3E(a0)	; set number of	times for ship to flash
 		bsr	BossDamageSound ; play boss damage sound
 		moveq	#10,d0		; add 100 ...
 		jsr	AddPoints	; ... points
-
+		move.b	$21(a0),($FFFFFF68).w
 
 		tst.b	($FFFFFFD1).w
 		bne.s	Obj3D_ShipFlash
@@ -37887,6 +37942,8 @@ loc_1797A:				; XREF: Obj3D_ShipIndex
 		subq.w	#1,$3C(a0)
 		bmi.s	loc_17984
 		addq.w	#3,$8(a0)	; move eggman to the right
+		move.b	#1,($FFFFFE1C).w
+		move.b	#0,($FFFFFF68).w
 		bset	#0,$22(a0)
 		bra.w	BossDefeated
 ; ===========================================================================
@@ -41403,6 +41460,7 @@ loc_19E3E:
 loc_19E5A:
 		move.w	#0,$34(a0)
 		move.b	#30,$21(a0)	; set number of	hits to	30
+		move.b	$21(a0),($FFFFFF68).w
 		move.w	#-1,$30(a0)
 
 Obj85_Eggman:				; XREF: Obj85_Index
@@ -41487,8 +41545,8 @@ loc_19F2E:
 
 loc_19F48:
 		tst.b	$35(a0)
-		bne.s	loc_19F88
-		bra.s	loc_19F96
+		bne.w	loc_19F88
+		bra.w	loc_19F96
 ; ===========================================================================
 
 loc_19F50:
@@ -41505,6 +41563,7 @@ loc_19F6A:
 		tst.b	$35(a0)
 		bne.s	loc_19F88
 		subq.b	#1,$21(a0)
+		move.b	$21(a0),($FFFFFF68).w
 		bsr	BossDamageSound
 		moveq	#10,d0		; add 100 ...
 		jsr	AddPoints	; ... points
@@ -41523,7 +41582,8 @@ loc_19F6A:
 Eggman_0lives:
 		move.l	#10000,d0	; add 100000 ...
 		jsr	AddPoints	; ... points
-
+		move.b	#0,($FFFFFF68).w
+		move.b	#1,($FFFFFE1C).w
 		move.b	#$FF,$35(a0)	; long flashing, because you may not hit eggman again
 	;	move.w	#$8D,d0
 	;	bsr	PlaySound	; play normal fz music
@@ -45668,7 +45728,16 @@ Obj21_NormalUpdateY:
 
 Obj21_NoUpdate:
 		cmpi.b	#2,$30(a0)		; is object set to RINGS?
+		beq.s	@cont
+		cmpi.b	#4,$30(a0)		; is object set to LIVES?
 		bne.s	Obj21_Display		; if not, branch
+		move.b	#5,$1A(a0)
+		tst.b	($FFFFFF68).w
+		beq.s	Obj21_Display
+		move.b	#6,$1A(a0)
+		bra.s	Obj21_Display
+
+@cont:
 		moveq	#2,d0			; clear d0
 		tst.w	($FFFFFE20).w		; do you have any rings?
 		beq.s	Obj21_Flash2		; if not, branch
@@ -45815,9 +45884,13 @@ loc_1C734:
 		bsr.w	Hud_Secs
 
 Hud_ChkLives:
+		tst.b	($FFFFFF68).w
+		bne.s	@cont
 		tst.b	($FFFFFE1C).w	; does the lives counter need updating?
 		beq.s	Hud_ChkBonus	; if not, branch
 		clr.b	($FFFFFE1C).w
+
+@cont:
 		bsr	Hud_Lives
 
 Hud_ChkBonus:
@@ -45864,9 +45937,14 @@ HudDb_ObjCount:
 		moveq	#0,d1
 		move.b	($FFFFF62C).w,d1 ; load	"number	of objects" counter
 		bsr	Hud_Secs
+
+		tst.b	($FFFFFF68).w
+		bne.s	@cont
 		tst.b	($FFFFFE1C).w	; does the lives counter need updating?
 		beq.s	HudDb_ChkBonus	; if not, branch
 		clr.b	($FFFFFE1C).w
+
+@cont:
 		bsr	Hud_Lives
 
 HudDb_ChkBonus:
@@ -46285,6 +46363,10 @@ Hud_Lives:				; XREF: Hud_ChkLives
 		move.l	#$7B800003,d0	; set VRAM address
 		moveq	#0,d1
 		move.b	($FFFFFE12).w,d1 ; load	number of lives
+		tst.b	($FFFFFF68).w
+		beq.s	@cont
+		move.b	($FFFFFF68).w,d1
+@cont:
 		lea	(Hud_10).l,a2
 		moveq	#1,d6
 		moveq	#0,d4

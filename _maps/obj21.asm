@@ -10,6 +10,7 @@ Obj21_Mappings:
 		dc.w	Obj21_AltRings-Obj21_Mappings	; [$3]
 		dc.w	Obj21_Time-Obj21_Mappings	; [$4]
 		dc.w	Obj21_Lives-Obj21_Mappings	; [$5]
+		dc.w	Obj21_LivesB-Obj21_Mappings	; [$6]
 ; --------------------------------------------------------------------------------
 
 Obj21_Blank	dc.b 0
@@ -41,6 +42,9 @@ Obj21_Lives:	dc.b 3
 		dc.b $F9, $0D, $81, $0A, $F4	; LIVE
 		dc.b $F9, $01, $80, $00, $10	; S
 		dc.b $F8, $05, $81, $12, $DC	; Lives Counter
+
+Obj21_LivesB:	dc.b 1
+		dc.b $F8, $05, $81, $12, $08	; Lives Counter
 		even
 ; --------------------------------------------------------------------------------
 ; ================================================================================
