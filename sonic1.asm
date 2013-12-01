@@ -56,6 +56,7 @@ Align:		macro
 ; 1 - Yes
 DebugModeDefault = 1
 DontAllowDebug = 0
+DebugHUD = 0
 ;=================================================
 ;Enable Demo Recording. (In RAM at $FFFFD200)
 ;Also disables Stars and Shields
@@ -1226,15 +1227,6 @@ SDL_Loop:
 
 
 PlaySound:
-		tst.b	($FFFFFF92).w
-		bra.s	@cont
-		cmpi.b	#$A0,d0
-		blt.s	@cont
-		cmpi.b	#$E0,d0
-		bge.s	@cont
-		rts
-
-@cont:
 		move.b	d0,($FFFFF00A).w
 		rts	
 ; End of function PlaySound
@@ -1253,15 +1245,6 @@ PlaySound:
 
 
 PlaySound_Special:
-		tst.b	($FFFFFF92).w
-		bra.s	@cont
-		cmpi.b	#$A0,d0
-		blt.s	@cont
-		cmpi.b	#$E0,d0
-		bge.s	@cont
-		rts
-
-@cont:
 		move.b	d0,($FFFFF00B).w
 		rts	
 ; End of function PlaySound_Special
@@ -1308,6 +1291,8 @@ loc_13BE:
 PG_ChkHUD:
 		cmpi.w	#$501,($FFFFFE10).w
 		beq.s	PG_NotGHZ2
+		tst.b	($FFFFFF92).w
+		bne.s	PG_NotGHZ2
 		tst.b	($FFFFD040).w		; is HUD already loaded?
 		bne.s	PG_NotGHZ2		; if yes, allow to pause
 		cmpi.b	#$10,($FFFFF600).w
@@ -3429,7 +3414,36 @@ Angle_Data:	incbin	misc\angles.bin
 ; ===========================================================================
 
 	;include "SSRGSplash.asm"
-	
+
+SineWavePalette:
+		addq.w	#2,($FFFFFE04).w
+		move.w	($FFFFFE04).w,d0
+		jsr	CalcSine
+		cmpi.w	#$100,d0
+		bne.s	@contff
+		subq.w	#1,d0
+		
+@contff:
+		addi.w	#$100,d0
+		tst.w	d0
+		bne.s	@cont
+		cmpi.w	#12,($FFFFFF6C).w
+		beq.s	@contx
+		addq.w	#4,($FFFFFF6C).w
+		cmpi.w	#12,($FFFFFF6C).w
+		bne.s	@cont
+
+@contx:
+		clr.w	($FFFFFF6C).w
+		
+@cont:
+		lsr.w	#5,d0
+		move.w	($FFFFFF6C).w,d1
+		lsl.w	d1,d0
+		andi.w	#$EEE,d0
+		move.w	d0,($FFFFFB40).w
+		rts
+
 ; ---------------------------------------------------------------------------
 ; Sega screen
 ; ---------------------------------------------------------------------------
@@ -4229,12 +4243,16 @@ Level_NoMusic2:
 		clr.b	($FFFFFF99).w
 		clr.w	($FFFFFFCE).w	; clear extended camera counter
 		bsr	ClearEverySpecialFlag
+		
+		cmpi.w	#$502,($FFFFFE10).w
+		bne.s	@contx
+		move.b	#30,($FFFFFF68).w
+@contx:
 
-
-		tst.b	($FFFFFF92).w
-		bne.s	Level_NoTitleCard2
 		cmpi.w	#$001,($FFFFFE10).w
 		beq.s	Level_NoTitleCard
+		tst.b	($FFFFFF92).w
+		bne.s	Level_NoTitleCard2
 		cmpi.w	#$500,($FFFFFE10).w
 		bne.s	@cont
 		move.b	#1,($FFFFF7CC).w
@@ -4261,8 +4279,10 @@ Level_NoTitleCard2:
 Level_NoTitleCard:
 		moveq	#3,d0
 		bsr	PalLoad2	; load Sonic's pallet line
+		cmpi.w	#$500,($FFFFFE10).w
+		bne.s	Level_TtlCard
 		moveq	#2,d0
-		jsr	(LoadPLC).l	; load explosion patterns
+		jsr	LoadPLC		; load explosion patterns
 
 Level_TtlCard:
 		move.b	#$C,($FFFFF62A).w
@@ -7430,6 +7450,8 @@ loc_628E:
 
 ;Deform_NoCamShake:
 ShakePw1 = $0007
+ShakePw2 = $0001
+ShakePw3 = $0003
 
 GenerateCameraShake:
 		tst.b	($FFFFFF64).w
@@ -7439,8 +7461,23 @@ GenerateCameraShake:
 		swap	d0
 		move.w	d0,d1
 		swap	d0
+		cmpi.w	#$502,($FFFFFE10).w
+		beq.s	@FZ
 		andi.w	#ShakePw1,d0			; limit to 15
 		andi.w	#ShakePw1,d1			; limit to 15
+		bra.s	@NoFZ
+@FZ:
+		cmpi.b	#10,($FFFFFF68).w
+		ble.s	@reFZ
+		andi.w	#ShakePw2,d0
+		andi.w	#ShakePw2,d1
+		bra.s	@NoFZ
+
+@reFZ
+		andi.w	#ShakePw3,d0
+		andi.w	#ShakePw3,d1
+
+@NoFZ:
 		btst	#0,($FFFFFE05).w
 		beq.s	@x
 		neg.w	d0
@@ -11876,7 +11913,7 @@ Obj18_Action2:				; XREF: Obj18_Index
 		bpl.s	@cont
 		neg.w	d0
 @cont:
-		cmpi.w	#$100,d0
+		cmpi.w	#$300,d0
 		bgt.s	Obj18_NotSYZX
 		move.b	#10,($FFFFFF64).w		; camera shaking
 		bsr	SingleObjLoad
@@ -12740,7 +12777,7 @@ Obj1D_Index:	dc.w Obj1D_Main-Obj1D_Index
 Obj1D_Main:				; XREF: Obj1D_Index
 		addq.b	#2,$24(a0)
 
-		moveq	#22,d0		; set base cooldown time to 20 frames
+		moveq	#30,d0		; set base cooldown time to 20 frames
 		move.b	$28(a0),d1	; get object subtype (range: 0-A)
 		add.b	d1,d1		; multiply it by 2
 		sub.b	d1,d0		; substract from cooldown time
@@ -13381,6 +13418,8 @@ Obj3F_Main:				; XREF: Obj3F_Index
 		move.w	$3E(a0),$3E(a1)
 		move.b	#2,$24(a1)
 		move.b	$30(a0),$30(a1)
+		btst	#0,($FFFFFE05).w
+		bne.s	Obj3F_Main2
 		bsr	SingleObjLoad
 		bne.s	Obj3F_Main2
 		move.b	#$3F,0(a1)	; load animal object
@@ -13956,9 +13995,10 @@ Obj1F_Main:				; XREF: Obj1F_Index
 		bne.s	Obj01_NotGHZ1_Main2	; if not, branch
 		move.b	#$F,$20(a0)		; use boss touch response
 	if CrabmeatOneHit=1
-		move.b	#(1*2),$21(a0)		; set number of	hits to	1
+		move.b	#1,$21(a0)		; set number of	hits to	1
+		move.b	$21(a0),($FFFFFF68).w
 	else
-		move.b	#(12*2),$21(a0)		; set number of	hits to	12
+		move.b	#12,$21(a0)		; set number of	hits to	12
 		move.b	$21(a0),($FFFFFF68).w
 	endif
 		bra.s	Obj1F_NotGHZ1_Cont	; skip
@@ -14001,6 +14041,19 @@ Obj1F_NoHome:
 		move.w	$C(a0),$C(a1)		; set Y-pos
 
 Obj1F_NotInhumanCrush:
+		cmpi.b	#$1E,$3E(a0)			; set flashing timer
+		bne.s	@cont
+	;	subq.b	#1,$21(a0)			; sub 1 from lives (for SOME really stupid reason, this is done somewhere else. gah.)
+		move.b	$21(a0),($FFFFFF68).w
+		tst.b	$21(a0)
+		bne.s	@cont
+		cmpi.b	#4,$25(a0)
+		bge.s	@cont
+		move.b	#10,($FFFFFF64).w		; camera shaking
+		move.b	#4,$25(a0)			; set to boss defeated
+		move.w	#200,$3C(a0)			; set destroying timer
+		move.b	#8,$1C(a0)
+@cont:
 		moveq	#0,d0
 		move.b	$25(a0),d0
 		move.w	Obj1F_Index2(pc,d0.w),d1
@@ -14128,10 +14181,11 @@ Obj1F_CheckDefeated:
 		bne.w	Obj1F_NotGHZ1_WF		; if yes, branch
 		tst.b	$3E(a0)				; is timer empty?
 		bne.s	loc_17F70X			; if not, branch
-		move.b	$21(a0),($FFFFFF68).w
-		subq.b	#1,$21(a0)			; sub 1 from lives
-		bpl.s	loc_17F70XY			; if he still has lives left, branch
+	;	move.b	$21(a0),($FFFFFF68).w
+	;	subq.b	#1,$21(a0)			; sub 1 from lives
+		bra.s	loc_17F70XY			; if he still has lives left, branch
 		move.b	#4,$25(a0)			; set to boss defeated
+		move.b	#10,($FFFFFF64).w		; camera shaking
 		move.w	#200,$3C(a0)			; set timer
 		move.b	#8,$1C(a0)
 		bra.w	Obj1F_NotGHZ1_WF		; skip
@@ -14159,7 +14213,7 @@ loc_17F70XY:
 
 loc_17F70X:
 		cmpi.b	#2,$21(a0)			; only having 2 lives left?
-		bpl.s	Obj1F_Flashing			; if more, branch
+		bra.s	Obj1F_Flashing			; if more, branch
 		move.b	#4,$25(a0)			; set to boss defeated
 		move.w	#200,$3C(a0)			; set destroying timer
 		move.b	#8,$1C(a0)
@@ -14178,10 +14232,10 @@ loc_17F7EX:
 		subq.b	#1,$3E(a0)			; sub 1 from flashing timer
 		bne.s	Obj1F_NotGHZ1_WF		; if it isn't empty, branch
 		move.b	#$F,$20(a0)			; set normal touch response
-		subq.b	#1,$21(a0)			; sub 1 from lives
-		move.b	$21(a0),($FFFFFF68).w
+	;	subq.b	#1,$21(a0)			; sub 1 from lives
+	;	move.b	$21(a0),($FFFFFF68).w
 		cmpi.b	#2,$21(a0)			; only having 2 lives left?
-		bpl.s	Obj1F_NotGHZ1_WF		; if more, branch
+		bra.s	Obj1F_NotGHZ1_WF		; if more, branch
 		move.b	#4,$25(a0)			; set to boss defeated
 		move.w	#200,$3C(a0)			; set destroying timer
 		move.b	#8,$1C(a0)
@@ -14288,7 +14342,7 @@ Obj1F_WalkOnFloor:			; XREF: Obj1F_Index2
 
 loc_17F70XX:
 		cmpi.b	#2,$21(a0)			; only having 2 lives left?
-		bpl.s	Obj1F_Flashing2			; if more, branch
+		bra.s	Obj1F_Flashing2			; if more, branch
 		move.b	#4,$25(a0)			; set to boss defeated
 		move.w	#200,$3C(a0)			; set destroying timer
 		move.b	#8,$1C(a0)
@@ -14307,10 +14361,10 @@ loc_17F7EXX:
 		subq.b	#1,$3E(a0)			; sub 1 from flashing timer
 		bne.s	Obj1F_NotGHZ1_WFX		; if it isn't empty, branch
 		move.b	#$F,$20(a0)			; set normal touch response
-		subq.b	#1,$21(a0)			; sub 1 from lives
-		move.b	$21(a0),($FFFFFF68).w
+	;	subq.b	#1,$21(a0)			; sub 1 from lives
+	;	move.b	$21(a0),($FFFFFF68).w
 		cmpi.b	#2,$21(a0)			; only having 2 lives left?
-		bpl.s	Obj1F_NotGHZ1_WFX		; if more, branch
+		bra.s	Obj1F_NotGHZ1_WFX		; if more, branch
 		move.b	#4,$25(a0)			; set to boss defeated
 		move.w	#200,$3C(a0)			; set destroying timer
 		move.b	#8,$1C(a0)
@@ -14516,6 +14570,7 @@ Obj1F_Delete4:
 		move.b	#$3F,0(a1)		; explosion object
 		move.w	8(a0),8(a1)		; set X-location
 		move.w	$C(a0),$C(a1)		; set Y-location
+		move.b	#2,$24(a1)
 		clr.b	$28(a0)
 		bra.w	DeleteObject		; delete ball object
 ; ===========================================================================
@@ -16558,6 +16613,14 @@ Obj2E_ChkS:
 		tst.b	($FFFFFFE7).w
 		beq.s	@cont
 
+
+	if RecordDemo=0
+		move.b	#$38,($FFFFD280).w ; load stars	object ($3803)
+		move.b	#1,($FFFFD29C).w
+		move.b	#$38,($FFFFD2C0).w ; load stars	object ($3804)
+		move.b	#3,($FFFFD2DC).w
+	endif
+
 		movem.l	d0-a1,-(sp)
 		move.w	#$077A,d0
 		move.w	#$027F,d1
@@ -16595,13 +16658,6 @@ Obj2E_ChkS:
 
 @contxx:
 		move.b	#1,($FFFFFFE7).w ; make sonic immortal
-
-	if RecordDemo=0
-		move.b	#$38,($FFFFD280).w ; load stars	object ($3803)
-		move.b	#1,($FFFFD29C).w
-		move.b	#$38,($FFFFD2C0).w ; load stars	object ($3804)
-		move.b	#3,($FFFFD2DC).w
-	endif
 
 		cmpi.w	#$001,($FFFFFE10).w
 		beq.s	@cont2
@@ -17107,6 +17163,7 @@ BossDefeated4:
 		move.b	#$3F,0(a1)	; load explosion object
 		move.w	8(a0),8(a1)
 		move.w	$C(a0),$C(a1)
+		move.b	#2,$24(a1)
 		jsr	(RandomNumber).l
 		move.w	d0,d1
 		moveq	#0,d1
@@ -19631,6 +19688,7 @@ Obj3A_Index:	dc.w Obj3A_Main-Obj3A_Index
 		dc.w Obj3A_Needle-Obj3A_Index
 		dc.w Obj3A_Wheel-Obj3A_Index
 		dc.w Obj3A_Scale-Obj3A_Index
+		dc.w Obj3A_Tube-Obj3A_Index
 ; ===========================================================================
 
 Obj3A_Main:				; XREF: Obj6D_Index
@@ -19638,7 +19696,7 @@ Obj3A_Main:				; XREF: Obj6D_Index
 		move.l	#Map_BombMachine,4(a0)
 		move.w	#$22B0,2(a0)
 		ori.b	#4,1(a0)
-		move.b	#1,$18(a0)
+		move.b	#2,$18(a0)
 		move.b	#$14,$1A(a0)
 
 		jsr	SingleObjLoad
@@ -19718,6 +19776,43 @@ Obj3A_Wheel:
 Obj3A_Scale:
 		lea	(Ani_BombMachine).l,a1
 		bsr	AnimateSprite
+		bra.w	DisplaySprite
+; ---------------------------------------------------------------------------
+
+Obj3A_Tube:
+		move.b	#10,$18(a0)
+		move.b	#$15,$1A(a0)
+		addi.w	#$18,$12(a0)	; increase vertical speed
+		jsr	SpeedToPos
+
+		move.b	($FFFFFE0F).w,d0
+		andi.b	#7,d0
+		bne.s	@cont
+		jsr	SingleObjLoad
+		bne.s	@cont
+		move.b	#$3F,0(a1)	; load explosion object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+		move.b	#1,$30(a1)
+		jsr	(RandomNumber).l
+		move.w	d0,d1
+		moveq	#0,d1
+		move.b	d0,d1
+		lsr.b	#4,d1
+		addi.w	#$28,d1
+		add.w	d1,8(a1)
+		lsr.w	#8,d0
+		lsr.b	#5,d0
+		addi.w	#$28,d0
+		add.w	d0,$C(a1)
+
+@cont:
+		cmpi.w	#$0240,$C(a0)
+		blt.s	@contx
+		jmp	DeleteObject
+
+@contx:
+	;	move.b	#10,($FFFFFF64).w
 		bra.w	DisplaySprite
 
 ; ---------------------------------------------------------------------------
@@ -27012,6 +27107,9 @@ Obj5F_Walk:				; XREF: Obj5F_Index2
 		tst.b	($FFFFFFA9).w
 		beq.s	Obj5F_Return
 		move.w	#-BombWalkSpeed_Boss,$10(a0)	; move object to the left
+		move.b	#1,$1C(a0)
+		cmpi.b	#2,($FFFFFFA9).w
+		blt	Obj5F_Return
 		moveq	#0,d0
 		moveq	#0,d1
 		move.b	($FFFFFF75).w,d0
@@ -27019,7 +27117,6 @@ Obj5F_Walk:				; XREF: Obj5F_Index2
 		sub.b	d0,d1
 		lsl.w	#4,d1
 		sub.w	d1,$10(a0)
-		move.b	#1,$1C(a0)
 		bra.s	Obj5F_Return
 
 Obj5F_Walk2:
@@ -27028,6 +27125,7 @@ Obj5F_Walk2:
 		tst.b	($FFFFFFA9).w
 		beq.s	Obj5F_Return
 		move.w	#BombWalkSpeed_Boss,$10(a0)	; move object to the left
+		moveq	#0,d0
 		moveq	#0,d1
 		move.b	($FFFFFF75).w,d0
 		move.b	#20,d1
@@ -27081,7 +27179,7 @@ loc_11AA8:
 ; ===========================================================================
 
 Obj5F_Explode:				; XREF: Obj5F_Index2
-		bsr	Obj5F_FaceSonic
+	;	bsr	Obj5F_FaceSonic
 		move.b	#0,$1C(a0)	; stop animation
 		move.b	#4,$18(a0)
 		subq.w	#1,$30(a0)
@@ -27422,7 +27520,15 @@ loc_11B7C:
 		moveq	#BombPellets,d6			; bomb pellets
 		tst.b	($FFFFFFA9).w
 		beq.s	@cont
-		moveq	#BombPellets_Boss,d6		; bomb pellets
+		moveq	#2,d6		; bomb pellets
+		moveq	#0,d0
+		moveq	#0,d1
+		move.b	($FFFFFF75).w,d0
+		move.b	#20,d1
+		sub.b	d0,d1
+	;	lsl.w	#1,d1
+		add.w	d1,d6
+
 @cont
 		movea.l	a0,a1
 		cmpi.b	#5,$1C(a0)
@@ -30048,11 +30154,6 @@ Obj01_ChkS:
 		tst.b	($FFFFFF92).w
 		beq.s	@contx
 		move.b	#1,($FFFFFFE7).w ; make sonic immortal
-		move.b	#$38,($FFFFD280).w ; load stars	object ($3803)
-		move.b	#1,($FFFFD29C).w
-		move.b	#$38,($FFFFD2C0).w ; load stars	object ($3804)
-		move.b	#3,($FFFFD2DC).w
-		move.w	#100,($FFFFFE20).w
 
 @contx:
 		tst.b	($FFFFFFE7).w		; has sonic destroyed a S monitor?
@@ -37652,7 +37753,7 @@ loc_17772:
 		move.w	8(a0),$30(a0)
 		move.w	$C(a0),$38(a0)
 	;	move.b	#$F,$20(a0)
-		move.b	#15,$21(a0)	; set number of	hits to	15
+		move.b	#20,$21(a0)	; set number of	hits to	15
 		move.b	$21(a0),($FFFFFF68).w
 
 Obj3D_ShipMain:				; XREF: Obj3D_Index
@@ -37721,7 +37822,7 @@ loc_177E6:
 
 		tst.b	($FFFFFFD1).w
 		bne.s	Obj3D_ShipFlash
-		cmpi.b	#5,$21(a0)
+		cmpi.b	#7,$21(a0)
 		bne.s	Obj3D_ShipFlash
 		lea	($FFFFD800).w,a1
 		move.w	#$3F,d0
@@ -37893,7 +37994,7 @@ loc_17916:
 ; ===========================================================================
 
 Obj3D_ShipMove:				; XREF: Obj3D_ShipIndex
-		cmpi.b	#5,$21(a0)
+		cmpi.b	#7,$21(a0)
 		bgt.s	@cont2
 		move.b	#$E2,d0
 		jsr	(PlaySound_Special).l	; speed up music
@@ -38149,7 +38250,7 @@ Obj48_Main:				; XREF: Obj48_Index
 		beq.s	Obj48_Do
 		subq.b	#1,$25(a0)
 		movea.l	$34(a0),a1
-		move.b	#15,$21(a1)	; force boss to have full health until all three balls appeared
+		move.b	#20,$21(a1)	; force boss to have full health until all three balls appeared
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -38247,12 +38348,12 @@ Obj48_Display:
 
 Obj48_Display2:				; XREF: Obj48_Index
 		bsr	sub_17C2A
-		cmpi.b	#5+1,$21(a1) ; +1 for whatever reason
+		cmpi.b	#7+1,$21(a1) ; +1 for whatever reason
 		bpl.s	@cont2
 		jsr	(Obj48_Move).l
 
 @cont2
-		cmpi.b	#10+1,$21(a1) ; +1 for whatever reason
+		cmpi.b	#15+1,$21(a1) ; +1 for whatever reason
 		bpl.s	@cont
 		jsr	(Obj48_Move).l
 
@@ -41109,12 +41210,23 @@ Obj82_FindBlocks:
 	;	move.w	#$474F,$28(a1)	; set block to disintegrate
 
 
-		jsr	WhiteFlash2
+	;	jsr	WhiteFlash2
 		
-		move.b	#$C3,d0
-		jsr	PlaySound
+	;	move.b	#$C3,d0
+	;	jsr	PlaySound
 		
 		move.b	#1,($FFFFFFC8).w
+
+		jsr	SingleObjLoad
+		move.b	#$3A,(a1)
+		move.b	#$A,$24(a1)
+		move.w	#$01B4,$8(a1)
+		move.w	#$0128,$C(a1)
+
+		move.l	#Map_BombMachine,4(a1)
+		move.w	#$22B0,2(a1)
+		ori.b	#4,1(a1)
+		move.b	#1,$18(a1)
 
 	;	move.l	a0,-(sp)
 	;	move.l	#$66600002,($C00004).l
@@ -41521,8 +41633,6 @@ loc_19EC6:
 		move.w	#$B7,d0
 		jsr	(PlaySound_Special).l ;	play rumbling sound
 
-		jsr	SingleObjLoad		; load from SingleObjLoad
-		bne.s	loc_19F10		; if SingleObjLoad is already in use, don't load obejct
 		move.b	#$FF,($FFFFFF64).w
 
 loc_19F10:
@@ -41567,8 +41677,12 @@ loc_19F6A:
 		bsr	BossDamageSound
 		moveq	#10,d0		; add 100 ...
 		jsr	AddPoints	; ... points
+		cmpi.b	#10,$21(a0)
+		bne.s	@cont
+		move.w	#$E2,d0
+		jsr	(PlaySound_Special).l	; speed up music
 
-
+@cont:
 		tst.b	$21(a0)	; does eggman lost all his lives?
 		beq.s	Eggman_0lives	; if yes, branch
 		move.b	#5,$35(a0)	; short flashing (5) - original: $65
@@ -41904,6 +42018,7 @@ loc_1A312:
 	;	tst.b	1(a0)
 	;	bpl.w	Obj85_Delete
 		bsr	BossDefeated
+		move.b	#10,($FFFFFF64).w		; camera shaking
 		move.b	#2,$18(a0)
 		move.b	#0,$1C(a0)
 		move.l	#Map_Eggman2,4(a0)
@@ -42090,6 +42205,15 @@ loc_1A578:
 ; ===========================================================================
 
 loc_1A57E:				; XREF: Obj84_Index
+		cmpi.b	#10,($FFFFFF68).w
+		bgt.s	@cont
+		moveq	#0,d0
+		move.b	$28(a0),d0
+		move.w	off2_1A590(pc,d0.w),d0
+		jsr	off2_1A590(pc,d0.w)
+		bra.w	loc_1A4EA
+
+@cont:
 		moveq	#0,d0
 		move.b	$28(a0),d0
 		move.w	off_1A590(pc,d0.w),d0
@@ -42100,6 +42224,11 @@ off_1A590:	dc.w loc_1A598-off_1A590
 		dc.w loc_1A598-off_1A590
 		dc.w loc_1A604-off_1A590
 		dc.w loc_1A604-off_1A590
+
+off2_1A590:	dc.w loc2_1A598-off2_1A590
+		dc.w loc2_1A598-off2_1A590
+		dc.w loc2_1A604-off2_1A590
+		dc.w loc2_1A604-off2_1A590
 ; ===========================================================================
 
 loc_1A598:				; XREF: off_1A590
@@ -42175,6 +42304,111 @@ loc_1A656:
 
 locret_1A674:
 		rts	
+; ===========================================================================
+; ===========================================================================
+; ===========================================================================
+FZpinch = $8000
+
+loc2_1A598:				; XREF: off_1A590
+		tst.b	$29(a0)
+		bne.s	loc2_1A5D4
+		movea.l	$34(a0),a1
+		tst.b	$21(a1)
+		bne.s	loc2_1A5B4
+		bsr	BossDefeated
+		subi.l	#$10000+FZpinch,$3C(a0)
+
+loc2_1A5B4:
+		addi.l	#$20000+FZpinch,$3C(a0)
+		bcc.s	locret2_1A602
+		clr.l	$3C(a0)
+		movea.l	$34(a0),a1
+		subq.w	#1,$32(a1)
+		clr.w	$30(a1)
+		subq.b	#2,$24(a0)
+		rts	
+; ===========================================================================
+
+loc2_1A5D4:
+		cmpi.w	#-$10,$3C(a0)
+		bge.s	loc2_1A5E4
+		subi.l	#$28000+FZpinch,$3C(a0)
+
+loc2_1A5E4:
+		subi.l	#$8000+FZpinch,$3C(a0)
+		cmpi.w	#-$A0,$3C(a0)
+		bgt.s	locret2_1A602
+		clr.w	$3E(a0)
+		move.w	#-$A0,$3C(a0)
+		clr.b	$29(a0)
+
+locret2_1A602:
+		rts	
+; ===========================================================================
+BossDefeatedX:
+		move.b	($FFFFFE0F).w,d0
+		andi.b	#7,d0
+		bne.s	xlocret_178A2x
+		jsr	SingleObjLoad
+		bne.s	xlocret_178A2x
+		move.b	#$3F,0(a1)	; load explosion object
+		move.w	8(a0),8(a1)
+		move.w	$C(a0),$C(a1)
+		move.b	#1,$30(a1)
+		move.b	#2,$24(a1)
+		jsr	(RandomNumber).l
+		move.w	d0,d1
+		moveq	#0,d1
+		move.b	d0,d1
+		lsr.b	#2,d1
+		subi.w	#$20,d1
+		add.w	d1,8(a1)
+		lsr.w	#8,d0
+		lsr.b	#3,d0
+		add.w	d0,$C(a1)
+
+xlocret_178A2x:
+		rts
+
+loc2_1A604:				; XREF: off_1A590
+		bset	#1,1(a0)
+		tst.b	$29(a0)
+		bne.s	loc2_1A646
+		movea.l	$34(a0),a1
+		tst.b	$21(a1)
+		bne.s	loc2_1A626
+		bsr	BossDefeatedX
+		addi.l	#$10000+FZpinch,$3C(a0)
+
+loc2_1A626:
+		subi.l	#$20000+FZpinch,$3C(a0)
+		bcc.s	locret2_1A674
+		clr.l	$3C(a0)
+		movea.l	$34(a0),a1
+		subq.w	#1,$32(a1)
+		clr.w	$30(a1)
+		subq.b	#2,$24(a0)
+		rts	
+; ===========================================================================
+
+loc2_1A646:
+		cmpi.w	#$10,$3C(a0)
+		blt.s	loc2_1A656
+		addi.l	#$28000+FZpinch,$3C(a0)
+
+loc2_1A656:
+		addi.l	#$8000+FZpinch,$3C(a0)
+		cmpi.w	#$A0,$3C(a0)
+		blt.s	locret2_1A674
+		clr.w	$3E(a0)
+		move.w	#$A0,$3C(a0)
+		clr.b	$29(a0)
+
+locret2_1A674:
+		rts	
+
+
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - cylinders Eggman hides in (FZ)
@@ -42352,6 +42586,15 @@ loc_1A9E6:
 		subq.w	#1,$28(a0)
 		bne.s	locret_1AA1C
 		addq.b	#2,$25(a0)
+
+		cmpi.b	#10,($FFFFFF68).w
+		bgt.s	@cont
+		jsr	RandomNumber
+		andi.w	#$FF,d0
+		subi.w	#$80,d0
+		move.w	d0,$10(a0)
+
+@cont:
 		move.b	#1,$1C(a0)
 		move.b	#$9A,$20(a0)
 		move.w	#$B4,$28(a0)
@@ -45818,7 +46061,7 @@ HudUpdate:
 ; ===========================================================================
 
 @NoDemo:
-	if DontAllowDebug=0
+	if DebugHUD=1
 		tst.w	($FFFFFFFA).w	; is debug mode	on?
 		bne.w	HudDebug	; if yes, branch
 	endif
@@ -49808,7 +50051,7 @@ Music8A:	include	"sound\DalekSam\ENDING.asm"
 		even
 Music8B:	incbin	sound\music8B.bin
 		even
-Music8C:	include "sound\EK\m46-Boss.asm"
+Music8C:	incbin	sound\sadv3-bosspinch.bin
 		even
 Music8D:	incbin	sound\EK\m5A-FZIntro.bin
 		even

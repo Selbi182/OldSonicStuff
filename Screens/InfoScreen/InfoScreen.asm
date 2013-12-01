@@ -104,6 +104,7 @@ Info_ClrVram:
 InfoScreen_MainLoop:
 		move.b	#4,($FFFFF62A).w
 		jsr	DelayProgram
+		jsr	SineWavePalette
 		jsr	RunPLC_RAM
 		tst.l	($FFFFF680).w
 		bne.s	InfoScreen_MainLoop

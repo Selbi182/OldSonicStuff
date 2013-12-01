@@ -119,23 +119,7 @@ Options_ClrVram:
 ; ===========================================================================
 
 Options_PalCycle:
-		addq.w	#2,($FFFFFE04).w
-		move.w	($FFFFFE04).w,d0
-		jsr	CalcSine
-		addi.w	#$100,d0
-		tst.w	d0
-		bne.s	@cont
-		addq.w	#4,($FFFFFFB8).w
-		cmpi.w	#12,($FFFFFFB8).w
-		bne.s	@cont
-		clr.w	($FFFFFFB8).w
-		
-@cont:
-		lsr.w	#5,d0
-		move.w	($FFFFFFB8).w,d1
-		lsl.w	d1,d0
-		andi.w	#$EEE,d0
-		move.w	d0,($FFFFFB40).w
+		jsr	SineWavePalette
 
 
 
@@ -320,6 +304,7 @@ Opt10_YesEaster:
 		move.b	#0,($A130F1).l			; disable SRAM
 
 		bchg	#0,($FFFFFF92).w	; enable/disable hard part skipper
+		move.b	($FFFFFF92).w,($FFFFFFE7).w
 		andi.b	#1,($FFFFFF92).w
 		tst.b	($FFFFFF92).w
 		bne.s	@contx
