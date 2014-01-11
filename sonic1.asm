@@ -54,8 +54,8 @@ Align:		macro
 ;Don't allow debug mode, not even with Game Genie.
 ; 0 - No
 ; 1 - Yes
-DebugModeDefault = 1
-DontAllowDebug = 0
+DebugModeDefault = 0
+DontAllowDebug = 1
 DebugHUD = 0
 ;=================================================
 ;Enable Demo Recording. (In RAM at $FFFFD200)
@@ -5642,6 +5642,11 @@ SS_NoDebug:
 ; ---------------------------------------------------------------------------
 
 SS_MainLoop:
+	;	move.l	#$4A200001,($C00004).l ; set VRAM address $4A20
+	;	moveq	#7,d1
+	;	lea	(Art_Text).l,a1
+	;	jsr	LoadTiles
+
 	;	tst.b	($FFFFFF92).w		; is hard part skipper enabled?
 	;	beq.s	SS_NoSkip		; if not, branch
 		move.b	($FFFFF602).w,d0	; get button presses
@@ -11138,7 +11143,7 @@ Obj15_Solid:				; XREF: Obj15_SetSolid
 
 Obj11_Action2:				; XREF: Obj11_Index
 		bsr.s	Obj11_WalkOff
-		bsr	DisplaySprite
+		jsr	DisplaySprite
 		bra.w	Obj11_ChkDel
 
 ; ---------------------------------------------------------------------------
@@ -11426,7 +11431,7 @@ Obj15_SetLength:
 		subq.w	#1,d1
 
 Obj15_MakeChain:
-		bsr	SingleObjLoad
+		jsr	SingleObjLoad
 		bne.s	loc_7A92
 		addq.b	#1,$28(a0)
 		move.w	a1,d5
@@ -11832,6 +11837,7 @@ Obj18_Index:	dc.w Obj18_Main-Obj18_Index
 		dc.w Obj18_Action2-Obj18_Index
 		dc.w Obj18_Delete-Obj18_Index
 		dc.w Obj18_Action-Obj18_Index
+		dc.w Obj18_Arrows-Obj18_Index
 ; ===========================================================================
 
 Obj18_Main:				; XREF: Obj18_Index
@@ -11847,7 +11853,27 @@ Obj18_NotLZ:
 		cmpi.b	#4,($FFFFFE10).w ; check if level is SYZ
 		bne.s	Obj18_NotSYZ
 		move.l	#Map_obj18a,4(a0) ; SYZ	specific code
+		move.w	#$4490,2(a0)
 		move.b	#$20,$19(a0)
+
+		jsr	SingleObjLoad
+		move.b	#$18,(a1)
+		move.b	#$A,$24(a1)
+		move.l	#Map_obj18a,4(a1) ; SYZ	specific code
+		move.w	#$6490,2(a1)
+		move.w	$8(a0),$8(a1)
+		move.w	$C(a0),$C(a1)
+		move.b	#1,$1A(a1)
+		move.b	#$20,$19(a1)
+		move.b	#4,1(a1)
+		move.b	#4,$18(a1)
+		move.w	$C(a0),$2C(a1)
+		move.w	$C(a0),$34(a1)
+		move.w	8(a0),$32(a1)
+		move.w	#$80,$26(a1)
+		move.l	a0,$36(a1)
+
+
 
 Obj18_NotSYZ:
 		cmpi.b	#3,($FFFFFE10).w ; check if level is SLZ
@@ -11904,17 +11930,35 @@ Obj18_Action:				; XREF: Obj18_Index
 		bra.w	Obj18_ChkDel
 ; ===========================================================================
 
+Obj18_Arrows:
+		movea.l	$36(a0),a1
+		tst.b	$3F(a1)
+		beq.s	@cont
+		move.b	$24(a1),d0
+		cmpi.b	#4,d0
+		bne.s	@cont
+		bsr	DisplaySprite
+
+@cont:
+		bra.w	Obj18_ChkDel
+
+; ===========================================================================
+
+
+
 Obj18_Action2:				; XREF: Obj18_Index
 		cmpi.w	#$400,($FFFFFE10).w	; is level SYZ1?
 		bne.s	Obj18_NotSYZX
-		btst	#1,($FFFFF605).w
-		beq.s	Obj18_NotSYZX
+		move.b	#0,$3F(a0)
 		move.w	($FFFFD010).w,d0
 		bpl.s	@cont
 		neg.w	d0
 @cont:
 		cmpi.w	#$300,d0
 		bgt.s	Obj18_NotSYZX
+		move.b	#1,$3F(a0)
+		btst	#1,($FFFFF605).w
+		beq.s	Obj18_NotSYZX
 		move.b	#10,($FFFFFF64).w		; camera shaking
 		bsr	SingleObjLoad
 		bne.s	Obj18_NotSYZX
@@ -12267,7 +12311,8 @@ Map_obj18:
 ; Sprite mappings - SYZ	platforms
 ; ---------------------------------------------------------------------------
 Map_obj18a:
-		include	"_maps\obj18syz.asm"
+	;	include	"_maps\obj18syz.asm"
+		include	"_maps\SYZPlatform.asm"
 
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - SLZ	platforms
@@ -47182,6 +47227,8 @@ Nem_Bumper:	incbin	artnem\syzbumpe.bin	; SYZ bumper
 Nem_LzSwitch:	incbin	artnem\switch.bin	; LZ/SYZ/SBZ switch
 		even
 Nem_LevelSigns:	incbin	artnem\LevelSigns.bin	; SYZ level signs
+		even
+Nem_SYZPlat:	incbin	artnem\SYZPlatform.bin	; SLZ Platform
 		even
 ; ---------------------------------------------------------------------------
 ; Compressed graphics - SBZ stuff
