@@ -1,0 +1,5 @@
+rotsprite 1.0
+Sprite Rotation Utility (for aliased rotation of sprites or other images)
+by Xenowhirl
+
+This program is provided "as-is"; you are free to use it for whatever you want, but I can't be held responsible for what it does or what you do with it, and please give credit where credit is due.
