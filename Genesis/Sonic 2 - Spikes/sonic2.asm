@@ -4019,6 +4019,7 @@ Sega_WaitPalette:
 	btst	#5,(Ctrl_1_Held).w	; is C held down?
 	beq.s	+
 	move.b	#$20,(Game_Mode).w	; => EndingSequence
+	bsr	Sega_Remaining
 	rts
 +
 	btst	#6,(Ctrl_1_Held).w	; is A held down?
@@ -4050,6 +4051,7 @@ Sega_WaitEnd:
 	beq.s	Sega_WaitEnd		; if not, branch
 ; loc_395E:
 Sega_GotoTitle:
+	bsr	Sega_Remaining
 	jmp	SelbiSplash
 
 	;move.b	#4,(Game_Mode).w	; => TitleScreen
@@ -4057,15 +4059,8 @@ Sega_GotoTitle:
 	jmp	loc_9480
 
 Sega_Remaining:
-	move.b	#2,(Delay_Time).w
-	bsr.w	DelayProgram
-	bsr.w	JmpTo_RunObjects
-	jsr	(BuildSprites).l
 	clr.b	($FFFFF660).w
-	move.b	#2,(Delay_Time).w
-	bsr.w	DelayProgram
-	move.b	#$14,(Delay_Time).w
-	bsr.w	DelayProgram
+
 	clr.w	(Demo_Time_left).w
 
 	move.b	#1,(Debug_mode_flag).w
@@ -4692,7 +4687,7 @@ loc_4114:
 	bsr.w	WaterEffects
 	bsr.w	InitPlayers
 
-	move.b	#0,($FFFFF500).w	; reset hit counter
+	move.l	#0,($FFFFF500).w	; reset hit counter (2 bytes), reset red hits frames (1 byte), ?
 
 	move.w	#0,(Ctrl_1_Logical).w
 	move.w	#0,(Ctrl_2_Logical).w
@@ -25288,7 +25283,7 @@ loc_13EFE:
 	rts
 ; ===========================================================================
 
-loc_13F18:
+loc_13F18:	; $16 - wait and go away, used by the zone name, "ZONE" and the act number
 	tst.w	anim_frame_duration(a0)
 	beq.s	loc_13F24
 	subq.w	#1,anim_frame_duration(a0)
@@ -25321,6 +25316,9 @@ loc_13F44:
 	moveq	#0,d0
 	move.b	(Current_Zone).w,d0
 	move.b	byte_13F62(pc,d0.w),d0
+	bsr.w	JmpTo3_LoadPLC
+	
+	moveq	#$3B,d0
 	bsr.w	JmpTo3_LoadPLC
 
 BranchTo10_DeleteObject 
@@ -26997,6 +26995,12 @@ Spike_Hurt:
 	bset	#1,status(a0)
 	move.b	#$1A,anim(a0)		; set animation to hurt
 	;move.b	#0,anim_frame(a0)	; reset animation frame
+	move.w	#$26+$80,d0	; load spikes damage sound
+	jsr	(PlaySound).l
+	addq.w	#1,($FFFFF500).w	; increase hit counter
+	move.b	#10,($FFFFF502).w	; set hits on hut to red for 10 frames
+	move.b	#1,(Update_HUD_rings).w	; update HUD
+
 
 ; center Sonic
 	cmpi.b	#2,routine(a2)	; upright?
@@ -27046,12 +27050,6 @@ Spike_Hurt:
 +
 
 	movea.l	a2,a0
-	move.w	#$26+$80,d0	; load spikes damage sound
-	jsr	(PlaySound).l
-	moveq	#-1,d0
-	
-	addq.w	#1,($FFFFF500).w	; increase hit counter
-	move.b	#1,(Update_HUD_rings).w	; update HUD
 	rts
 
 ; ----------------------------------------------------------------------------
@@ -27137,7 +27135,27 @@ SHH_2:	rts
 SH_Explode:
 	;move.w	#0,x_vel(a0)
 	move.w	#-$1000,y_vel(a0)
-	rts
+	
+	move.w	x_pos(a0),d2
+	move.w	y_pos(a0),d3
+	jsr	SingleObjLoad
+	bne.s	+
+	move.b	#$58,(a1)	; load Explosion object
+	move.w	d2,x_pos(a1)
+	move.w	d3,y_pos(a1)
+	jsr	SingleObjLoad2
+	bne.s	+
+	move.b	#$58,(a1)	; load Explosion object
+	move.w	d2,x_pos(a1)
+	subi.w	#$20,d3
+	move.w	d3,y_pos(a1)
+	jsr	SingleObjLoad2
+	bne.s	+
+	move.b	#$58,(a1)	; load Explosion object
+	move.w	d2,x_pos(a1)
+	subi.w	#$20,d3
+	move.w	d3,y_pos(a1)
++	rts
 ; ----------------------------------------------------------------------------
 ; ===========================================================================
 
@@ -31487,7 +31505,7 @@ off_1889C:
 loc_188A8:
 	addq.b	#2,routine(a0)
 	move.l	#Obj41_MapUnc_1901C,mappings(a0)
-	move.w	#$45C-$7E,art_tile(a0)
+	move.w	#$45C-$9E,art_tile(a0)
 	ori.b	#4,render_flags(a0)
 	move.b	#$10,width_pixels(a0)
 	move.b	#4,priority(a0)
@@ -31509,7 +31527,7 @@ loc_188E8:
 	move.b	#4,routine(a0)
 	move.b	#2,anim(a0)
 	move.b	#3,mapping_frame(a0)
-	move.w	#$470-$7E,art_tile(a0)
+	move.w	#$470-$9E,art_tile(a0)
 	move.b	#8,width_pixels(a0)
 	bra.s	loc_18954
 ; ===========================================================================
@@ -31525,7 +31543,7 @@ loc_1891C:
 	move.b	#8,routine(a0)
 	move.b	#4,anim(a0)
 	move.b	#7,mapping_frame(a0)
-	move.w	#$43C-$7E,art_tile(a0)
+	move.w	#$43C-$9E,art_tile(a0)
 	bra.s	loc_18954
 ; ===========================================================================
 
@@ -31533,7 +31551,7 @@ loc_18936:
 	move.b	#$A,routine(a0)
 	move.b	#4,anim(a0)
 	move.b	#$A,mapping_frame(a0)
-	move.w	#$43C-$7E,art_tile(a0)
+	move.w	#$43C-$9E,art_tile(a0)
 	bset	#1,status(a0)
 
 loc_18954:
@@ -35449,7 +35467,7 @@ Obj01_Hurt_Normal:
 	bset	#0,status(a0)	; make Sonic face left
 	neg.w	d0		; make X-speed positive
 +
-; $1A Slow; $22 Faster; $23 Fastest
+; $22 fastest; $23 slower; $24 even slower; $1A even slower (normal); $25 almost slowest; $26 slowest
 	move.w	y_vel(a0),d1	; get Y-speed
 	bpl.s	+		; positive? branch
 	neg.w	d1		; otherwise make it positive
@@ -35457,15 +35475,35 @@ Obj01_Hurt_Normal:
 	bmi.s	+		; if not, branch
 	move.w	d1,d0		; otherwise, make Y-speed dominant
 +
-	cmpi.w	#$800,d0	; speed >=$800?
+	cmpi.w	#$A00,d0	; speed >=$A00?
 	blt.s	+		; if not, branch
-	move.b	#$23,anim(a0)	; use fastest hurt animation
+	move.b	#$22,anim(a0)	; use animation $22
 	bra	OHN_End		; skip to end
-+	cmpi.w	#$400,d0	; speed between $400 and $7FF?
++
+	cmpi.w	#$700,d0	; speed >=$700?
 	blt.s	+		; if not, branch
-	move.b	#$22,anim(a0)	; use faster hurt animation
+	move.b	#$23,anim(a0)	; use animation $23
 	bra	OHN_End		; skip to end
-+	move.b	#$1A,anim(a0)	; use slowest hurt animation
++
+	cmpi.w	#$500,d0	; speed >=$500?
+	blt.s	+		; if not, branch
+	move.b	#$24,anim(a0)	; use animation $24
+	bra	OHN_End		; skip to end
++
+	cmpi.w	#$300,d0	; speed >=$300?
+	blt.s	+		; if not, branch
+	move.b	#$1A,anim(a0)	; use animation $1A
+	bra	OHN_End		; skip to end
++
+	cmpi.w	#$100,d0	; speed >=$100?
+	blt.s	+		; if not, branch
+	move.b	#$25,anim(a0)	; use animation $25
+	bra	OHN_End		; skip to end
++
+;	cmpi.w	#$100,d0	; speed >=$100?
+;	blt.s	+		; if not, branch
+	move.b	#$26,anim(a0)	; use animation $26
+;	bra	OHN_End		; skip to end
 OHN_End:
 	move.b	anim(a0),next_anim(a0)	; make sure frame doesn't get reset
 
@@ -35971,8 +36009,11 @@ SonicAniData:
 	dc.w SupSonAni_Transform - SonicAniData	; 31 ; $1F
 	dc.w SonAni_Lying - SonicAniData	; 32 ; $20
 	dc.w SonAni_LieDown - SonicAniData	; 33 ; $21
-	dc.w SonAni_HurtFaster - SonicAniData	; 34 ; $22
-	dc.w SonAni_HurtFastest - SonicAniData	; 35 ; $23
+	dc.w SonAni_HurtFast1 - SonicAniData	; 34 ; $22
+	dc.w SonAni_HurtFast2 - SonicAniData	; 35 ; $23
+	dc.w SonAni_HurtFast3 - SonicAniData	; 36 ; $24
+	dc.w SonAni_HurtFast4 - SonicAniData	; 37 ; $25
+	dc.w SonAni_HurtFast5 - SonicAniData	; 37 ; $26
 
 SonAni_Walk:	dc.b $FF, $F,$10,$11,$12,$13,$14, $D, $E,$FF
 SonAni_Run:	dc.b $FF,$2D,$2E,$2F,$30,$FF,$FF,$FF,$FF,$FF
@@ -36022,12 +36063,24 @@ SonAni_Balance3:dc.b $13,$D0,$D1,$FF
 SonAni_Balance4:dc.b   3,$CF,$C8,$C9,$CA,$CB,$FE,  4
 SonAni_Lying:	dc.b   9,  8,  9,$FF
 SonAni_LieDown:	dc.b   3,  7,$FD,  0
-SonAni_HurtFaster:
+SonAni_HurtFast1:
+	dc.b $00
+	dc.b $4E,$DC,$DB,$DA,$D9,$D8,$D7,$D6, $4F,$DC,$DB,$DA,$D9,$D8,$D7,$D6
+	dc.b $FF
+SonAni_HurtFast2:
 	dc.b $01
 	dc.b $4E,$DC,$DB,$DA,$D9,$D8,$D7,$D6, $4F,$DC,$DB,$DA,$D9,$D8,$D7,$D6
 	dc.b $FF
-SonAni_HurtFastest:
-	dc.b $00
+SonAni_HurtFast3:
+	dc.b $02
+	dc.b $4E,$DC,$DB,$DA,$D9,$D8,$D7,$D6, $4F,$DC,$DB,$DA,$D9,$D8,$D7,$D6
+	dc.b $FF
+SonAni_HurtFast4:
+	dc.b $04
+	dc.b $4E,$DC,$DB,$DA,$D9,$D8,$D7,$D6, $4F,$DC,$DB,$DA,$D9,$D8,$D7,$D6
+	dc.b $FF
+SonAni_HurtFast5:
+	dc.b $05
 	dc.b $4E,$DC,$DB,$DA,$D9,$D8,$D7,$D6, $4F,$DC,$DB,$DA,$D9,$D8,$D7,$D6
 	dc.b $FF
 	even
@@ -58548,7 +58601,8 @@ off_2D4A2:
 loc_2D4A6:
 	addq.b	#2,routine(a0)
 	move.l	#Obj58_MapUnc_2D50A,mappings(a0)
-	move.w	#$8580,art_tile(a0)
+	;move.w	#$8580,art_tile(a0)
+	move.w	#$8000+($73C0/$20),art_tile(a0)
 	bsr.w	JmpTo59_Adjust2PArtPointer
 	move.b	#4,render_flags(a0)
 	move.b	#0,priority(a0)
@@ -58556,7 +58610,8 @@ loc_2D4A6:
 	move.b	#$C,width_pixels(a0)
 	move.b	#7,anim_frame_duration(a0)
 	move.b	#0,mapping_frame(a0)
-	move.w	#$C4,d0
+	;move.w	#$C4,d0
+	move.w	#$4B+$80,d0
 	jmp	(PlaySound).l
 ; ===========================================================================
 	rts
@@ -83108,11 +83163,12 @@ JmpTo2_NemDecToRAM
 
 
 ; ----------------------------------------------------------------------------
-; HUD code
+; HUD code - HUD dealing
 ; ----------------------------------------------------------------------------
-loc_40804:
-	tst.w	(Ring_count).w
-	beq.s	loc_40820
+loc_40804:	; Single Player HUD
+	bra	loc_40820
+;	tst.w	(Ring_count).w
+;	beq.s	loc_40820
 	moveq	#0,d1
 	btst	#3,($FFFFFE05).w
 	bne.s	BranchTo_loc_40836
@@ -83125,13 +83181,17 @@ BranchTo_loc_40836
 ; ===========================================================================
 
 loc_40820:
-	moveq	#0,d1
-	btst	#3,($FFFFFE05).w
-	bne.s	loc_40836
-	addq.w	#1,d1
-	cmpi.b	#9,(Timer_minute).w
-	bne.s	loc_40836
-	addq.w	#2,d1
+	moveq	#0,d1			; use normal sprite without red
+	tst.b	($FFFFF502).w
+	beq.s	loc_40836
+	subq.b	#1,($FFFFF502).w
+;	btst	#3,($FFFFFE05).w	; check if time to swap colors has been reached yet
+	btst	#1,($FFFFFE05).w	; check if time to swap colors has been reached yet
+	bne.s	loc_40836		; if not, branch
+	addq.w	#1,d1			; use red "rings" counter
+	cmpi.b	#9,(Timer_minute).w	; is time over 9 minutes?
+	bne.s	loc_40836		; if not, branch
+	addq.w	#2,d1			; use red "rings" and "time" counter
 
 loc_40836:
 	move.w	#$90,d3
@@ -83154,6 +83214,7 @@ return_40858:
 loc_4085A:
 	tst.w	(Ring_count).w
 	beq.s	loc_40876
+
 	moveq	#0,d1
 	btst	#3,($FFFFFE05).w
 	bne.s	BranchTo_loc_4088C
@@ -83508,14 +83569,14 @@ HudUpdate:
 	tst.b	(Update_HUD_score).w	; does the score need updating?
 	;beq.s	Hud_ChkRings	; if not, branch
 	clr.b	(Update_HUD_score).w
-	move.l	#$5C800003,d0	; set VRAM address
+	move.l	#$5C400003,d0	; set VRAM address
 ;	move.l	(Score).w,d1	; load score
 
 	moveq	#0,d2
 	move.w	(MainCharacter+x_vel).w,d2	; load speed
 	bpl.s	+
 	neg.w	d2
-+	lsr.w	#2,d2
++	lsr.w	#1,d2
 
 
 	moveq	#0,d1
@@ -83523,9 +83584,12 @@ HudUpdate:
 	;move.w	($FFFFF500).w,d1	; load speed
 	bpl.s	+
 	neg.w	d1
-+	lsr.w	#2,d1
-	;add.l	d2,d1
-	move.w	d2,d1
++	lsr.w	#1,d1
+	
+	
+	mulu.w	#10000,d2
+	add.l	d2,d1
+	;move.w	d2,d1
 
 	bsr.w	Hud_Score
 ; loc_40DBA:
@@ -83917,14 +83981,18 @@ Hud_Rings:
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to load score numbers patterns
+; Inputs:
+; d0 = VDP input
+; d1 = Score value
 ; ---------------------------------------------------------------------------
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 ; sub_41146:
 Hud_Score:
-	lea	(Hud_1000000).l,a2
-	moveq	#6,d6
+	lea	(Hud_10000000).l,a2
+	;moveq	#6,d6
+	moveq	#7,d6
 ; loc_4114E:
 Hud_LoadArt:
 	moveq	#0,d4
@@ -83948,8 +84016,9 @@ loc_41160:
 	move.w	#1,d4
 
 loc_4116A:
-	tst.w	d4
+	;tst.w	d4
 	;beq.s	loc_41198
+
 	lsl.w	#6,d2
 	move.l	d0,4(a6)
 	lea	(a1,d2.w),a3
@@ -84005,6 +84074,7 @@ loc_411CE:
 ; for HUD counter
 ; ---------------------------------------------------------------------------
 				; byte_411FC:
+Hud_10000000:	dc.l 10000000
 Hud_1000000:	dc.l 1000000
 Hud_100000:	dc.l 100000	; byte_41200: ; Hud_10000:
 		dc.l 10000	; byte_41204:
@@ -84577,7 +84647,7 @@ loc_41B1C:
 	add.w	d0,d0
 	adda.w	(a2,d0.w),a2
 	move.w	(a2)+,d6
-	bsr.w	sub_41B34	; check button inputs
+	;bsr.w	sub_41B34	; check button inputs
 	;jmp	DisplaySprite
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -84592,8 +84662,8 @@ sub_41B34:
 	move.b	(Ctrl_1_Held).w,d0
 	andi.w	#$F,d0			; is any key on the D-Pad held?
 	bne.s	loc_41B5E		; if yes, branch 2
-	move.b	#$C*2,($FFFFFE0A).w	; set split-second delay after pressing once
-	move.b	#$40,($FFFFFE0B).w	; set initial speed ($F)
+	move.b	#$C,($FFFFFE0A).w	; set split-second delay after pressing once ($C)
+	move.b	#$7F,($FFFFFE0B).w	; set initial speed ($F)
 	bra.w	loc_41BDA		; if not, branch 3 (A-check)
 ; ===========================================================================
 
@@ -84602,9 +84672,9 @@ loc_41B5E:
 	bne.s	loc_41B7A		; still not 0? branch
 	move.b	#1,($FFFFFE0A).w	; reset delay to 1 (so the above check will always get skipped)
 	addq.b	#1,($FFFFFE0B).w	; increase speed by 1
-	cmpi.b	#$41,($FFFFFE0B).w
+	cmpi.b	#$80,($FFFFFE0B).w
 	bcs.s	loc_41B76		; did speed go from $FF to $00 again? if not, branch
-	move.b	#$40,($FFFFFE0B).w	; if yes, reset it to $FF
+	move.b	#$7F,($FFFFFE0B).w	; if yes, reset it to $FF
 
 loc_41B76:
 	move.b	(Ctrl_1_Held).w,d4
@@ -84794,30 +84864,19 @@ dbglistobj macro   obj, mapaddr,  decl, frame, flags, vram
     endm
 
 DbgObjList_Def: dbglistheader
+		;  obj  maps  decl  frame  flags  vram
 	dbglistobj $25, Obj25_MapUnc_12382,   0,   0,  2, $6BC ; obj25 = ring
 	dbglistobj $26, Obj26_MapUnc_12D36,   8,   0,  0, $680 ; obj26 = monitor
 DbgObjList_Def_End
 
 DbgObjList_EHZ: dbglistheader
-	dbglistobj $25, Obj25_MapUnc_12382,   0,   0,  2, $6BC
-	dbglistobj $26, Obj26_MapUnc_12D36,   8,   0,  0, $680
-	dbglistobj $79, Obj79_MapUnc_1F424,   1,   0,  0, $47C
-	dbglistobj   3, Obj03_MapUnc_1FFB8,   9,   1,  2, $6BC
-	dbglistobj $49, Obj49_MapUnc_20C50,   0,   0,  2, $39E
-	dbglistobj $49, Obj49_MapUnc_20C50,   2,   3,  2, $39E
-	dbglistobj $49, Obj49_MapUnc_20C50,   4,   5,  2, $39E
-	dbglistobj $18, Obj18_MapUnc_107F6,   1,   0,  4, 0
-	dbglistobj $18, Obj18_MapUnc_107F6, $9A,   1,  4, 0
-	dbglistobj $36, Obj36_MapUnc_15B68,   0,   0,  2, $434
-	dbglistobj $41, Obj41_MapUnc_1901C, $81,   0,  0, $45C
-	dbglistobj $41, Obj41_MapUnc_1901C, $90,   3,  0, $470
-	dbglistobj $41, Obj41_MapUnc_1901C, $A0,   6,  0, $45C
-	dbglistobj $41, Obj41_MapUnc_1901C, $30,   7,  0, $43C
-	dbglistobj $41, Obj41_MapUnc_1901C, $40,  $A,  0, $43C
-	dbglistobj $4B, Obj4B_MapUnc_2D2EA,   0,   0,  0, $3D2
-	dbglistobj $5C, Obj5C_MapUnc_2D442,   0,   0,  0, $414
-	dbglistobj $9D, Obj9D_Obj98_MapUnc_37D96, $1E,   0,  0, $3EE
-	dbglistobj $3E, Obj3E_MapUnc_3F436,   0,   0,  2, $680
+	dbglistobj $36, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; level 1
+	dbglistobj $36, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; level 2
+	dbglistobj $36, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; level 3
+	dbglistobj $36, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; halve
+	dbglistobj $36, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; explode
+	dbglistobj $36, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; level 1 sideways
+;	dbglistobj $36, Obj36_MapUnc_15B68,   0,   0,  0, $434+$00	; sample
 DbgObjList_EHZ_End
 
 DbgObjList_MTZ: dbglistheader
@@ -85253,6 +85312,7 @@ ArtLoadCues:
 	dc.w PLC_38 - ArtLoadCues	; 64
 	dc.w PLC_39 - ArtLoadCues	; 65
 	dc.w PLC_3A - ArtLoadCues	; 66
+	dc.w PLC_3B - ArtLoadCues	; 67
 
 ; macro for a pattern load request list header
 ; must be on the same line as a label that has a corresponding _End label later
@@ -85308,21 +85368,22 @@ PlrList_GameOver_End
 ; Emerald Hill Zone primary
 ;---------------------------------------------------------------------------------------
 PlrList_Ehz1: plrlistheader
-	plreq $73C0, ArtNem_Waterfall
-	plreq $76C0, ArtNem_EHZ_Bridge
+;	plreq $73C0, ArtNem_Waterfall
+;	plreq $76C0, ArtNem_EHZ_Bridge
 ;	plreq $77C0, ArtNem_Buzzer_Fireball
 ;	plreq $7A40, ArtNem_Buzzer
 ;	plreq $7DC0, ArtNem_Coconuts
 ;	plreq $8280, ArtNem_Masher
+;	plreq $8780-$13C0, ArtNem_DignlSprng
+;	plreq $8B80-$13C0, ArtNem_VrtclSprng
+;	plreq $8E00-$13C0, ArtNem_HrzntlSprng
+	plreq $73C0, ArtNem_FieryExplosion ; $7C00
 PlrList_Ehz1_End
 ;---------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
 ; Emerald Hill Zone secondary
 ;---------------------------------------------------------------------------------------
 PlrList_Ehz2: plrlistheader
-	plreq $8780-$FC0, ArtNem_DignlSprng
-	plreq $8B80-$FC0, ArtNem_VrtclSprng
-	plreq $8E00-$FC0, ArtNem_HrzntlSprng
 	plreq $8580, ArtNem_HorizSpike	; H-SPIKE GRAPHICS ADDED
 	plreq $8680, ArtNem_Spikes
 PlrList_Ehz2_End
@@ -85876,7 +85937,13 @@ PLC_3A: plrlistheader
 	plreq $BE80, ArtNem_MiniTails
 	plreq $A800, ArtNem_Perfect
 PLC_3A_End
-
+;---------------------------------------------------------------------------------------
+; Pattern load queue
+; Fiery Explosion
+;---------------------------------------------------------------------------------------
+PLC_3B: plrlistheader
+	plreq $B000, ArtNem_FieryExplosion
+PLC_3B_End
 
 
 

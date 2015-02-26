@@ -1,8 +1,0 @@
-Vergleichen von win32\sonic2.asm und sonic2.asm...
-Dateien sind unterschiedlich groá.
-
-n
-Vergleichen von win32\sonic2.asm und sonic2.asm...
-Dateien sind unterschiedlich groá.
-
-n
