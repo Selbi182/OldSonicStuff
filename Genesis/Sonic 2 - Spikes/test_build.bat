@@ -26,6 +26,7 @@ REM // -c outputs a shared file (sonic2.h)
 REM // -A gives us a small speedup
 set AS_MSGPATH=win32/msg
 set USEANSI=n
+rem "win32/asw" -E s2err.txt -r 2 -xx -c -A sonic2.asm
 "win32/asw" -xx -c -A sonic2.asm
 
 REM // combine the assembler output into a rom
@@ -53,7 +54,7 @@ echo "============================================"
 echo.
 pause
 @echo on
-s2built.bin
+start s2built.bin
 exit /b
 
 

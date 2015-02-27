@@ -4019,13 +4019,13 @@ Sega_WaitPalette:
 	btst	#5,(Ctrl_1_Held).w	; is C held down?
 	beq.s	+
 	move.b	#$20,(Game_Mode).w	; => EndingSequence
-	bsr	Sega_Remaining
+	bsr.s	Sega_Remaining
 	rts
 +
 	btst	#6,(Ctrl_1_Held).w	; is A held down?
 	beq.s	+
 	move.b	#$28,(Game_Mode).w	; => LevelSelect
-	bsr	Sega_Remaining
+	bsr.s	Sega_Remaining
 	rts
 +
 	move.b	#2,(Delay_Time).w
@@ -4051,12 +4051,12 @@ Sega_WaitEnd:
 	beq.s	Sega_WaitEnd		; if not, branch
 ; loc_395E:
 Sega_GotoTitle:
-	bsr	Sega_Remaining
-	jmp	SelbiSplash
+	bsr.s	Sega_Remaining
+	jmp	(SelbiSplash).l
 
-	;move.b	#4,(Game_Mode).w	; => TitleScreen
-	move.w	#$000,d0
-	jmp	loc_9480
+;	move.b	#4,(Game_Mode).w	; => TitleScreen
+;	move.w	#$000,d0
+;	jmp	loc_9480
 
 Sega_Remaining:
 	clr.b	($FFFFF660).w
@@ -4494,7 +4494,7 @@ MusicList2:
 ; Level
 ; DEMO AND ZONE LOOP (MLS values $08, $0C; bit 7 set indicates that load routine is running)
 ; ---------------------------------------------------------------------------
-; loc_3EC4: XLevel:
+; loc_3EC4: XLevel::
 Level:
 	bset	#7,(Game_Mode).w ; add $80 to screen mode (for pre level sequence)
 	tst.w	(Demo_mode_flag).w
@@ -13988,7 +13988,7 @@ loc_C1C2:
 ; appear at when the level starts.
 ; --------------------------------------------------------------------------------------
 WrdArr_StartLoc:
-	dc.w	$28,	$270	; $00
+	dc.w	$A0,	$294	; $00
 	dc.w	$60,	$2AF
 	dc.w	$60,	$28F	; $01
 	dc.w	$60,	$2AF
@@ -26997,11 +26997,12 @@ Spike_Hurt:
 	;move.b	#0,anim_frame(a0)	; reset animation frame
 	move.w	#$26+$80,d0	; load spikes damage sound
 	jsr	(PlaySound).l
-	addq.w	#1,($FFFFF500).w	; increase hit counter
 	move.b	#10,($FFFFF502).w	; set hits on hut to red for 10 frames
 	move.b	#1,(Update_HUD_rings).w	; update HUD
-
-
+	cmpi.w	#999,($FFFFF500).w	; already 999 hits?
+	bcc.s	+			; if yes, branch
+	addq.w	#1,($FFFFF500).w	; increase hit counter
++
 ; center Sonic
 	cmpi.b	#2,routine(a2)	; upright?
 	bne.s	+
@@ -27018,30 +27019,30 @@ Spike_Hurt:
 ; check for subtype
 	cmpi.b	#0,d4
 	bne.s	+
-	bsr	SH_Default
+	bsr.w	SH_Default
 	
 +	cmpi.b	#1,d4
 	bne.s	+
-	bsr	SH_Level1
+	bsr.w	SH_Level1
 +	cmpi.b	#2,d4
 	bne.s	+
-	bsr	SH_Level2
+	bsr.w	SH_Level2
 +	cmpi.b	#3,d4
 	bne.s	+
-	bsr	SH_Level3
+	bsr.w	SH_Level3
 
 
 +	cmpi.b	#4,d4
 	bne.s	+
-	bsr	SH_Flip
+	bsr.w	SH_Flip
 
 +	cmpi.b	#5,d4
 	bne.s	+
-	bsr	SH_Halve
+	bsr.w	SH_Halve
 
 +	cmpi.b	#6,d4
 	bne.s	+
-	bsr	SH_Explode
+	bsr.w	SH_Explode
 +; end subtype check
 
 	btst	#1,render_flags(a2)	; is Spike y-flipped?
@@ -27078,11 +27079,11 @@ SH_Flip: ;$4
 
 SH_Level1: ;$1
 	move.w	#-$200,x_vel(a0)
-	bra	SH_Level_End
+	bra.s	SH_Level_End
 ; ----------------------------------------------------------------------------
 SH_Level2: ;$2
 	move.w	#-$400,x_vel(a0)
-	bra	SH_Level_End
+	bra.s	SH_Level_End
 ; ----------------------------------------------------------------------------
 SH_Level3: ;$3
 	move.w	#-$800,x_vel(a0)
@@ -27281,6 +27282,15 @@ byte_15916:
 ; ===========================================================================
 
 Obj36_Init:
+	lea	(Object_Respawn_Table).w,a2
+	moveq	#0,d0
+	move.b	respawn_index(a0),d0
+;	beq.s	+		; if the respawn index flag isn't set, don't do this
+	bclr	#7,2(a2,d0.w)
+	btst	#0,2(a2,d0.w)	; if this bit is set it means the spike is already deleted
+	beq.s	+
+	jmp	(DeleteObject).l
++
 	addq.b	#2,routine(a0)
 	move.l	#Obj36_MapUnc_15B68,mappings(a0)
 	move.w	#$2434,art_tile(a0)
@@ -27383,8 +27393,48 @@ loc_15986:
 	move.w	y_pos(a0),objoff_32(a0)
 	bra.w	Adjust2PArtPointer
 ; ===========================================================================
+; ===========================================================================
+DebugRange = $1F
+
+Obj36_DebugCheck:
+	tst.w	(Debug_placement_mode).w	; is debug placement mode enabled?
+	beq.s	ODC_End				; if not, branch
+	
+	move.w	(MainCharacter+x_pos).w,d0	; get debug X-position
+	sub.w	x_pos(a0),d0			; substract spike X-position
+	bpl.s	+				; branch if positive
+	neg.w	d0				; otherwise make it positive
++	cmpi.w	#DebugRange,d0			; in range?
+	bgt.s	ODC_End				; if not, end
+	
+	move.w	(MainCharacter+y_pos).w,d0	; get debug Y-position
+	sub.w	y_pos(a0),d0			; substract spike Y-position
+	addq.w	#3,d0				; apparently this is necessary...
+	bpl.s	+				; branch if positive
+	neg.w	d0				; otherwise make it positive
++	cmpi.w	#DebugRange,d0			; in range?
+	bgt.s	ODC_End				; if not, end
+	
+	move.b	#1,($FFFFF503).w		; block debug placement
+	btst	#5,(Ctrl_1_Press).w		; is button C pressed?
+	beq.s	ODC_End				; if not, branch
+	move.b	#0,($FFFFF503).w		; enable debug placement
+
+	lea	(Object_Respawn_Table).w,a2
+	moveq	#0,d0
+	move.b	respawn_index(a0),d0
+;	beq.s	+		; if the respawn index flag isn't set, don't do this
+	bset	#0,2(a2,d0.w)	; mark spike as deleted
++
+	jmp	(DeleteObject).l
+	
+ODC_End:
+	rts
+; ===========================================================================
+; ===========================================================================
 
 Obj36_Upright:
+	bsr.w	Obj36_DebugCheck
 	cmpi.b	#6,subtype(a0)		; explosion spike?
 	bne.s	OU_NoExplo		; if not, ignore this all
 	move.b	(Timer_frames+1).w,d0
@@ -27433,6 +27483,7 @@ loc_159DE:
 ; ===========================================================================
 
 Obj36_Sideways:
+	bsr.w	Obj36_DebugCheck
 	move.w	x_pos(a0),-(sp)
 	;bsr.w	sub_15AC6
 	moveq	#0,d1
@@ -27469,6 +27520,7 @@ loc_15A3A:
 ; ===========================================================================
 
 Obj36_UpsideDown:
+	bsr.w	Obj36_DebugCheck
 	;bsr.w	sub_15AC6
 	moveq	#0,d1
 	move.b	width_pixels(a0),d1
@@ -30762,6 +30814,20 @@ byte_1795E:	BINCLUDE	"level/objects/CNZ 2 bumpers.bin"
 ; Start of subroutine loc_17AA4
 ; Called by loc_41F8, loc_43A4, loc_4418
 ; Most likely the object placement engine.
+; ----------------------------------------------------------------------------
+; Format:
+;  $0000  $0   $000 $00 $00
+;  $XXXX %ABC0 $YYY $PP $SS
+;  
+;  $XXXX = X-position (2 bytes; 16 bits)
+;     %A = Remeber object state flag (1 bit)
+;     %B = Vertical flip flag (1 bit)
+;     %C = Horizontal flip flag (1 bit)
+;   $YYY = Y-position (1.5 bytes; 12 bits)
+;    $PP = Object ID (1 byte)
+;    $SS = Subtype (1 byte)
+; ===========================================================================
+
 
 loc_17AA4:
 	moveq	#0,d0
@@ -30770,33 +30836,24 @@ loc_17AA4:
 	jmp	off_17AB2(pc,d0.w)
 ; ============== RELATIVE OFFSET LIST     ===================================
 off_17AB2:
-	dc.w loc_17AB8-off_17AB2
-	dc.w loc_17B84-off_17AB2; 2
-	dc.w loc_17CCC-off_17AB2; 4
+	dc.w ObjectsManager_Init-off_17AB2
+	dc.w ObjectsManager_Main-off_17AB2; 2
 ; ============== END RELATIVE OFFSET LIST ===================================
 
-loc_17AB8:
+ObjectsManager_Init:
 	addq.b	#2,(Obj_placement_routine).w
+
 	move.w	(Current_ZoneAndAct).w,d0	; If level == $0F (ARZ)...
 	ror.b	#1,d0		; then this yields $87...
 	lsr.w	#6,d0		; and this yields $0002.
 	lea	(Off_Objects).l,a0	; Next, we load the first pointer in the object layout list pointer index,
 	movea.l	a0,a1		; then copy it for quicker use later.
 	adda.w	(a0,d0.w),a0	; (Point1 * 2) + $0002
-	tst.w	(Two_player_mode).w	; skip if not in 2-player vs mode
-	beq.s	loc_17AF0
-	cmpi.b	#$C,(Current_Zone).w	; skip if not Casino Night Zone
-	bne.s	loc_17AF0
-	lea	(Objects_CNZ1_2P).l,a0	; CNZ 1 2-player object layout
-	tst.b	(Current_Act).w		; skip if not past act 1
-	beq.s	loc_17AF0
-	lea	(Objects_CNZ2_2P).l,a0	; CNZ 2 2-player object layout
-
-loc_17AF0:
 	move.l	a0,(Obj_load_addr_0).w	; set object placement list
 	move.l	a0,(Obj_load_addr_1).w
 	move.l	a0,(Obj_load_addr_2).w
 	move.l	a0,(Obj_load_addr_3).w
+
 	lea	(Object_Respawn_Table).w,a2	; load respawn list
 	move.w	#$101,(a2)+	; $01 $01
 	move.w	#$5E,d0		; set loop counter
@@ -30804,6 +30861,7 @@ loc_17AF0:
 loc_17B0C:
 	clr.l	(a2)+		; loop clears all other respawn values
 	dbf	d0,loc_17B0C
+
 	lea	(Object_Respawn_Table).w,a2	; reset
 	moveq	#0,d2
 	move.w	(Camera_X_pos).w,d6
@@ -30818,9 +30876,11 @@ loc_17B24:
 loc_17B2C:
 	cmp.w	(a0),d6
 	bls.s	loc_17B3E
-	tst.b	2(a0)
-	bpl.s	loc_17B3A
-	move.b	(a2),d2
+	cmpi.b	#$36,4(a0)
+	beq.s	+
+	tst.b	2(a0)	; does the object get a respawn table entry?
+	bpl.s	loc_17B3A	; if not, branch
++	move.b	(a2),d2
 	addq.b	#1,(a2)
 
 loc_17B3A:
@@ -30838,9 +30898,11 @@ loc_17B3E:
 loc_17B50:
 	cmp.w	(a0),d6
 	bls.s	loc_17B62
+	cmpi.b	#$36,4(a0)
+	beq.s	+
 	tst.b	2(a0)
 	bpl.s	loc_17B5E
-	addq.b	#1,1(a2)
++	addq.b	#1,1(a2)
 
 loc_17B5E:
 	addq.w	#6,a0
@@ -30852,13 +30914,9 @@ loc_17B62:
 	move.l	a0,(Obj_load_addr_3).w
 	move.w	#-1,($FFFFF76E).w	; $FFFF
 	move.w	#-1,($FFFFF78C).w
-	tst.w	(Two_player_mode).w
-	beq.s	loc_17B84
-	addq.b	#2,(Obj_placement_routine).w
-	bra.w	loc_17C50
-; ---------------------------------------------------------------------------
+; ===========================================================================
 
-loc_17B84:
+ObjectsManager_Main:
 	move.w	(Camera_X_pos).w,d1
 	subi.w	#$80,d1
 	andi.w	#$FF80,d1
@@ -30869,32 +30927,36 @@ loc_17B84:
 	andi.w	#$FF80,d6
 	cmp.w	($FFFFF76E).w,d6
 	beq.w	return_17C4E
-	bge.s	loc_17C0A
+	bge.w	loc_17C0A
 	move.w	d6,($FFFFF76E).w
 	movea.l	(Obj_load_addr_1).w,a0
 	subi.w	#$80,d6
 	bcs.s	loc_17BE6
 
-loc_17BBA:
+-
 	cmp.w	-6(a0),d6
 	bge.s	loc_17BE6
 	subq.w	#6,a0
+	cmpi.b	#$36,4(a0)
+	beq.s	+
 	tst.b	2(a0)
 	bpl.s	loc_17BD0
-	subq.b	#1,1(a2)
++	subq.b	#1,1(a2)
 	move.b	1(a2),d2
 
 loc_17BD0:
-	bsr.w	loc_17F36
-	bne.s	loc_17BDA
+	bsr.w	ChkLoadObj
+	bne.s	+
 	subq.w	#6,a0
-	bra.s	loc_17BBA
+	bra.s	-
 ; ---------------------------------------------------------------------------
 
-loc_17BDA:
++
+	cmpi.b	#$36,4(a0)
+	beq.s	+
 	tst.b	2(a0)
 	bpl.s	loc_17BE4
-	addq.b	#1,1(a2)
++	addq.b	#1,1(a2)
 
 loc_17BE4:
 	addq.w	#6,a0
@@ -30907,9 +30969,11 @@ loc_17BE6:
 loc_17BF2:
 	cmp.w	-6(a0),d6
 	bgt.s	loc_17C04
+	cmpi.b	#$36,-2(a0)
+	beq.s	+
 	tst.b	-4(a0)
 	bpl.s	loc_17C00
-	subq.b	#1,(a2)
++	subq.b	#1,(a2)
 
 loc_17C00:
 	subq.w	#6,a0
@@ -30926,17 +30990,19 @@ loc_17C0A:
 	movea.l	(Obj_load_addr_0).w,a0
 	addi.w	#$280,d6
 
-loc_17C16:
+-
 	cmp.w	(a0),d6
 	bls.s	loc_17C2A
+	cmpi.b	#$36,4(a0)
+	beq.s	+
 	tst.b	2(a0)
 	bpl.s	loc_17C24
-	move.b	(a2),d2
++	move.b	(a2),d2
 	addq.b	#1,(a2)
 
 loc_17C24:
-	bsr.w	loc_17F36
-	beq.s	loc_17C16
+	bsr.w	ChkLoadObj
+	beq.s	-
 
 loc_17C2A:
 	move.l	a0,(Obj_load_addr_0).w
@@ -30947,9 +31013,11 @@ loc_17C2A:
 loc_17C38:
 	cmp.w	(a0),d6
 	bls.s	loc_17C4A
+	cmpi.b	#$36,4(a0)
+	beq.s	+
 	tst.b	2(a0)
 	bpl.s	loc_17C46
-	addq.b	#1,1(a2)
++	addq.b	#1,1(a2)
 
 loc_17C46:
 	addq.w	#6,a0
@@ -30961,368 +31029,33 @@ loc_17C4A:
 
 return_17C4E:
 	rts
+; ===========================================================================
+; ===========================================================================
+; ===========================================================================
+
+; >>> The two player stuff used to be here <<<
+
+; ===========================================================================
 ; ---------------------------------------------------------------------------
-
-loc_17C50:
-	moveq	#-1,d0
-	move.l	d0,($FFFFF780).w
-	move.l	d0,($FFFFF784).w
-	move.l	d0,($FFFFF788).w
-	move.l	d0,($FFFFF78C).w
-	move.w	#0,($FFFFF76E).w
-	move.w	#0,($FFFFF78C).w
-	lea	(Object_Respawn_Table).w,a2
-	move.w	(a2),($FFFFF78E).w
-	moveq	#0,d2
-	lea	(Object_Respawn_Table).w,a5
-	lea	(Obj_load_addr_0).w,a4
-	lea	($FFFFF786).w,a1
-	lea	($FFFFF789).w,a6
-	moveq	#-2,d6
-	bsr.w	loc_17DE4
-	lea	($FFFFF786).w,a1
-	moveq	#-1,d6
-	bsr.w	loc_17DE4
-	lea	($FFFFF786).w,a1
-	moveq	#0,d6
-	bsr.w	loc_17DE4
-	lea	($FFFFF78E).w,a5
-	lea	(Obj_load_addr_2).w,a4
-	lea	($FFFFF789).w,a1
-	lea	($FFFFF786).w,a6
-	moveq	#-2,d6
-	bsr.w	loc_17DE4
-	lea	($FFFFF789).w,a1
-	moveq	#-1,d6
-	bsr.w	loc_17DE4
-	lea	($FFFFF789).w,a1
-	moveq	#0,d6
-	bsr.w	loc_17DE4
-
-loc_17CCC:
-	move.w	(Camera_X_pos).w,d1
-	andi.w	#$FF00,d1
-	move.w	d1,(Camera_X_pos_coarse).w
-	move.w	($FFFFEE20).w,d1
-	andi.w	#$FF00,d1
-	move.w	d1,($FFFFF7DC).w
-	move.b	(Camera_X_pos).w,d6
-	andi.w	#$FF,d6
-	move.w	($FFFFF76E).w,d0
-	cmp.w	($FFFFF76E).w,d6
-	beq.s	loc_17D0C
-	move.w	d6,($FFFFF76E).w
-	lea	(Object_Respawn_Table).w,a5
-	lea	(Obj_load_addr_0).w,a4
-	lea	($FFFFF786).w,a1
-	lea	($FFFFF789).w,a6
-	bsr.s	loc_17D36
-
-loc_17D0C:
-	move.b	($FFFFEE20).w,d6
-	andi.w	#$FF,d6
-	move.w	($FFFFF78C).w,d0
-	cmp.w	($FFFFF78C).w,d6
-	beq.s	return_17D34
-	move.w	d6,($FFFFF78C).w
-	lea	($FFFFF78E).w,a5
-	lea	(Obj_load_addr_2).w,a4
-	lea	($FFFFF789).w,a1
-	lea	($FFFFF786).w,a6
-	bsr.s	loc_17D36
-
-return_17D34:
-	rts
-; ===========================================================================
-
-loc_17D36:
-	lea	(Object_Respawn_Table).w,a2
-	moveq	#0,d2
-	cmp.w	d0,d6
-	beq.w	return_17C4E
-	bge.w	loc_17DE4
-	move.b	2(a1),d2
-	move.b	1(a1),2(a1)
-	move.b	(a1),1(a1)
-	move.b	d6,(a1)
-	cmp.b	(a6),d2
-	beq.s	loc_17D6C
-	cmp.b	1(a6),d2
-	beq.s	loc_17D6C
-	cmp.b	2(a6),d2
-	beq.s	loc_17D6C
-	bsr.w	loc_17EC6
-	bra.s	loc_17D70
+; Subroutine to check if an object needs to be loaded.
+;
+; input variables:
+;  d2 = respawn index of object to be loaded
+;
+;  a0 = address in object placement list
+;  a2 = object respawn table
+;
+; writes:
+;  d0, d1
+;  a1 = object
 ; ---------------------------------------------------------------------------
-
-loc_17D6C:
-	bsr.w	loc_17E8A
-
-loc_17D70:
-	bsr.w	loc_17E66
-	bne.s	loc_17D94
-	movea.l	4(a4),a0
-
-loc_17D7A:
-	cmp.b	-6(a0),d6
-	bne.s	loc_17D8E
-	tst.b	-4(a0)
-	bpl.s	loc_17D8A
-	subq.b	#1,1(a5)
-
-loc_17D8A:
-	subq.w	#6,a0
-	bra.s	loc_17D7A
-; ---------------------------------------------------------------------------
-
-loc_17D8E:
-	move.l	a0,4(a4)
-	bra.s	loc_17DCA
-; ---------------------------------------------------------------------------
-
-loc_17D94:
-	movea.l	4(a4),a0
-	move.b	d6,(a1)
-
-loc_17D9A:
-	cmp.b	-6(a0),d6
-	bne.s	loc_17DC6
-	subq.w	#6,a0
-	tst.b	2(a0)
-	bpl.s	loc_17DB0
-	subq.b	#1,1(a5)
-	move.b	1(a5),d2
-
-loc_17DB0:
-	bsr.w	loc_17F80
-	bne.s	loc_17DBA
-	subq.w	#6,a0
-	bra.s	loc_17D9A
-; ---------------------------------------------------------------------------
-
-loc_17DBA:
-	tst.b	2(a0)
-	bpl.s	loc_17DC4
-	addq.b	#1,1(a5)
-
-loc_17DC4:
-	addq.w	#6,a0
-
-loc_17DC6:
-	move.l	a0,4(a4)
-
-loc_17DCA:
-	movea.l	(a4),a0
-	addq.w	#3,d6
-
-loc_17DCE:
-	cmp.b	-6(a0),d6
-	bne.s	loc_17DE0
-	tst.b	-4(a0)
-	bpl.s	loc_17DDC
-	subq.b	#1,(a5)
-
-loc_17DDC:
-	subq.w	#6,a0
-	bra.s	loc_17DCE
-; ---------------------------------------------------------------------------
-
-loc_17DE0:
-	move.l	a0,(a4)
-	rts
-; ===========================================================================
-
-loc_17DE4:
-	addq.w	#2,d6
-	move.b	(a1),d2
-	move.b	1(a1),(a1)
-	move.b	2(a1),1(a1)
-	move.b	d6,2(a1)
-	cmp.b	(a6),d2
-	beq.s	loc_17E0C
-	cmp.b	1(a6),d2
-	beq.s	loc_17E0C
-	cmp.b	2(a6),d2
-	beq.s	loc_17E0C
-	bsr.w	loc_17EC6
-	bra.s	loc_17E10
-; ===========================================================================
-
-loc_17E0C:
-	bsr.w	loc_17E8A
-
-loc_17E10:
-	bsr.w	loc_17E66
-	bne.s	loc_17E2C
-	movea.l	(a4),a0
-
-loc_17E18:
-	cmp.b	(a0),d6
-	bne.s	loc_17E28
-	tst.b	2(a0)
-	bpl.s	loc_17E24
-	addq.b	#1,(a5)
-
-loc_17E24:
-	addq.w	#6,a0
-	bra.s	loc_17E18
-; ===========================================================================
-
-loc_17E28:
-	move.l	a0,(a4)
-	bra.s	loc_17E46
-; ===========================================================================
-
-loc_17E2C:
-	movea.l	(a4),a0
-	move.b	d6,(a1)
-
-loc_17E30:
-	cmp.b	(a0),d6
-	bne.s	loc_17E44
-	tst.b	2(a0)
-	bpl.s	loc_17E3E
-	move.b	(a5),d2
-	addq.b	#1,(a5)
-
-loc_17E3E:
-	bsr.w	loc_17F80
-	beq.s	loc_17E30
-
-loc_17E44:
-	move.l	a0,(a4)
-
-loc_17E46:
-	movea.l	4(a4),a0
-	subq.w	#3,d6
-	bcs.s	loc_17E60
-
-loc_17E4E:
-	cmp.b	(a0),d6
-	bne.s	loc_17E60
-	tst.b	2(a0)
-	bpl.s	loc_17E5C
-	addq.b	#1,1(a5)
-
-loc_17E5C:
-	addq.w	#6,a0
-	bra.s	loc_17E4E
-; ===========================================================================
-
-loc_17E60:
-	move.l	a0,4(a4)
-	rts
-; ===========================================================================
-
-loc_17E66:
-	move.l	a1,-(sp)
-	lea	($FFFFF780).w,a1
-	cmp.b	(a1)+,d6
-	beq.s	loc_17E86
-	cmp.b	(a1)+,d6
-	beq.s	loc_17E86
-	cmp.b	(a1)+,d6
-	beq.s	loc_17E86
-	cmp.b	(a1)+,d6
-	beq.s	loc_17E86
-	cmp.b	(a1)+,d6
-	beq.s	loc_17E86
-	cmp.b	(a1)+,d6
-	beq.s	loc_17E86
-	moveq	#1,d0
-
-loc_17E86:
-	movea.l	(sp)+,a1
-	rts
-; ===========================================================================
-
-loc_17E8A:
-	lea	($FFFFF780).w,a1
-	lea	(Object_RAM+$E00).w,a3
-	tst.b	(a1)+
-	bmi.s	loc_17EC2
-	lea	(Object_RAM+$1100).w,a3
-	tst.b	(a1)+
-	bmi.s	loc_17EC2
-	lea	(Object_RAM+$1400).w,a3
-	tst.b	(a1)+
-	bmi.s	loc_17EC2
-	lea	(Object_RAM+$1700).w,a3
-	tst.b	(a1)+
-	bmi.s	loc_17EC2
-	lea	(Object_RAM+$1A00).w,a3
-	tst.b	(a1)+
-	bmi.s	loc_17EC2
-	lea	(Object_RAM+$1D00).w,a3
-	tst.b	(a1)+
-	bmi.s	loc_17EC2
-	nop
-	nop
-
-loc_17EC2:
-	subq.w	#1,a1
-	rts
-; ===========================================================================
-
-loc_17EC6:
-	lea	($FFFFF780).w,a1
-	lea	(Object_RAM+$E00).w,a3
-	cmp.b	(a1)+,d2
-	beq.s	loc_17EFE
-	lea	(Object_RAM+$1100).w,a3
-	cmp.b	(a1)+,d2
-	beq.s	loc_17EFE
-	lea	(Object_RAM+$1400).w,a3
-	cmp.b	(a1)+,d2
-	beq.s	loc_17EFE
-	lea	(Object_RAM+$1700).w,a3
-	cmp.b	(a1)+,d2
-	beq.s	loc_17EFE
-	lea	(Object_RAM+$1A00).w,a3
-	cmp.b	(a1)+,d2
-	beq.s	loc_17EFE
-	lea	(Object_RAM+$1D00).w,a3
-	cmp.b	(a1)+,d2
-	beq.s	loc_17EFE
-	nop
-	nop
-
-loc_17EFE:
-	move.b	#-1,-(a1)
-	movem.l	a1/a3,-(sp)
-	moveq	#0,d1
-	moveq	#$B,d2
-
-loc_17F0A:
-	tst.b	(a3)
-	beq.s	loc_17F26
-	movea.l	a3,a1
-	moveq	#0,d0
-	move.b	respawn_index(a1),d0
+ChkLoadObj:
+	move.b	4(a0),d5
+	cmpi.b	#$36,d5
 	beq.s	+
-	bclr	#7,2(a2,d0.w)
-
-	; inlined DeleteObject2:
-+
-	moveq	#bytesToLcnt(next_object),d0 ; we want to clear up to the next object
-	; note: d1 is already 0
-
-	; delete the object by setting all of its bytes to 0
--	move.l	d1,(a1)+
-	dbf	d0,-
-
-loc_17F26:
-	lea	next_object(a3),a3 ; a3=object
-	dbf	d2,loc_17F0A
-	moveq	#0,d2
-	movem.l	(sp)+,a1/a3
-	rts
-; ===========================================================================
-
-loc_17F36:
 	tst.b	2(a0)
 	bpl.s	loc_17F4A
-	bset	#7,2(a2,d2.w)
++	bset	#7,2(a2,d2.w)
 	beq.s	loc_17F4A
 	addq.w	#6,a0
 	moveq	#0,d0
@@ -31332,10 +31065,13 @@ loc_17F36:
 loc_17F4A:
 	bsr.w	SingleObjLoad
 	bne.s	return_17F7E
+
 	move.w	(a0)+,x_pos(a1)
 	move.w	(a0)+,d0
-	bpl.s	loc_17F5C
-	move.b	d2,respawn_index(a1)
+	bmi.s	+
+	cmpi.b	#$36,d5
+	bne.s	loc_17F5C
++	move.b	d2,respawn_index(a1)
 
 loc_17F5C:
 	move.w	d0,d1
@@ -31345,7 +31081,7 @@ loc_17F5C:
 	andi.b	#3,d1
 	move.b	d1,render_flags(a1)
 	move.b	d1,status(a1)
-	_move.b	(a0)+,0(a1) ; load obj
+	move.b	(a0)+,(a1) ; load obj
 	move.b	(a0)+,subtype(a1)
 	moveq	#0,d0
 
@@ -31353,49 +31089,6 @@ return_17F7E:
 	rts
 ; ===========================================================================
 
-loc_17F80:
-	tst.b	2(a0)
-	bpl.s	loc_17F94
-	bset	#7,2(a2,d2.w)
-	beq.s	loc_17F94
-	addq.w	#6,a0
-	moveq	#0,d0
-	rts
-; ===========================================================================
-
-loc_17F94:
-	btst	#4,2(a0)
-	beq.s	loc_17FA4
-	bsr.w	SingleObjLoad
-	bne.s	return_17FD8
-	bra.s	loc_17FAA
-; ===========================================================================
-
-loc_17FA4:
-	bsr.w	SingleObjLoad3
-	bne.s	return_17FD8
-
-loc_17FAA:
-	move.w	(a0)+,x_pos(a1)
-	move.w	(a0)+,d0
-	bpl.s	loc_17FB6
-	move.b	d2,respawn_index(a1)
-
-loc_17FB6:
-	move.w	d0,d1
-	andi.w	#$FFF,d0
-	move.w	d0,y_pos(a1)
-	rol.w	#3,d1
-	andi.b	#3,d1
-	move.b	d1,render_flags(a1)
-	move.b	d1,status(a1)
-	_move.b	(a0)+,0(a1) ; load obj
-	move.b	(a0)+,subtype(a1)
-	moveq	#0,d0
-
-return_17FD8:
-	rts
-; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Single object loading subroutine
 ; Find an empty object array
@@ -35478,32 +35171,32 @@ Obj01_Hurt_Normal:
 	cmpi.w	#$A00,d0	; speed >=$A00?
 	blt.s	+		; if not, branch
 	move.b	#$22,anim(a0)	; use animation $22
-	bra	OHN_End		; skip to end
+	bra.w	OHN_End		; skip to end
 +
 	cmpi.w	#$700,d0	; speed >=$700?
 	blt.s	+		; if not, branch
 	move.b	#$23,anim(a0)	; use animation $23
-	bra	OHN_End		; skip to end
+	bra.s	OHN_End		; skip to end
 +
 	cmpi.w	#$500,d0	; speed >=$500?
 	blt.s	+		; if not, branch
 	move.b	#$24,anim(a0)	; use animation $24
-	bra	OHN_End		; skip to end
+	bra.s	OHN_End		; skip to end
 +
 	cmpi.w	#$300,d0	; speed >=$300?
 	blt.s	+		; if not, branch
 	move.b	#$1A,anim(a0)	; use animation $1A
-	bra	OHN_End		; skip to end
+	bra.s	OHN_End		; skip to end
 +
 	cmpi.w	#$100,d0	; speed >=$100?
 	blt.s	+		; if not, branch
 	move.b	#$25,anim(a0)	; use animation $25
-	bra	OHN_End		; skip to end
+	bra.s	OHN_End		; skip to end
 +
 ;	cmpi.w	#$100,d0	; speed >=$100?
 ;	blt.s	+		; if not, branch
 	move.b	#$26,anim(a0)	; use animation $26
-;	bra	OHN_End		; skip to end
+;	bra.s	OHN_End		; skip to end
 OHN_End:
 	move.b	anim(a0),next_anim(a0)	; make sure frame doesn't get reset
 
@@ -36553,7 +36246,7 @@ loc_1BC64:
 	add.w	d2,y_pos(a0)
 
 loc_1BC68:
-	bra	return_1BCDE	; always make Tails be a helicopter
+	bra.w	return_1BCDE	; always make Tails be a helicopter
 
 	lea	(Sonic_Stat_Record_Buf).w,a2
 	move.b	2(a2,d3.w),d2
@@ -83166,7 +82859,7 @@ JmpTo2_NemDecToRAM
 ; HUD code - HUD dealing
 ; ----------------------------------------------------------------------------
 loc_40804:	; Single Player HUD
-	bra	loc_40820
+	bra.w	loc_40820
 ;	tst.w	(Ring_count).w
 ;	beq.s	loc_40820
 	moveq	#0,d1
@@ -83189,9 +82882,9 @@ loc_40820:
 	btst	#1,($FFFFFE05).w	; check if time to swap colors has been reached yet
 	bne.s	loc_40836		; if not, branch
 	addq.w	#1,d1			; use red "rings" counter
-	cmpi.b	#9,(Timer_minute).w	; is time over 9 minutes?
-	bne.s	loc_40836		; if not, branch
-	addq.w	#2,d1			; use red "rings" and "time" counter
+	;cmpi.b	#9,(Timer_minute).w	; is time over 9 minutes?
+	;bne.s	loc_40836		; if not, branch
+	;addq.w	#2,d1			; use red "rings" and "time" counter
 
 loc_40836:
 	move.w	#$90,d3
@@ -83614,7 +83307,8 @@ Hud_ChkTime:
 	bne.s	Hud_ChkLives	; if yes, branch
 	lea	(Timer).w,a1
 	cmpi.l	#$93B3B,(a1)+	; is the time 9.59?
-	beq.w	loc_40E84	; if yes, branch
+;	beq.w	loc_40E84	; if yes, branch
+	beq.s	Hud_ChkLives	; if yes, branch
 	addq.b	#1,-(a1)
 	cmpi.b	#60,(a1)
 	bcs.s	Hud_ChkLives
@@ -84373,7 +84067,7 @@ SelbiSplash_Loop:
 		cmpi.l	#$4EE00001,($FFFFFF7A).w
 		beq.w	SelbiSplash_cont1
 		cmpi.w	#$20,($FFFFF614).w		; is time less than $40?
-		bpl	SelbiSplash_ChangePal	; if yes, branch
+		bpl.w	SelbiSplash_ChangePal	; if yes, branch
 
 		lea	($C00000).l,a5			; load VDP data port address to a5
 		lea	($C00004).l,a6			; load VDP address port address to a6
@@ -84399,7 +84093,7 @@ SelbiSplash_Loop:
 		beq.s	SelbiSplash_cont2
 		add.w	#$20,($FFFFF614).w
 
-		bra	SelbiSplash_ChangePal
+		bra.w	SelbiSplash_ChangePal
 SelbiSplash_cont2:
 		move.w	#$D0,($FFFFF614).w
 		lea	($C00000).l,a5
@@ -84567,6 +84261,8 @@ Debug_EvenObj2:
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; When debug mode is currently in use
+
+DebugSpeed = $7F
 ; ---------------------------------------------------------------------------
 ; loc_41A78:
 DebugMode:
@@ -84619,7 +84315,7 @@ loc_41AE2:
 loc_41AFC:
 	bsr.w	sub_41CEC
 	move.b	#$C,($FFFFFE0A).w
-	move.b	#1,($FFFFFE0B).w
+	move.b	#DebugSpeed,($FFFFFE0B).w
 
 	jsr	(SingleObjLoad).l
 	move.w	x_pos(a0),x_pos(a1)
@@ -84663,7 +84359,7 @@ sub_41B34:
 	andi.w	#$F,d0			; is any key on the D-Pad held?
 	bne.s	loc_41B5E		; if yes, branch 2
 	move.b	#$C,($FFFFFE0A).w	; set split-second delay after pressing once ($C)
-	move.b	#$7F,($FFFFFE0B).w	; set initial speed ($F)
+	move.b	#DebugSpeed,($FFFFFE0B).w	; set initial speed ($F)
 	bra.w	loc_41BDA		; if not, branch 3 (A-check)
 ; ===========================================================================
 
@@ -84672,9 +84368,9 @@ loc_41B5E:
 	bne.s	loc_41B7A		; still not 0? branch
 	move.b	#1,($FFFFFE0A).w	; reset delay to 1 (so the above check will always get skipped)
 	addq.b	#1,($FFFFFE0B).w	; increase speed by 1
-	cmpi.b	#$80,($FFFFFE0B).w
+	cmpi.b	#DebugSpeed+1,($FFFFFE0B).w
 	bcs.s	loc_41B76		; did speed go from $FF to $00 again? if not, branch
-	move.b	#$7F,($FFFFFE0B).w	; if yes, reset it to $FF
+	move.b	#DebugSpeed,($FFFFFE0B).w	; if yes, reset it to $FF
 
 loc_41B76:
 	move.b	(Ctrl_1_Held).w,d4
@@ -84751,8 +84447,16 @@ BranchTo_sub_41CEC
 ; ===========================================================================
 
 loc_41C12:
+	tst.b	($FFFFF503).w		; debug mode blocked by spike?
+	beq.s	+			; if not, place object
+	move.b	#0,($FFFFF503).w	; enable debug placement for next frame
+	bra.s	loc_41C56		; skip
++
 	btst	#5,(Ctrl_1_Press).w	; is button C pressed?
 	beq.s	loc_41C56		; if not, branch; if yes, place object
+
+	move.b	#0,(Object_Respawn_Table+2).w
+
 	jsr	(SingleObjLoad).l
 	bne.s	loc_41C56
 	move.w	x_pos(a0),x_pos(a1)
