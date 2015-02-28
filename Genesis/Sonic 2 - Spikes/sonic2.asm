@@ -164,6 +164,7 @@ Camera_Min_X_pos =		ramaddr( $FFFFEEC8 )
 Camera_Max_X_pos =		ramaddr( $FFFFEECA )
 Camera_Min_Y_pos =		ramaddr( $FFFFEECC )
 Camera_Max_Y_pos_now =		ramaddr( $FFFFEECE ) ; was "Camera_max_scroll_spd"...
+Spindash_Delay =		ramaddr( $FFFFEED0 )
 Sonic_Pos_Record_Index =	ramaddr( $FFFFEED2 ) ; into Sonic_Pos_Record_Buf and Sonic_Stat_Record_Buf
 Tails_Pos_Record_Index =	ramaddr( $FFFFEED6 ) ; into Tails_Pos_Record_Buf
 Camera_Y_pos_bias =		ramaddr( $FFFFEED8 ) ; added to y position for lookup/lookdown, $60 is center
@@ -1918,214 +1919,198 @@ ProcessDMAQueue_Done:
 
 
 
-; ------------------------------------------------------------------------
-; START OF NEMESIS DECOMPRESSOR
-; ------------------------------------------------------------------------
+; ==============================================================================
+; ------------------------------------------------------------------------------
+; Nemesis decompression routine
+; ------------------------------------------------------------------------------
+; Optimized by vladikcomper
+; Modified for Sonic 2 by MainMemory
+; ------------------------------------------------------------------------------
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; Nemesis decompression to VRAM
-; sub_14DE: NemDecA:
-NemDec:
-	movem.l	d0-a1/a3-a5,-(sp)
-	lea	(NemDec_WriteAndStay).l,a3 ; write all data to the same location
-	lea	(VDP_data_port).l,a4	   ; specifically, to the VDP data port
-	bra.s	NemDecMain
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; Nemesis decompression to RAM
-; input: a4 = starting address of destination
-; sub_14F0: NemDecB:
 NemDecToRAM:
-	movem.l	d0-a1/a3-a5,-(sp)
-	lea	(NemDec_WriteAndAdvance).l,a3 ; advance to the next location after each write
+	movem.l	d0-a1/a3-a6,-(sp)
+	lea	NemDec_WriteAndAdvance(pc),a3
+	bra.s	NemDec_Main
 
+; ------------------------------------------------------------------------------
+NemDec:
+	movem.l	d0-a1/a3-a6,-(sp)
+	lea	(VDP_data_port).l,a4		; load VDP Data Port     
+	lea	NemDec_WriteAndStay(pc),a3
 
-; sub_14FA:
-NemDecMain:
-	lea	(Decomp_Buffer).w,a1
-	move.w	(a0)+,d2
-	lsl.w	#1,d2
-	bcc.s	+
-	adda.w	#NemDec_WriteAndStay_XOR-NemDec_WriteAndStay,a3
-+	lsl.w	#2,d2
+NemDec_Main:
+	lea	(Decomp_Buffer).w,a1		; load Nemesis decompression buffer
+	move.w	(a0)+,d2		; get number of patterns
+	bpl.s	+			; are we in Mode 0?
+	lea	$A(a3),a3		; if not, use Mode 1
++
+	lsl.w	#3,d2
 	movea.w	d2,a5
-	moveq	#8,d3
+	moveq	#7,d3
 	moveq	#0,d2
 	moveq	#0,d4
 	bsr.w	NemDecPrepare
-	move.b	(a0)+,d5
-	asl.w	#8,d5
-	move.b	(a0)+,d5
-	move.w	#$10,d6
-	bsr.s	NemDecRun
-	movem.l	(sp)+,d0-a1/a3-a5
+	move.b	(a0)+,d5		; get first byte of compressed data
+	asl.w	#8,d5			; shift up by a byte
+	move.b	(a0)+,d5		; get second byte of compressed data
+	move.w	#$10,d6			; set initial shift value
+	bsr.s	NemDec2
+	movem.l	(sp)+,d0-a1/a3-a6
 	rts
-; End of function NemDec
 
+; ---------------------------------------------------------------------------
+; Part of the Nemesis decompressor, processes the actual compressed data
+; ---------------------------------------------------------------------------
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; part of the Nemesis decompressor
-; sub_1528:
-NemDecRun:
+NemDec2:
 	move.w	d6,d7
-	subq.w	#8,d7
+	subq.w	#8,d7			; get shift value
 	move.w	d5,d1
-	lsr.w	d7,d1
-	cmpi.b	#-4,d1
-	bcc.s	loc_1574
+	lsr.w	d7,d1			; shift so that high bit of the code is in bit position 7
+	cmpi.b	#%11111100,d1		; are the high 6 bits set?
+	bcc.s	NemDec_InlineData	; if they are, it signifies inline data
 	andi.w	#$FF,d1
 	add.w	d1,d1
-	move.b	(a1,d1.w),d0
-	ext.w	d0
-	sub.w	d0,d6
-	cmpi.w	#9,d6
-	bcc.s	+
+	sub.b	(a1,d1.w),d6		; ~~ subtract from shift value so that the next code is read next time around
+	cmpi.w	#9,d6			; does a new byte need to be read?
+	bcc.s	+			; if not, branch
 	addq.w	#8,d6
 	asl.w	#8,d5
-	move.b	(a0)+,d5
-+	move.b	1(a1,d1.w),d1
+	move.b	(a0)+,d5		; read next byte
++
+	move.b	1(a1,d1.w),d1
 	move.w	d1,d0
-	andi.w	#$F,d1
+	andi.w	#$F,d1			; get palette index for pixel
 	andi.w	#$F0,d0
 
-loc_155E:
-	lsr.w	#4,d0
+NemDec_GetRepeatCount:
+	lsr.w	#4,d0			; get repeat count
 
-loc_1560:
-	lsl.l	#4,d4
-	or.b	d1,d4
-	subq.w	#1,d3
-	bne.s	NemDec_WriteIter_Part2
-	jmp	(a3) ; dynamic jump! to NemDec_WriteAndStay, NemDec_WriteAndAdvance, NemDec_WriteAndStay_XOR, or NemDec_WriteAndAdvance_XOR
-; ===========================================================================
-; loc_156A:
+NemDec_WritePixel:
+	lsl.l	#4,d4			; shift up by a nybble
+	or.b	d1,d4			; write pixel
+	dbf	d3,NemDec_WritePixelLoop; ~~
+	jmp	(a3)			; otherwise, write the row to its destination
+; ---------------------------------------------------------------------------
+
 NemDec_WriteIter:
-	moveq	#0,d4
-	moveq	#8,d3
-; loc_156E:
-NemDec_WriteIter_Part2:
-	dbf	d0,loc_1560
-	bra.s	NemDecRun
-; ===========================================================================
+	moveq	#0,d4			; reset row
+	moveq	#7,d3			; reset nybble counter
 
-loc_1574:
-	subq.w	#6,d6
+NemDec_WritePixelLoop:
+	dbf	d0,NemDec_WritePixel
+	bra.s	NemDec2
+; ---------------------------------------------------------------------------
+
+NemDec_InlineData:
+	subq.w	#6,d6			; 6 bits needed to signal inline data
 	cmpi.w	#9,d6
 	bcc.s	+
 	addq.w	#8,d6
 	asl.w	#8,d5
 	move.b	(a0)+,d5
 +
-	subq.w	#7,d6
+	subq.w	#7,d6			; and 7 bits needed for the inline data itself
 	move.w	d5,d1
-	lsr.w	d6,d1
+	lsr.w	d6,d1			; shift so that low bit of the code is in bit position 0
 	move.w	d1,d0
-	andi.w	#$F,d1
-	andi.w	#$70,d0
+	andi.w	#$F,d1			; get palette index for pixel
+	andi.w	#$70,d0			; high nybble is repeat count for pixel
 	cmpi.w	#9,d6
-	bcc.s	loc_155E
+	bcc.s	NemDec_GetRepeatCount
 	addq.w	#8,d6
 	asl.w	#8,d5
 	move.b	(a0)+,d5
-	bra.s	loc_155E
-; End of function NemDecRun
+	bra.s	NemDec_GetRepeatCount
 
-; ===========================================================================
-; loc_15A0:
+; ---------------------------------------------------------------------------
+; Subroutines to output decompressed entry
+; Selected depending on current decompression mode
+; ---------------------------------------------------------------------------
+
 NemDec_WriteAndStay:
-	move.l	d4,(a4)
+loc_1502:
+	move.l	d4,(a4)			; write 8-pixel row
 	subq.w	#1,a5
-	move.w	a5,d4
-	bne.s	NemDec_WriteIter
+	move.w	a5,d4			; have all the 8-pixel rows been written?
+	bne.s	NemDec_WriteIter			; if not, branch
 	rts
 ; ---------------------------------------------------------------------------
-; loc_15AA:
+
 NemDec_WriteAndStay_XOR:
-	eor.l	d4,d2
-	move.l	d2,(a4)
+	eor.l	d4,d2			; XOR the previous row by the current row
+	move.l	d2,(a4)			; and write the result
 	subq.w	#1,a5
 	move.w	a5,d4
 	bne.s	NemDec_WriteIter
 	rts
-; ===========================================================================
-; loc_15B6:
+; ---------------------------------------------------------------------------
+
 NemDec_WriteAndAdvance:
-	move.l	d4,(a4)+
+	move.l	d4,(a4)+		; write 8-pixel row
 	subq.w	#1,a5
-	move.w	a5,d4
-	bne.s	NemDec_WriteIter
+	move.w	a5,d4			; have all the 8-pixel rows been written?
+	bne.s	NemDec_WriteIter			; if not, branch
 	rts
-
-    if *-NemDec_WriteAndAdvance > NemDec_WriteAndStay_XOR-NemDec_WriteAndStay
-	fatal "the code in NemDec_WriteAndAdvance must not be larger than the code in NemDec_WriteAndStay"
-    endif
-    org NemDec_WriteAndAdvance+NemDec_WriteAndStay_XOR-NemDec_WriteAndStay
-
 ; ---------------------------------------------------------------------------
-; loc_15C0:
+
 NemDec_WriteAndAdvance_XOR:
-	eor.l	d4,d2
-	move.l	d2,(a4)+
+	eor.l	d4,d2			; XOR the previous row by the current row
+	move.l	d2,(a4)+		; and write the result
 	subq.w	#1,a5
 	move.w	a5,d4
 	bne.s	NemDec_WriteIter
 	rts
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; Part of the Nemesis decompressor
+; ---------------------------------------------------------------------------
+; Part of the Nemesis decompressor, builds the code table (in RAM)
+; ---------------------------------------------------------------------------
 
-; sub_15CC:
 NemDecPrepare:
-	move.b	(a0)+,d0
+	move.b	(a0)+,d0		; read first byte
 
--	cmpi.b	#$FF,d0
-	bne.s	+
+.ChkEnd:
+	cmpi.b	#$FF,d0			; has the end of the code table description been reached?
+	bne.s	.NewPalIndex		; if not, branch
 	rts
 ; ---------------------------------------------------------------------------
-+	move.w	d0,d7
 
-loc_15D8:
-	move.b	(a0)+,d0
-	cmpi.b	#$80,d0
-	bcc.s	-
+.NewPalIndex:
+	move.w	d0,d7
 
+.ItemLoop:
+	move.b	(a0)+,d0		; read next byte
+	bmi.s	.ChkEnd			; ~~
 	move.b	d0,d1
-	andi.w	#$F,d7
-	andi.w	#$70,d1
-	or.w	d1,d7
-	andi.w	#$F,d0
+	andi.w	#$F,d7			; get palette index
+	andi.w	#$70,d1			; get repeat count for palette index
+	or.w	d1,d7			; combine the two
+	andi.w	#$F,d0			; get the length of the code in bits
 	move.b	d0,d1
 	lsl.w	#8,d1
-	or.w	d1,d7
+	or.w	d1,d7			; combine with palette index and repeat count to form code table entry
 	moveq	#8,d1
-	sub.w	d0,d1
-	bne.s	loc_1606
-	move.b	(a0)+,d0
-	add.w	d0,d0
-	move.w	d7,(a1,d0.w)
-	bra.s	loc_15D8
+	sub.w	d0,d1			; is the code 8 bits long?
+	bne.s	.ItemShortCode		; if not, a bit of extra processing is needed
+	move.b	(a0)+,d0		; get code
+	add.w	d0,d0			; each code gets a word-sized entry in the table
+	move.w	d7,(a1,d0.w)		; store the entry for the code
+	bra.s	.ItemLoop		; repeat
 ; ---------------------------------------------------------------------------
-loc_1606:
-	move.b	(a0)+,d0
-	lsl.w	d1,d0
-	add.w	d0,d0
+
+.ItemShortCode:
+	move.b	(a0)+,d0		; get code
+	lsl.w	d1,d0			; shift so that high bit is in bit position 7
+	add.w	d0,d0			; get index into code table
 	moveq	#1,d5
 	lsl.w	d1,d5
-	subq.w	#1,d5
+	subq.w	#1,d5			; d5 = 2^d1 - 1
+	lea	(a1,d0.w),a6		; ~~
 
--	move.w	d7,(a1,d0.w)
-	addq.w	#2,d0
-	dbf	d5,-
-	bra.s	loc_15D8
-; End of function NemDecPrepare
-
-; ---------------------------------------------------------------------------
-; END OF NEMESIS DECOMPRESSOR
-; ---------------------------------------------------------------------------
-
+.ItemShortCodeLoop:
+	move.w	d7,(a6)+		; ~~ store entry
+	dbf	d5,.ItemShortCodeLoop	; repeat for required number of entries
+	bra.s	.ItemLoop
 
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -14234,7 +14219,7 @@ loc_C41A:
 	lea	(Camera_Min_X_pos).w,a2
 	lea	($FFFFEE50).w,a3
 	lea	($FFFFEEB0).w,a4
-	lea	($FFFFEED0).w,a5
+	lea	(Spindash_Delay).w,a5
 	lea	(Sonic_Pos_Record_Buf).w,a6
 	cmpi.w	#2,(Player_mode).w
 	bne.s	loc_C44C
@@ -25311,21 +25296,22 @@ BranchTo16_DisplaySprite
 ; ===========================================================================
 
 loc_13F44:
+	cmpa.w	#Object_RAM+$80,a0	; is this the zone name object?
+	bne.s	BranchTo10_DeleteObject	; if not, just delete the title card
+	nop
+	;moveq	#2,d0			; load the standard water graphics
+	;bsr.w	JmpTo3_LoadPLC
 
-	cmpa.w	#Object_RAM+$80,a0
-	bne.s	BranchTo10_DeleteObject
-	moveq	#2,d0
-	bsr.w	JmpTo3_LoadPLC
-	moveq	#0,d0
-	move.b	(Current_Zone).w,d0
-	move.b	byte_13F62(pc,d0.w),d0
-	bsr.w	JmpTo3_LoadPLC
+	;moveq	#0,d0
+	;move.b	(Current_Zone).w,d0
+	;move.b	byte_13F62(pc,d0.w),d0	; load the animal graphics for the current zone
+	;bsr.w	JmpTo3_LoadPLC
 	
-	moveq	#$3B,d0
-	bsr.w	JmpTo3_LoadPLC
+	;moveq	#$3B,d0
+	;bsr.w	JmpTo3_LoadPLC
 
 BranchTo10_DeleteObject 
-	bra.w	DeleteObject
+	bra.w	DeleteObject; delete the title card object
 ; ===========================================================================
 byte_13F62:
 	dc.b $32
@@ -26981,7 +26967,7 @@ JmpTo_sub_8476
 
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
-; Subroutines to Manage the individual spike movement types
+; Subroutines to manage the individual spike movement types
 ; ----------------------------------------------------------------------------
 
 Spike_Hurt:
@@ -26994,13 +26980,15 @@ Spike_Hurt:
 	movea.l	a0,a2	; spike is now in a2
 	movea.l	a1,a0	; Sonic is now in a0
 	move.b	#4,routine(a0)
-	jsr	JmpTo_Sonic_ResetOnFloor_Part2
+	jsr	(JmpTo_Sonic_ResetOnFloor_Part2).l
 	bset	#1,status(a0)
 	move.b	#$1A,anim(a0)		; set animation to hurt
 	;move.b	#0,anim_frame(a0)	; reset animation frame
 	move.w	#$26+$80,d0	; load spikes damage sound
 	jsr	(PlaySound).l
-	move.b	#10,($FFFFF502).w	; set hits on hut to red for 10 frames
+	move.w	#0,(Spindash_Delay).w	; clear spindash delay counter
+	
+	move.b	#10,($FFFFF502).w	; set hits on HUD to red for 10 frames
 	move.b	#1,(Update_HUD_rings).w	; update HUD
 	cmpi.w	#999,($FFFFF500).w	; already 999 hits?
 	bcc.s	+			; if yes, branch
@@ -27009,13 +26997,27 @@ Spike_Hurt:
 ; center Sonic
 	cmpi.b	#2,routine(a2)	; upright?
 	bne.s	+
-	move.w	x_pos(a2),x_pos(a0)
+	move.w	x_pos(a2),x_pos(a0)	; put Sonic in the middle of the spike
+	move.w	y_pos(a2),d0		; get spike y-pos
+	subi.w	#$20,d0			; sub $20 from it (size of spike)
+	move.w	d0,y_pos(a0)		; set fixed y-pos to Sonic
+
 +	cmpi.b	#4,routine(a2)	; sideways?
 	bne.s	+
 	move.w	y_pos(a2),y_pos(a0)
+	move.w	x_pos(a2),d0		; get spike x-pos
+	subi.w	#$20,d0			; sub $20 from it (size of spike)
+	btst	#0,render_flags(a2)	; is spike flipped?
+	beq.s	.cont			; if not, branch
+	addi.w	#$20*2,d0
+.cont	move.w	d0,x_pos(a0)		; set fixed x-pos to Sonic
+
 +	cmpi.b	#6,routine(a2)	; upside-down?
 	bne.s	+
 	move.w	x_pos(a2),x_pos(a0)
+	move.w	y_pos(a2),d0		; get spike y-pos
+	addi.w	#$20,d0			; add $20 from it (size of spike)
+	move.w	d0,y_pos(a0)		; set fixed y-pos to Sonic
 +
 ; end center Sonic
 
@@ -27052,7 +27054,6 @@ Spike_Hurt:
 	beq.s	+			; if not, branch
 	neg.w	y_vel(a0)		; negate Y-speed
 +
-
 	movea.l	a2,a0
 	rts
 
@@ -27092,6 +27093,10 @@ SH_Level3: ;$3
 	move.w	#-$800,x_vel(a0)
 ; ----------------------------------------------------------------------------
 SH_Level_End:
+	cmpi.b	#4,routine(a2)		; sideways spike?
+	bne.s	+			; if not, branch
+	neg.w	x_vel(a0)
++
 	btst	#0,render_flags(a2)
 	bne.s	+
 	neg.w	x_vel(a0)
@@ -27102,62 +27107,70 @@ SH_Level_End:
 SH_Halve: ;$5
 	move.w	#-$400,y_vel(a0) ; make Sonic bounce away from the object
 
+	cmpi.b	#4,routine(a2)		; sideways spike?
+	bcs.s	+			; if not, branch
+	move.w	#0,x_vel(a0)		; clear x-speed
++
+	cmpi.b	#6,routine(a2)		; upside-down spike?
+	bne.s	+			; if not, branch
+	move.w	#0,y_vel(a0)		; clear y-speed
+	rts
++
 	move.w	x_vel(a0),d0	; get x-speed
 	asr.w	#1,d0		; divide it by two (works for both negative and positive speeds)
 	move.w	d0,x_vel(a0)	; store the result back
-	rts
 
-	move.w	x_vel(a0),d0	; get x-speed
-	move.w	d0,d1		; copy for later
-	bpl.s	+		; is speed positive? if yes, branch
-	neg.w	d0		; if not, make it positive
-+	lsr.w	#1,d0		; divide by 2
-	tst.w	d1		; was original speed negative?
-	bpl.s	+		; if not, branch
-	neg.w	d0		; if yes, make it negative again
-+	move.w	d0,x_vel(a0)	; store result
 	rts
-
-	move.w	x_vel(a0),d0	; get x-speed
-	move.w	d0,d1		; copy
-	asr.w	#1,d1		; halve speed
-	tst.w	d1		; test result
-	beq.s	SHH_2		; return if d1 is 0
-	bmi.s	SHH_1		; branch if moving left
-	sub.w	d1,d0		; reduce x velocity by d1
-	bcc.s	+
-	move.w	#0,d0
-+	move.w	d0,x_vel(a0)
-	bra.s	SHH_2
-SHH_1:	sub.w	d1,d0	; reduce x velocity by d1
-	bcs.s	SHH_2
-	move.w	#0,d0
-	move.w	d0,x_vel(a0)
-SHH_2:	rts
 ; ===========================================================================
 
 SH_Explode:
-	;move.w	#0,x_vel(a0)
-	move.w	#-$1000,y_vel(a0)
-
-	;lea	(MainCharacter).w,a1
-	;move.b	#$35,(Object_RAM+$2200).w ; load Obj35 (invincibility stars) at $FFFFD200
-	;move.w	a1,(Object_RAM+$2200+parent).w
-	;bset	#1,status_secondary(a1)	; give invincibility status
-	;move.w	#20*60,invincibility_time(a1) ; 20 seconds
-
 	jsr	SingleObjLoad
-	bne.s	SHE_Abort
+	bne.w	SHE_Abort
 	move.b	#$35,(a1)	; load explosion "invincibility starts"
-
 
 	move.w	x_pos(a2),d2
 	move.w	y_pos(a2),d3
-	jsr	SingleObjLoad
-	bne.s	SHE_Abort
+	jsr	(SingleObjLoad).l
+	bne.w	SHE_Abort
 	move.b	#$58,(a1)	; load Explosion object
 	move.w	d2,x_pos(a1)
 	move.w	d3,y_pos(a1)
+
+; sideways check
+	cmpi.b	#4,routine(a2)		; sideways spike?
+	bne.s	SHE_NotSide		; if not, branch
+	move.w	#-$1000,x_vel(a0)
+	btst	#0,render_flags(a2)
+	beq.s	+
+	neg.w	x_vel(a0)
++	move.w	#-$400,y_vel(a0)
+
+; sideways
+	jsr	SingleObjLoad2
+	bne.w	SHE_Abort
+	move.b	#$58,(a1)	; load Explosion object
+	subi.w	#$10,d3
+	subi.w	#$08,d2
+	btst	#0,render_flags(a2)	; is Spike x-flipped?
+	beq.s	+			; if not, branch
+	addi.w	#$08*2,d2	
++	move.w	d2,x_pos(a1)
+	move.w	d3,y_pos(a1)
+	move.b	#1,$30(a1)	; disable explosion sound
+
+	jsr	SingleObjLoad2
+	bne.s	SHE_Abort
+	move.b	#$58,(a1)	; load Explosion object
+	;addi.w	#$20,d2
+	addi.w	#$20,d3
+	move.w	d2,x_pos(a1)
+	move.w	d3,y_pos(a1)
+	move.b	#1,$30(a1)	; disable explosion sound
+	rts
+
+SHE_NotSide:
+	;move.w	#0,x_vel(a0)
+	move.w	#-$1000,y_vel(a0)
 
 	jsr	SingleObjLoad2
 	bne.s	SHE_Abort
@@ -27198,81 +27211,58 @@ Obj4D:
 	jmp	Obj4D_Index(pc,d1.w)
 ; ===========================================================================
 Obj4D_Index:
-	dc.w Obj4D_Init - Obj4D_Index		; $0
-	dc.w Obj4D_Vertical - Obj4D_Index	; $2
-	dc.w Obj4D_Horizontal - Obj4D_Index	; $4
+	dc.w Obj4D_Init - Obj4D_Index	; $0
+	dc.w Obj4D_Main - Obj4D_Index	; $2
 ; ===========================================================================
 
 Obj4D_Init: 
-	addq.b	#2,routine(a0)	; set to vertical
-	cmpi.b	#$B,mapping_frame(a0) ; vertical frame? (at least frame $B)
-	blo.s	+		; if not, branch
-	addq.b	#2,routine(a0)	; set to horizontal
-+
-	move.b	#15*2,d0	; set default value (level 1 *2)
+	addq.b	#2,routine(a0)	; set to next routine
+
+	move.b	#15*2,d0	; set default interval value (level 1 *2)
 	move.b	$37(a0),d1	; get level type (1, 2, 3)
 	lsr.b	d1,d0		; 15 on 1, 07 on 2, 03 on 3
 	move.b	d0,$37(a0)	; store result
 	
 	jsr	RandomNumber	; get a random number
 	move.b	d0,$3F(a0)	; set result as random start value for sine stuff
-	rts			; return
 ; ===========================================================================
 
-Obj4D_Vertical:
+Obj4D_Main:
 	movea.l	$30(a0),a1	; load parent spike into a1
 	cmpi.b	#$36,(a1)	; does it still exist?
 	bne.w	Obj4D_Delete	; if not, delete arrow object
-
 	move.b	$3F(a0),d0	; get next saved add position
 	jsr	(CalcSine).l	; calc new sine
 	asr.w	#6,d0		; drastically shrink it down
 	add.w	$3C(a0),d0	; add original Y-pos
-	move.w	d0,y_pos(a0)	; save result to new Y-pos
 	addq.b	#2,$3F(a0)	; increase for next frame
-
+	tst.b	$38(a0)		; is this a horizontal spike?
+	bne.s	+		; if not, branch
+	move.w	d0,x_pos(a0)	; save result to new X-pos
+	bra.s	O4D_skip	; skip
++	move.w	d0,y_pos(a0)	; save result to new Y-pos
+O4D_skip:
 	addq.b	#1,$35(a0)	; increase one to blink counter
 	move.b	$37(a0),d0	; get saved blink interval time
 	cmp.b	$35(a0),d0	; blink toggle time reached?
 	bpl.s	+		; if not, branch
-	eori.b	#1,$34(a0)	; toggle visibility
-	clr.b	$35(a0)		; rest blink counter
-+	tst.b	$34(a0)		; currently visible?
-	beq.s	+		; if yes, branch
-	rts			; if not, don't display
-+	bra.s	Obj4D_Display	; display
+	clr.b	$35(a0)		; reset blink counter
+
+	eori.b	#1,$34(a0)	; toggle state flag
+	addq.w	#4,art_tile(a0)	; set to gray
+	tst.b	$34(a0)		; already gray?
+	bne.s	+		; if not, branch
+	subq.w	#8,art_tile(a0)	; reset to yellow
++	bra.w	MarkObjGone_DebugSpikes	; display
 ; ===========================================================================
 
-Obj4D_Horizontal:
-	movea.l	$30(a0),a1	; load parent spike into a1
-	cmpi.b	#$36,(a1)	; does it still exist?
-	bne.w	Obj4D_Delete	; if not, delete arrow object
+Obj4D_Sine:
 
-	move.b	$3F(a0),d0	; get next saved add position
-	jsr	(CalcSine).l	; calc new sine
-	asr.w	#7,d0		; drastically shrink it down
-	add.w	$3C(a0),d0	; add original X-pos
-	move.w	d0,x_pos(a0)	; save result to new X-pos
-	addq.b	#2,$3F(a0)	; increase for next frame
-
-	addq.b	#1,$35(a0)	; increase one to blink counter
-	move.b	$37(a0),d0	; get saved blink interval time
-	cmp.b	$35(a0),d0	; blink toggle time reached?
-	bpl.s	+		; if not, branch
-	eori.b	#1,$34(a0)	; toggle visibility
-	clr.b	$35(a0)		; rest blink counter
-+	tst.b	$34(a0)		; currently visible?
-	beq.s	+		; if yes, branch
-	rts			; if not, don't display
-+	bra.s	Obj4D_Display	; display
+.ret	rts
 ; ===========================================================================
 
 Obj4D_Delete:
 	jmp	DeleteObject	; delte object
-; ===========================================================================
-
-Obj4D_Display:
-	bra.w	MarkObjGone_DebugSpikes	; copy parent's display
 ; ===========================================================================
 
 ; ===========================================================================
@@ -27310,7 +27300,14 @@ byte_15916:
 	dc.b $40	; 15
 ; ===========================================================================
 
+VRAMSPIKEV_size = $200 * 3
+VRAMSpikeV = $8040
+VRAMSpikeH = VRAMSpikeV + VRAMSPIKEV_size
+
+
 Obj36_Init:
+	addq.b	#2,routine(a0)
+
 	cmpi.b	#-1,respawn_index(a0)	; is this a debug-placed spike?
 	beq.s	+			; if yes, skip
 	lea	(Object_Respawn_Table).w,a2
@@ -27322,9 +27319,7 @@ Obj36_Init:
 	beq.s	+
 	jmp	(DeleteObject).l
 +
-	addq.b	#2,routine(a0)
 	move.l	#Obj36_MapUnc_15B68,mappings(a0)
-	move.w	#$2434,art_tile(a0)
 	ori.b	#4,render_flags(a0)
 	move.b	#5,priority(a0)
 	move.b	subtype(a0),d0
@@ -27338,40 +27333,64 @@ Obj36_Init:
 	lsr.w	#1,d0
 	move.b	d0,mapping_frame(a0)
 
+
 	move.b	subtype(a0),d1
+
+	move.w	#(VRAMSpikeV/$20),d2
+	cmpi.b	#4,d0		; horizontal spike?
+	bcs.s	+		; if not, branch
+	move.w	#(VRAMSpikeH/$20),d2
++
+			; default
+	move.w	d2,d3		; gray spikes
+	addi.w	#$2000,d3
+	move.w	d3,art_tile(a0)
+
 	cmpi.b	#5,d1	; halve
 	bne.s	+
-	move.w	#$0434+$08,art_tile(a0) ; blue spikes
-+	cmpi.b	#2,d1	; level 2
+	move.w	d2,d3		; blue spikes
+	addi.w	#$08,d3
+	move.w	d3,art_tile(a0)
++
+	cmpi.b	#2,d1	; level 2
 	bne.s	+
-	move.w	#$0434+$10,art_tile(a0) ; yellow spikes
-+	cmpi.b	#3,d1	; level 3
+	move.w	d2,d3		; yellow spikes
+	addi.w	#$10,d3
+	move.w	d3,art_tile(a0)
++
+	cmpi.b	#3,d1	; level 3
 	bne.s	+
-	move.w	#$0434+$18,art_tile(a0) ; red spikes
+	move.w	d2,d3		; red spikes
+	addi.w	#$18,d3
+	move.w	d3,art_tile(a0)
 +
 
-
 	cmpi.b	#4,d0		; horizontal spike?
-	bcc.s	O4D_ArtHoriz	; if yes, branch
-
-
-; O4D_ArtVert:
+	bcs.s	+	; if not, branch
+	addq.b	#2,routine(a0)
++
 	cmpi.b	#3,d1		; is a level spike?
 	bhi.w	loc_15978	; if not, skip
 	tst.b	d1
 	beq.w	loc_15978	; default? skip too
 
+
+; O4D_ArtVert:
+	cmpi.b	#4,d0		; horizontal spike?
+	bcc.s	O4D_ArtHoriz	; if yes, branch
+
 	jsr	SingleObjLoad
 	bne.s	+
 	move.b	#$4D,(a1)	; load arrow object
 	move.l	mappings(a0),mappings(a1)
-	move.w	#$2434,art_tile(a1)
+	move.w	#$2000+(VRAMSpikeV/$20),art_tile(a1)
 	move.b	render_flags(a0),render_flags(a1)
 
-	move.b	#7,d0	; 8 is base value
+	move.b	#$B,d0	; $C is base value
 	add.b	d1,d0	; add 1, 2 or 3
 	move.b	d0,mapping_frame(a1)
 	move.b	d1,$37(a1)
+	move.b	#1,$38(a1)
 	
 	move.b	#6,priority(a1)
 	move.w	x_pos(a0),x_pos(a1)
@@ -27393,10 +27412,10 @@ O4D_ArtHoriz:
 	bne.s	+
 	move.b	#$4D,(a1)	; load arrow object
 	move.l	mappings(a0),mappings(a1)
-	move.w	#$2434,art_tile(a1)
+	move.w	#$2000+(VRAMSpikeV/$20),art_tile(a1)
 	move.b	render_flags(a0),render_flags(a1)
 
-	move.b	#$B,d0	; $B is base value (NOTE: SHOULD BE $A)
+	move.b	#$E,d0	; $F is base value
 	add.b	d1,d0	; add 1, 2 or 3
 	move.b	d0,mapping_frame(a1)
 	move.b	d1,$37(a1)
@@ -27411,8 +27430,7 @@ O4D_ArtHoriz:
 
 +
 
-	addq.b	#2,routine(a0)
-	move.w	#$242C,art_tile(a0)
+	;move.w	#$2000+(VRAMSpikeH/$20),art_tile(a0)
 
 loc_15978:
 	btst	#1,status(a0)
@@ -27448,6 +27466,8 @@ Obj36_DebugCheck:
 	bge.s	ODC_End				; if not, end
 	
 	move.b	#1,($FFFFF503).w		; block debug placement
+	btst	#6,(Ctrl_1_Held).w		; is button A held?
+	bne.s	ODC_End				; if yes, branch
 	btst	#5,(Ctrl_1_Press).w		; is button C pressed?
 	beq.s	ODC_End				; if not, branch
 	move.b	#0,($FFFFF503).w		; enable debug placement
@@ -27477,6 +27497,7 @@ MarkObjGone_DebugSpikes:
 	sub.w	(Camera_X_pos_coarse).w,d0
 	cmpi.w	#$280,d0
 	bhi.w	+
+
 	bra.w	DisplaySprite
 +	rts
 ; ===========================================================================
@@ -27485,14 +27506,21 @@ MarkObjGone_DebugSpikes:
 O36_ExploSpike:
 	cmpi.b	#6,subtype(a0)		; explosion spike?
 	bne.s	OU_NoExplo		; if not, ignore this all
+
+	move.w	#(VRAMSpikeV/$20)+($08*4),d1
+	cmpi.b	#4,routine(a0)		; horizontal spike?
+	bne.s	+
+	move.w	#(VRAMSpikeH/$20)+($08*4),d1
++
 	move.b	(Timer_frames+1).w,d0
 	btst	#0,d0
 	beq.s	OU_NoExplo
-	cmpi.w	#$0434+($08*4+4),art_tile(a0)	; already a red spike?
+	cmp.w	art_tile(a0),d1	; already a red spike?
 	beq.s	+			; if yes, branch
-	move.w	#$0434+($08*4+4),art_tile(a0)	; if not, make it red
+	move.w	d1,art_tile(a0)	; if not, make it red
 	bra.s	OU_NoExplo		; skip
-+	move.w	#$2434+($08*0),art_tile(a0)	; reset it to gray
++	addi.w	#$2000-($08*4),d1
+	move.w	d1,art_tile(a0)	; reset it to gray
 	
 OU_NoExplo:
 	rts
@@ -27555,24 +27583,27 @@ Obj36_Sideways:
 	bsr.w	SolidObject
 	swap	d6
 	andi.w	#3,d6
-	beq.s	loc_15A3A
+	beq.s	loc_15A26
 	move.b	d6,d0
 	andi.b	#1,d0
 	beq.s	loc_15A26
 	lea	(MainCharacter).w,a1 ; a1=character
-	moveq	#0,d4
+
+	btst	#0,render_flags(a0)
+	beq.s	+
+	move.w	x_pos(a1),d0
+	cmp.w	x_pos(a0),d0
+	bcc.s	.shurt		; if Sonic is left of the object, branch
+	bra.s	loc_15A26
++	move.w	x_pos(a1),d0
+	cmp.w	x_pos(a0),d0
+	bcc.s	loc_15A26		; if Sonic is right of the object, branch
+.shurt
+	move.b	subtype(a0),d4
 	bsr.w	Spike_Hurt
 	bclr	#5,status(a0)
 
 loc_15A26:
-	andi.b	#2,d6
-	beq.s	loc_15A3A
-	lea	(Sidekick).w,a1 ; a1=character
-	moveq	#0,d4
-	bsr.w	Spike_Hurt
-	bclr	#6,status(a0)
-
-loc_15A3A:
 	cmpi.b	#-1,respawn_index(a0)	; is this a debug-placed spike?
 	beq.w	MarkObjGone_DebugSpikes	; if yes, branch
 
@@ -32899,6 +32930,7 @@ loc_19B8E:
 	rts
 ; ===========================================================================
 
+; ---------------------------------------------------------------------------
 ; Subroutine to change Sonic's position with a platform
 ; ---------------------------------------------------------------------------
 
@@ -34703,7 +34735,7 @@ Sonic_UpdateSpindash:
 	andi.w	#$1F00,d0
 	neg.w	d0
 	addi.w	#$2000,d0
-	move.w	d0,($FFFFEED0).w
+	move.w	d0,(Spindash_Delay).w
 	btst	#0,status(a0)
 	beq.s	+
 	neg.w	inertia(a0)
@@ -83386,7 +83418,7 @@ HudUpdate:
 	tst.w	(Two_player_mode).w
 	bne.w	loc_40F50
 	tst.w	(Debug_mode_flag).w	; is debug mode on?
-	;bne.w	loc_40E9A	; if yes, branch
+	;bne.w	loc_40E9A	; if yes, branch (HudDebug:)
 
 	tst.b	(Update_HUD_score).w	; does the score need updating?
 	;beq.s	Hud_ChkRings	; if not, branch
@@ -84410,6 +84442,7 @@ Debug_EvenObj2:	; otherwise, use specified object (a1) as target
 ; When debug mode is currently in use
 
 DebugSpeed = $7F
+DebugDelay = $08
 ; ---------------------------------------------------------------------------
 ; loc_41A78:
 DebugMode:
@@ -84479,7 +84512,7 @@ loc_41AE2:
 
 loc_41AFC:
 	bsr.w	sub_41CEC
-	move.b	#$C,($FFFFFE0A).w
+	move.b	#DebugDelay,($FFFFFE0A).w
 	move.b	#DebugSpeed,($FFFFFE0B).w
 
 	jsr	(SingleObjLoad).l
@@ -84528,7 +84561,7 @@ sub_41B34:
 	move.b	(Ctrl_1_Held).w,d0
 	andi.w	#$F,d0			; is any key on the D-Pad held?
 	bne.s	loc_41B5E		; if yes, branch 2
-	move.b	#$C,($FFFFFE0A).w	; set split-second delay after pressing once ($C)
+	move.b	#DebugDelay,($FFFFFE0A).w	; set split-second delay after pressing once ($C)
 	move.b	#DebugSpeed,($FFFFFE0B).w	; set initial speed ($F)
 	bra.w	loc_41BDA		; if not, branch 3 (A-check)
 ; ===========================================================================
@@ -84785,10 +84818,11 @@ dbglistobj macro   obj, mapaddr,  decl, frame, flags, vram
 ; $OOMMMMMM $DDFF $fVVV
 
 DbgObjList_Def: dbglistheader
-		;  obj  maps  decl  frame  flags  vram
+		;  obj           maps      decl  fram flg vram
 	dbglistobj $25, Obj25_MapUnc_12382,   0,   0,  2, $6BC ; obj25 = ring
 	dbglistobj $26, Obj26_MapUnc_12D36,   8,   0,  0, $680 ; obj26 = monitor
 DbgObjList_Def_End
+
 
 DbgObjList_EHZ: dbglistheader
 ;	dbglistobj $36, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; level 1
@@ -84799,48 +84833,48 @@ DbgObjList_EHZ: dbglistheader
 ;	dbglistobj $36, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; level 1 sideways
 
 ; level 1
-	dbglistobj $00, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; x-flip
-	dbglistobj $00, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; normal sideways
-	dbglistobj $01, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; x-flip sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   1,   0,  2, (VRAMSpikeV/$20)+$00	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   1,   0,  2, (VRAMSpikeV/$20)+$00	; x-flip
+	dbglistobj $00, Obj36_MapUnc_15B68, $41,   4,  2, (VRAMSpikeH/$20)+$00	; normal sideways
+	dbglistobj $01, Obj36_MapUnc_15B68, $41,   4,  2, (VRAMSpikeH/$20)+$00	; x-flip sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   1,   0,  2, (VRAMSpikeV/$20)+$00	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   1,   0,  2, (VRAMSpikeV/$20)+$00	; xy-flip
 
 
 ; level 2
-	dbglistobj $00, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; x-flip
-	;dbglistobj $00, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; normal sideways
-	;dbglistobj $01, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; x-flip sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   2,   0,  0, (VRAMSpikeV/$20)+$10	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   2,   0,  0, (VRAMSpikeV/$20)+$10	; x-flip
+	dbglistobj $00, Obj36_MapUnc_15B68, $42,   4,  0, (VRAMSpikeH/$20)+$10	; normal sideways
+	dbglistobj $01, Obj36_MapUnc_15B68, $42,   4,  0, (VRAMSpikeH/$20)+$10	; x-flip sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   2,   0,  0, (VRAMSpikeV/$20)+$10	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   2,   0,  0, (VRAMSpikeV/$20)+$10	; xy-flip
 
 
 ; level 3
-	dbglistobj $00, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; x-flip
-	;dbglistobj $00, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; normal sideways
-	;dbglistobj $01, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; x-flip sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   3,   0,  0, (VRAMSpikeV/$20)+$18	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   3,   0,  0, (VRAMSpikeV/$20)+$18	; x-flip
+	dbglistobj $00, Obj36_MapUnc_15B68, $43,   4,  0, (VRAMSpikeH/$20)+$18	; normal sideways
+	dbglistobj $01, Obj36_MapUnc_15B68, $43,   4,  0, (VRAMSpikeH/$20)+$18	; x-flip sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   3,   0,  0, (VRAMSpikeV/$20)+$18	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   3,   0,  0, (VRAMSpikeV/$20)+$18	; xy-flip
 
 
 ; halve
-	dbglistobj $00, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; x-flip
-	;dbglistobj $00, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; normal sideways
-	;dbglistobj $01, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; x-flip sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpikeV/$20)+$08	; normal
+;	dbglistobj $01, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpikeV/$20)+$08	; x-flip
+	dbglistobj $00, Obj36_MapUnc_15B68, $45,   4,  0, (VRAMSpikeH/$20)+$08	; normal sideways
+	dbglistobj $01, Obj36_MapUnc_15B68, $45,   4,  0, (VRAMSpikeH/$20)+$08	; x-flip sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpikeV/$20)+$08	; y-flip
+;	dbglistobj $03, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpikeV/$20)+$08	; xy-flip
 
 
 ; explode
-	dbglistobj $00, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; x-flip
-	;dbglistobj $00, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; normal sideways
-	;dbglistobj $01, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; x-flip sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpikeV/$20)+$20	; normal
+;	dbglistobj $01, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpikeV/$20)+$20	; x-flip
+	dbglistobj $00, Obj36_MapUnc_15B68, $46,   4,  0, (VRAMSpikeH/$20)+$20	; normal sideways
+	dbglistobj $01, Obj36_MapUnc_15B68, $46,   4,  0, (VRAMSpikeH/$20)+$20	; x-flip sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpikeV/$20)+$20	; y-flip
+;	dbglistobj $03, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpikeV/$20)+$20	; xy-flip
 DbgObjList_EHZ_End
 
 DbgObjList_MTZ: dbglistheader
@@ -85348,8 +85382,8 @@ PlrList_Ehz1_End
 ; Emerald Hill Zone secondary
 ;---------------------------------------------------------------------------------------
 PlrList_Ehz2: plrlistheader
-	plreq $8580, ArtNem_HorizSpike	; H-SPIKE GRAPHICS ADDED
-	plreq $8680, ArtNem_Spikes
+	plreq VRAMSpikeV, ArtNem_Spikes
+	plreq VRAMSpikeH, ArtNem_HorizSpike	; H-SPIKE GRAPHICS ADDED
 PlrList_Ehz2_End
 ;---------------------------------------------------------------------------------------
 ; Pattern load queue

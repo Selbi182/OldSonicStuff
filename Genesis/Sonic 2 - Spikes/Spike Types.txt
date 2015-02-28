@@ -3,7 +3,7 @@ Types of Spikes:
 Y		<     >	= Level 1 ($0200)
 Y		<<   >>	= Level 2 ($0400)
 Y		<<< >>>	= Level 3 ($0800)
-N		X	= Explodes on contact (one time use; push force of red spring ($1000))
+Y		X	= Explodes on contact (push force of red spring ($1000))
 	
 	Speed-relative spikes:
 N		0	= Neutral (don't affect the speed at all)
