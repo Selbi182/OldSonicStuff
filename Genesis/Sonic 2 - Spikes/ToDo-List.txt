@@ -1,0 +1,11 @@
+Top priority:
+- Sideways spikes functionality, art, and debug list inclusion.
+
+Medium priority:
+- Bug with jumping at an upside-down spike (getting stuck).
+- Arrow for debug preview spikes.
+- Backside immunity for sideways spikes.
+
+Low priority:
+- Smoothing movement when touching unevenly placed spike.
+- Improving Tails' movement.

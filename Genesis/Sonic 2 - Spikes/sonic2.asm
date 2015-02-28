@@ -4687,8 +4687,11 @@ loc_4114:
 	bsr.w	WaterEffects
 	bsr.w	InitPlayers
 
-	move.l	#0,($FFFFF500).w	; reset hit counter (2 bytes), reset red hits frames (1 byte), ?
-
+	move.l	#0,($FFFFF500).w	; reset hit counter (2 bytes, F500+F501), red hits frames (1 byte, F502), debug placement block flag (1 byte, F503)
+	move.l	#0,($FFFFF504).w	; clear evened debug placement locations (X-pos and Y-pos, bytes each)
+	move.l	#0,($FFFFF508).w	; reset fake debug mirror flags (1 byte), ?, ?, ?
+	move.b	#0,(Debug_object).w	; clear debug list selection
+	
 	move.w	#0,(Ctrl_1_Logical).w
 	move.w	#0,(Ctrl_2_Logical).w
 	move.w	#0,(Ctrl_1).w
@@ -27136,27 +27139,49 @@ SHH_2:	rts
 SH_Explode:
 	;move.w	#0,x_vel(a0)
 	move.w	#-$1000,y_vel(a0)
-	
-	move.w	x_pos(a0),d2
-	move.w	y_pos(a0),d3
+
+	;lea	(MainCharacter).w,a1
+	;move.b	#$35,(Object_RAM+$2200).w ; load Obj35 (invincibility stars) at $FFFFD200
+	;move.w	a1,(Object_RAM+$2200+parent).w
+	;bset	#1,status_secondary(a1)	; give invincibility status
+	;move.w	#20*60,invincibility_time(a1) ; 20 seconds
+
 	jsr	SingleObjLoad
-	bne.s	+
+	bne.s	SHE_Abort
+	move.b	#$35,(a1)	; load explosion "invincibility starts"
+
+
+	move.w	x_pos(a2),d2
+	move.w	y_pos(a2),d3
+	jsr	SingleObjLoad
+	bne.s	SHE_Abort
 	move.b	#$58,(a1)	; load Explosion object
 	move.w	d2,x_pos(a1)
 	move.w	d3,y_pos(a1)
+
 	jsr	SingleObjLoad2
-	bne.s	+
+	bne.s	SHE_Abort
 	move.b	#$58,(a1)	; load Explosion object
-	move.w	d2,x_pos(a1)
-	subi.w	#$20,d3
+	subi.w	#$10,d2
+	subi.w	#$08,d3
+	btst	#1,render_flags(a2)	; is Spike y-flipped?
+	beq.s	+			; if not, branch
+	addi.w	#$08*2,d3	
++	move.w	d2,x_pos(a1)
 	move.w	d3,y_pos(a1)
+	move.b	#1,$30(a1)	; disable explosion sound
+
 	jsr	SingleObjLoad2
-	bne.s	+
+	bne.s	SHE_Abort
 	move.b	#$58,(a1)	; load Explosion object
+	addi.w	#$20,d2
+	;addi.w	#$20,d3
 	move.w	d2,x_pos(a1)
-	subi.w	#$20,d3
 	move.w	d3,y_pos(a1)
-+	rts
+	move.b	#1,$30(a1)	; disable explosion sound
+
+SHE_Abort:
+	rts
 ; ----------------------------------------------------------------------------
 ; ===========================================================================
 
@@ -27215,7 +27240,7 @@ Obj4D_Vertical:
 +	tst.b	$34(a0)		; currently visible?
 	beq.s	+		; if yes, branch
 	rts			; if not, don't display
-+	jmp	DisplaySprite	; display
++	bra.s	Obj4D_Display	; display
 ; ===========================================================================
 
 Obj4D_Horizontal:
@@ -27239,11 +27264,15 @@ Obj4D_Horizontal:
 +	tst.b	$34(a0)		; currently visible?
 	beq.s	+		; if yes, branch
 	rts			; if not, don't display
-+	jmp	DisplaySprite	; display
++	bra.s	Obj4D_Display	; display
 ; ===========================================================================
 
 Obj4D_Delete:
 	jmp	DeleteObject	; delte object
+; ===========================================================================
+
+Obj4D_Display:
+	bra.w	MarkObjGone_DebugSpikes	; copy parent's display
 ; ===========================================================================
 
 ; ===========================================================================
@@ -27282,6 +27311,8 @@ byte_15916:
 ; ===========================================================================
 
 Obj36_Init:
+	cmpi.b	#-1,respawn_index(a0)	; is this a debug-placed spike?
+	beq.s	+			; if yes, skip
 	lea	(Object_Respawn_Table).w,a2
 	moveq	#0,d0
 	move.b	respawn_index(a0),d0
@@ -27394,32 +27425,38 @@ loc_15986:
 	bra.w	Adjust2PArtPointer
 ; ===========================================================================
 ; ===========================================================================
-DebugRange = $1F
+DebugRange = $20
 
 Obj36_DebugCheck:
 	tst.w	(Debug_placement_mode).w	; is debug placement mode enabled?
 	beq.s	ODC_End				; if not, branch
 	
-	move.w	(MainCharacter+x_pos).w,d0	; get debug X-position
+	;move.w	(MainCharacter+x_pos).w,d0	; get debug X-position
+	move.w	($FFFFF504).w,d0		; get evened debug X-position
 	sub.w	x_pos(a0),d0			; substract spike X-position
 	bpl.s	+				; branch if positive
 	neg.w	d0				; otherwise make it positive
 +	cmpi.w	#DebugRange,d0			; in range?
-	bgt.s	ODC_End				; if not, end
+	bge.s	ODC_End				; if not, end
 	
-	move.w	(MainCharacter+y_pos).w,d0	; get debug Y-position
+	;move.w	(MainCharacter+y_pos).w,d0	; get debug Y-position
+	move.w	($FFFFF506).w,d0		; get evened debug Y-position
 	sub.w	y_pos(a0),d0			; substract spike Y-position
-	addq.w	#3,d0				; apparently this is necessary...
 	bpl.s	+				; branch if positive
 	neg.w	d0				; otherwise make it positive
 +	cmpi.w	#DebugRange,d0			; in range?
-	bgt.s	ODC_End				; if not, end
+	bge.s	ODC_End				; if not, end
 	
 	move.b	#1,($FFFFF503).w		; block debug placement
 	btst	#5,(Ctrl_1_Press).w		; is button C pressed?
 	beq.s	ODC_End				; if not, branch
 	move.b	#0,($FFFFF503).w		; enable debug placement
 
+	move.w	#$65+$80,d0		; play "pf-pf-pfff" sound
+	jsr	(PlaySound).l		; play
+
+	cmpi.b	#-1,respawn_index(a0)	; is this a debug-placed spike?
+	beq.s	+			; if yes, skip
 	lea	(Object_Respawn_Table).w,a2
 	moveq	#0,d0
 	move.b	respawn_index(a0),d0
@@ -27432,9 +27469,20 @@ ODC_End:
 	rts
 ; ===========================================================================
 ; ===========================================================================
+; input: a0 = the object
+; simply doesn't draw the object if off-screen rather than deleting it
+MarkObjGone_DebugSpikes:
+	move.w	x_pos(a0),d0
+	andi.w	#$FF80,d0
+	sub.w	(Camera_X_pos_coarse).w,d0
+	cmpi.w	#$280,d0
+	bhi.w	+
+	bra.w	DisplaySprite
++	rts
+; ===========================================================================
+; ===========================================================================
 
-Obj36_Upright:
-	bsr.w	Obj36_DebugCheck
+O36_ExploSpike:
 	cmpi.b	#6,subtype(a0)		; explosion spike?
 	bne.s	OU_NoExplo		; if not, ignore this all
 	move.b	(Timer_frames+1).w,d0
@@ -27447,6 +27495,13 @@ Obj36_Upright:
 +	move.w	#$2434+($08*0),art_tile(a0)	; reset it to gray
 	
 OU_NoExplo:
+	rts
+; ===========================================================================
+; ===========================================================================
+
+Obj36_Upright:
+	bsr.w	Obj36_DebugCheck
+	bsr.s	O36_ExploSpike
 	;bsr.w	sub_15AC6
 	moveq	#0,d1
 	move.b	width_pixels(a0),d1
@@ -27477,6 +27532,8 @@ loc_159D0:
 	bsr.w	Spike_Hurt
 
 loc_159DE:
+	cmpi.b	#-1,respawn_index(a0)	; is this a debug-placed spike?
+	beq.w	MarkObjGone_DebugSpikes	; if yes, branch
 
 	move.w	objoff_30(a0),d0
 	bra.w	MarkObjGone2
@@ -27484,6 +27541,7 @@ loc_159DE:
 
 Obj36_Sideways:
 	bsr.w	Obj36_DebugCheck
+	bsr.w	O36_ExploSpike
 	move.w	x_pos(a0),-(sp)
 	;bsr.w	sub_15AC6
 	moveq	#0,d1
@@ -27515,12 +27573,16 @@ loc_15A26:
 	bclr	#6,status(a0)
 
 loc_15A3A:
+	cmpi.b	#-1,respawn_index(a0)	; is this a debug-placed spike?
+	beq.w	MarkObjGone_DebugSpikes	; if yes, branch
+
 	move.w	objoff_30(a0),d0
 	bra.w	MarkObjGone2
 ; ===========================================================================
 
 Obj36_UpsideDown:
 	bsr.w	Obj36_DebugCheck
+	bsr.w	O36_ExploSpike
 	;bsr.w	sub_15AC6
 	moveq	#0,d1
 	move.b	width_pixels(a0),d1
@@ -27549,6 +27611,8 @@ loc_15A7A:
 	bsr.w	Spike_Hurt
 
 loc_15A88:
+	cmpi.b	#-1,respawn_index(a0)	; is this a debug-placed spike?
+	beq.w	MarkObjGone_DebugSpikes	; if yes, branch
 
 	move.w	objoff_30(a0),d0
 	bra.w	MarkObjGone2
@@ -30874,6 +30938,8 @@ loc_17B24:
 	movea.l	(Obj_load_addr_0).w,a0	; load address of object placement list
 
 loc_17B2C:
+	; at the beginning of a level this gives respawn table entries to any object that is one chunk
+	; behind the left edge of the screen that needs to remember its state (Monitors, Badniks, etc.)
 	cmp.w	(a0),d6
 	bls.s	loc_17B3E
 	cmpi.b	#$36,4(a0)
@@ -30896,6 +30962,7 @@ loc_17B3E:
 	bcs.s	loc_17B62
 
 loc_17B50:
+	; count how many objects are behind the screen that are not in range and need to remember their state
 	cmp.w	(a0),d6
 	bls.s	loc_17B62
 	cmpi.b	#$36,4(a0)
@@ -30927,13 +30994,13 @@ ObjectsManager_Main:
 	andi.w	#$FF80,d6
 	cmp.w	($FFFFF76E).w,d6
 	beq.w	return_17C4E
-	bge.w	loc_17C0A
+	bge.w	ObjectsManager_GoingForward
 	move.w	d6,($FFFFF76E).w
 	movea.l	(Obj_load_addr_1).w,a0
 	subi.w	#$80,d6
 	bcs.s	loc_17BE6
 
--
+-	; load all objects left of the screen that are now in range
 	cmp.w	-6(a0),d6
 	bge.s	loc_17BE6
 	subq.w	#6,a0
@@ -30951,7 +31018,7 @@ loc_17BD0:
 	bra.s	-
 ; ---------------------------------------------------------------------------
 
-+
++	; undo a few things, if the object couldn't load
 	cmpi.b	#$36,4(a0)
 	beq.s	+
 	tst.b	2(a0)
@@ -30967,6 +31034,7 @@ loc_17BE6:
 	addi.w	#$300,d6
 
 loc_17BF2:
+	; subtract number of objects that have been moved out of range (from the right side)
 	cmp.w	-6(a0),d6
 	bgt.s	loc_17C04
 	cmpi.b	#$36,-2(a0)
@@ -30985,12 +31053,12 @@ loc_17C04:
 	rts
 ; ---------------------------------------------------------------------------
 
-loc_17C0A:
+ObjectsManager_GoingForward:
 	move.w	d6,($FFFFF76E).w
 	movea.l	(Obj_load_addr_0).w,a0
 	addi.w	#$280,d6
 
--
+-	; load all objects right of the screen that are now in range
 	cmp.w	(a0),d6
 	bls.s	loc_17C2A
 	cmpi.b	#$36,4(a0)
@@ -31011,6 +31079,7 @@ loc_17C2A:
 	bcs.s	loc_17C4A
 
 loc_17C38:
+	; subtract number of objects that have been moved out of range (from the left)
 	cmp.w	(a0),d6
 	bls.s	loc_17C4A
 	cmpi.b	#$36,4(a0)
@@ -31100,17 +31169,16 @@ return_17F7E:
 SingleObjLoad:
 	lea	(Object_RAM+$400).w,a1 ; a1=object
 	move.w	#$6F,d0	; search to end of table
-	tst.w	(Two_player_mode).w
-	beq.s	loc_17FEC
-	move.w	#$27,d0	; search to $BF00 exclusive
-
-loc_17FEC:
+-
 	tst.b	(a1)	; is object RAM slot empty?
 	beq.s	return_17FF8	; if yes, branch
 	lea	next_object(a1),a1 ; load obj address ; goto next object RAM slot
-	dbf	d0,loc_17FEC	; repeat until end
+	dbf	d0,-	; repeat until end
+	rts
 
 return_17FF8:
+;	move.w	d0,($FFFFF50A).w	; store remaining object slots (for debugging)
+;	or	#%00000100,ccr		; force Z-flag
 	rts
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -39168,11 +39236,64 @@ return_1D976:
 JmpTo7_DeleteObject 
 	jmp	DeleteObject
 ; ===========================================================================
+
+
+		dc.b   0,  1,  2,  3,  4,  5,  6, $FF
+
 ; ----------------------------------------------------------------------------
 ; Object 35 - Invincibility Stars
 ; ----------------------------------------------------------------------------
 ; Sprite_1D97E:
 Obj35:
+	moveq	#0,d0
+	move.b	routine(a0),d0
+	move.w	Obj35_Index(pc,d0.w),d1
+	jmp	Obj35_Index(pc,d1.w)
+; ===========================================================================
+Obj35_Index:
+	dc.w Obj35_Init-Obj35_Index
+	dc.w Obj35_Spawn-Obj35_Index; 1
+	dc.w loc_1DA80-Obj35_Index; 2
+; ===========================================================================
+
+Obj35_Init:
+	tst.b	$30(a0)		; is frame interval empty?
+	beq.s	+		; if yes, create new explosion
+	subq.b	#1,$30(a0)	; if not, substract one from interval
+	rts			; return
+
++	addq.b	#1,$31(a0)	; increase number of spawned explosins
+	cmpi.b	#5,$31(a0)	; five explosions reached?
+	beq.s	Obj35_Delete	; if yes, delete object
+	move.b	#2,$30(a0)	; reset frame interval
+
+	addq.b	#2,routine(a0)	; spawn an explosion in the next frame
+
+	rts			; return
+
+Obj35_Delete:
+	jmp	(DeleteObject).l; delete
+
+; ===========================================================================
+
+Obj35_Spawn:
+	subq.b	#2,routine(a0)		; go back to main routine
+
+	lea	(MainCharacter).w,a2	; get Sonic's RAM
+	jsr	SingleObjLoad		; find a new object
+	bne.s	+			; skip if SST is full
+	move.b	#$58,(a1)		; load Explosion object
+	move.w	x_pos(a2),x_pos(a1)	; copy Sonic's X-position
+	move.w	y_pos(a2),y_pos(a1)	; copy Sonic's Y-position
+
+	move.b	$31(a0),d0	; get explosion counter
+	andi.b	#1,d0		; only look at the first bit
+	move.b	d0,$30(a1)	; disable explosion sound on every other explosion
+
++	rts
+; ===========================================================================
+
+
 	moveq	#0,d0
 	move.b	objoff_A(a0),d0
 	move.w	off_1D98C(pc,d0.w),d1
@@ -39199,8 +39320,13 @@ loc_1D9A4:
 loc_1D9AE:
 	_move.b	0(a0),0(a1) ; load obj35
 	move.b	#4,objoff_A(a1)
+
+	;move.l	#Obj58_MapUnc_2D50A,mappings(a1)
+	;move.w	#$8000+($73C0/$20),art_tile(a1)
+
 	move.l	#Obj35_MapUnc_1DCBC,mappings(a1)
 	move.w	#$4DE,art_tile(a1)
+
 	bsr.w	Adjust2PArtPointer2
 	move.b	#4,render_flags(a1)
 	bset	#6,render_flags(a1)
@@ -39343,6 +39469,7 @@ byte_1DB42:	dc.w   $F00,  $F03,  $E06,  $D08,  $B0B,  $80D,  $60E,  $30F
 		dc.w  $F000, -$F04, -$E07, -$D09, -$B0C, -$80E, -$60F, -$310
 		dc.w   -$10,  $3F0,  $6F1,  $8F2,  $BF4,  $DF7,  $EF9,  $FFC
 
+
 byte_1DB82:	dc.b   8,  5,  7,  6,  6,  7,  5,  8,  6,  7,  7,  6,$FF
 byte_1DB8F:	dc.b   8,  7,  6,  5,  4,  3,  4,  5,  6,  7,$FF
 		dc.b   3,  4,  5,  6,  7,  8,  7,  6,  5,  4
@@ -39351,7 +39478,7 @@ byte_1DBA4:	dc.b   8,  7,  6,  5,  4,  3,  2,  3,  4,  5,  6,  7,$FF
 byte_1DBBD:	dc.b   7,  6,  5,  4,  3,  2,  1,  2,  3,  4,  5,  6,$FF
 		dc.b   1,  2,  3,  4,  5,  6,  7,  6,  5,  4,  3,  2
 byte_1DBD6:	dc.b   0,  2,  0,  5,  0,  5,  1,  5,  2,  5,  3,  5,  4,$FF
-
+		even
 ; -------------------------------------------------------------------------------
 ; sprite mappings
 ; -------------------------------------------------------------------------------
@@ -58304,10 +58431,12 @@ loc_2D4A6:
 	move.b	#7,anim_frame_duration(a0)
 	move.b	#0,mapping_frame(a0)
 	;move.w	#$C4,d0
+	tst.b	$30(a0)	; sound disabled?
+	bne.s	+	; if yes, skip
 	move.w	#$4B+$80,d0
 	jmp	(PlaySound).l
-; ===========================================================================
-	rts
+
++	rts
 ; ===========================================================================
 
 loc_2D4EC:
@@ -83278,7 +83407,9 @@ HudUpdate:
 	bpl.s	+
 	neg.w	d1
 +	lsr.w	#1,d1
-	
+
+;	move.w	($FFFFF508).w,d1 ; DEBUG SHIT
+;	lsr.w	#8,d1
 	
 	mulu.w	#10000,d2
 	add.l	d2,d1
@@ -84212,51 +84343,67 @@ Obj4C_Index:
 ; ===========================================================================
 
 Obj4C_Main:
-	tst.b	(Debug_placement_mode).w
-	beq.s	Obj4C_Delete
+	tst.b	(Debug_placement_mode).w		; is debug mode even enabled?
+	beq.s	Obj4C_Delete				; if not, delete object
 
-	movea.l	$34(a0),a1
-	move.l	mappings(a1),mappings(a0)
-	move.w	art_tile(a1),art_tile(a0)
-	move.b	mapping_frame(a1),mapping_frame(a0)
-	move.b	render_flags(a1),render_flags(a0)
-	move.w	x_pos(a1),x_pos(a0)
-	move.w	y_pos(a1),y_pos(a0)
-	bsr.s	Debug_EvenObj
-	jmp	DisplaySprite
+	movea.l	$34(a0),a1				; load parent object (in this case, the real debug object)
+	move.l	mappings(a1),mappings(a0)		; copy over mappings...
+	move.w	art_tile(a1),art_tile(a0)		; ...tile offset...
+	move.b	mapping_frame(a1),mapping_frame(a0)	; ...current frame...
+;	move.b	render_flags(a1),render_flags(a0)	; ...display flags...
+	move.b	($FFFFF508).w,render_flags(a0)		; ...display flags (with mirror flags)...
+	move.b	($FFFFF508).w,status(a0)		; ...status (with mirror flags)...
+	move.w	x_pos(a1),x_pos(a0)			; ...x-position...
+	move.w	y_pos(a1),y_pos(a0)			; ...and y-position
+	bsr.s	Debug_EvenObj				; even the object
+
+	move.w	x_pos(a0),($FFFFF504).w			; globally store the x-position (for placement...)
+	move.w	y_pos(a0),($FFFFF506).w			; globally store the y-position (...and deletion)
+	jmp	DisplaySprite				; display
 ; ===========================================================================
 
 Obj4C_Delete:
-	jmp	DeleteObject
+	clr.l	($FFFFF504).w				; reset stored positions
+	jmp	DeleteObject				; delete object
 ; ===========================================================================
 
-; Subroutine to even an object's position in Debug
+; ===========================================================================
+; ----------------------------------------------------------------------------
+; Subroutine properly even an object in the world by a specified multiple
+; ----------------------------------------------------------------------------
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+
 EvenSize = $8
 
-Debug_EvenObj:
-	movea.l	a0,a1
 
-Debug_EvenObj2:
-	move.w	x_pos(a1),d0
-	divu.w	#EvenSize,d0
-	swap	d0
-	moveq	#0,d1
-	cmpi.w	#EvenSize/2,d0
-	blt.s	+
-	moveq	#EvenSize/2,d1
-+	add.w	d1,x_pos(a1)
-	andi.w	#$10000-EvenSize,x_pos(a1)
+Debug_EvenObj:	; use current object as target
+	movea.l	a0,a1				; copy object address to a1
 
-	move.w	y_pos(a1),d0
-	divu.w	#EvenSize,d0
-	swap	d0
-	moveq	#0,d1
-	cmpi.w	#EvenSize/2,d0
-	blt.s	+
-	moveq	#EvenSize/2,d1
-+	add.w	d1,y_pos(a1)
-	andi.w	#$10000-EvenSize,y_pos(a1)
-	rts
+Debug_EvenObj2:	; otherwise, use specified object (a1) as target
+	move.w	x_pos(a1),d0			; get x-position of target
+	divu.w	#EvenSize,d0			; divide it by the even size
+	swap	d0				; put result in first word
+	moveq	#0,d1				; clear d1
+	cmpi.w	#EvenSize/2,d0			; is the object closer to the left or the right?
+	blt.s	+				; if it's closer to the left, branch
+	moveq	#EvenSize/2,d1			; if it's closer to the right, move it there
++	add.w	d1,x_pos(a1)			; add result to y_position, and...
+	andi.w	#$10000-EvenSize,x_pos(a1)	; ...even it in the world
+
+	move.w	y_pos(a1),d0			; get y-position of target
+	divu.w	#EvenSize,d0			; divide it by the even size
+	swap	d0				; put result in first word
+	moveq	#0,d1				; clear d1
+	cmpi.w	#EvenSize/2,d0			; is the object closer to the left or the right?
+	blt.s	+				; if it's closer to the left, branch
+	moveq	#EvenSize/2,d1			; if it's closer to the right, move it there
++	add.w	d1,y_pos(a1)			; add result to y-position, and...
+	andi.w	#$10000-EvenSize,y_pos(a1)	; ...even it in the world
+
+	rts					; return
+; ---------------------------------------------------------------------------
+; ===========================================================================
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -84273,11 +84420,11 @@ DebugMode:
 ; ===========================================================================
 ; off_41A86:
 Debug_Index:
-	dc.w Debug_Main-Debug_Index	; 0
-	dc.w loc_41B0C-Debug_Index	; 2
+	dc.w Debug_Init-Debug_Index	; 0
+	dc.w Debug_Main-Debug_Index	; 2
 ; ===========================================================================
 ; loc_41A8A:
-Debug_Main:
+Debug_Init:
 	addq.b	#2,(Debug_placement_mode).w
 	move.w	(Camera_Min_Y_pos).w,($FFFFFFCC).w
 	move.w	(Camera_Max_Y_pos).w,($FFFFFFCE).w
@@ -84293,6 +84440,24 @@ loc_41AAE:
 	clr.b	($FFFFEEBE).w
 	move.b	#0,mapping_frame(a0)
 	move.b	#0,anim(a0)
+
+; Block interaction with platforms during debug mode
+	clr.w	x_vel(a0)
+	clr.w	y_vel(a0)
+	clr.w	inertia(a0)
+	btst	#3,status(a0)	; is Sonic standing on an object?
+	beq.s	+		; if not, branch
+	bclr	#3,status(a0)	; clear Sonic's standing flag
+	moveq	#0,d0
+	move.b	interact(a0),d0	; get object id
+	clr.b	interact(a0)	; clear object id
+	lsl.w	#6,d0
+	addi.l	#Object_RAM&$FFFFFF,d0
+	movea.l	d0,a2
+	bclr	#3,status(a2)	; clear object's standing flag	;Mercury Constants
+	clr.b	routine_secondary(a2)
++
+
 	cmpi.b	#$10,(Game_Mode).w	; special stage mode?
 	bne.s	loc_41ADC		; if not, branch
 	moveq	#6,d0
@@ -84301,7 +84466,7 @@ loc_41AAE:
 
 loc_41ADC:
 	moveq	#0,d0
-	move.b	(Current_Zone).w,d0
+;	move.b	(Current_Zone).w,d0
 
 loc_41AE2:
 	lea	(JmpTbl_DbgObjLists).l,a2
@@ -84320,23 +84485,28 @@ loc_41AFC:
 	jsr	(SingleObjLoad).l
 	move.w	x_pos(a0),x_pos(a1)
 	move.w	y_pos(a0),y_pos(a1)
-	move.b	#$4C,0(a1) ; load obj
+	move.b	#$4C,(a1) ; load obj
 	move.l	a0,$34(a1)
 	;move.b	#1,$30(a1)
 	move.l	mappings(a0),mappings(a1)
 	move.w	art_tile(a0),art_tile(a1)
 	move.b	mapping_frame(a0),mapping_frame(a1)
-	move.b	render_flags(a0),render_flags(a1)
+;	move.b	render_flags(a0),render_flags(a1)
+
+	bsr.w	sub_41CEC
+	move.b	($FFFFF508).w,render_flags(a1)
+;	move.b	($FFFFF508).w,status(a1)
 ; end of object init
 
+; ===========================================================================
+; ===========================================================================
 
-
-loc_41B0C:
+Debug_Main:
 	moveq	#6,d0
-	cmpi.b	#$10,(Game_Mode).w	; special stage mode?
-	beq.s	loc_41B1C		; if yes, branch
-	moveq	#0,d0
-	move.b	(Current_Zone).w,d0
+;	cmpi.b	#$10,(Game_Mode).w	; special stage mode?
+;	beq.s	loc_41B1C		; if yes, branch
+	moveq	#0,d0			; set debug list to EHZ
+;	move.b	(Current_Zone).w,d0	; change the debug list based on the zone
 
 loc_41B1C:
 	lea	(JmpTbl_DbgObjLists).l,a2
@@ -84442,7 +84612,7 @@ loc_41BF6:
 	bhi.s	BranchTo_sub_41CEC
 	move.b	#0,(Debug_object).w	; reset list to the beginning when the end has been reached
 
-BranchTo_sub_41CEC 
+BranchTo_sub_41CEC
 	bra.w	sub_41CEC
 ; ===========================================================================
 
@@ -84455,22 +84625,62 @@ loc_41C12:
 	btst	#5,(Ctrl_1_Press).w	; is button C pressed?
 	beq.s	loc_41C56		; if not, branch; if yes, place object
 
-	move.b	#0,(Object_Respawn_Table+2).w
+	;move.b	#0,(Object_Respawn_Table+2).w	; clear some stuff to allow this to work
 
-	jsr	(SingleObjLoad).l
-	bne.s	loc_41C56
+	bsr.w	SingleObjLoad_Debug	; check for a free object slot
+	beq.s	+			; create, if a free slot exists
+	move.w	#$6D+$80,d0		; otherwise, play "drr-drrrrr" sound
+	jsr	(PlaySound).l		; play
+	bra.w	loc_41C56		; branch
++
+	move.w	#$55+$80,d0		; play "cl-cling" sound
+	jsr	(PlaySound).l		; play
 	move.w	x_pos(a0),x_pos(a1)
 	move.w	y_pos(a0),y_pos(a1)
 	bsr.w	Debug_EvenObj2
-	_move.b	mappings(a0),0(a1) ; load obj
-	move.b	render_flags(a0),render_flags(a1)
-	move.b	render_flags(a0),status(a1)
+;	move.b	mappings(a0),(a1) ; load obj
+	move.b	#$36,(a1)
+;	move.b	render_flags(a0),render_flags(a1)
+;	move.b	render_flags(a0),status(a1)
+	move.b	mappings(a0),render_flags(a1)
+	move.b	mappings(a0),status(a1)
+
+	move.b	#-1,respawn_index(a1)	; mark the respawn index so that the game knows it's a debug-placed spike
+	
 	andi.b	#$7F,status(a1)
 	moveq	#0,d0
 	move.b	(Debug_object).w,d0
 	lsl.w	#3,d0
 	move.b	4(a2,d0.w),subtype(a1)
 	rts
+; ===========================================================================
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Single object loading subroutine
+; Find an empty object array
+; Specialized for Debug Mode
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+
+; loc_17FDA: ; allocObject:
+SingleObjLoad_Debug:
+	lea	(Object_RAM+$400).w,a1 ; a1=object
+	move.w	#$6F-$8,d0	; search almost to the end of table (leave 8 slots free at all times)
+-
+	tst.b	(a1)	; is object RAM slot empty?
+	beq.s	+	; if yes, branch
+	lea	next_object(a1),a1 ; load obj address ; goto next object RAM slot
+	dbf	d0,-	; repeat until end	
+;	rts
+
++
+;	move.w	d0,($FFFFF50A).w	; store remaining object slots (for debugging)
+;	or	#%00000100,ccr		; force Z-flag
+	rts
+; ===========================================================================
+
+; ===========================================================================
 ; ===========================================================================
 
 loc_41C56:
@@ -84520,10 +84730,16 @@ sub_41CEC:
 	moveq	#0,d0
 	move.b	(Debug_object).w,d0
 	lsl.w	#3,d0
+
+	moveq	#0,d1
+	move.b	render_flags(a0),d1
+	andi.b	#%11111100,d1
+	add.b	(a2,d0.w),d1
+	move.b	d1,($FFFFF508).w	; set the render flags on debug placement
+
 	move.l	(a2,d0.w),mappings(a0)
 	move.w	6(a2,d0.w),art_tile(a0)
 	move.b	5(a2,d0.w),mapping_frame(a0)
-	bsr.w	JmpTo66_Adjust2PArtPointer
 	rts
 ; End of function sub_41CEC
 
@@ -84566,6 +84782,7 @@ dbglistobj macro   obj, mapaddr,  decl, frame, flags, vram
 	dc.w decl<<8|frame
 	dc.w flags<<12|vram
     endm
+; $OOMMMMMM $DDFF $fVVV
 
 DbgObjList_Def: dbglistheader
 		;  obj  maps  decl  frame  flags  vram
@@ -84574,13 +84791,56 @@ DbgObjList_Def: dbglistheader
 DbgObjList_Def_End
 
 DbgObjList_EHZ: dbglistheader
-	dbglistobj $36, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; level 1
-	dbglistobj $36, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; level 2
-	dbglistobj $36, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; level 3
-	dbglistobj $36, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; halve
-	dbglistobj $36, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; explode
-	dbglistobj $36, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; level 1 sideways
-;	dbglistobj $36, Obj36_MapUnc_15B68,   0,   0,  0, $434+$00	; sample
+;	dbglistobj $36, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; level 1
+;	dbglistobj $36, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; level 2
+;	dbglistobj $36, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; level 3
+;	dbglistobj $36, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; halve
+;	dbglistobj $36, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; explode
+;	dbglistobj $36, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; level 1 sideways
+
+; level 1
+	dbglistobj $00, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; x-flip
+	dbglistobj $00, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; normal sideways
+	dbglistobj $01, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; x-flip sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   1,   0,  2, $434+$00	; xy-flip
+
+
+; level 2
+	dbglistobj $00, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; x-flip
+	;dbglistobj $00, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; normal sideways
+	;dbglistobj $01, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; x-flip sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   2,   0,  0, $434+$10	; xy-flip
+
+
+; level 3
+	dbglistobj $00, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; x-flip
+	;dbglistobj $00, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; normal sideways
+	;dbglistobj $01, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; x-flip sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   3,   0,  0, $434+$18	; xy-flip
+
+
+; halve
+	dbglistobj $00, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; x-flip
+	;dbglistobj $00, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; normal sideways
+	;dbglistobj $01, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; x-flip sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   5,   0,  0, $434+$08	; xy-flip
+
+
+; explode
+	dbglistobj $00, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; x-flip
+	;dbglistobj $00, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; normal sideways
+	;dbglistobj $01, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; x-flip sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   6,   0,  0, $434+$24	; xy-flip
 DbgObjList_EHZ_End
 
 DbgObjList_MTZ: dbglistheader
