@@ -27198,6 +27198,15 @@ SHE_Abort:
 ; ----------------------------------------------------------------------------
 ; ===========================================================================
 
+; ===========================================================================
+; VRAM settings for spikes
+VRAMSpike_Size =	($20 * 8) * 5			; $20 = 1 tile; 8 = number of tiles per spike; 5 = spikes in total
+VRAMSpike_V =		$8040				; default offset (right after explosions)
+VRAMSpike_H =		VRAMSpike_V + VRAMSpike_Size	; right after vertical spikes
+VRAMSpike_Arrows =	VRAMSpike_H + VRAMSpike_Size	; right after horizontal spikes
+
+VRAMSArr_Size =		2 * 9				; size of one arrow VRAM block
+; ===========================================================================
 
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
@@ -27213,10 +27222,14 @@ Obj4D:
 Obj4D_Index:
 	dc.w Obj4D_Init - Obj4D_Index	; $0
 	dc.w Obj4D_Main - Obj4D_Index	; $2
+	dc.w Obj4D_Debug - Obj4D_Index	; $4
 ; ===========================================================================
 
-Obj4D_Init: 
+Obj4D_Init:
 	addq.b	#2,routine(a0)	; set to next routine
+
+	move.l	#Obj4D_MapUnc,mappings(a0)	; set mappings
+	move.w	#$2000+(VRAMSpike_Arrows/$20),art_tile(a0) ; set tile offset
 
 	move.b	#15*2,d0	; set default interval value (level 1 *2)
 	move.b	$37(a0),d1	; get level type (1, 2, 3)
@@ -27249,21 +27262,53 @@ O4D_skip:
 	clr.b	$35(a0)		; reset blink counter
 
 	eori.b	#1,$34(a0)	; toggle state flag
-	addq.w	#4,art_tile(a0)	; set to gray
+	addi.w	#VRAMSArr_Size,art_tile(a0) ; set to gray
 	tst.b	$34(a0)		; already gray?
 	bne.s	+		; if not, branch
-	subq.w	#8,art_tile(a0)	; reset to yellow
+	subi.w	#VRAMSArr_Size*2,art_tile(a0) ; reset to yellow
 +	bra.w	MarkObjGone_DebugSpikes	; display
 ; ===========================================================================
 
-Obj4D_Sine:
+Obj4D_Debug:
+	tst.w	(Debug_placement_mode).w ; is debug placement mode enabled?
+	beq.s	Obj4D_Delete		; if not, delete object
+	btst	#6,(Ctrl_1_Held).w	; is button A still held?
+	bne.s	+			; if yes, branch
+	rts				; if not, don't do anything
++
+	move.w	($FFFFF504).w,x_pos(a0)	; set evened X-pos to this one's
+	move.w	($FFFFF506).w,y_pos(a0)	; set evened Y-pos to this one's
 
-.ret	rts
+	btst	#2,(Ctrl_1_Press).w	; is button left pressed?
+	beq.s	+			; if not, branch
+	move.b	#7,mapping_frame(a0)	; set "left arrow yellow" frame
+	move.b	#5,$30(a0)		; reset delay?
++	btst	#3,(Ctrl_1_Press).w	; is button right pressed?
+	beq.s	+			; if not, branch
+	move.b	#8,mapping_frame(a0)	; set "right arrow yellow" frame
+	move.b	#6,$30(a0)		; reset delay
++
+	tst.b	$30(a0)			; delay done?
+	beq.s	+			; if yes, reset to gray
+	subq.b	#1,$30(a0)		; if not, reduce delay
+	bra.s	Obj4D_Display		; skip
++	move.b	#6,mapping_frame(a0)	; set default frame
+
+Obj4D_Display:
+	jmp	(DisplaySprite).l
 ; ===========================================================================
 
 Obj4D_Delete:
-	jmp	DeleteObject	; delte object
+	jmp	(DeleteObject).l	; delete object
 ; ===========================================================================
+
+; ===========================================================================
+; -------------------------------------------------------------------------------
+; sprite mappings
+; -------------------------------------------------------------------------------
+Obj4D_MapUnc:		BINCLUDE "mappings/sprite/obj4D.bin"
+; ===========================================================================
+
 
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
@@ -27300,25 +27345,21 @@ byte_15916:
 	dc.b $40	; 15
 ; ===========================================================================
 
-VRAMSPIKEV_size = $200 * 3
-VRAMSpikeV = $8040
-VRAMSpikeH = VRAMSpikeV + VRAMSPIKEV_size
-
-
 Obj36_Init:
-	addq.b	#2,routine(a0)
-
+; === RESPAWN TABLE CHECK ===
 	cmpi.b	#-1,respawn_index(a0)	; is this a debug-placed spike?
 	beq.s	+			; if yes, skip
 	lea	(Object_Respawn_Table).w,a2
 	moveq	#0,d0
 	move.b	respawn_index(a0),d0
-;	beq.s	+		; if the respawn index flag isn't set, don't do this
 	bclr	#7,2(a2,d0.w)
 	btst	#0,2(a2,d0.w)	; if this bit is set it means the spike is already deleted
 	beq.s	+
 	jmp	(DeleteObject).l
 +
+
+; === DEFAULT SPIKE SETUP ===
+	addq.b	#2,routine(a0)
 	move.l	#Obj36_MapUnc_15B68,mappings(a0)
 	ori.b	#4,render_flags(a0)
 	move.b	#5,priority(a0)
@@ -27333,13 +27374,13 @@ Obj36_Init:
 	lsr.w	#1,d0
 	move.b	d0,mapping_frame(a0)
 
-
+; === SETTING SPECIALIZED ART TILE BASED ON SUBTYPE ==
 	move.b	subtype(a0),d1
 
-	move.w	#(VRAMSpikeV/$20),d2
+	move.w	#(VRAMSpike_V/$20),d2
 	cmpi.b	#4,d0		; horizontal spike?
 	bcs.s	+		; if not, branch
-	move.w	#(VRAMSpikeH/$20),d2
+	move.w	#(VRAMSpike_H/$20),d2
 +
 			; default
 	move.w	d2,d3		; gray spikes
@@ -27365,28 +27406,28 @@ Obj36_Init:
 	move.w	d3,art_tile(a0)
 +
 
+; === SET CORRECT SUBROUTINE ===
 	cmpi.b	#4,d0		; horizontal spike?
-	bcs.s	+	; if not, branch
-	addq.b	#2,routine(a0)
+	bcs.s	+		; if not, branch
+	addq.b	#2,routine(a0)	; if yes, set to horizontal spike
 +
+
+; === LOAD ARROW OBJECT FOR LEVEL SPIKES ===
 	cmpi.b	#3,d1		; is a level spike?
-	bhi.w	loc_15978	; if not, skip
-	tst.b	d1
-	beq.w	loc_15978	; default? skip too
+	bhi.w	Obj4D_Init_End	; if not, skip
+	tst.b	d1		; default spike?
+	beq.w	Obj4D_Init_End	; if yes, skip too
 
-
-; O4D_ArtVert:
 	cmpi.b	#4,d0		; horizontal spike?
 	bcc.s	O4D_ArtHoriz	; if yes, branch
 
-	jsr	SingleObjLoad
-	bne.s	+
+O4D_ArtVert:
+	jsr	SingleObjLoad	
+	bne.w	Obj4D_Init_End
 	move.b	#$4D,(a1)	; load arrow object
-	move.l	mappings(a0),mappings(a1)
-	move.w	#$2000+(VRAMSpikeV/$20),art_tile(a1)
 	move.b	render_flags(a0),render_flags(a1)
 
-	move.b	#$B,d0	; $C is base value
+	move.b	#-1,d0	; $0 is base value
 	add.b	d1,d0	; add 1, 2 or 3
 	move.b	d0,mapping_frame(a1)
 	move.b	d1,$37(a1)
@@ -27399,23 +27440,15 @@ Obj36_Init:
 	move.l	a0,$30(a1)
 	
 	move.w	y_pos(a0),$3C(a1)
-
-+
-	bra.s	loc_15978
+	bra.s	Obj4D_Init_End
 
 O4D_ArtHoriz:
-	;cmpi.b	#3,d1		; is a level spike?
-	;bhi.s	+		; if not, skip
-	;beq.s	+		; default? skip too
-	
 	jsr	SingleObjLoad
 	bne.s	+
 	move.b	#$4D,(a1)	; load arrow object
-	move.l	mappings(a0),mappings(a1)
-	move.w	#$2000+(VRAMSpikeV/$20),art_tile(a1)
 	move.b	render_flags(a0),render_flags(a1)
 
-	move.b	#$E,d0	; $F is base value
+	move.b	#2,d0	; $3 is base value
 	add.b	d1,d0	; add 1, 2 or 3
 	move.b	d0,mapping_frame(a1)
 	move.b	d1,$37(a1)
@@ -27430,12 +27463,11 @@ O4D_ArtHoriz:
 
 +
 
-	;move.w	#$2000+(VRAMSpikeH/$20),art_tile(a0)
-
-loc_15978:
-	btst	#1,status(a0)
-	beq.s	loc_15986
-	move.b	#6,routine(a0)
+; === FINAL SETUP STUFF ===
+Obj4D_Init_End:
+	btst	#1,status(a0)	; y-flipped?
+	beq.s	loc_15986	; if not, branch
+	move.b	#6,routine(a0)	; if yes, set to upside down
 
 loc_15986:
 	move.w	x_pos(a0),objoff_30(a0)
@@ -27507,10 +27539,10 @@ O36_ExploSpike:
 	cmpi.b	#6,subtype(a0)		; explosion spike?
 	bne.s	OU_NoExplo		; if not, ignore this all
 
-	move.w	#(VRAMSpikeV/$20)+($08*4),d1
+	move.w	#(VRAMSpike_V/$20)+($08*4),d1
 	cmpi.b	#4,routine(a0)		; horizontal spike?
 	bne.s	+
-	move.w	#(VRAMSpikeH/$20)+($08*4),d1
+	move.w	#(VRAMSpike_H/$20)+($08*4),d1
 +
 	move.b	(Timer_frames+1).w,d0
 	btst	#0,d0
@@ -36178,11 +36210,11 @@ Obj02_ExitChk:
 
 ; loc_1BAD4:
 TailsCPU_Control: ; a0=Tails
-	move.b	(Ctrl_2_Held).w,d0	; did the real player 2 hit something?
-	andi.b	#$7F,d0
-	beq.s	+			; if not, branch
-	move.w	#600,(Tails_control_counter).w ; give player 2 control for 10 seconds (minimum)
-+
+;	move.b	(Ctrl_2_Held).w,d0	; did the real player 2 hit something?
+;	andi.b	#$7F,d0
+;	beq.s	+			; if not, branch
+;	move.w	#600,(Tails_control_counter).w ; give player 2 control for 10 seconds (minimum)
+;+
 	lea	(MainCharacter).w,a1 ; a1=character ; a1=Sonic
 	move.w	(Tails_CPU_routine).w,d0
 	move.w	TailsCPU_States(pc,d0.w),d0
@@ -83035,7 +83067,11 @@ BranchTo_loc_40836
 ; ===========================================================================
 
 loc_40820:
-	moveq	#0,d1			; use normal sprite without red
+	moveq	#0,d1			; use normal sprite without red and normal mode
+	tst.w	(Debug_placement_mode).w ; is debug mode on?
+	beq.s	+			; if not, branch
+	addq.b	#2,d1			; use "COORD" HUD
++
 	tst.b	($FFFFF502).w
 	beq.s	loc_40836
 	subq.b	#1,($FFFFF502).w
@@ -83417,7 +83453,7 @@ HudUpdate:
 	lea	(VDP_data_port).l,a6
 	tst.w	(Two_player_mode).w
 	bne.w	loc_40F50
-	tst.w	(Debug_mode_flag).w	; is debug mode on?
+	tst.w	(Debug_placement_mode).w	; is debug mode on?
 	;bne.w	loc_40E9A	; if yes, branch (HudDebug:)
 
 	tst.b	(Update_HUD_score).w	; does the score need updating?
@@ -83432,13 +83468,20 @@ HudUpdate:
 	neg.w	d2
 +	lsr.w	#1,d2
 
+	tst.w	(Debug_placement_mode).w	; is debug mode on?
+	beq.s	+
+	move.w	($FFFFF504).w,d2		; load evened x-pos
++
 
 	moveq	#0,d1
 	move.w	(MainCharacter+y_vel).w,d1
-	;move.w	($FFFFF500).w,d1	; load speed
 	bpl.s	+
 	neg.w	d1
 +	lsr.w	#1,d1
+	tst.w	(Debug_placement_mode).w	; is debug mode on?
+	beq.s	+
+	move.w	($FFFFF506).w,d1		; load evened y-pos
++
 
 ;	move.w	($FFFFF508).w,d1 ; DEBUG SHIT
 ;	lsr.w	#8,d1
@@ -84515,17 +84558,28 @@ loc_41AFC:
 	move.b	#DebugDelay,($FFFFFE0A).w
 	move.b	#DebugSpeed,($FFFFFE0B).w
 
-	jsr	(SingleObjLoad).l
-	move.w	x_pos(a0),x_pos(a1)
-	move.w	y_pos(a0),y_pos(a1)
-	move.b	#$4C,(a1) ; load obj
-	move.l	a0,$34(a1)
-	;move.b	#1,$30(a1)
-	move.l	mappings(a0),mappings(a1)
-	move.w	art_tile(a0),art_tile(a1)
-	move.b	mapping_frame(a0),mapping_frame(a1)
-;	move.b	render_flags(a0),render_flags(a1)
-
+	jsr	(SingleObjLoad).l	; call routine
+	bne.s	+			; skip if SST is full
+	move.b	#$4D,(a1)		; load to spike arrow object
+	move.b	#4,routine(a1)		; give it its specialized routine (debug A arrows)
+	move.l	#Obj4D_MapUnc,mappings(a1) ; set mappings
+	move.w	#$2000+(VRAMSpike_Arrows/$20),art_tile(a1) ; set tile offset
+	move.b	#6,mapping_frame(a1)	; set default frame
+	move.w	($FFFFF504).w,x_pos(a1)	; copy evened x-pos
+	move.w	($FFFFF506).w,y_pos(a1)	; copy evened y-pos
+	ori.b	#4,render_flags(a1)
+	move.b	#5,priority(a1)
++
+	jsr	(SingleObjLoad).l	; call routine
+	bne.s	+			; skip if SST is full
+	move.b	#$4C,(a1)		; load fake debug object
+	move.w	x_pos(a0),x_pos(a1)	; copy x-pos
+	move.w	y_pos(a0),y_pos(a1)	; copy y-pos
+	move.l	a0,$34(a1)		; let object know who his parent was
+	move.l	mappings(a0),mappings(a1) ; copy mappings
+	move.w	art_tile(a0),art_tile(a1) ; copy art tile
+	move.b	mapping_frame(a0),mapping_frame(a1) ; copy frame
++
 	bsr.w	sub_41CEC
 	move.b	($FFFFF508).w,render_flags(a1)
 ;	move.b	($FFFFF508).w,status(a1)
@@ -84553,6 +84607,9 @@ loc_41B1C:
 
 
 sub_41B34:
+	btst	#6,(Ctrl_1_Held).w	; is button A held?
+	bne.w	Debug_CheckA		; if yes, ignore D-Pad
+
 	moveq	#0,d4
 	move.w	#1,d1
 	move.b	(Ctrl_1_Press).w,d4
@@ -84563,7 +84620,7 @@ sub_41B34:
 	bne.s	loc_41B5E		; if yes, branch 2
 	move.b	#DebugDelay,($FFFFFE0A).w	; set split-second delay after pressing once ($C)
 	move.b	#DebugSpeed,($FFFFFE0B).w	; set initial speed ($F)
-	bra.w	loc_41BDA		; if not, branch 3 (A-check)
+	bra.w	Debug_CheckA		; if not, branch 3 (A-check)
 ; ===========================================================================
 
 loc_41B5E:
@@ -84626,11 +84683,19 @@ loc_41BD2:
 	move.l	d3,x_pos(a0)	; set new x-pos
 ; end of D-Pad stuff
 
-loc_41BDA:
+	bra.w	Debug_CheckC	; ignore button A
+
+Debug_CheckA:
 	btst	#6,(Ctrl_1_Held).w	; is button A held?
-	beq.s	loc_41C12		; if not, branch
-	btst	#5,(Ctrl_1_Press).w	; is button C pressed?
+	beq.s	Debug_CheckC		; if not, branch
+;	btst	#5,(Ctrl_1_Press).w	; is button C pressed?
+;	beq.s	loc_41BF6		; if not, branch
+	btst	#2,(Ctrl_1_Press).w	; is button left pressed?
 	beq.s	loc_41BF6		; if not, branch
+
+	move.w	#$64+$80,d0		; play other "dit" sound
+	jsr	(PlaySound).l		; play
+
 	subq.b	#1,(Debug_object).w	; cycle through the debug object list backwards
 	bcc.s	BranchTo_sub_41CEC
 	add.b	d6,(Debug_object).w
@@ -84638,8 +84703,12 @@ loc_41BDA:
 ; ===========================================================================
 
 loc_41BF6:
-	btst	#6,(Ctrl_1_Press).w	; is button A pressed?
-	beq.s	loc_41C12		; if not, branch
+	btst	#3,(Ctrl_1_Press).w	; is button right pressed?
+	beq.w	return_41CB6		; if not, don't test other buttons either
+
+	move.w	#$5D+$80,d0		; play "dit" sound
+	jsr	(PlaySound).l		; play
+
 	addq.b	#1,(Debug_object).w	; cycle through the debug object list forwards
 	cmp.b	(Debug_object).w,d6
 	bhi.s	BranchTo_sub_41CEC
@@ -84649,14 +84718,14 @@ BranchTo_sub_41CEC
 	bra.w	sub_41CEC
 ; ===========================================================================
 
-loc_41C12:
+Debug_CheckC:
 	tst.b	($FFFFF503).w		; debug mode blocked by spike?
 	beq.s	+			; if not, place object
 	move.b	#0,($FFFFF503).w	; enable debug placement for next frame
-	bra.s	loc_41C56		; skip
+	bra.s	Debug_CheckB		; skip
 +
 	btst	#5,(Ctrl_1_Press).w	; is button C pressed?
-	beq.s	loc_41C56		; if not, branch; if yes, place object
+	beq.s	Debug_CheckB		; if not, branch; if yes, place object
 
 	;move.b	#0,(Object_Respawn_Table+2).w	; clear some stuff to allow this to work
 
@@ -84664,7 +84733,7 @@ loc_41C12:
 	beq.s	+			; create, if a free slot exists
 	move.w	#$6D+$80,d0		; otherwise, play "drr-drrrrr" sound
 	jsr	(PlaySound).l		; play
-	bra.w	loc_41C56		; branch
+	bra.w	Debug_CheckB		; branch
 +
 	move.w	#$55+$80,d0		; play "cl-cling" sound
 	jsr	(PlaySound).l		; play
@@ -84716,7 +84785,7 @@ SingleObjLoad_Debug:
 ; ===========================================================================
 ; ===========================================================================
 
-loc_41C56:
+Debug_CheckB:
 	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
 	beq.w	return_41CB6		; if not, branch; if yes, return normal playmode
 	moveq	#0,d0
@@ -84833,48 +84902,48 @@ DbgObjList_EHZ: dbglistheader
 ;	dbglistobj $36, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; level 1 sideways
 
 ; level 1
-	dbglistobj $00, Obj36_MapUnc_15B68,   1,   0,  2, (VRAMSpikeV/$20)+$00	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   1,   0,  2, (VRAMSpikeV/$20)+$00	; x-flip
-	dbglistobj $00, Obj36_MapUnc_15B68, $41,   4,  2, (VRAMSpikeH/$20)+$00	; normal sideways
-	dbglistobj $01, Obj36_MapUnc_15B68, $41,   4,  2, (VRAMSpikeH/$20)+$00	; x-flip sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   1,   0,  2, (VRAMSpikeV/$20)+$00	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   1,   0,  2, (VRAMSpikeV/$20)+$00	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   1,   8,  2, (VRAMSpike_V/$20)+$00	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   1,   8,  2, (VRAMSpike_V/$20)+$00	; x-flip
+	dbglistobj $01, Obj36_MapUnc_15B68, $41,  11,  2, (VRAMSpike_H/$20)+$00	; x-flip sideways
+	dbglistobj $00, Obj36_MapUnc_15B68, $41,  11,  2, (VRAMSpike_H/$20)+$00	; normal sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   1,   8,  2, (VRAMSpike_V/$20)+$00	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   1,   8,  2, (VRAMSpike_V/$20)+$00	; xy-flip
 
 
 ; level 2
-	dbglistobj $00, Obj36_MapUnc_15B68,   2,   0,  0, (VRAMSpikeV/$20)+$10	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   2,   0,  0, (VRAMSpikeV/$20)+$10	; x-flip
-	dbglistobj $00, Obj36_MapUnc_15B68, $42,   4,  0, (VRAMSpikeH/$20)+$10	; normal sideways
-	dbglistobj $01, Obj36_MapUnc_15B68, $42,   4,  0, (VRAMSpikeH/$20)+$10	; x-flip sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   2,   0,  0, (VRAMSpikeV/$20)+$10	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   2,   0,  0, (VRAMSpikeV/$20)+$10	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   2,   9,  0, (VRAMSpike_V/$20)+$10	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   2,   9,  0, (VRAMSpike_V/$20)+$10	; x-flip
+	dbglistobj $01, Obj36_MapUnc_15B68, $42,  12,  0, (VRAMSpike_H/$20)+$10	; x-flip sideways
+	dbglistobj $00, Obj36_MapUnc_15B68, $42,  12,  0, (VRAMSpike_H/$20)+$10	; normal sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   2,   9,  0, (VRAMSpike_V/$20)+$10	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   2,   9,  0, (VRAMSpike_V/$20)+$10	; xy-flip
 
 
 ; level 3
-	dbglistobj $00, Obj36_MapUnc_15B68,   3,   0,  0, (VRAMSpikeV/$20)+$18	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   3,   0,  0, (VRAMSpikeV/$20)+$18	; x-flip
-	dbglistobj $00, Obj36_MapUnc_15B68, $43,   4,  0, (VRAMSpikeH/$20)+$18	; normal sideways
-	dbglistobj $01, Obj36_MapUnc_15B68, $43,   4,  0, (VRAMSpikeH/$20)+$18	; x-flip sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   3,   0,  0, (VRAMSpikeV/$20)+$18	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   3,   0,  0, (VRAMSpikeV/$20)+$18	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   3,  10,  0, (VRAMSpike_V/$20)+$18	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   3,  10,  0, (VRAMSpike_V/$20)+$18	; x-flip
+	dbglistobj $01, Obj36_MapUnc_15B68, $43,  13,  0, (VRAMSpike_H/$20)+$18	; x-flip sideways
+	dbglistobj $00, Obj36_MapUnc_15B68, $43,  13,  0, (VRAMSpike_H/$20)+$18	; normal sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   3,  10,  0, (VRAMSpike_V/$20)+$18	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   3,  10,  0, (VRAMSpike_V/$20)+$18	; xy-flip
 
 
 ; halve
-	dbglistobj $00, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpikeV/$20)+$08	; normal
-;	dbglistobj $01, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpikeV/$20)+$08	; x-flip
-	dbglistobj $00, Obj36_MapUnc_15B68, $45,   4,  0, (VRAMSpikeH/$20)+$08	; normal sideways
-	dbglistobj $01, Obj36_MapUnc_15B68, $45,   4,  0, (VRAMSpikeH/$20)+$08	; x-flip sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpikeV/$20)+$08	; y-flip
-;	dbglistobj $03, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpikeV/$20)+$08	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpike_V/$20)+$08	; normal
+;	dbglistobj $01, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpike_V/$20)+$08	; x-flip
+	dbglistobj $01, Obj36_MapUnc_15B68, $45,   4,  0, (VRAMSpike_H/$20)+$08	; x-flip sideways
+	dbglistobj $00, Obj36_MapUnc_15B68, $45,   4,  0, (VRAMSpike_H/$20)+$08	; normal sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpike_V/$20)+$08	; y-flip
+;	dbglistobj $03, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpike_V/$20)+$08	; xy-flip
 
 
 ; explode
-	dbglistobj $00, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpikeV/$20)+$20	; normal
-;	dbglistobj $01, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpikeV/$20)+$20	; x-flip
-	dbglistobj $00, Obj36_MapUnc_15B68, $46,   4,  0, (VRAMSpikeH/$20)+$20	; normal sideways
-	dbglistobj $01, Obj36_MapUnc_15B68, $46,   4,  0, (VRAMSpikeH/$20)+$20	; x-flip sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpikeV/$20)+$20	; y-flip
-;	dbglistobj $03, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpikeV/$20)+$20	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpike_V/$20)+$20	; normal
+;	dbglistobj $01, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpike_V/$20)+$20	; x-flip
+	dbglistobj $01, Obj36_MapUnc_15B68, $46,   4,  0, (VRAMSpike_H/$20)+$20	; x-flip sideways
+	dbglistobj $00, Obj36_MapUnc_15B68, $46,   4,  0, (VRAMSpike_H/$20)+$20	; normal sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpike_V/$20)+$20	; y-flip
+;	dbglistobj $03, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpike_V/$20)+$20	; xy-flip
 DbgObjList_EHZ_End
 
 DbgObjList_MTZ: dbglistheader
@@ -85331,7 +85400,8 @@ plreq macro toVRAMaddr,fromROMaddr
 ;---------------------------------------------------------------------------------------
 PlrList_Std1: plrlistheader
 	plreq $D940, ArtNem_HUD
-	plreq $FA80, ArtNem_Sonic_life_counter
+	;plreq $FA80, ArtNem_Sonic_life_counter
+	plreq $FA80, ArtNem_HUD_CORD
 	plreq $D780, ArtNem_Ring
 	plreq $9580, ArtNem_Numbers
 PlrList_Std1_End
@@ -85382,8 +85452,9 @@ PlrList_Ehz1_End
 ; Emerald Hill Zone secondary
 ;---------------------------------------------------------------------------------------
 PlrList_Ehz2: plrlistheader
-	plreq VRAMSpikeV, ArtNem_Spikes
-	plreq VRAMSpikeH, ArtNem_HorizSpike	; H-SPIKE GRAPHICS ADDED
+	plreq VRAMSpike_V, ArtNem_Spikes
+	plreq VRAMSpike_H, ArtNem_HorizSpike
+	plreq VRAMSpike_Arrows, ArtNem_SpikeArrows
 PlrList_Ehz2_End
 ;---------------------------------------------------------------------------------------
 ; Pattern load queue
@@ -86285,6 +86356,11 @@ ArtNem_DignlSprng:	BINCLUDE	"art/nemesis/Diagonal spring.bin"
 	even
 ArtNem_HUD:	BINCLUDE	"art/nemesis/HUD.bin"
 ;---------------------------------------------------------------------------------------
+; Nemesis compressed art (8 blocks)
+; "COORD" patterns for debug HUD
+	even
+ArtNem_HUD_CORD:	BINCLUDE	"art/nemesis/HUD CORD.bin"
+;---------------------------------------------------------------------------------------
 ; Nemesis compressed art (12 blocks)
 ; Sonic lives counter		ArtNem_79346:
 	even
@@ -87113,7 +87189,11 @@ ArtNem_EndingTails:	BINCLUDE	"art/nemesis/Final image of Tails.bin"
 ; Sonic the Hedgehog 2 image at end of credits	; ArtNem_94B28:
 	even
 ArtNem_EndingTitle:	BINCLUDE	"art/nemesis/Sonic the Hedgehog 2 image at end of credits.bin"
-
+;--------------------------------------------------------------------------------------
+; Nemesis compressed art (36 blocks)
+; Spike arrows displayed over normal level spikes
+	even
+ArtNem_SpikeArrows:	BINCLUDE	"art/nemesis/Spike arrows.bin"
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; LEVEL ART AND BLOCK MAPPINGS (16x16 and 128x128)

@@ -1,13 +1,15 @@
 Top priority:
-- Build first real levels.
-- Arrow for debug preview spikes.
+- Make Tails follow you even during debug.
+- Add an effect when hovering over a placed spike.
 
 Medium priority:
 - Blood.
-- Make multi-arrows a single sprite.
+- Build first real levels.
 
 Low priority:
-- Smoothing movement when touching unevenly placed spike.
+- Add an undoing feature.
+- Smoothing camera movement when touching unevenly placed spike.
 - Improving Tails' movement.
 - Fix slowdown on level startup caused by NemDec.
 - Change in-game-placed spikes to use a custom respawn table rather than being simply not deleted.
+- Add clone driver V2.
