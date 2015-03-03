@@ -48,7 +48,7 @@ Size_of_Snd_driver_guess =	$F64 ; approximate post-compressed size of the Z80 so
 ; Object Status Table offsets (for everything between Object_RAM and Primary_Collision)
 ; ---------------------------------------------------------------------------
 ; universally followed object conventions:
-render_flags =		  1 ; bitfield ; bit 7 = onscreen flag, bit 0 = x mirror, bit 1 = y mirror, bit 2 = coordinate system
+render_flags =		  1 ; 0 = x-flip, 1 = y-flip, 2&3 = coordinate system, 4 = assume pixel height, 5 = one-sprite, 6 = compound sprites, bit 7 = onscreen
 art_tile =		  2 ; and 3 ; start of sprite's art
 mappings =		  4 ; and 5 and 6 and 7
 x_pos =			  8 ; and 9 ... some objects use $A and $B as well when extra precision is required (see ObjectMove) ... for screen-space objects this is called x_pixel instead
@@ -3814,6 +3814,8 @@ RandomNumber:
 	move.l	(RNG_seed).w,d1
 	bne.s	+
 	move.l	#$2A6D365A,d1 ; if the RNG is 0, reset it to this crazy number
+	move.l	($FFFFFE0C).w,d0	; grab V-Int runcount
+	eor.l	d0,d1			; xor the seed
 
 	; set the high word of d0 to be the high word of the RNG
 	; and multiply the RNG by 41
@@ -19872,7 +19874,7 @@ Obj11_Main:
 	move.l	#Obj11_MapUnc_FC28,mappings(a0)
 	move.w	#$6300,art_tile(a0)
 +
-	bsr.w	Adjust2PArtPointer
+	jsr	Adjust2PArtPointer
 	move.b	#4,render_flags(a0)
 	move.b	#$80,width_pixels(a0)
 	move.w	y_pos(a0),d2
@@ -25295,20 +25297,22 @@ BranchTo16_DisplaySprite
 	bra.w	DisplaySprite
 ; ===========================================================================
 
-loc_13F44:
+loc_13F44: ;thatonething:
+	bra.s	BranchTo10_DeleteObject	; skipped for now
+
 	cmpa.w	#Object_RAM+$80,a0	; is this the zone name object?
 	bne.s	BranchTo10_DeleteObject	; if not, just delete the title card
 	nop
-	;moveq	#2,d0			; load the standard water graphics
-	;bsr.w	JmpTo3_LoadPLC
+	moveq	#2,d0			; load the standard water graphics
+	bsr.w	JmpTo3_LoadPLC
 
-	;moveq	#0,d0
-	;move.b	(Current_Zone).w,d0
-	;move.b	byte_13F62(pc,d0.w),d0	; load the animal graphics for the current zone
-	;bsr.w	JmpTo3_LoadPLC
+	moveq	#0,d0
+	move.b	(Current_Zone).w,d0
+	move.b	byte_13F62(pc,d0.w),d0	; load the animal graphics for the current zone
+	bsr.w	JmpTo3_LoadPLC
 	
-	;moveq	#$3B,d0
-	;bsr.w	JmpTo3_LoadPLC
+	moveq	#$3B,d0
+	bsr.w	JmpTo3_LoadPLC
 
 BranchTo10_DeleteObject 
 	bra.w	DeleteObject; delete the title card object
@@ -26967,6 +26971,95 @@ JmpTo_sub_8476
 
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
+; Object 4E - Blood Particles
+
+VRAMBlood =	$8EC0
+BloodInterval =	4
+; ----------------------------------------------------------------------------
+
+Obj4E:
+	moveq	#0,d0
+	move.b	routine(a0),d0
+	move.w	Obj4E_Index(pc,d0.w),d1
+	jmp	Obj4E_Index(pc,d1.w)
+; ===========================================================================
+Obj4E_Index:
+	dc.w Obj4E_InitParent	- Obj4E_Index	; $0
+	dc.w Obj4E_InitChild	- Obj4E_Index	; $2
+	dc.w Obj4E_Main		- Obj4E_Index	; $4
+; ===========================================================================
+
+Obj4E_InitParent:
+	move.w	#4,d2				; spawn 5 additional sprites (6 in total)
+-
+	bsr.w	SingleObjLoad2			; load object
+	bne.s	Obj4E_InitChild			; skip if SST is full
+	move.b	(a0),(a1)			; load another object of the same type
+	move.b	#2,routine(a1)			; set it to the next routine
+	move.w	x_pos(a0),x_pos(a1)		; copy x-pos
+	move.w	y_pos(a0),y_pos(a1)		; copy y-pos
+	move.b	d2,mapping_frame(a1)		; give a belated starting frame (for randomized mirrioring)
+	move.b	d2,render_flags(a1)		; give another render flag (for randomized mirrioring)
+	dbf	d2,-				; loop
+; ===========================================================================
+
+Obj4E_InitChild:
+	jsr	(RandomNumber).l		; get a random number
+	move.l	d0,d1				; copy for later
+	asr.w	#4,d0				; reduce-shift word by 4 bits
+	add.w	(MainCharacter+x_vel).w,d0	; add Sonic's x-vel
+	asr.w	#1,d0				; halve the result
+	move.w	d0,x_vel(a0)			; set objects's x-vel
+	asr.w	#7,d0				; reduce-shift word by 7 bits
+	add.w	d0,x_pos(a0)			; add result to x-pos
+	swap	d0				; --- get other word ---
+	asr.w	#4,d0				; reduce-shift word by 4 bits
+	add.w	(MainCharacter+y_vel).w,d0	; add Sonic's y-vel
+	asr.w	#1,d0				; halve the result
+	move.w	d0,y_vel(a0)			; set objects's x-vel
+	asr.w	#7,d0				; reduce-shift word by 7 bits
+	add.w	d0,y_pos(a0)			; add result to x-pos
+
+	move.b	#4,routine(a0)			; set all objects to next routine
+	move.l	#Obj4E_MapUnc,mappings(a0)	; set mappings
+	move.w	#(VRAMBlood/$20),art_tile(a0)	; set tile offset
+	move.b	#BloodInterval,$30(a0)		; set default interval value
+	andi.b	#3,render_flags(a0)		; make sure the different flip flags didn't mess with anything else
+	ori.b	#$84,render_flags(a0)		; make sure the damn thing actually appears
+; ===========================================================================
+
+Obj4E_Main:
+	tst.b	render_flags(a0)		; did the sprite leave the screen?
+	bpl.s	Obj4E_Delete			
+	subq.b	#1,$30(a0)			; substract 1 from interval
+	bne.s	+				; is it zero? if not, branch
+	move.b	#BloodInterval,$30(a0)		; if yes, reset interval
+	addq.b	#1,mapping_frame(a0)		; show next frame
+	cmpi.b	#$A,mapping_frame(a0)		; has the last frame finished playing? (9+1)
+	beq.s	Obj4E_Delete			; if yes, delete object
++
+	jsr	(ObjectMoveAndFall).l		; make sprite fall
+	jmp	(DisplaySprite).l		; display
+
+; ===========================================================================
+
+Obj4E_Delete:
+	jmp	(DeleteObject).l		; delete object
+; ===========================================================================
+
+; ===========================================================================
+; -------------------------------------------------------------------------------
+; sprite mappings
+; -------------------------------------------------------------------------------
+Obj4E_MapUnc:		BINCLUDE "mappings/sprite/Obj4E.bin"
+; ===========================================================================
+
+
+
+
+
+; ===========================================================================
+; ----------------------------------------------------------------------------
 ; Subroutines to manage the individual spike movement types
 ; ----------------------------------------------------------------------------
 
@@ -27055,6 +27148,16 @@ Spike_Hurt:
 	neg.w	y_vel(a0)		; negate Y-speed
 +
 	movea.l	a2,a0
+
+	jsr	(SingleObjLoad).l
+	bne.s	+
+	move.b	#$4E,(a1)
+	move.w	(MainCharacter+x_pos).w,x_pos(a1)
+	move.w	(MainCharacter+y_pos).w,y_pos(a1)
+
++
+
+
 	rts
 
 ; ----------------------------------------------------------------------------
@@ -27108,18 +27211,19 @@ SH_Halve: ;$5
 	move.w	#-$400,y_vel(a0) ; make Sonic bounce away from the object
 
 	cmpi.b	#4,routine(a2)		; sideways spike?
-	bcs.s	+			; if not, branch
+	bne.s	+			; if not, branch
 	move.w	#0,x_vel(a0)		; clear x-speed
+	bchg	#0,status(a0)		; swap Sonic's facing
 +
 	cmpi.b	#6,routine(a2)		; upside-down spike?
 	bne.s	+			; if not, branch
+	move.w	#0,x_vel(a0)		; clear x-speed
 	move.w	#0,y_vel(a0)		; clear y-speed
 	rts
 +
 	move.w	x_vel(a0),d0	; get x-speed
 	asr.w	#1,d0		; divide it by two (works for both negative and positive speeds)
 	move.w	d0,x_vel(a0)	; store the result back
-
 	rts
 ; ===========================================================================
 
@@ -27145,6 +27249,8 @@ SH_Explode:
 	neg.w	x_vel(a0)
 +	move.w	#-$400,y_vel(a0)
 
+	bra.w	SHE_Abort
+
 ; sideways
 	jsr	SingleObjLoad2
 	bne.w	SHE_Abort
@@ -27169,8 +27275,10 @@ SH_Explode:
 	rts
 
 SHE_NotSide:
+
 	;move.w	#0,x_vel(a0)
 	move.w	#-$1000,y_vel(a0)
+	bra.w	SHE_Abort
 
 	jsr	SingleObjLoad2
 	bne.s	SHE_Abort
@@ -27220,9 +27328,10 @@ Obj4D:
 	jmp	Obj4D_Index(pc,d1.w)
 ; ===========================================================================
 Obj4D_Index:
-	dc.w Obj4D_Init - Obj4D_Index	; $0
-	dc.w Obj4D_Main - Obj4D_Index	; $2
+	dc.w Obj4D_Init  - Obj4D_Index	; $0
+	dc.w Obj4D_Main  - Obj4D_Index	; $2
 	dc.w Obj4D_Debug - Obj4D_Index	; $4
+	dc.w Obj4D_Idle  - Obj4D_Index	; $6
 ; ===========================================================================
 
 Obj4D_Init:
@@ -27241,9 +27350,6 @@ Obj4D_Init:
 ; ===========================================================================
 
 Obj4D_Main:
-	movea.l	$30(a0),a1	; load parent spike into a1
-	cmpi.b	#$36,(a1)	; does it still exist?
-	bne.w	Obj4D_Delete	; if not, delete arrow object
 	move.b	$3F(a0),d0	; get next saved add position
 	jsr	(CalcSine).l	; calc new sine
 	asr.w	#6,d0		; drastically shrink it down
@@ -27266,7 +27372,7 @@ O4D_skip:
 	tst.b	$34(a0)		; already gray?
 	bne.s	+		; if not, branch
 	subi.w	#VRAMSArr_Size*2,art_tile(a0) ; reset to yellow
-+	bra.w	MarkObjGone_DebugSpikes	; display
++	jmp	(DisplaySprite).l
 ; ===========================================================================
 
 Obj4D_Debug:
@@ -27302,6 +27408,10 @@ Obj4D_Delete:
 	jmp	(DeleteObject).l	; delete object
 ; ===========================================================================
 
+Obj4D_Idle:
+	rts				; do nothing
+; ===========================================================================
+
 ; ===========================================================================
 ; -------------------------------------------------------------------------------
 ; sprite mappings
@@ -27312,7 +27422,7 @@ Obj4D_MapUnc:		BINCLUDE "mappings/sprite/obj4D.bin"
 
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
-; Object 36 - Vertical spikes
+; Object 36 - Spikes
 ; ----------------------------------------------------------------------------
 ; Sprite_15900:
 Obj36:
@@ -27361,7 +27471,7 @@ Obj36_Init:
 ; === DEFAULT SPIKE SETUP ===
 	addq.b	#2,routine(a0)
 	move.l	#Obj36_MapUnc_15B68,mappings(a0)
-	ori.b	#4,render_flags(a0)
+	ori.b	#$84,render_flags(a0)
 	move.b	#5,priority(a0)
 	move.b	subtype(a0),d0
 	andi.b	#$F,subtype(a0)
@@ -27422,7 +27532,7 @@ Obj36_Init:
 	bcc.s	O4D_ArtHoriz	; if yes, branch
 
 O4D_ArtVert:
-	jsr	SingleObjLoad	
+	jsr	(SingleObjLoad2).l
 	bne.w	Obj4D_Init_End
 	move.b	#$4D,(a1)	; load arrow object
 	move.b	render_flags(a0),render_flags(a1)
@@ -27437,13 +27547,13 @@ O4D_ArtVert:
 	move.w	x_pos(a0),x_pos(a1)
 	move.w	y_pos(a0),y_pos(a1)
 	
-	move.l	a0,$30(a1)
+	move.w	a1,$3E(a0)	; remember child
 	
 	move.w	y_pos(a0),$3C(a1)
 	bra.s	Obj4D_Init_End
 
 O4D_ArtHoriz:
-	jsr	SingleObjLoad
+	jsr	(SingleObjLoad2).l
 	bne.s	+
 	move.b	#$4D,(a1)	; load arrow object
 	move.b	render_flags(a0),render_flags(a1)
@@ -27457,7 +27567,7 @@ O4D_ArtHoriz:
 	move.w	x_pos(a0),x_pos(a1)
 	move.w	y_pos(a0),y_pos(a1)
 
-	move.l	a0,$30(a1)
+	move.w	a1,$3E(a0)	; remember child
 
 	move.w	x_pos(a0),$3C(a1)
 
@@ -27498,8 +27608,8 @@ Obj36_DebugCheck:
 	bge.s	ODC_End				; if not, end
 	
 	move.b	#1,($FFFFF503).w		; block debug placement
-	btst	#6,(Ctrl_1_Held).w		; is button A held?
-	bne.s	ODC_End				; if yes, branch
+	;btst	#6,(Ctrl_1_Held).w		; is button A held?
+	;bne.s	ODC_End				; if yes, branch
 	btst	#5,(Ctrl_1_Press).w		; is button C pressed?
 	beq.s	ODC_End				; if not, branch
 	move.b	#0,($FFFFF503).w		; enable debug placement
@@ -27515,7 +27625,9 @@ Obj36_DebugCheck:
 ;	beq.s	+		; if the respawn index flag isn't set, don't do this
 	bset	#0,2(a2,d0.w)	; mark spike as deleted
 +
-	jmp	(DeleteObject).l
+	movea.w	$3E(a0),a1
+	bsr.w	DeleteObject2
+	bra.w	DeleteObject
 	
 ODC_End:
 	rts
@@ -27524,17 +27636,38 @@ ODC_End:
 ; input: a0 = the object
 ; simply doesn't draw the object if off-screen rather than deleting it
 MarkObjGone_DebugSpikes:
+;	tst.b	render_flags(a0)	; is object on screen? (bit 7 set)
+;	bpl.s	+			; if not, branch
+	movea.w	$3E(a0),a1
+
 	move.w	x_pos(a0),d0
 	andi.w	#$FF80,d0
 	sub.w	(Camera_X_pos_coarse).w,d0
 	cmpi.w	#$280,d0
 	bhi.w	+
-
+	move.b	#2,routine(a1)
 	bra.w	DisplaySprite
-+	rts
++	move.b	#6,routine(a1)
+	rts
+; ===========================================================================
+MarkObjGone_NormalSpikes:
+	andi.w	#$FF80,d0
+	sub.w	(Camera_X_pos_coarse).w,d0
+	cmpi.w	#$280,d0
+	bhi.w	+
+	bra.w	DisplaySprite
++
+	lea	(Object_Respawn_Table).w,a2
+	moveq	#0,d0
+	move.b	respawn_index(a0),d0
+	beq.s	+
+	bclr	#7,2(a2,d0.w)
++
+	movea.w	$3E(a0),a1
+	bsr.w	DeleteObject2
+	bra.w	DeleteObject
 ; ===========================================================================
 ; ===========================================================================
-
 O36_ExploSpike:
 	cmpi.b	#6,subtype(a0)		; explosion spike?
 	bne.s	OU_NoExplo		; if not, ignore this all
@@ -27596,7 +27729,7 @@ loc_159DE:
 	beq.w	MarkObjGone_DebugSpikes	; if yes, branch
 
 	move.w	objoff_30(a0),d0
-	bra.w	MarkObjGone2
+	bra.w	MarkObjGone_NormalSpikes
 ; ===========================================================================
 
 Obj36_Sideways:
@@ -27640,7 +27773,7 @@ loc_15A26:
 	beq.w	MarkObjGone_DebugSpikes	; if yes, branch
 
 	move.w	objoff_30(a0),d0
-	bra.w	MarkObjGone2
+	bra.w	MarkObjGone_NormalSpikes
 ; ===========================================================================
 
 Obj36_UpsideDown:
@@ -27678,7 +27811,7 @@ loc_15A88:
 	beq.w	MarkObjGone_DebugSpikes	; if yes, branch
 
 	move.w	objoff_30(a0),d0
-	bra.w	MarkObjGone2
+	bra.w	MarkObjGone_NormalSpikes
 
 ; ---------------------------------------------------------------------------
 ; Subroutine for checking if Sonic/Tails should be hurt and hurting them if so
@@ -28170,7 +28303,7 @@ Obj_Index: ; ObjPtrs: ; loc_1600C:
 	dc.l Obj4B	; Buzzer (Buzz bomber) from EHZ
 	dc.l Obj4C	; Obj4C
 	dc.l Obj4D	; Obj4D
-	dc.l ObjNull	; Obj4E
+	dc.l Obj4E	; Obj4E
 	dc.l ObjNull	; Obj4F
 	dc.l Obj50	; Aquis (seahorse badnik) from OOZ
 	dc.l Obj51	; CNZ boss
@@ -28315,10 +28448,11 @@ Obj_Index: ; ObjPtrs: ; loc_1600C:
 	dc.l ObjDC	; Ring prize from Casino Night Zone
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
-; Object 4E, 4F, 62, D0, and D1
+; Object 4F, 62, D0, and D1
 ; Previously null objects:
 ; - $4C: Fake Debug Object
 ; - $4D: Spike Arrows
+; - $4E: Blood Particles
 
 ; Object removed from the game. All it does is deallocate its array.
 ; ----------------------------------------------------------------------------
@@ -33460,6 +33594,21 @@ Obj01_Control:
 	beq.s	+			; if not, branch
 	move.w	#1,(Debug_placement_mode).w	; change Sonic into a ring/item
 	clr.b	(Control_Locked).w		; unlock control
+	
+		move.w	(SideKick+x_pos).w,d1	; load X-pos of nearest enemy into d1
+		sub.w	x_pos(a0),d1		; sub Sonic's X-pos from it
+		move.w	(SideKick+y_pos).w,d2	; load Y-pos of nearest enemy into d1
+		sub.w	y_pos(a0),d2		; sub Sonic's Y-pos from it
+		jsr	(CalcAngle).l		; calculate the angle
+		jsr	(CalcSine).l		; calculate the sine
+		muls.w	#$A00,d0		; multiply result 1 by $900 (this line is for the Y-speed)
+		muls.w	#$A00,d1		; multiply result 2 by $900 (this line is for the X-speed)
+		asr.l	#8,d0			; align the results to the correct position in the bitfield ...
+		asr.l	#8,d1			; ... (e.g. 00000000xxxxxxxxxxxxxxxx00000000 to 0000000000000000xxxxxxxxxxxxxxxx)
+		move.w	d1,(SideKick+x_vel).w	; set final result to Sonic's X-speed
+		move.w	d0,(SideKick+y_vel).w	; set final result to Sonic's Y-speed
+
+	
 	rts
 ; -----------------------------------------------------------------------
 +	tst.b	(Control_Locked).w	; are controls locked?
@@ -35286,6 +35435,8 @@ Obj01_Hurt:
 ; loc_1B13A:
 Obj01_Hurt_Normal:
 	move.w	x_vel(a0),d0	; save X-speed for later
+	beq.s	+		; if it's zero, don't change direction
+
 	bclr	#0,status(a0)	; make Sonic face right
 	tst.w	x_vel(a0)	; is Sonic moving to the right?
 	bpl.s	+		; if yes, branch
@@ -36209,7 +36360,7 @@ Obj02_ExitChk:
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 ; loc_1BAD4:
-TailsCPU_Control: ; a0=Tails
+TailsCPU_Control: ; a0=Tails ; TailsCPU:
 ;	move.b	(Ctrl_2_Held).w,d0	; did the real player 2 hit something?
 ;	andi.b	#$7F,d0
 ;	beq.s	+			; if not, branch
@@ -36317,9 +36468,39 @@ TailsCPU_Flying_Part2:
 	bge.s	+
 	move.w	d0,(Tails_CPU_target_y).w
 +
+
+	tst.w	(Debug_placement_mode).w	; in debug mode?
+	beq.s	+				; if not, branch
+	bsr.s	TailsFly_MoveX			; move Tails on x-axis (debug)
+	bra.w	TailsFly_MoveY			; move Tails on y-axis (debug)
++
+	bsr.s	TailsFly_MoveX2			; move Tails on x-axis (normal)
+	bra.w	TailsFly_MoveY2			; move Tails on y-axis (normal)
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutines to move Tails during Flying Mode towards Sonic.
+; The first blocks are for keeping distance during debug mode.
+
+TailsDist = $40	; pixel distance in which Tails shouldn't move in debug
+; ---------------------------------------------------------------------------
+
+TailsFly_MoveX:
+	bclr	#0,status(a0)	; make Tails face right
+	move.w	x_pos(a0),d0	; get Tails' x-pos
+	sub.w	x_pos(a1),d0	; substract Sonic's x-pos from it
+	beq.w	TMX_End		; skip all this if result is zero
+	bmi.s	+		; is Tails to the right of the debug? if yes, skip
+	bset	#0,status(a0)	; make Tails face left
++	cmpi.w	#TailsDist,d0	; within block range to the right?
+	bgt.w	TailsFly_MoveX2	; if not, move Tails
+	cmpi.w	#-TailsDist,d0	; withing block range to the left?
+	bgt.w	TMX_End		; if yes, return
+
+TailsFly_MoveX2:
 	move.w	x_pos(a0),d0
 	sub.w	(Tails_CPU_target_x).w,d0
-	beq.s	loc_1BC54
+	beq.w	TMX_End
 	move.w	d0,d2
 	bpl.s	+
 	neg.w	d2
@@ -36358,58 +36539,66 @@ loc_1BC40:
 loc_1BC50:
 	add.w	d2,x_pos(a0)
 
-loc_1BC54:
-;	moveq	#1,d2
-	move.w	y_vel(a1),d2
-	bpl.s	+
-	neg.w	d2
-+	lsr.w	#8,d2
-	andi.w	#$F,d2
-	bne.s	+
-	moveq	#1,d2
-+
-	move.w	y_pos(a0),d1
-	sub.w	(Tails_CPU_target_y).w,d1
-	beq.s	loc_1BC68
-	bmi.s	loc_1BC64
-	neg.w	d2
-
-loc_1BC64:
-	add.w	d2,y_pos(a0)
-
-loc_1BC68:
-	bra.w	return_1BCDE	; always make Tails be a helicopter
-
-	lea	(Sonic_Stat_Record_Buf).w,a2
-	move.b	2(a2,d3.w),d2
-	andi.b	#$D2,d2
-	bne.s	return_1BCDE
-	or.w	d0,d1
-	bne.s	return_1BCDE
-	move.w	#6,(Tails_CPU_routine).w	; => TailsCPU_Normal
-	move.b	#0,obj_control(a0)
-	move.b	#0,anim(a0)
-	move.w	#0,x_vel(a0)
-	move.w	#0,y_vel(a0)
-	move.w	#0,inertia(a0)
-	move.b	#2,status(a0)
-	move.w	#0,move_lock(a0)
-	andi.w	#$7FFF,art_tile(a0)
-	tst.b	art_tile(a1)
-	bpl.s	+
-	ori.w	#$8000,art_tile(a0)
-+
-	move.b	layer(a1),layer(a0)
-	move.b	layer_plus(a1),layer_plus(a0)
-	cmpi.b	#9,anim(a1)
-	beq.s	return_1BCDE
-	move.b	spindash_flag(a0),d0
-	beq.s	return_1BCDE
-	move.b	d0,spindash_flag(a1)
-	bsr.w	loc_212C4
-
-return_1BCDE:
+TMX_End:
 	rts
+
+; ---------------------------------------------------------------------------
+; ===========================================================================
+; ---------------------------------------------------------------------------
+
+TailsFly_MoveY:
+	move.w	y_pos(a0),d0	; get Tails' y-pos
+	sub.w	y_pos(a1),d0	; substract Sonic's y-pos from it
+	cmpi.w	#TailsDist,d0	; within block range to the bottom?
+	bgt.w	TailsFly_MoveY2	; if not, move Tails
+	cmpi.w	#-TailsDist,d0	; withing block range to the top?
+	blt.w	TailsFly_MoveY2	; if not, branch
+	nop
+	bra.w	TMY_End		; if yes, return
+
+TailsFly_MoveY2:
+	move.w	y_pos(a0),d0
+	sub.w	(Tails_CPU_target_y).w,d0
+	beq.w	TMY_End
+	move.w	d0,d2
+	bpl.s	+
+	neg.w	d2
++
+	lsr.w	#4,d2
+	cmpi.w	#$C,d2
+	bcs.s	+
+	moveq	#$C,d2
++
+	move.b	y_vel(a1),d1
+	bpl.s	+
+	neg.b	d1
++
+	add.b	d1,d2
+	addq.w	#1,d2
+	tst.w	d0
+	bmi.s	loc2_1BC40
+	cmp.w	d0,d2
+	bcs.s	+
+	move.w	d0,d2
+	moveq	#0,d0
++
+	neg.w	d2
+	bra.s	loc2_1BC50
+; ---------------------------------------------------------------------------
+
+loc2_1BC40:
+	neg.w	d0
+	cmp.w	d0,d2
+	bcs.s	loc2_1BC50
+	move.b	d0,d2
+	moveq	#0,d0
+
+loc2_1BC50:
+	add.w	d2,y_pos(a0)
+TMY_End:
+	rts
+; ---------------------------------------------------------------------------
+; ===========================================================================
 
 ; ===========================================================================
 ; AI State where Tails follows the player normally
@@ -39300,9 +39489,6 @@ return_1D976:
 JmpTo7_DeleteObject 
 	jmp	DeleteObject
 ; ===========================================================================
-
-
-		dc.b   0,  1,  2,  3,  4,  5,  6, $FF
 
 ; ----------------------------------------------------------------------------
 ; Object 35 - Invincibility Stars
@@ -58482,6 +58668,8 @@ off_2D4A2:
 	dc.w loc_2D4EC-off_2D4A2; 1
 ; ===========================================================================
 
+ExploDelay = 2
+
 loc_2D4A6:
 	addq.b	#2,routine(a0)
 	move.l	#Obj58_MapUnc_2D50A,mappings(a0)
@@ -58492,7 +58680,7 @@ loc_2D4A6:
 	move.b	#0,priority(a0)
 	move.b	#0,collision_flags(a0)
 	move.b	#$C,width_pixels(a0)
-	move.b	#7,anim_frame_duration(a0)
+	move.b	#ExploDelay,anim_frame_duration(a0)
 	move.b	#0,mapping_frame(a0)
 	;move.w	#$C4,d0
 	tst.b	$30(a0)	; sound disabled?
@@ -58506,7 +58694,7 @@ loc_2D4A6:
 loc_2D4EC:
 	subq.b	#1,anim_frame_duration(a0)
 	bpl.s	BranchTo_JmpTo33_DisplaySprite
-	move.b	#7,anim_frame_duration(a0)
+	move.b	#ExploDelay,anim_frame_duration(a0)
 	addq.b	#1,mapping_frame(a0)
 	cmpi.b	#7,mapping_frame(a0)
 	beq.w	JmpTo50_DeleteObject
@@ -83453,8 +83641,9 @@ HudUpdate:
 	lea	(VDP_data_port).l,a6
 	tst.w	(Two_player_mode).w
 	bne.w	loc_40F50
-	tst.w	(Debug_placement_mode).w	; is debug mode on?
-	;bne.w	loc_40E9A	; if yes, branch (HudDebug:)
+	tst.w	(Debug_mode_flag).w	; is debug mode on?
+;	tst.w	(Debug_placement_mode).w	; is debug mode on?
+;	bne.w	loc_40E9A	; if yes, branch (HudDebug:)
 
 	tst.b	(Update_HUD_score).w	; does the score need updating?
 	;beq.s	Hud_ChkRings	; if not, branch
@@ -84489,6 +84678,8 @@ DebugDelay = $08
 ; ---------------------------------------------------------------------------
 ; loc_41A78:
 DebugMode:
+	jsr	(Sonic_RecordPos).l	; keep Tails following you
+
 	moveq	#0,d0
 	move.b	(Debug_placement_mode).w,d0
 	move.w	Debug_Index(pc,d0.w),d1
@@ -84688,8 +84879,8 @@ loc_41BD2:
 Debug_CheckA:
 	btst	#6,(Ctrl_1_Held).w	; is button A held?
 	beq.s	Debug_CheckC		; if not, branch
-;	btst	#5,(Ctrl_1_Press).w	; is button C pressed?
-;	beq.s	loc_41BF6		; if not, branch
+	btst	#5,(Ctrl_1_Press).w	; is button C pressed?
+	bne.s	Debug_CheckC		; if yes, branch
 	btst	#2,(Ctrl_1_Press).w	; is button left pressed?
 	beq.s	loc_41BF6		; if not, branch
 
@@ -85410,7 +85601,7 @@ PlrList_Std1_End
 ; Standard 2 - loaded for every level
 ;---------------------------------------------------------------------------------------
 PlrList_Std2: plrlistheader
-	plreq $8F80, ArtNem_Checkpoint
+	;plreq $8F80, ArtNem_Checkpoint
 	plreq $D000, ArtNem_Powerups
 	plreq $97C0, ArtNem_Shield
 	plreq $9BC0, ArtNem_Invincible_stars
@@ -85455,6 +85646,7 @@ PlrList_Ehz2: plrlistheader
 	plreq VRAMSpike_V, ArtNem_Spikes
 	plreq VRAMSpike_H, ArtNem_HorizSpike
 	plreq VRAMSpike_Arrows, ArtNem_SpikeArrows
+	plreq VRAMBlood, ArtNem_Blood
 PlrList_Ehz2_End
 ;---------------------------------------------------------------------------------------
 ; Pattern load queue
@@ -87194,6 +87386,11 @@ ArtNem_EndingTitle:	BINCLUDE	"art/nemesis/Sonic the Hedgehog 2 image at end of c
 ; Spike arrows displayed over normal level spikes
 	even
 ArtNem_SpikeArrows:	BINCLUDE	"art/nemesis/Spike arrows.bin"
+;--------------------------------------------------------------------------------------
+; Nemesis compressed art (10 blocks)
+; 8x8 Blood particles
+	even
+ArtNem_Blood:	BINCLUDE	"art/nemesis/Blood particles.bin"
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; LEVEL ART AND BLOCK MAPPINGS (16x16 and 128x128)
