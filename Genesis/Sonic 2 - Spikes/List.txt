@@ -1,9 +1,9 @@
 Top priority:
-- Add an effect when hovering over a placed spike.
+- Build first real levels.
 
 Medium priority:
 - More blood.
-- Build first real levels.
+- Ending sequence stuff.
 
 Low priority:
 - Add an undoing feature.

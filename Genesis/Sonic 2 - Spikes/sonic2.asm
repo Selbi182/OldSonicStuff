@@ -739,26 +739,39 @@ GameClrRAM:
 	bsr.w	JmpTo_SoundDriverLoad
 	bsr.w	JoypadInit
 	move.b	#0,(Game_Mode).w	; => SegaScreen
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Main Game Loop, everything before this is only done on startup.
+; ---------------------------------------------------------------------------
+
 ; loc_394:
 MainGameLoop:
+	moveq	#0,d0
 	move.b	(Game_Mode).w,d0
-	andi.w	#$3C,d0
-	jsr	GameModesArray(pc,d0.w)
+	movea.l	GameModesArray(pc,d0.w),a1
+	jsr	(a1)
 	bra.s	MainGameLoop
+
+
 ; ===========================================================================
 ; loc_3A2:
-GameModesArray: ;;
-	bra.w	SegaScreen		; $00 SEGA screen mode
-	bra.w	TitleScreen		; $04 Title screen mode
-	bra.w	Level			; $08 Demo mode
-	bra.w	Level			; $0C Zone play mode
-	bra.w	SpecialStage		; $10 Special stage play mode
-	bra.w	ContinueScreen		; $14 Continue mode
-	bra.w	TwoPlayerResults	; $18 2P results mode
-	bra.w	LevelSelectMenu2P	; $1C 2P level select mode
-	bra.w	JmpTo_EndingSequence	; $20 End sequence mode
-	bra.w	OptionsMenu		; $24 Options mode
-	bra.w	LevelSelectMenu		; $28 Level select mode
+GameModesArray:
+; ===========================================================================
+; ---------------------------------------------------------------------------
+	dc.l	SegaScreen		; $00 SEGA screen mode
+	dc.l	TitleScreen		; $04 Title screen mode
+	dc.l	Level			; $08 Demo mode
+	dc.l	Level			; $0C Zone play mode
+	dc.l	SpecialStage		; $10 Special stage play mode
+	dc.l	ContinueScreen		; $14 Continue mode
+	dc.l	TwoPlayerResults	; $18 2P results mode
+	dc.l	LevelSelectMenu2P	; $1C 2P level select mode
+	dc.l	JmpTo_EndingSequence	; $20 End sequence mode
+	dc.l	OptionsMenu		; $24 Options mode
+	dc.l	LevelSelectMenu		; $28 Level select mode
+	dc.l	SelbiSplash		; $2C Selbi Splash
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 ; loc_3CE:
 ChecksumError:
@@ -2599,98 +2612,138 @@ return_1938:
 ; a1 = destination address
 ; ------------------------------------------------------------------------
 ; KozDec_193A:
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Kosinski decompression routine
+;
+; Created by vladikcomper
+; Special thanks to flamewing and MarkeyJester
+; Modified for AS by MainMemory
+; ---------------------------------------------------------------------------
+
+_Kos_RunBitStream macro
+	dbf	d2,+
+	moveq	#7,d2
+	move.b	d1,d0
+	swap	d3
+	bpl.s	+
+	move.b	(a0)+,d0			; get desc. bitfield
+	move.b	(a0)+,d1			;
+	move.b	(a4,d0.w),d0			; reload converted desc. bitfield from a LUT
+	move.b	(a4,d1.w),d1			;
++
+	endm
+; ---------------------------------------------------------------------------
+
 KosDec:
-	subq.l	#2,sp
-	move.b	(a0)+,1(sp)
-	move.b	(a0)+,(sp)
-	move.w	(sp),d5
-	moveq	#$F,d4
+	moveq	#7,d7
+	moveq	#0,d0
+	moveq	#0,d1
+	lea	KosDec_ByteMap(pc),a4
+	move.b	(a0)+,d0			; get desc field low-byte
+	move.b	(a0)+,d1			; get desc field hi-byte
+	move.b	(a4,d0.w),d0			; reload converted desc. bitfield from a LUT
+	move.b	(a4,d1.w),d1			;
+	moveq	#7,d2				; set repeat count to 8
+	moveq	#-1,d3				; d3 will be desc field switcher
+	clr.w	d3				;
+	bra.s	KosDec_FetchNewCode
 
-loc_1946:
-	lsr.w	#1,d5
-	move	sr,d6
-	dbf	d4,+
-	move.b	(a0)+,1(sp)
-	move.b	(a0)+,(sp)
-	move.w	(sp),d5
-	moveq	#$F,d4
-+
-	move	d6,ccr
-	bcc.s	loc_1960
+KosDec_FetchCodeLoop:
+	; code 1 (Uncompressed byte)
+	_Kos_RunBitStream
 	move.b	(a0)+,(a1)+
-	bra.s	loc_1946
+
+KosDec_FetchNewCode:
+	add.b	d0,d0				; get a bit from the bitstream
+	bcs.s	KosDec_FetchCodeLoop		; if code = 0, branch
+
+	; codes 00 and 01
+	_Kos_RunBitStream
+	moveq	#0,d4				; d4 will contain copy count
+	add.b	d0,d0				; get a bit from the bitstream
+	bcs.s	KosDec_Code_01
+
+	; code 00 (Dictionary ref. short)
+	_Kos_RunBitStream
+	add.b	d0,d0				; get a bit from the bitstream
+	addx.w	d4,d4
+	_Kos_RunBitStream
+	add.b	d0,d0				; get a bit from the bitstream
+	addx.w	d4,d4
+	_Kos_RunBitStream
+	moveq	#-1,d5
+	move.b	(a0)+,d5			; d5 = displacement
+
+KosDec_StreamCopy:
+	lea	(a1,d5),a3
+	move.b	(a3)+,(a1)+			; do 1 extra copy (to compensate for +1 to copy counter)
+
+KosDec_copy:
+	move.b	(a3)+,(a1)+
+	dbf	d4,KosDec_copy
+	bra.w	KosDec_FetchNewCode
 ; ---------------------------------------------------------------------------
+KosDec_Code_01:
+	; code 01 (Dictionary ref. long / special)
+	_Kos_RunBitStream
+	move.b	(a0)+,d6			; d6 = %LLLLLLLL
+	move.b	(a0)+,d4			; d4 = %HHHHHCCC
+	moveq	#-1,d5
+	move.b	d4,d5				; d5 = %11111111 HHHHHCCC
+	lsl.w	#5,d5				; d5 = %111HHHHH CCC00000
+	move.b	d6,d5				; d5 = %111HHHHH LLLLLLLL
+	and.w	d7,d4				; d4 = %00000CCC
+	bne.s	KosDec_StreamCopy		; if CCC=0, branch
 
-loc_1960:
-	moveq	#0,d3
-	lsr.w	#1,d5
-	move	sr,d6
-	dbf	d4,+
-	move.b	(a0)+,1(sp)
-	move.b	(a0)+,(sp)
-	move.w	(sp),d5
-	moveq	#$F,d4
-+
-	move	d6,ccr
-	bcs.s	loc_19A4
-	lsr.w	#1,d5
-	dbf	d4,+
-	move.b	(a0)+,1(sp)
-	move.b	(a0)+,(sp)
-	move.w	(sp),d5
-	moveq	#$F,d4
-+
-	roxl.w	#1,d3
-	lsr.w	#1,d5
-	dbf	d4,+
-	move.b	(a0)+,1(sp)
-	move.b	(a0)+,(sp)
-	move.w	(sp),d5
-	moveq	#$F,d4
-+
-	roxl.w	#1,d3
-	addq.w	#1,d3
-	moveq	#-1,d2
-	move.b	(a0)+,d2
-	bra.s	loc_19BA
-; ---------------------------------------------------------------------------
+	; special mode (extended counter)
+	move.b	(a0)+,d4			; read cnt
+	beq.s	KosDec_Quit			; if cnt=0, quit decompression
+	subq.b	#1,d4
+	beq.w	KosDec_FetchNewCode		; if cnt=1, fetch a new code
 
-loc_19A4:
-	move.b	(a0)+,d0
-	move.b	(a0)+,d1
-	moveq	#-1,d2
-	move.b	d1,d2
-	lsl.w	#5,d2
-	move.b	d0,d2
-	andi.w	#7,d1
-	beq.s	loc_19C6
-	move.b	d1,d3
-	addq.w	#1,d3
+	lea	(a1,d5),a3
+	move.b	(a3)+,(a1)+			; do 1 extra copy (to compensate for +1 to copy counter)
+	move.w	d4,d6
+	not.w	d6
+	and.w	d7,d6
+	add.w	d6,d6
+	lsr.w	#3,d4
+	jmp	KosDec_largecopy(pc,d6.w)
 
-loc_19BA:
-	move.b	(a1,d2.w),d0
-	move.b	d0,(a1)+
-	dbf	d3,loc_19BA
-	bra.s	loc_1946
-; ---------------------------------------------------------------------------
+KosDec_largecopy:
+	rept 8
+	move.b	(a3)+,(a1)+
+	endm
+	dbf	d4,KosDec_largecopy
+	bra.w	KosDec_FetchNewCode
 
-loc_19C6:
-	move.b	(a0)+,d1
-	beq.s	loc_19D6
-	cmpi.b	#1,d1
-	beq.w	loc_1946
-	move.b	d1,d3
-	bra.s	loc_19BA
-; ---------------------------------------------------------------------------
-
-loc_19D6:
-	addq.l	#2,sp
+KosDec_Quit:
 	rts
-; End of function KosDec
+
+; ---------------------------------------------------------------------------
+; A look-up table to invert bits order in desc. field bytes
+; ---------------------------------------------------------------------------
+
+KosDec_ByteMap:
+	dc.b	$00,$80,$40,$C0,$20,$A0,$60,$E0,$10,$90,$50,$D0,$30,$B0,$70,$F0
+	dc.b	$08,$88,$48,$C8,$28,$A8,$68,$E8,$18,$98,$58,$D8,$38,$B8,$78,$F8
+	dc.b	$04,$84,$44,$C4,$24,$A4,$64,$E4,$14,$94,$54,$D4,$34,$B4,$74,$F4
+	dc.b	$0C,$8C,$4C,$CC,$2C,$AC,$6C,$EC,$1C,$9C,$5C,$DC,$3C,$BC,$7C,$FC
+	dc.b	$02,$82,$42,$C2,$22,$A2,$62,$E2,$12,$92,$52,$D2,$32,$B2,$72,$F2
+	dc.b	$0A,$8A,$4A,$CA,$2A,$AA,$6A,$EA,$1A,$9A,$5A,$DA,$3A,$BA,$7A,$FA
+	dc.b	$06,$86,$46,$C6,$26,$A6,$66,$E6,$16,$96,$56,$D6,$36,$B6,$76,$F6
+	dc.b	$0E,$8E,$4E,$CE,$2E,$AE,$6E,$EE,$1E,$9E,$5E,$DE,$3E,$BE,$7E,$FE
+	dc.b	$01,$81,$41,$C1,$21,$A1,$61,$E1,$11,$91,$51,$D1,$31,$B1,$71,$F1
+	dc.b	$09,$89,$49,$C9,$29,$A9,$69,$E9,$19,$99,$59,$D9,$39,$B9,$79,$F9
+	dc.b	$05,$85,$45,$C5,$25,$A5,$65,$E5,$15,$95,$55,$D5,$35,$B5,$75,$F5
+	dc.b	$0D,$8D,$4D,$CD,$2D,$AD,$6D,$ED,$1D,$9D,$5D,$DD,$3D,$BD,$7D,$FD
+	dc.b	$03,$83,$43,$C3,$23,$A3,$63,$E3,$13,$93,$53,$D3,$33,$B3,$73,$F3
+	dc.b	$0B,$8B,$4B,$CB,$2B,$AB,$6B,$EB,$1B,$9B,$5B,$DB,$3B,$BB,$7B,$FB
+	dc.b	$07,$87,$47,$C7,$27,$A7,$67,$E7,$17,$97,$57,$D7,$37,$B7,$77,$F7
+	dc.b	$0F,$8F,$4F,$CF,$2F,$AF,$6F,$EF,$1F,$9F,$5F,$DF,$3F,$BF,$7F,$FF
 
 ; ===========================================================================
-	nop
-
 
 
 
@@ -3172,14 +3225,20 @@ Pal_FadeTo:
 Pal_ToBlack:
 	move.w	d1,(a0)+
 	dbf	d0,Pal_ToBlack	; fill palette with $000 (black)
-	move.w	#$15,d4
+	moveq	#$0E,d4					; MJ: prepare maximum colour check
+	moveq	#$00,d6					; MJ: clear d6
 
--	move.b	#$12,(Delay_Time).w
+-	bsr.w	RunPLC_RAM
+	move.b	#$12,(Delay_Time).w
 	bsr.w	DelayProgram
+	bchg	#$00,d6					; MJ: change delay counter
+	beq.s	-					; MJ: if null, delay a frame
 	bsr.s	Pal_FadeIn
-	bsr.w	RunPLC_RAM
-	dbf	d4,-
-	rts
+	subq.b	#$02,d4					; MJ: decrease colour check
+	bne	-					; MJ: if it has not reached null, branch
+	move.b	#$12,(Delay_Time).w			; MJ: wait for V-blank again (so colours transfer)
+	bra.w	DelayProgram				; MJ: ''
+
 ; End of function Pal_FadeTo
 
 ; ---------------------------------------------------------------------------
@@ -3222,35 +3281,30 @@ return_243C:
 
 ; sub_243E:
 Pal_AddColor:
-	move.w	(a1)+,d2
-	move.w	(a0),d3
-	cmp.w	d2,d3
-	beq.s	loc_2466
-	move.w	d3,d1
-	addi.w	#$200,d1	; increase blue value
-	cmp.w	d2,d1		; has blue reached threshold level?
-	bhi.s	Pal_AddGreen	; if yes, branch
-	move.w	d1,(a0)+	; update palette
-	rts
-; ===========================================================================
-; loc_2454:
-Pal_AddGreen:
-	move.w	d3,d1
-	addi.w	#$20,d1		; increase green value
-	cmp.w	d2,d1
-	bhi.s	Pal_AddRed
-	move.w	d1,(a0)+	; update palette
-	rts
-; ===========================================================================
-; loc_2462:
-Pal_AddRed:
-	addq.w	#2,(a0)+	; increase red value
-	rts
-; ===========================================================================
+	move.b	(a1),d5					; MJ: load blue
+	move.w	(a1)+,d1				; MJ: load green and red
+	move.b	d1,d2					; MJ: load red
+	lsr.b	#$04,d1					; MJ: get only green
+	andi.b	#$0E,d2					; MJ: get only red
+	move.w	(a0),d3					; MJ: load current colour in buffer
+	cmp.b	d5,d4					; MJ: is it time for blue to fade?
+	bhi.s	FCI_NoBlue				; MJ: if not, branch
+	addi.w	#$0200,d3				; MJ: increase blue
 
-loc_2466:
-	addq.w	#2,a0
-	rts
+FCI_NoBlue:
+	cmp.b	d1,d4					; MJ: is it time for green to fade?
+	bhi.s	FCI_NoGreen				; MJ: if not, branch
+	addi.b	#$20,d3					; MJ: increase green
+
+FCI_NoGreen:
+	cmp.b	d2,d4					; MJ: is it time for red to fade?
+	bhi.s	FCI_NoRed				; MJ: if not, branch
+	addq.b	#$02,d3					; MJ: increase red
+
+FCI_NoRed:
+	move.w	d3,(a0)+				; MJ: save colour
+	rts						; MJ: return
+
 ; End of function Pal_AddColor
 
 
@@ -3259,12 +3313,15 @@ loc_2466:
 ; sub_246A:
 Pal_FadeFrom:
 	move.w	#$3F,($FFFFF626).w
-	move.w	#$15,d4
+	moveq	#$07,d4					; MJ: set repeat times
+	moveq	#$00,d6					; MJ: clear d6
 
--	move.b	#$12,(Delay_Time).w
+-	bsr.w	RunPLC_RAM
+	move.b	#$12,(Delay_Time).w
 	bsr.w	DelayProgram
+	bchg	#$00,d6					; MJ: change delay counter
+	beq.s	-					; MJ: if null, delay a frame
 	bsr.s	Pal_FadeOut
-	bsr.w	RunPLC_RAM
 	dbf	d4,-
 	rts
 ; End of function Pal_FadeFrom
@@ -3301,34 +3358,28 @@ Pal_FadeOut:
 
 ; sub_24B8:
 Pal_DecColor:
-	move.w	(a0),d2
-	beq.s	loc_24E4
-	move.w	d2,d1
-	andi.w	#$E,d1
-	beq.s	Pal_DecGreen
-	subq.w	#2,(a0)+	; decrease red value
-	rts
-; ===========================================================================
-; loc_24C8:
-Pal_DecGreen:
-	move.w	d2,d1
-	andi.w	#$E0,d1
-	beq.s	Pal_DecBlue
-	subi.w	#$20,(a0)+	; decrease green value
-	rts
-; ===========================================================================
-; loc_24D6:
-Pal_DecBlue:
-	move.w	d2,d1
-	andi.w	#$E00,d1
-	beq.s	loc_24E4
-	subi.w	#$200,(a0)+	; decrease blue value
-	rts
-; ===========================================================================
+	move.w	(a0),d5					; MJ: load colour
+	move.w	d5,d1					; MJ: copy to d1
+	move.b	d1,d2					; MJ: load green and red
+	move.b	d1,d3					; MJ: load red
+	andi.w	#$0E00,d1				; MJ: get only blue
+	beq.s	FCO_NoBlue				; MJ: if blue is finished, branch
+	subi.w	#$0200,d5				; MJ: decrease blue
 
-loc_24E4:
-	addq.w	#2,a0
-	rts
+FCO_NoBlue:
+	andi.b	#$E0,d2					; MJ: get only green
+	beq.s	FCO_NoGreen				; MJ: if green is finished, branch
+	subi.b	#$20,d5					; MJ: decrease green
+
+FCO_NoGreen:
+	andi.b	#$0E,d3					; MJ: get only red
+	beq.s	FCO_NoRed				; MJ: if red is finished, branch
+	subq.b	#$02,d5					; MJ: decrease red
+
+FCO_NoRed:
+	move.w	d5,(a0)+				; MJ: save new colour
+	rts						; MJ: return
+
 ; End of function Pal_DecColor
 
 ; ---------------------------------------------------------------------------
@@ -3990,6 +4041,15 @@ SegaScreen:
 SegaScreen_Contin:
 	moveq	#0,d0
 	bsr.w	PalLoad2
+
+	move.w	#$0000,(Normal_palette).w	; set background colour to black
+-	;bsr.w	Sega_CheckButtons
+	move.b	#2,(Delay_Time).w		; set V-Int mode
+	bsr.w	DelayProgram			; run
+	addi.w	#$0111,(Normal_palette).w	; make background brighter
+	cmpi.w	#$0FFF,(Normal_palette).w	; has white been reached?
+	bne.s	-				; if not, loop
+
 	move.w	#-$A,($FFFFF632).w
 	move.w	#0,($FFFFF634).w
 	move.w	#0,($FFFFF662).w
@@ -4003,58 +4063,81 @@ SegaScreen_Contin:
 	move.w	d0,(VDP_control_port).l
 ; loc_390E:
 Sega_WaitPalette:
-	btst	#5,(Ctrl_1_Held).w	; is C held down?
-	beq.s	+
-	move.b	#$20,(Game_Mode).w	; => EndingSequence
-	bsr.s	Sega_Remaining
-	rts
-+
-	btst	#6,(Ctrl_1_Held).w	; is A held down?
-	beq.s	+
-	move.b	#$28,(Game_Mode).w	; => LevelSelect
-	bsr.s	Sega_Remaining
-	rts
-+
+	bsr.w	Sega_CheckButtons
 	move.b	#2,(Delay_Time).w
 	bsr.w	DelayProgram
 	bsr.w	JmpTo_RunObjects
 	jsr	(BuildSprites).l
 	tst.b	($FFFFF660).w
 	beq.s	Sega_WaitPalette
-	move.b	#$7A+$80,d0
-	bsr.w	PlaySound	; play "SEGA" sound
-	move.b	#2,(Delay_Time).w
-	bsr.w	DelayProgram
-	move.w	#$B4,(Demo_Time_left).w
+
+	move.b	#$35+$80,d0		; load ring sound
+	bsr.w	PlaySound		; play it
+	move.b	#$14,(Delay_Time).w	; set V-Int mode
+	bsr.w	DelayProgram		; run
+	move.w	#25,(Demo_Time_left).w	; set interval to 25 frames
+-	bsr.w	Sega_CheckButtons
+	move.b	#2,(Delay_Time).w	; set V-Int mode
+	bsr.w	DelayProgram		; run
+	tst.w	(Demo_Time_left).w	; has demo time reached 0?
+	bne.s	-			; if not, loop
+	move.b	#$7A+$80,d0		; load "SEGA" sound
+	bsr.w	PlaySound		; play it
+	move.b	#2,(Delay_Time).w	; set V-Int mode
+	bsr.w	DelayProgram		; run
+	move.w	#130,(Demo_Time_left).w	; set interval to 130 frames
+
 ; loc_3940:
 Sega_WaitEnd:
+	bsr.w	Sega_CheckButtons
 	move.b	#$14,(Delay_Time).w
 	bsr.w	DelayProgram
 	tst.w	(Demo_Time_left).w
-	beq.s	Sega_GotoTitle
-	move.b	(Ctrl_1_Press).w,d0	; is Start button pressed?
-	or.b	(Ctrl_2_Press).w,d0	; (either player)
-	andi.b	#$80,d0
-	beq.s	Sega_WaitEnd		; if not, branch
+	bne.s	Sega_WaitEnd
 ; loc_395E:
 Sega_GotoTitle:
-	bsr.s	Sega_Remaining
-	jmp	(SelbiSplash).l
+	move.b	#$2C,(Game_Mode).w	; => SelbiSplash
+;	bra.s	Sega_Remaining		; do final stuff
 
 ;	move.b	#4,(Game_Mode).w	; => TitleScreen
 ;	move.w	#$000,d0
 ;	jmp	loc_9480
 
 Sega_Remaining:
-	clr.b	($FFFFF660).w
+	move.b	#1,(Debug_mode_flag).w	; enable debug
+	clr.w	(Demo_Time_left).w	; clear demo time
+	clr.l	($FFFFF660).w		; clear F660 anf F662 for whatever reason
+	rts				; return
 
-	clr.w	(Demo_Time_left).w
+Sega_CheckButtons:
+	move.b	(Ctrl_1_Press).w,d0	; is Start button pressed?
+	or.b	(Ctrl_2_Press).w,d0	; (either player)
+	andi.b	#$80,d0			; and it
+	beq.s	+
+	addq.l	#4,sp			; return to MainGameLoop
+	bra.s	Sega_GotoTitle		; if not, branch
++
+	btst	#5,(Ctrl_1_Held).w	; is C held down?
+	beq.s	+			; if not, branch
+	move.b	#$20,(Game_Mode).w	; => EndingSequence
+	addq.l	#4,sp			; return to MainGameLoop
+	bra.s	Sega_Remaining		; do final stuff
++
+	btst	#4,(Ctrl_1_Held).w	; is B held down?
+	beq.s	+			; if not, branch
+	move.b	#$04,(Game_Mode).w	; => TitleScreen
+	addq.l	#4,sp			; return to MainGameLoop
+	bra.s	Sega_Remaining		; do final stuff
++
+	btst	#6,(Ctrl_1_Held).w	; is A held down?
+	beq.s	+			; if not, branch
+	move.b	#$28,(Game_Mode).w	; => LevelSelect
+	addq.l	#4,sp			; return to MainGameLoop
+	bra.s	Sega_Remaining		; do final stuff
++
+	rts				; return
 
-	move.b	#1,(Debug_mode_flag).w
 
-	clr.w	($FFFFF660).w
-	clr.w	($FFFFF662).w
-	rts
 ; ---------------------------------------------------------------------------
 ; Subroutine that does the exact same thing as ShowVDPGraphics2
 ; (this one is used at the Sega screen)
@@ -4242,8 +4325,9 @@ TitleScreen_Loop:
 
 	bsr.w	RunPLC_RAM
 	bsr.w	TailsNameCheat
-	tst.w	(Demo_Time_left).w
-	beq.w	loc_3D2E
+	tst.w	(Demo_Time_left).w	; demo time left?
+;	beq.w	loc_3D2E		; if not, start demo
+	beq.s	TS_StartGame		; if not, start level
 	tst.b	(Object_RAM+next_object+objoff_2F).w
 	beq.w	TitleScreen_Loop
 	move.b	(Ctrl_1_Press).w,d0
@@ -4251,6 +4335,7 @@ TitleScreen_Loop:
 	andi.b	#$80,d0
 	beq.w	TitleScreen_Loop ; loop until Start is pressed
 
+TS_StartGame:
 	move.b	#$C,(Game_Mode).w ; => Level (Zone play mode)
 	move.b	#3,(Life_count).w
 	move.b	#3,(Life_count_2P).w
@@ -12034,6 +12119,8 @@ JmpTo2_Dynamic_Normal
 ; ===========================================================================
 ; loc_9C7C:
 EndingSequence:
+	bsr.w	Pal_FadeFrom
+
 	clearRAM Object_RAM,$2000
 	clearRAM Misc_Variables,$100
 	clearRAM Camera_RAM,$100
@@ -16300,9 +16387,14 @@ sub_D77A:
 	moveq	#0,d1
 	move.w	y_pos(a0),d0
 	sub.w	(a1),d0
-	cmpi.w	#-$100,(Camera_Min_Y_pos).w
-	bne.s	loc_D78E
-	andi.w	#$7FF,d0
+	tst.w	(Camera_Min_Y_pos).w		; Does this level y-wrap?
+	bpl.s	loc_D78E			; If not, branch and skip looping
+	cmpi.w	#$60,(Camera_Y_pos_bias).w	; Is screen in its default position?
+	beq.s	+				; If so, branch, and loop
+	tst.w	(Sonic_Look_delay_counter).w	; Is Sonic still looking up or down?
+	bne.s	+				; If so, branch, and keep looping, Sonic ain't moving anywhere!
+	move.w	#$60,(Camera_Y_pos_bias).w	; move the screen to its default position quickly
++    	andi.w	#$7FF,d0			; Forever loop
 
 loc_D78E:
 	btst	#2,status(a0)
@@ -24586,9 +24678,12 @@ ObjC9:
 	move.w	loc_132FE(pc,d0.w),d1
 	jmp	loc_132FE(pc,d1.w)
 ; ===========================================================================
-
 loc_132FE:
-	ori.b	#$46,d4
+	dc.w	loc_13302-loc_132FE
+	dc.w	NewRoutine-loc_132FE
+; ===========================================================================
+
+loc_13302:
 	addq.b	#2,routine(a0)
 	moveq	#0,d0
 	move.b	subtype(a0),d0
@@ -24602,6 +24697,7 @@ loc_132FE:
 	adda.w	d0,a3
 	move.b	(a1)+,d0
 	move.w	d0,objoff_36(a0)
+	move.b	#$0E,objoff_33(a0)			; MJ: set fade counter
 
 loc_1332E:
 	move.w	(a2)+,(a3)+
@@ -24612,13 +24708,16 @@ loc_1332E:
 	move.b	(a1)+,objoff_32(a0)
 	rts
 ; ===========================================================================
-	; unused/dead code ; a0=object
 
+NewRoutine:
 	subq.b	#1,objoff_30(a0)
 	bpl.s	return_1337A
 	move.b	objoff_31(a0),objoff_30(a0)
 	subq.b	#1,objoff_32(a0)
 	bmi.w	DeleteObject
+	moveq	#$00,d4					; MJ: clear d4
+	move.b	objoff_33(a0),d4			; MJ: load fade counter
+	subq.b	#$02,objoff_33(a0)			; MJ: decrease fade counter
 	movea.l	objoff_3A(a0),a2
 	movea.l	a0,a3
 	move.w	objoff_36(a0),d0
@@ -24652,7 +24751,7 @@ C9PalInfo macro codeptr,dataptr,loadtoOffset,length,fadeinTime,fadeinAmount
 	dc.b loadtoOffset, length, fadeinTime, fadeinAmount
     endm
 
-off_1338C:	C9PalInfo Pal_AddColor, Pal_1342C, $60, $F,2,$15
+off_1338C:	C9PalInfo Pal_AddColor, Pal_1342C, $60, $F,2,$07
 off_13398:	C9PalInfo    loc_1344C, Pal_1340C, $40, $F,4,7
 off_133A4:	C9PalInfo    loc_1344C,  Pal_AD1E,   0, $F,8,7
 off_133B0:	C9PalInfo    loc_1348A,  Pal_AD1E,   0, $F,8,7
@@ -24803,6 +24902,7 @@ loc_135C6:
 loc_135D6:
 	move.l	(a1)+,(a2)+
 	dbf	d6,loc_135D6
+	sf.b	(Object_RAM+($100+$32)).w			; MJ: set fade counter to 00 (finish)
 	tst.b	objoff_30(a0)
 	bne.s	return_135E8
 	moveq	#$19+$80,d0 ; title music
@@ -25306,14 +25406,11 @@ loc_13F44: ;thatonething:
 	moveq	#2,d0			; load the standard water graphics
 	bsr.w	JmpTo3_LoadPLC
 
-	moveq	#0,d0
-	move.b	(Current_Zone).w,d0
-	move.b	byte_13F62(pc,d0.w),d0	; load the animal graphics for the current zone
-	bsr.w	JmpTo3_LoadPLC
+;	moveq	#0,d0
+;	move.b	(Current_Zone).w,d0
+;	move.b	byte_13F62(pc,d0.w),d0	; load the animal graphics for the current zone
+;	bsr.w	JmpTo3_LoadPLC
 	
-	moveq	#$3B,d0
-	bsr.w	JmpTo3_LoadPLC
-
 BranchTo10_DeleteObject 
 	bra.w	DeleteObject; delete the title card object
 ; ===========================================================================
@@ -26968,13 +27065,159 @@ JmpTo_sub_8476
 	jmp	sub_8476.l
 ; End of function JmpTo_sub_8476
 
+; ===========================================================================
+; ----------------------------------------------------------------------------
+; VRAM settings for spikes & co.
+
+VRAM_Explosion =	$73C0					; base offset for everything that's to come
+Size_Explo =		04 + (7 * 16)				; 4 = small explosion; 7 = number of big explosions; 16 = tiles per big explosion
+
+VRAM_Blood =		VRAM_Explosion+((Size_Explo)*$20)	; offset for blood particles
+Size_Blood =		10 * 01					; 9 = number of blood paricles; 01 = tiles per blood particle
+
+Size_Spikes =		5 * 08					; 5 = spike types in total; 08 = number of tiles per spike
+VRAM_SpikeV =		VRAM_Blood+((Size_Blood)*$20)		; offset for vertical spikes
+VRAM_SpikeH =		VRAM_SpikeV+((Size_Spikes)*$20)		; offset for horizontal spikes
+
+VRAM_SArrows =		VRAM_SpikeH+((Size_Spikes)*$20)		; offset for spike arrows
+Size_Arrow =		18					; 18 = number of tiles per arrow block
+
+VRAM_SGrid =		VRAM_SArrows+((Size_Arrow)*$20*2)	; offset for debug spike grid
+; ----------------------------------------------------------------------------
+; ===========================================================================
+
+; ===========================================================================
+; ----------------------------------------------------------------------------
+; Object 4D - Spike Arrows & Spike Grid
+; ----------------------------------------------------------------------------
+
+Obj4D:
+	moveq	#0,d0
+	move.b	routine(a0),d0
+	move.w	Obj4D_Index(pc,d0.w),d1
+	jmp	Obj4D_Index(pc,d1.w)
+; ===========================================================================
+Obj4D_Index:
+	dc.w Obj4D_Init   - Obj4D_Index	; $0
+	dc.w Obj4D_Main   - Obj4D_Index	; $2
+	dc.w Obj4D_Debug  - Obj4D_Index	; $4
+	dc.w Obj4D_Idle   - Obj4D_Index	; $6
+	dc.w Obj4D_Grid1  - Obj4D_Index	; $8
+	dc.w Obj4D_Grid2  - Obj4D_Index	; $A
+; ===========================================================================
+
+Obj4D_Init:
+	addq.b	#2,routine(a0)	; set to next routine
+
+	move.l	#Obj4D_MapUnc_Arrow,mappings(a0)	; set mappings
+	move.w	#$2000+(VRAM_SArrows/$20),art_tile(a0) ; set tile offset
+
+	move.b	#15*2,d0	; set default interval value (level 1 *2)
+	move.b	$37(a0),d1	; get level type (1, 2, 3)
+	lsr.b	d1,d0		; 15 on 1, 07 on 2, 03 on 3
+	move.b	d0,$37(a0)	; store result
+	
+	jsr	RandomNumber	; get a random number
+	move.b	d0,$3F(a0)	; set result as random start value for sine stuff
+; ===========================================================================
+
+Obj4D_Main:
+	move.b	$3F(a0),d0	; get next saved add position
+	jsr	(CalcSine).l	; calc new sine
+	asr.w	#6,d0		; drastically shrink it down
+	add.w	$3C(a0),d0	; add original Y-pos
+	addq.b	#2,$3F(a0)	; increase for next frame
+	tst.b	$38(a0)		; is this a horizontal spike?
+	bne.s	+		; if not, branch
+	move.w	d0,x_pos(a0)	; save result to new X-pos
+	bra.s	O4D_skip	; skip
++	move.w	d0,y_pos(a0)	; save result to new Y-pos
+O4D_skip:
+	addq.b	#1,$35(a0)	; increase one to blink counter
+	move.b	$37(a0),d0	; get saved blink interval time
+	cmp.b	$35(a0),d0	; blink toggle time reached?
+	bpl.s	+		; if not, branch
+	clr.b	$35(a0)		; reset blink counter
+
+	eori.b	#1,$34(a0)	; toggle state flag
+	addi.w	#Size_Arrow,art_tile(a0) ; set to gray
+	tst.b	$34(a0)		; already gray?
+	bne.s	+		; if not, branch
+	subi.w	#Size_Arrow*2,art_tile(a0) ; reset to yellow
++	jmp	(DisplaySprite).l
+; ===========================================================================
+
+Obj4D_Debug:
+	tst.w	(Debug_placement_mode).w ; is debug placement mode enabled?
+	beq.s	Obj4D_Delete		; if not, delete object
+	btst	#6,(Ctrl_1_Held).w	; is button A still held?
+	bne.s	+			; if yes, branch
+	rts				; if not, don't do anything
++
+	move.w	($FFFFF504).w,x_pos(a0)	; set evened X-pos to this one's
+	move.w	($FFFFF506).w,y_pos(a0)	; set evened Y-pos to this one's
+
+	btst	#2,(Ctrl_1_Press).w	; is button left pressed?
+	beq.s	+			; if not, branch
+	move.b	#7,mapping_frame(a0)	; set "left arrow yellow" frame
+	move.b	#5,$30(a0)		; reset delay?
++	btst	#3,(Ctrl_1_Press).w	; is button right pressed?
+	beq.s	+			; if not, branch
+	move.b	#8,mapping_frame(a0)	; set "right arrow yellow" frame
+	move.b	#6,$30(a0)		; reset delay
++
+	tst.b	$30(a0)			; delay done?
+	beq.s	+			; if yes, reset to gray
+	subq.b	#1,$30(a0)		; if not, reduce delay
+	bra.s	Obj4D_Display		; skip
++	move.b	#6,mapping_frame(a0)	; set default frame
+
+Obj4D_Display:
+	jmp	(DisplaySprite).l
+; ===========================================================================
+
+Obj4D_Delete:
+	jmp	(DeleteObject).l	; delete object
+; ===========================================================================
+
+Obj4D_Idle:
+	rts				; do nothing
+; ===========================================================================
+
+Obj4D_Grid1:
+	addq.b	#2,routine(a0)			; set to next routine
+
+	move.l	#Obj4D_MapUnc_Grid,mappings(a0)	; set mappings
+	move.w	#(VRAM_SGrid/$20),art_tile(a0) ; set tile offset
+	move.b	#$84,render_flags(a0)		; make sure the damn thing even displays
+	move.b	#1,priority(a0)			; place it above spikes
+; ----------------------------------------------------------------------------
+
+Obj4D_Grid2:
+	btst	#0,(Timer_frames+1).w	; every other frame reached?
+	bne.s	++			; if not, branch
+	eori.b	#1,$30(a0)		; xor flag
+	bne.s	+			; if it isn't zero, branch
+	bchg	#0,render_flags(a0)	; change horizontal mirror flag
+	bra.s	++			; display object
++	bchg	#1,render_flags(a0)	; change vertical mirror flag
++	bra.w	Obj4D_Display		; display object
+; ===========================================================================
+
+; ===========================================================================
+; -------------------------------------------------------------------------------
+; sprite mappings
+; -------------------------------------------------------------------------------
+Obj4D_MapUnc_Arrow:		BINCLUDE "mappings/sprite/obj4D.bin"
+Obj4D_MapUnc_Grid:		dc.w $0002, $0001, $F00F,$0000,$0000,$FFF0
+; ----------------------------------------------------------------------------
+; ===========================================================================
 
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
 ; Object 4E - Blood Particles
 
-VRAMBlood =	$8EC0
-BloodInterval =	4
+BloodInterval =	5	; frames to wait between showing the successing frame
 ; ----------------------------------------------------------------------------
 
 Obj4E:
@@ -27022,7 +27265,7 @@ Obj4E_InitChild:
 
 	move.b	#4,routine(a0)			; set all objects to next routine
 	move.l	#Obj4E_MapUnc,mappings(a0)	; set mappings
-	move.w	#(VRAMBlood/$20),art_tile(a0)	; set tile offset
+	move.w	#(VRAM_Blood/$20),art_tile(a0)	; set tile offset
 	move.b	#BloodInterval,$30(a0)		; set default interval value
 	andi.b	#3,render_flags(a0)		; make sure the different flip flags didn't mess with anything else
 	ori.b	#$84,render_flags(a0)		; make sure the damn thing actually appears
@@ -27030,12 +27273,12 @@ Obj4E_InitChild:
 
 Obj4E_Main:
 	tst.b	render_flags(a0)		; did the sprite leave the screen?
-	bpl.s	Obj4E_Delete			
+	bpl.s	Obj4E_Delete			; if yes, delete object
 	subq.b	#1,$30(a0)			; substract 1 from interval
 	bne.s	+				; is it zero? if not, branch
 	move.b	#BloodInterval,$30(a0)		; if yes, reset interval
 	addq.b	#1,mapping_frame(a0)		; show next frame
-	cmpi.b	#$A,mapping_frame(a0)		; has the last frame finished playing? (9+1)
+	cmpi.b	#Size_Blood,mapping_frame(a0)	; has the last frame finished playing?
 	beq.s	Obj4E_Delete			; if yes, delete object
 +
 	jsr	(ObjectMoveAndFall).l		; make sprite fall
@@ -27053,9 +27296,6 @@ Obj4E_Delete:
 ; -------------------------------------------------------------------------------
 Obj4E_MapUnc:		BINCLUDE "mappings/sprite/Obj4E.bin"
 ; ===========================================================================
-
-
-
 
 
 ; ===========================================================================
@@ -27154,10 +27394,7 @@ Spike_Hurt:
 	move.b	#$4E,(a1)
 	move.w	(MainCharacter+x_pos).w,x_pos(a1)
 	move.w	(MainCharacter+y_pos).w,y_pos(a1)
-
 +
-
-
 	rts
 
 ; ----------------------------------------------------------------------------
@@ -27307,120 +27544,6 @@ SHE_Abort:
 ; ===========================================================================
 
 ; ===========================================================================
-; VRAM settings for spikes
-VRAMSpike_Size =	($20 * 8) * 5			; $20 = 1 tile; 8 = number of tiles per spike; 5 = spikes in total
-VRAMSpike_V =		$8040				; default offset (right after explosions)
-VRAMSpike_H =		VRAMSpike_V + VRAMSpike_Size	; right after vertical spikes
-VRAMSpike_Arrows =	VRAMSpike_H + VRAMSpike_Size	; right after horizontal spikes
-
-VRAMSArr_Size =		2 * 9				; size of one arrow VRAM block
-; ===========================================================================
-
-; ===========================================================================
-; ----------------------------------------------------------------------------
-; Object 4D - Spike Arrows
-; ----------------------------------------------------------------------------
-
-Obj4D:
-	moveq	#0,d0
-	move.b	routine(a0),d0
-	move.w	Obj4D_Index(pc,d0.w),d1
-	jmp	Obj4D_Index(pc,d1.w)
-; ===========================================================================
-Obj4D_Index:
-	dc.w Obj4D_Init  - Obj4D_Index	; $0
-	dc.w Obj4D_Main  - Obj4D_Index	; $2
-	dc.w Obj4D_Debug - Obj4D_Index	; $4
-	dc.w Obj4D_Idle  - Obj4D_Index	; $6
-; ===========================================================================
-
-Obj4D_Init:
-	addq.b	#2,routine(a0)	; set to next routine
-
-	move.l	#Obj4D_MapUnc,mappings(a0)	; set mappings
-	move.w	#$2000+(VRAMSpike_Arrows/$20),art_tile(a0) ; set tile offset
-
-	move.b	#15*2,d0	; set default interval value (level 1 *2)
-	move.b	$37(a0),d1	; get level type (1, 2, 3)
-	lsr.b	d1,d0		; 15 on 1, 07 on 2, 03 on 3
-	move.b	d0,$37(a0)	; store result
-	
-	jsr	RandomNumber	; get a random number
-	move.b	d0,$3F(a0)	; set result as random start value for sine stuff
-; ===========================================================================
-
-Obj4D_Main:
-	move.b	$3F(a0),d0	; get next saved add position
-	jsr	(CalcSine).l	; calc new sine
-	asr.w	#6,d0		; drastically shrink it down
-	add.w	$3C(a0),d0	; add original Y-pos
-	addq.b	#2,$3F(a0)	; increase for next frame
-	tst.b	$38(a0)		; is this a horizontal spike?
-	bne.s	+		; if not, branch
-	move.w	d0,x_pos(a0)	; save result to new X-pos
-	bra.s	O4D_skip	; skip
-+	move.w	d0,y_pos(a0)	; save result to new Y-pos
-O4D_skip:
-	addq.b	#1,$35(a0)	; increase one to blink counter
-	move.b	$37(a0),d0	; get saved blink interval time
-	cmp.b	$35(a0),d0	; blink toggle time reached?
-	bpl.s	+		; if not, branch
-	clr.b	$35(a0)		; reset blink counter
-
-	eori.b	#1,$34(a0)	; toggle state flag
-	addi.w	#VRAMSArr_Size,art_tile(a0) ; set to gray
-	tst.b	$34(a0)		; already gray?
-	bne.s	+		; if not, branch
-	subi.w	#VRAMSArr_Size*2,art_tile(a0) ; reset to yellow
-+	jmp	(DisplaySprite).l
-; ===========================================================================
-
-Obj4D_Debug:
-	tst.w	(Debug_placement_mode).w ; is debug placement mode enabled?
-	beq.s	Obj4D_Delete		; if not, delete object
-	btst	#6,(Ctrl_1_Held).w	; is button A still held?
-	bne.s	+			; if yes, branch
-	rts				; if not, don't do anything
-+
-	move.w	($FFFFF504).w,x_pos(a0)	; set evened X-pos to this one's
-	move.w	($FFFFF506).w,y_pos(a0)	; set evened Y-pos to this one's
-
-	btst	#2,(Ctrl_1_Press).w	; is button left pressed?
-	beq.s	+			; if not, branch
-	move.b	#7,mapping_frame(a0)	; set "left arrow yellow" frame
-	move.b	#5,$30(a0)		; reset delay?
-+	btst	#3,(Ctrl_1_Press).w	; is button right pressed?
-	beq.s	+			; if not, branch
-	move.b	#8,mapping_frame(a0)	; set "right arrow yellow" frame
-	move.b	#6,$30(a0)		; reset delay
-+
-	tst.b	$30(a0)			; delay done?
-	beq.s	+			; if yes, reset to gray
-	subq.b	#1,$30(a0)		; if not, reduce delay
-	bra.s	Obj4D_Display		; skip
-+	move.b	#6,mapping_frame(a0)	; set default frame
-
-Obj4D_Display:
-	jmp	(DisplaySprite).l
-; ===========================================================================
-
-Obj4D_Delete:
-	jmp	(DeleteObject).l	; delete object
-; ===========================================================================
-
-Obj4D_Idle:
-	rts				; do nothing
-; ===========================================================================
-
-; ===========================================================================
-; -------------------------------------------------------------------------------
-; sprite mappings
-; -------------------------------------------------------------------------------
-Obj4D_MapUnc:		BINCLUDE "mappings/sprite/obj4D.bin"
-; ===========================================================================
-
-
-; ===========================================================================
 ; ----------------------------------------------------------------------------
 ; Object 36 - Spikes
 ; ----------------------------------------------------------------------------
@@ -27483,14 +27606,15 @@ Obj36_Init:
 	move.b	(a1)+,y_radius(a0)
 	lsr.w	#1,d0
 	move.b	d0,mapping_frame(a0)
+	move.w	#0,$3C(a0)	; make sure there is no grid child set
 
 ; === SETTING SPECIALIZED ART TILE BASED ON SUBTYPE ==
 	move.b	subtype(a0),d1
 
-	move.w	#(VRAMSpike_V/$20),d2
+	move.w	#(VRAM_SpikeV/$20),d2
 	cmpi.b	#4,d0		; horizontal spike?
 	bcs.s	+		; if not, branch
-	move.w	#(VRAMSpike_H/$20),d2
+	move.w	#(VRAM_SpikeH/$20),d2
 +
 			; default
 	move.w	d2,d3		; gray spikes
@@ -27589,7 +27713,7 @@ DebugRange = $20
 
 Obj36_DebugCheck:
 	tst.w	(Debug_placement_mode).w	; is debug placement mode enabled?
-	beq.s	ODC_End				; if not, branch
+	beq.w	ODC_DelGrid			; if not, branch
 	
 	;move.w	(MainCharacter+x_pos).w,d0	; get debug X-position
 	move.w	($FFFFF504).w,d0		; get evened debug X-position
@@ -27597,7 +27721,7 @@ Obj36_DebugCheck:
 	bpl.s	+				; branch if positive
 	neg.w	d0				; otherwise make it positive
 +	cmpi.w	#DebugRange,d0			; in range?
-	bge.s	ODC_End				; if not, end
+	bge.s	ODC_DelGrid			; if not, end
 	
 	;move.w	(MainCharacter+y_pos).w,d0	; get debug Y-position
 	move.w	($FFFFF506).w,d0		; get evened debug Y-position
@@ -27605,8 +27729,20 @@ Obj36_DebugCheck:
 	bpl.s	+				; branch if positive
 	neg.w	d0				; otherwise make it positive
 +	cmpi.w	#DebugRange,d0			; in range?
-	bge.s	ODC_End				; if not, end
-	
+	bge.s	ODC_DelGrid			; if not, end
+
+; -> Debug location is at spike
+
+	tst.w	$3C(a0)			; does child already exist?
+	bne.s	+			; if yes, branch
+	jsr	(SingleObjLoad2).l	; if not, load new object
+	bne.s	+			; branch if SST is full
+	move.b	#$4D,(a1)		; load arrow object
+	move.b	#8,routine(a1)		; change it to grid object
+	move.w	x_pos(a0),x_pos(a1)	; copy x-pos
+	move.w	y_pos(a0),y_pos(a1)	; copy y-pos
+	move.w	a1,$3C(a0)		; remember child
++
 	move.b	#1,($FFFFF503).w		; block debug placement
 	;btst	#6,(Ctrl_1_Held).w		; is button A held?
 	;bne.s	ODC_End				; if yes, branch
@@ -27625,10 +27761,18 @@ Obj36_DebugCheck:
 ;	beq.s	+		; if the respawn index flag isn't set, don't do this
 	bset	#0,2(a2,d0.w)	; mark spike as deleted
 +
-	movea.w	$3E(a0),a1
-	bsr.w	DeleteObject2
-	bra.w	DeleteObject
-	
+	movea.w	$3E(a0),a1	; load arrow child
+	bsr.w	DeleteObject2	; delete it
+	bsr.s	ODC_DelGrid	; delete grid object
+	bsr.w	DeleteObject	; delete main object
+
+ODC_DelGrid:
+	tst.w	$3C(a0)			; does grid already exist?
+	beq.s	ODC_End			; if not, branch
+	movea.w	$3C(a0),a1		; load grid into a1
+	jsr	(DeleteObject2).l	; delete it
+	clr.w	$3C(a0)			; reset child storer
+
 ODC_End:
 	rts
 ; ===========================================================================
@@ -27672,10 +27816,10 @@ O36_ExploSpike:
 	cmpi.b	#6,subtype(a0)		; explosion spike?
 	bne.s	OU_NoExplo		; if not, ignore this all
 
-	move.w	#(VRAMSpike_V/$20)+($08*4),d1
+	move.w	#(VRAM_SpikeV/$20)+($08*4),d1
 	cmpi.b	#4,routine(a0)		; horizontal spike?
 	bne.s	+
-	move.w	#(VRAMSpike_H/$20)+($08*4),d1
+	move.w	#(VRAM_SpikeH/$20)+($08*4),d1
 +
 	move.b	(Timer_frames+1).w,d0
 	btst	#0,d0
@@ -28470,20 +28614,16 @@ ObjNull: ;;
 
 ; sub_16380: ObjectFall:
 ObjectMoveAndFall:
-	move.l	x_pos(a0),d2	; load x position
-	move.l	y_pos(a0),d3	; load y position
-	move.w	x_vel(a0),d0	; load x speed
-	ext.l	d0
-	asl.l	#8,d0	; shift velocity to line up with the middle 16 bits of the 32-bit position
-	add.l	d0,d2	; add x speed to x position	; note this affects the subpixel position objoff_A(a0) = 2+x_pos(a0)
-	move.w	y_vel(a0),d0	; load y speed
-	addi.w	#$38,y_vel(a0)	; increase vertical speed (apply gravity)
-	ext.l	d0
-	asl.l	#8,d0	; shift velocity to line up with the middle 16 bits of the 32-bit position
-	add.l	d0,d3	; add old y speed to y position	; note this affects the subpixel position objoff_E(a0) = 2+y_pos(a0)
-	move.l	d2,x_pos(a0)	; store new x position
-	move.l	d3,y_pos(a0)	; store new y position
-	rts
+        move.w  x_vel(a0),d0
+        ext.l   d0
+        lsl.l   #8,d0
+        add.l   d0,x_pos(a0)
+        move.w  y_vel(a0),d0
+        addi.w  #$38,y_vel(a0) ; apply gravity
+        ext.l   d0
+        lsl.l   #8,d0
+        add.l   d0,y_pos(a0)
+        rts
 ; End of function ObjectMoveAndFall
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -28497,19 +28637,15 @@ ObjectMoveAndFall:
 
 ; sub_163AC: SpeedToPos:
 ObjectMove:
-	move.l	x_pos(a0),d2	; load x position
-	move.l	y_pos(a0),d3	; load y position
-	move.w	x_vel(a0),d0	; load horizontal speed
-	ext.l	d0
-	asl.l	#8,d0	; shift velocity to line up with the middle 16 bits of the 32-bit position
-	add.l	d0,d2	; add to x-axis position	; note this affects the subpixel position objoff_A(a0) = 2+x_pos(a0)
-	move.w	y_vel(a0),d0	; load vertical speed
-	ext.l	d0
-	asl.l	#8,d0	; shift velocity to line up with the middle 16 bits of the 32-bit position
-	add.l	d0,d3	; add to y-axis position	; note this affects the subpixel position objoff_E(a0) = 2+y_pos(a0)
-	move.l	d2,x_pos(a0)	; update x-axis position
-	move.l	d3,y_pos(a0)	; update y-axis position
-	rts
+        move.w  x_vel(a0),d0
+        ext.l   d0
+        lsl.l   #8,d0
+        add.l   d0,x_pos(a0)
+        move.w  y_vel(a0),d0
+        ext.l   d0
+        lsl.l   #8,d0
+        add.l   d0,y_pos(a0)
+        rts
 ; End of function ObjectMove
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -33660,11 +33796,11 @@ Obj01_Modes:
 
 ; loc_1A0C6:
 Sonic_Display:
-	move.w	invulnerable_time(a0),d0
-	beq.s	Obj01_Display
-	subq.w	#1,invulnerable_time(a0)
-	lsr.w	#3,d0
-	bcc.s	Obj01_ChkInvin
+;	move.w	invulnerable_time(a0),d0
+;	beq.s	Obj01_Display
+;	subq.w	#1,invulnerable_time(a0)
+;	lsr.w	#3,d0
+;	bcc.s	Obj01_ChkInvin
 ; loc_1A0D4:
 Obj01_Display:
 	jsr	DisplaySprite
@@ -34597,6 +34733,7 @@ Sonic_Boundary_CheckBottom:
 	rts
 ; ---------------------------------------------------------------------------
 Sonic_Boundary_Bottom: ;;
+	addq.l	#4,sp
 	bra.w	JmpTo_KillCharacter
 ; ===========================================================================
 
@@ -35519,7 +35656,6 @@ Sonic_HurtStop:
 	move.b	#0,anim(a0)
 	subq.b	#2,routine(a0)	; => Obj01_Control
 	;move.w	#$78,invulnerable_time(a0)
-	move.w	#$1,invulnerable_time(a0)
 	move.b	#0,spindash_flag(a0)
 
 return_1B1C8:
@@ -37580,6 +37716,7 @@ Tails_Boundary_CheckBottom:
 	rts
 ; ---------------------------------------------------------------------------
 Tails_Boundary_Bottom: ;;
+	addq.l	#4,sp
 	bra.w	JmpTo2_KillCharacter
 ; ===========================================================================
 
@@ -58674,7 +58811,7 @@ loc_2D4A6:
 	addq.b	#2,routine(a0)
 	move.l	#Obj58_MapUnc_2D50A,mappings(a0)
 	;move.w	#$8580,art_tile(a0)
-	move.w	#$8000+($73C0/$20),art_tile(a0)
+	move.w	#$8000+(VRAM_Explosion/$20),art_tile(a0)
 	bsr.w	JmpTo59_Adjust2PArtPointer
 	move.b	#4,render_flags(a0)
 	move.b	#0,priority(a0)
@@ -81888,8 +82025,8 @@ Touch_NoHurt:
 ; loc_3F86E:
 Touch_Hurt:
 	nop
-	tst.w	invulnerable_time(a0)
-	bne.s	Touch_NoHurt
+;	tst.w	invulnerable_time(a0)
+;	bne.s	Touch_NoHurt
 	movea.l	a1,a2
 
 ; End of function TouchResponse
@@ -81951,7 +82088,7 @@ Hurt_Reverse:
 Hurt_ChkSpikes:
 	move.w	#0,inertia(a0)
 	move.b	#$1A,anim(a0)
-	move.w	#$78,invulnerable_time(a0)
+;	move.w	#$78,invulnerable_time(a0)
 	move.w	#$23+$80,d0	; load normal damage sound
 	cmpi.b	#$36,(a2)	; was damage caused by spikes?
 	bne.s	Hurt_Sound	; if not, branch
@@ -84753,8 +84890,8 @@ loc_41AFC:
 	bne.s	+			; skip if SST is full
 	move.b	#$4D,(a1)		; load to spike arrow object
 	move.b	#4,routine(a1)		; give it its specialized routine (debug A arrows)
-	move.l	#Obj4D_MapUnc,mappings(a1) ; set mappings
-	move.w	#$2000+(VRAMSpike_Arrows/$20),art_tile(a1) ; set tile offset
+	move.l	#Obj4D_MapUnc_Arrow,mappings(a1) ; set mappings
+	move.w	#$2000+(VRAM_SArrows/$20),art_tile(a1) ; set tile offset
 	move.b	#6,mapping_frame(a1)	; set default frame
 	move.w	($FFFFF504).w,x_pos(a1)	; copy evened x-pos
 	move.w	($FFFFF506).w,y_pos(a1)	; copy evened y-pos
@@ -85093,48 +85230,48 @@ DbgObjList_EHZ: dbglistheader
 ;	dbglistobj $36, Obj36_MapUnc_15B68, $40,   4,  2, $42C+$00	; level 1 sideways
 
 ; level 1
-	dbglistobj $00, Obj36_MapUnc_15B68,   1,   8,  2, (VRAMSpike_V/$20)+$00	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   1,   8,  2, (VRAMSpike_V/$20)+$00	; x-flip
-	dbglistobj $01, Obj36_MapUnc_15B68, $41,  11,  2, (VRAMSpike_H/$20)+$00	; x-flip sideways
-	dbglistobj $00, Obj36_MapUnc_15B68, $41,  11,  2, (VRAMSpike_H/$20)+$00	; normal sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   1,   8,  2, (VRAMSpike_V/$20)+$00	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   1,   8,  2, (VRAMSpike_V/$20)+$00	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   1,   8,  2, (VRAM_SpikeV/$20)+$00	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   1,   8,  2, (VRAM_SpikeV/$20)+$00	; x-flip
+	dbglistobj $01, Obj36_MapUnc_15B68, $41,  11,  2, (VRAM_SpikeH/$20)+$00	; x-flip sideways
+	dbglistobj $00, Obj36_MapUnc_15B68, $41,  11,  2, (VRAM_SpikeH/$20)+$00	; normal sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   1,   8,  2, (VRAM_SpikeV/$20)+$00	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   1,   8,  2, (VRAM_SpikeV/$20)+$00	; xy-flip
 
 
 ; level 2
-	dbglistobj $00, Obj36_MapUnc_15B68,   2,   9,  0, (VRAMSpike_V/$20)+$10	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   2,   9,  0, (VRAMSpike_V/$20)+$10	; x-flip
-	dbglistobj $01, Obj36_MapUnc_15B68, $42,  12,  0, (VRAMSpike_H/$20)+$10	; x-flip sideways
-	dbglistobj $00, Obj36_MapUnc_15B68, $42,  12,  0, (VRAMSpike_H/$20)+$10	; normal sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   2,   9,  0, (VRAMSpike_V/$20)+$10	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   2,   9,  0, (VRAMSpike_V/$20)+$10	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   2,   9,  0, (VRAM_SpikeV/$20)+$10	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   2,   9,  0, (VRAM_SpikeV/$20)+$10	; x-flip
+	dbglistobj $01, Obj36_MapUnc_15B68, $42,  12,  0, (VRAM_SpikeH/$20)+$10	; x-flip sideways
+	dbglistobj $00, Obj36_MapUnc_15B68, $42,  12,  0, (VRAM_SpikeH/$20)+$10	; normal sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   2,   9,  0, (VRAM_SpikeV/$20)+$10	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   2,   9,  0, (VRAM_SpikeV/$20)+$10	; xy-flip
 
 
 ; level 3
-	dbglistobj $00, Obj36_MapUnc_15B68,   3,  10,  0, (VRAMSpike_V/$20)+$18	; normal
-	dbglistobj $01, Obj36_MapUnc_15B68,   3,  10,  0, (VRAMSpike_V/$20)+$18	; x-flip
-	dbglistobj $01, Obj36_MapUnc_15B68, $43,  13,  0, (VRAMSpike_H/$20)+$18	; x-flip sideways
-	dbglistobj $00, Obj36_MapUnc_15B68, $43,  13,  0, (VRAMSpike_H/$20)+$18	; normal sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   3,  10,  0, (VRAMSpike_V/$20)+$18	; y-flip
-	dbglistobj $03, Obj36_MapUnc_15B68,   3,  10,  0, (VRAMSpike_V/$20)+$18	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   3,  10,  0, (VRAM_SpikeV/$20)+$18	; normal
+	dbglistobj $01, Obj36_MapUnc_15B68,   3,  10,  0, (VRAM_SpikeV/$20)+$18	; x-flip
+	dbglistobj $01, Obj36_MapUnc_15B68, $43,  13,  0, (VRAM_SpikeH/$20)+$18	; x-flip sideways
+	dbglistobj $00, Obj36_MapUnc_15B68, $43,  13,  0, (VRAM_SpikeH/$20)+$18	; normal sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   3,  10,  0, (VRAM_SpikeV/$20)+$18	; y-flip
+	dbglistobj $03, Obj36_MapUnc_15B68,   3,  10,  0, (VRAM_SpikeV/$20)+$18	; xy-flip
 
 
 ; halve
-	dbglistobj $00, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpike_V/$20)+$08	; normal
-;	dbglistobj $01, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpike_V/$20)+$08	; x-flip
-	dbglistobj $01, Obj36_MapUnc_15B68, $45,   4,  0, (VRAMSpike_H/$20)+$08	; x-flip sideways
-	dbglistobj $00, Obj36_MapUnc_15B68, $45,   4,  0, (VRAMSpike_H/$20)+$08	; normal sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpike_V/$20)+$08	; y-flip
-;	dbglistobj $03, Obj36_MapUnc_15B68,   5,   0,  0, (VRAMSpike_V/$20)+$08	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   5,   0,  0, (VRAM_SpikeV/$20)+$08	; normal
+;	dbglistobj $01, Obj36_MapUnc_15B68,   5,   0,  0, (VRAM_SpikeV/$20)+$08	; x-flip
+	dbglistobj $01, Obj36_MapUnc_15B68, $45,   4,  0, (VRAM_SpikeH/$20)+$08	; x-flip sideways
+	dbglistobj $00, Obj36_MapUnc_15B68, $45,   4,  0, (VRAM_SpikeH/$20)+$08	; normal sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   5,   0,  0, (VRAM_SpikeV/$20)+$08	; y-flip
+;	dbglistobj $03, Obj36_MapUnc_15B68,   5,   0,  0, (VRAM_SpikeV/$20)+$08	; xy-flip
 
 
 ; explode
-	dbglistobj $00, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpike_V/$20)+$20	; normal
-;	dbglistobj $01, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpike_V/$20)+$20	; x-flip
-	dbglistobj $01, Obj36_MapUnc_15B68, $46,   4,  0, (VRAMSpike_H/$20)+$20	; x-flip sideways
-	dbglistobj $00, Obj36_MapUnc_15B68, $46,   4,  0, (VRAMSpike_H/$20)+$20	; normal sideways
-	dbglistobj $02, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpike_V/$20)+$20	; y-flip
-;	dbglistobj $03, Obj36_MapUnc_15B68,   6,   0,  0, (VRAMSpike_V/$20)+$20	; xy-flip
+	dbglistobj $00, Obj36_MapUnc_15B68,   6,   0,  0, (VRAM_SpikeV/$20)+$20	; normal
+;	dbglistobj $01, Obj36_MapUnc_15B68,   6,   0,  0, (VRAM_SpikeV/$20)+$20	; x-flip
+	dbglistobj $01, Obj36_MapUnc_15B68, $46,   4,  0, (VRAM_SpikeH/$20)+$20	; x-flip sideways
+	dbglistobj $00, Obj36_MapUnc_15B68, $46,   4,  0, (VRAM_SpikeH/$20)+$20	; normal sideways
+	dbglistobj $02, Obj36_MapUnc_15B68,   6,   0,  0, (VRAM_SpikeV/$20)+$20	; y-flip
+;	dbglistobj $03, Obj36_MapUnc_15B68,   6,   0,  0, (VRAM_SpikeV/$20)+$20	; xy-flip
 DbgObjList_EHZ_End
 
 DbgObjList_MTZ: dbglistheader
@@ -85636,17 +85773,18 @@ PlrList_Ehz1: plrlistheader
 ;	plreq $8780-$13C0, ArtNem_DignlSprng
 ;	plreq $8B80-$13C0, ArtNem_VrtclSprng
 ;	plreq $8E00-$13C0, ArtNem_HrzntlSprng
-	plreq $73C0, ArtNem_FieryExplosion ; $7C00
+	plreq VRAM_Explosion, ArtNem_FieryExplosion ; $73C0
 PlrList_Ehz1_End
 ;---------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
 ; Emerald Hill Zone secondary
 ;---------------------------------------------------------------------------------------
 PlrList_Ehz2: plrlistheader
-	plreq VRAMSpike_V, ArtNem_Spikes
-	plreq VRAMSpike_H, ArtNem_HorizSpike
-	plreq VRAMSpike_Arrows, ArtNem_SpikeArrows
-	plreq VRAMBlood, ArtNem_Blood
+	plreq VRAM_Blood, ArtNem_Blood
+	plreq VRAM_SpikeV, ArtNem_Spikes
+	plreq VRAM_SpikeH, ArtNem_HorizSpike
+	plreq VRAM_SArrows, ArtNem_SpikeArrows
+	plreq VRAM_SGrid, ArtNem_SpikeGrid
 PlrList_Ehz2_End
 ;---------------------------------------------------------------------------------------
 ; Pattern load queue
@@ -87387,7 +87525,12 @@ ArtNem_EndingTitle:	BINCLUDE	"art/nemesis/Sonic the Hedgehog 2 image at end of c
 	even
 ArtNem_SpikeArrows:	BINCLUDE	"art/nemesis/Spike arrows.bin"
 ;--------------------------------------------------------------------------------------
-; Nemesis compressed art (10 blocks)
+; Nemesis compressed art (16 blocks)
+; Spike grid when hovering over spikes during debug
+	even
+ArtNem_SpikeGrid:	BINCLUDE	"art/nemesis/Spike grid.bin"
+;--------------------------------------------------------------------------------------
+; Nemesis compressed art (9 blocks)
 ; 8x8 Blood particles
 	even
 ArtNem_Blood:	BINCLUDE	"art/nemesis/Blood particles.bin"
