@@ -4761,7 +4761,7 @@ loc_4114:
 
 	move.l	#0,($FFFFF500).w	; reset hit counter (2 bytes, F500+F501), red hits frames (1 byte, F502), debug placement block flag (1 byte, F503)
 	move.l	#0,($FFFFF504).w	; clear evened debug placement locations (X-pos and Y-pos, bytes each)
-	move.l	#0,($FFFFF508).w	; reset fake debug mirror flags (1 byte), ?, ?, ?
+	move.l	#0,($FFFFF508).w	; reset fake Sonic mirror flags (1 byte), ?, ?, ?
 	move.b	#0,(Debug_object).w	; clear debug list selection
 	
 	move.w	#0,(Ctrl_1_Logical).w
@@ -14316,7 +14316,7 @@ loc_C41A:
 	lea	(Tails_Pos_Record_Buf).w,a6
 
 loc_C44C:
-	bsr.w	sub_D704
+	bsr.w	ScrollHoriz
 	lea	($FFFFEE40).w,a2
 	bsr.w	sub_D6E2
 	lea	(Camera_Y_pos).w,a1
@@ -14328,7 +14328,7 @@ loc_C44C:
 	move.w	(Camera_Y_pos_bias_2P).w,d3
 
 loc_C474:
-	bsr.w	sub_D77A
+	bsr.w	ScrollVerti
 	lea	($FFFFEE41).w,a2
 	bsr.w	sub_D878
 
@@ -14344,14 +14344,14 @@ loc_C480:
 	lea	($FFFFEEB8).w,a4
 	lea	($FFFFEED4).w,a5
 	lea	(Tails_Pos_Record_Buf).w,a6
-	bsr.w	sub_D704
+	bsr.w	ScrollHoriz
 	lea	($FFFFEE48).w,a2
 	bsr.w	sub_D6E2
 	lea	($FFFFEE24).w,a1
 	lea	(Tails_Min_X_pos).w,a2
 	lea	($FFFFEEBA).w,a4
 	move.w	(Camera_Y_pos_bias_2P).w,d3
-	bsr.w	sub_D77A
+	bsr.w	ScrollVerti
 	lea	($FFFFEE49).w,a2
 	bsr.w	sub_D878
 
@@ -16312,7 +16312,7 @@ return_D702:
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-sub_D704:
+ScrollHoriz:
 	move.w	(a1),d4
 	tst.b	($FFFFF623).w
 	bne.s	return_D742
@@ -16377,13 +16377,13 @@ loc_D76E:
 	move.w	d0,(a1)
 	move.w	d1,(a4)
 	rts
-; End of function sub_D704
+; End of function ScrollHoriz
 
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-sub_D77A:
+ScrollVerti:
 	moveq	#0,d1
 	move.w	y_pos(a0),d0
 	sub.w	(a1),d0
@@ -16523,7 +16523,7 @@ loc_D868:
 	move.w	d3,(a4)
 	move.l	d1,(a1)
 	rts
-; End of function sub_D77A
+; End of function ScrollVerti
 
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -27070,7 +27070,7 @@ JmpTo_sub_8476
 ; VRAM settings for spikes & co.
 
 VRAM_Explosion =	$73C0					; base offset for everything that's to come
-Size_Explo =		04 + (7 * 16)				; 4 = small explosion; 7 = number of big explosions; 16 = tiles per big explosion
+Size_Explo =		04 + (6 * 16)				; 4 = small explosion; 6 = number of big explosions; 16 = tiles per big explosion
 
 VRAM_Blood =		VRAM_Explosion+((Size_Explo)*$20)	; offset for blood particles
 Size_Blood =		10 * 01					; 9 = number of blood paricles; 01 = tiles per blood particle
@@ -27154,8 +27154,10 @@ Obj4D_Debug:
 	bne.s	+			; if yes, branch
 	rts				; if not, don't do anything
 +
-	move.w	($FFFFF504).w,x_pos(a0)	; set evened X-pos to this one's
-	move.w	($FFFFF506).w,y_pos(a0)	; set evened Y-pos to this one's
+;	move.w	($FFFFF504).w,x_pos(a0)	; set evened X-pos to this one's
+;	move.w	($FFFFF506).w,y_pos(a0)	; set evened Y-pos to this one's
+	move.w	(MainCharacter+x_pos).w,x_pos(a0)	; set evened X-pos to this one's
+	move.w	(MainCharacter+y_pos).w,y_pos(a0)	; set evened Y-pos to this one's
 
 	btst	#2,(Ctrl_1_Press).w	; is button left pressed?
 	beq.s	+			; if not, branch
@@ -27715,16 +27717,16 @@ Obj36_DebugCheck:
 	tst.w	(Debug_placement_mode).w	; is debug placement mode enabled?
 	beq.w	ODC_DelGrid			; if not, branch
 	
-	;move.w	(MainCharacter+x_pos).w,d0	; get debug X-position
-	move.w	($FFFFF504).w,d0		; get evened debug X-position
+	move.w	(MainCharacter+x_pos).w,d0	; get debug X-position
+	;move.w	($FFFFF504).w,d0		; get evened debug X-position
 	sub.w	x_pos(a0),d0			; substract spike X-position
 	bpl.s	+				; branch if positive
 	neg.w	d0				; otherwise make it positive
 +	cmpi.w	#DebugRange,d0			; in range?
 	bge.s	ODC_DelGrid			; if not, end
 	
-	;move.w	(MainCharacter+y_pos).w,d0	; get debug Y-position
-	move.w	($FFFFF506).w,d0		; get evened debug Y-position
+	move.w	(MainCharacter+y_pos).w,d0	; get debug Y-position
+	;move.w	($FFFFF506).w,d0		; get evened debug Y-position
 	sub.w	y_pos(a0),d0			; substract spike Y-position
 	bpl.s	+				; branch if positive
 	neg.w	d0				; otherwise make it positive
@@ -28594,7 +28596,7 @@ Obj_Index: ; ObjPtrs: ; loc_1600C:
 ; ----------------------------------------------------------------------------
 ; Object 4F, 62, D0, and D1
 ; Previously null objects:
-; - $4C: Fake Debug Object
+; - $4C: Fake Sonic Object
 ; - $4D: Spike Arrows
 ; - $4E: Blood Particles
 
@@ -33659,7 +33661,9 @@ Obj01:
 	; a0=character
 	tst.w	(Debug_placement_mode).w	; is debug mode being used?
 	beq.s	Obj01_Normal			; if not, branch
+	bmi.s	+
 	jmp	DebugMode
++	rts
 ; ---------------------------------------------------------------------------
 ; loc_19F5C:
 Obj01_Normal:
@@ -33724,30 +33728,7 @@ Obj01_Init_Continued:
 ; ---------------------------------------------------------------------------
 ; loc_1A030: Obj_01_Sub_2:
 Obj01_Control:
-	tst.w	(Debug_mode_flag).w	; is debug cheat enabled?
-	beq.s	+			; if not, branch
-	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
-	beq.s	+			; if not, branch
-	move.w	#1,(Debug_placement_mode).w	; change Sonic into a ring/item
-	clr.b	(Control_Locked).w		; unlock control
-	
-		move.w	(SideKick+x_pos).w,d1	; load X-pos of nearest enemy into d1
-		sub.w	x_pos(a0),d1		; sub Sonic's X-pos from it
-		move.w	(SideKick+y_pos).w,d2	; load Y-pos of nearest enemy into d1
-		sub.w	y_pos(a0),d2		; sub Sonic's Y-pos from it
-		jsr	(CalcAngle).l		; calculate the angle
-		jsr	(CalcSine).l		; calculate the sine
-		muls.w	#$A00,d0		; multiply result 1 by $900 (this line is for the Y-speed)
-		muls.w	#$A00,d1		; multiply result 2 by $900 (this line is for the X-speed)
-		asr.l	#8,d0			; align the results to the correct position in the bitfield ...
-		asr.l	#8,d1			; ... (e.g. 00000000xxxxxxxxxxxxxxxx00000000 to 0000000000000000xxxxxxxxxxxxxxxx)
-		move.w	d1,(SideKick+x_vel).w	; set final result to Sonic's X-speed
-		move.w	d0,(SideKick+y_vel).w	; set final result to Sonic's Y-speed
-
-	
-	rts
-; -----------------------------------------------------------------------
-+	tst.b	(Control_Locked).w	; are controls locked?
+	tst.b	(Control_Locked).w	; are controls locked?
 	bne.s	+			; if yes, branch
 	move.w	(Ctrl_1).w,(Ctrl_1_Logical).w	; copy new held buttons, to enable joypad control
 +
@@ -33957,6 +33938,15 @@ Obj01_OutWater:
 ; ---------------------------------------------------------------------------
 ; loc_1A26E:
 Obj01_MdNormal_Checks:
+	tst.w	(Debug_mode_flag).w	; is debug cheat enabled?
+	beq.s	+			; if not, branch
+	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
+	beq.s	+			; if not, branch
+	move.w	#1,(Debug_placement_mode).w	; change Sonic into a ring/item
+	clr.b	(Control_Locked).w		; unlock control
+	rts
+; -----------------------------------------------------------------------
++
 	move.b	(Ctrl_1_Press_Logical).w,d0
 	andi.b	#$70,d0
 	bne.s	Obj01_MdNormal
@@ -33979,11 +33969,11 @@ Obj01_MdNormal_Checks:
 ; ---------------------------------------------------------------------------
 ; loc_1A2B8:
 Obj01_MdNormal:
-	bsr.w	Sonic_CheckSpindash
+;	bsr.w	Sonic_CheckSpindash
 	bsr.w	Sonic_Jump
 	bsr.w	Sonic_SlopeResist
 	bsr.w	Sonic_Move
-	bsr.w	Sonic_Roll
+;	bsr.w	Sonic_Roll
 	bsr.w	Sonic_LevelBound
 	jsr	ObjectMove
 	bsr.w	AnglePos
@@ -35562,6 +35552,7 @@ return_1B11E:
 ; loc_1B120: Obj_01_Sub_4:
 Obj01_Hurt:
 	tst.w	(Debug_mode_flag).w
+	;bra.s	Obj01_Hurt_Normal
 	beq.s	Obj01_Hurt_Normal
 	btst	#4,(Ctrl_1_Press).w
 	beq.s	Obj01_Hurt_Normal
@@ -35681,6 +35672,7 @@ Sonic_HurtInstantRecover:
 ; loc_1B1E6: Obj_01_Sub_6:
 Obj01_Dead:
 	tst.w	(Debug_mode_flag).w
+	;bra.s	+
 	beq.s	+
 	btst	#4,(Ctrl_1_Press).w
 	beq.s	+
@@ -36126,6 +36118,8 @@ SonicAniData:
 	dc.w SonAni_HurtFast3 - SonicAniData	; 36 ; $24
 	dc.w SonAni_HurtFast4 - SonicAniData	; 37 ; $25
 	dc.w SonAni_HurtFast5 - SonicAniData	; 37 ; $26
+	dc.w SonAni_InstantWait - SonicAniData	; 38 ; $27
+	dc.w SonAni_GetUp2 - SonicAniData	; 39 ; $28
 
 SonAni_Walk:	dc.b $FF, $F,$10,$11,$12,$13,$14, $D, $E,$FF
 SonAni_Run:	dc.b $FF,$2D,$2E,$2F,$30,$FF,$FF,$FF,$FF,$FF
@@ -36195,6 +36189,12 @@ SonAni_HurtFast5:
 	dc.b $05
 	dc.b $4E,$DC,$DB,$DA,$D9,$D8,$D7,$D6, $4F,$DC,$DB,$DA,$D9,$D8,$D7,$D6
 	dc.b $FF
+SonAni_InstantWait:
+	dc.b $05
+	dc.b 6,  7
+	dc.b 8,  8,  8,  9,  9,  9, $FE,  6
+SonAni_GetUp2:
+	dc.b $05, $A, $FD, $05
 	even
 
 ; ---------------------------------------------------------------------------
@@ -36606,7 +36606,7 @@ TailsCPU_Flying_Part2:
 +
 
 	tst.w	(Debug_placement_mode).w	; in debug mode?
-	beq.s	+				; if not, branch
+	ble.s	+				; if not, branch
 	bsr.s	TailsFly_MoveX			; move Tails on x-axis (debug)
 	bra.w	TailsFly_MoveY			; move Tails on y-axis (debug)
 +
@@ -83392,9 +83392,9 @@ BranchTo_loc_40836
 ; ===========================================================================
 
 loc_40820:
-	moveq	#0,d1			; use normal sprite without red and normal mode
+	moveq	#0,d1			; use "SPEED" HUD
 	tst.w	(Debug_placement_mode).w ; is debug mode on?
-	beq.s	+			; if not, branch
+	ble.s	+			; if not, branch
 	addq.b	#2,d1			; use "COORD" HUD
 +
 	tst.b	($FFFFF502).w
@@ -83795,8 +83795,9 @@ HudUpdate:
 +	lsr.w	#1,d2
 
 	tst.w	(Debug_placement_mode).w	; is debug mode on?
-	beq.s	+
-	move.w	($FFFFF504).w,d2		; load evened x-pos
+	ble.s	+
+	;move.w	($FFFFF504).w,d2		; load evened x-pos
+	move.w	(MainCharacter+x_pos).w,d2		; load evened x-pos
 +
 
 	moveq	#0,d1
@@ -83805,8 +83806,9 @@ HudUpdate:
 	neg.w	d1
 +	lsr.w	#1,d1
 	tst.w	(Debug_placement_mode).w	; is debug mode on?
-	beq.s	+
-	move.w	($FFFFF506).w,d1		; load evened y-pos
+	ble.s	+
+	;move.w	($FFFFF506).w,d1		; load evened y-pos
+	move.w	(MainCharacter+y_pos).w,d1		; load evened y-pos
 +
 
 ;	move.w	($FFFFF508).w,d1 ; DEBUG SHIT
@@ -84730,42 +84732,98 @@ Pal_SelbiSplash:	BINCLUDE	"misc/SelbiSplash/Palette.bin"
 
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
-; Object 4C - Fake Debug Object
+; Object 4C - Fake Sonic Object
 ; ----------------------------------------------------------------------------
 Obj4C:
+	tst.b	routine(a0)		; has routine been set to anything other than main?
+	beq.s	+			; if not, branch
+	jsr	(Sonic_RecordPos).l	; keep Tails following you
++
 	moveq	#0,d0
 	move.b	routine(a0),d0
 	move.w	Obj4C_Index(pc,d0.w),d1
 	jmp	Obj4C_Index(pc,d1.w)
 ; ===========================================================================
 Obj4C_Index:
-	dc.w Obj4C_Main-Obj4C_Index
-	dc.w Obj4C_Delete-Obj4C_Index
+	dc.w Obj4C_Main-Obj4C_Index	; $0
+	dc.w Obj4C_Exit1-Obj4C_Index	; $2
+	dc.w Obj4C_Exit2-Obj4C_Index	; $4
+	dc.w Obj4C_Delete-Obj4C_Index	; $6
 ; ===========================================================================
 
 Obj4C_Main:
-	tst.b	(Debug_placement_mode).w		; is debug mode even enabled?
-	beq.s	Obj4C_Delete				; if not, delete object
+	tst.b	(Debug_placement_mode).w		; is debug mode set to end?
+	bpl.s	+					; if not, branch
+	addq.b	#2,routine(a0)				; otherwise, set it to exit mode
+	btst	#5,(Ctrl_1_Held).w			; is C held down?
+	bne.s	Obj4C_Exit1				; if yes, don't return to starting location (DEV)
+	move.w	x_pos(a0),(MainCharacter+x_pos).w	; move Sonic to his original x-position
+	move.w	y_pos(a0),(MainCharacter+y_pos).w	; move Sonic to his original y-position
+	bra.s	Obj4C_Exit1				; branch
++
+	bra.w	Obj4C_Display				; display sprite
+; ===========================================================================
 
-	movea.l	$34(a0),a1				; load parent object (in this case, the real debug object)
-	move.l	mappings(a1),mappings(a0)		; copy over mappings...
-	move.w	art_tile(a1),art_tile(a0)		; ...tile offset...
-	move.b	mapping_frame(a1),mapping_frame(a0)	; ...current frame...
-;	move.b	render_flags(a1),render_flags(a0)	; ...display flags...
-	move.b	($FFFFF508).w,render_flags(a0)		; ...display flags (with mirror flags)...
-	move.b	($FFFFF508).w,status(a0)		; ...status (with mirror flags)...
-	move.w	x_pos(a1),x_pos(a0)			; ...x-position...
-	move.w	y_pos(a1),y_pos(a0)			; ...and y-position
-	bsr.s	Debug_EvenObj				; even the object
+Obj4C_Exit1:
+	move.w	$30(a0),d0			; move stored X-camera-pos to d0 because cmp can't handle it
+	cmp.w	(Camera_X_pos).w,d0		; compare it to current X-camera-pos
+	bne.s	+				; if unequal, abort
+	move.w	$32(a0),d0			; move stored Y-camera-pos to d0 because cmp can't handle it
+	cmp.w	(Camera_Y_pos).w,d0		; compare it to current Y-camera-pos
+	bne.s	+				; if unequal, abort
+	addq.b	#2,routine(a0)			; set to next routine
+	move.b	#$28,anim(a0)			; set to "get-up" animation
++
+	move.w	(Camera_X_pos).w,$30(a0)	; store X-camera-pos for next frame
+	move.w	(Camera_Y_pos).w,$32(a0)	; store Y-camera-pos for next frame
+	bra.s	Obj4C_Display			; display
+; ===========================================================================
 
-	move.w	x_pos(a0),($FFFFF504).w			; globally store the x-position (for placement...)
-	move.w	y_pos(a0),($FFFFF506).w			; globally store the y-position (...and deletion)
-	jmp	DisplaySprite				; display
+Obj4C_Exit2:
+	cmpi.b	#$28,anim(a0)			; is get-up animation still being played?
+	beq.s	Obj4C_Display			; if yes, branch
+
+	addq.b	#2,routine(a0)			; delete object next frame
+
+	moveq	#0,d0				; set d0 to 0 for all the things to clear
+	move.w	d0,(Debug_placement_mode).w	; disable debug placement mode entirely
+
+	lea	(MainCharacter).w,a1		; load Sonic into a1
+	move.l	#Mapunc_Sonic,mappings(a1)	; reset mappings
+	move.w	#$780,art_tile(a1)		; reset art tile
+
+	move.b	#0,anim(a1)			; reset anim
+	move.b	#0,next_anim(a1)		; reset anim
+	move.b	#0,anim_frame(a1)		; reset anim
+	;move.w	d0,2+x_pos(a1)			; reset subpixel-x
+	;move.w	d0,2+y_pos(a1)			; reset subpixel y
+	move.b	d0,obj_control(a1)		; reset object control
+	move.b	d0,spindash_flag(a1)		; reset spindash flag
+	move.l	d0,x_vel(a1)			; reset x-vel
+	move.l	d0,y_vel(a1)			; reset y-vel
+	move.w	d0,inertia(a1)			; reset interia
+	;move.b	#2,status(a1)			; set status to in-air
+	move.b	#2,routine(a1)			; set routine to Obj01_Control
+	move.b	#0,routine_secondary(a1)	; set secondary routine to 0
+	move.b	#2,priority(a1)
+
+	;move.b	#9,x_radius(a1)			; reset x-radius to 9
+	;move.b	#$13,y_radius(a1)		; reset y-radius to $13
+	;move.w	($FFFFFFCC).w,(Camera_Min_Y_pos).w
+	;move.w	($FFFFFFCE).w,(Camera_Max_Y_pos).w
+
+; ===========================================================================
+
+Obj4C_Display:
+	move.b	render_flags(a0),d5		; backup render flags
+	jsr	(Sonic_Animate).l		; animate
+	move.b	d5,render_flags(a0)		; restore render flags
+	jsr	(LoadSonicDynPLC).l		; load correct DPLC
+	jmp	(DisplaySprite).l		; display
 ; ===========================================================================
 
 Obj4C_Delete:
-	clr.l	($FFFFF504).w				; reset stored positions
-	jmp	DeleteObject				; delete object
+	jmp	(DeleteObject).l		; delete object
 ; ===========================================================================
 
 ; ===========================================================================
@@ -84832,47 +84890,14 @@ Debug_Init:
 	addq.b	#2,(Debug_placement_mode).w
 	move.w	(Camera_Min_Y_pos).w,($FFFFFFCC).w
 	move.w	(Camera_Max_Y_pos).w,($FFFFFFCE).w
-	cmpi.b	#$10,(Current_Zone).w
-	bne.s	loc_41AAE
-	move.w	#0,(Camera_Min_X_pos).w
-	move.w	#$3FFF,(Camera_Max_X_pos).w
-
-loc_41AAE:
 	andi.w	#$7FF,(MainCharacter+y_pos).w
 	andi.w	#$7FF,(Camera_Y_pos).w
 	andi.w	#$7FF,($FFFFEE0C).w
 	clr.b	($FFFFEEBE).w
-	move.b	#0,mapping_frame(a0)
-	move.b	#0,anim(a0)
+	
+	move.b	#0,priority(a0)
 
-; Block interaction with platforms during debug mode
-	clr.w	x_vel(a0)
-	clr.w	y_vel(a0)
-	clr.w	inertia(a0)
-	btst	#3,status(a0)	; is Sonic standing on an object?
-	beq.s	+		; if not, branch
-	bclr	#3,status(a0)	; clear Sonic's standing flag
 	moveq	#0,d0
-	move.b	interact(a0),d0	; get object id
-	clr.b	interact(a0)	; clear object id
-	lsl.w	#6,d0
-	addi.l	#Object_RAM&$FFFFFF,d0
-	movea.l	d0,a2
-	bclr	#3,status(a2)	; clear object's standing flag	;Mercury Constants
-	clr.b	routine_secondary(a2)
-+
-
-	cmpi.b	#$10,(Game_Mode).w	; special stage mode?
-	bne.s	loc_41ADC		; if not, branch
-	moveq	#6,d0
-	bra.s	loc_41AE2
-; ===========================================================================
-
-loc_41ADC:
-	moveq	#0,d0
-;	move.b	(Current_Zone).w,d0
-
-loc_41AE2:
 	lea	(JmpTbl_DbgObjLists).l,a2
 	add.w	d0,d0
 	adda.w	(a2,d0.w),a2
@@ -84882,7 +84907,6 @@ loc_41AE2:
 	move.b	#0,(Debug_object).w
 
 loc_41AFC:
-	bsr.w	sub_41CEC
 	move.b	#DebugDelay,($FFFFFE0A).w
 	move.b	#DebugSpeed,($FFFFFE0B).w
 
@@ -84893,50 +84917,45 @@ loc_41AFC:
 	move.l	#Obj4D_MapUnc_Arrow,mappings(a1) ; set mappings
 	move.w	#$2000+(VRAM_SArrows/$20),art_tile(a1) ; set tile offset
 	move.b	#6,mapping_frame(a1)	; set default frame
-	move.w	($FFFFF504).w,x_pos(a1)	; copy evened x-pos
-	move.w	($FFFFF506).w,y_pos(a1)	; copy evened y-pos
-	ori.b	#4,render_flags(a1)
+	move.w	x_pos(a0),x_pos(a1)	; copy evened x-pos
+	move.w	y_pos(a0),y_pos(a1)	; copy evened y-pos
+	ori.b	#$84,render_flags(a1)
 	move.b	#5,priority(a1)
 +
 	jsr	(SingleObjLoad).l	; call routine
 	bne.s	+			; skip if SST is full
-	move.b	#$4C,(a1)		; load fake debug object
+	move.b	#$4C,(a1)		; load fake Sonic object
 	move.w	x_pos(a0),x_pos(a1)	; copy x-pos
 	move.w	y_pos(a0),y_pos(a1)	; copy y-pos
-	move.l	a0,$34(a1)		; let object know who his parent was
-	move.l	mappings(a0),mappings(a1) ; copy mappings
-	move.w	art_tile(a0),art_tile(a1) ; copy art tile
-	move.b	mapping_frame(a0),mapping_frame(a1) ; copy frame
+	move.l	#Mapunc_Sonic,mappings(a1)
+	move.w	#$780,art_tile(a1)
+;	move.b	mapping_frame(a0),mapping_frame(a1) ; copy frame
+	move.b	render_flags(a0),render_flags(a1)
+	ori.b	#$84,render_flags(a1)
+	move.b	#$27,anim(a1)
 +
 	bsr.w	sub_41CEC
-	move.b	($FFFFF508).w,render_flags(a1)
-;	move.b	($FFFFF508).w,status(a1)
-; end of object init
+;	move.b	($FFFFF508).w,render_flags(a1)
+	bsr.w	Debug_EvenObj
 
+; ---------------------------------------------------------------------------
 ; ===========================================================================
-; ===========================================================================
+; ---------------------------------------------------------------------------
 
 Debug_Main:
-	moveq	#6,d0
-;	cmpi.b	#$10,(Game_Mode).w	; special stage mode?
-;	beq.s	loc_41B1C		; if yes, branch
 	moveq	#0,d0			; set debug list to EHZ
-;	move.b	(Current_Zone).w,d0	; change the debug list based on the zone
-
-loc_41B1C:
 	lea	(JmpTbl_DbgObjLists).l,a2
 	add.w	d0,d0
 	adda.w	(a2,d0.w),a2
 	move.w	(a2)+,d6
-	;bsr.w	sub_41B34	; check button inputs
-	;jmp	DisplaySprite
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+ 	jsr	(DisplaySprite).l
 
+; ===========================================================================
 
-sub_41B34:
+Debug_CheckDPad:
 	btst	#6,(Ctrl_1_Held).w	; is button A held?
-	bne.w	Debug_CheckA		; if yes, ignore D-Pad
+	bne.w	Debug_CheckAC		; if yes, ignore D-Pad
 
 	moveq	#0,d4
 	move.w	#1,d1
@@ -84948,8 +84967,8 @@ sub_41B34:
 	bne.s	loc_41B5E		; if yes, branch 2
 	move.b	#DebugDelay,($FFFFFE0A).w	; set split-second delay after pressing once ($C)
 	move.b	#DebugSpeed,($FFFFFE0B).w	; set initial speed ($F)
-	bra.w	Debug_CheckA		; if not, branch 3 (A-check)
-; ===========================================================================
+	bra.w	Debug_CheckAC		; if not, branch 3 (A-check)
+; ---------------------------------------------------------------------------
 
 loc_41B5E:
 	subq.b	#1,($FFFFFE0A).w	; decrease 1 from delay
@@ -85009,41 +85028,39 @@ loc_41BCA:
 loc_41BD2:
 	move.l	d2,y_pos(a0)	; set new y-pos
 	move.l	d3,x_pos(a0)	; set new x-pos
-; end of D-Pad stuff
-
 	bra.w	Debug_CheckC	; ignore button A
+; ===========================================================================
 
-Debug_CheckA:
+Debug_CheckAC:
 	btst	#6,(Ctrl_1_Held).w	; is button A held?
 	beq.s	Debug_CheckC		; if not, branch
 	btst	#5,(Ctrl_1_Press).w	; is button C pressed?
 	bne.s	Debug_CheckC		; if yes, branch
 	btst	#2,(Ctrl_1_Press).w	; is button left pressed?
-	beq.s	loc_41BF6		; if not, branch
+	beq.s	Debug_CheckA		; if not, branch
 
 	move.w	#$64+$80,d0		; play other "dit" sound
 	jsr	(PlaySound).l		; play
 
 	subq.b	#1,(Debug_object).w	; cycle through the debug object list backwards
-	bcc.s	BranchTo_sub_41CEC
+	bcc.s	+
 	add.b	d6,(Debug_object).w
-	bra.s	BranchTo_sub_41CEC
-; ===========================================================================
+	bra.s	+
+; ---------------------------------------------------------------------------
 
-loc_41BF6:
+Debug_CheckA:
 	btst	#3,(Ctrl_1_Press).w	; is button right pressed?
-	beq.w	return_41CB6		; if not, don't test other buttons either
+	beq.w	Debug_EndButtons	; if not, don't test other buttons either
 
 	move.w	#$5D+$80,d0		; play "dit" sound
 	jsr	(PlaySound).l		; play
 
 	addq.b	#1,(Debug_object).w	; cycle through the debug object list forwards
 	cmp.b	(Debug_object).w,d6
-	bhi.s	BranchTo_sub_41CEC
+	bhi.s	+
 	move.b	#0,(Debug_object).w	; reset list to the beginning when the end has been reached
 
-BranchTo_sub_41CEC
-	bra.w	sub_41CEC
++	bra.w	sub_41CEC
 ; ===========================================================================
 
 Debug_CheckC:
@@ -85054,8 +85071,6 @@ Debug_CheckC:
 +
 	btst	#5,(Ctrl_1_Press).w	; is button C pressed?
 	beq.s	Debug_CheckB		; if not, branch; if yes, place object
-
-	;move.b	#0,(Object_Respawn_Table+2).w	; clear some stuff to allow this to work
 
 	bsr.w	SingleObjLoad_Debug	; check for a free object slot
 	beq.s	+			; create, if a free slot exists
@@ -85068,10 +85083,7 @@ Debug_CheckC:
 	move.w	x_pos(a0),x_pos(a1)
 	move.w	y_pos(a0),y_pos(a1)
 	bsr.w	Debug_EvenObj2
-;	move.b	mappings(a0),(a1) ; load obj
 	move.b	#$36,(a1)
-;	move.b	render_flags(a0),render_flags(a1)
-;	move.b	render_flags(a0),status(a1)
 	move.b	mappings(a0),render_flags(a1)
 	move.b	mappings(a0),status(a1)
 
@@ -85084,71 +85096,13 @@ Debug_CheckC:
 	move.b	4(a2,d0.w),subtype(a1)
 	rts
 ; ===========================================================================
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Single object loading subroutine
-; Find an empty object array
-; Specialized for Debug Mode
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; loc_17FDA: ; allocObject:
-SingleObjLoad_Debug:
-	lea	(Object_RAM+$400).w,a1 ; a1=object
-	move.w	#$6F-$8,d0	; search almost to the end of table (leave 8 slots free at all times)
--
-	tst.b	(a1)	; is object RAM slot empty?
-	beq.s	+	; if yes, branch
-	lea	next_object(a1),a1 ; load obj address ; goto next object RAM slot
-	dbf	d0,-	; repeat until end	
-;	rts
-
-+
-;	move.w	d0,($FFFFF50A).w	; store remaining object slots (for debugging)
-;	or	#%00000100,ccr		; force Z-flag
-	rts
-; ===========================================================================
-
-; ===========================================================================
-; ===========================================================================
 
 Debug_CheckB:
 	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
-	beq.w	return_41CB6		; if not, branch; if yes, return normal playmode
-	moveq	#0,d0
-	move.w	d0,(Debug_placement_mode).w
-	lea	(MainCharacter).w,a1 ; a1=character
-	move.l	#Mapunc_Sonic,mappings(a1)
-	move.w	#$780,art_tile(a1)
-	tst.w	(Two_player_mode).w
-	beq.s	loc_41C82
-	move.w	#$3C0,art_tile(a1)
+	beq.w	Debug_EndButtons		; if not, branch; if yes, return normal playmode
+	ori.w	#$8000,(Debug_placement_mode).w ; set top bit to initiate mode cancel
 
-loc_41C82:
-	move.b	d0,anim(a1)
-	move.w	d0,2+x_pos(a1) ; subpixel x
-	move.w	d0,2+y_pos(a1) ; subpixel y
-	move.b	d0,obj_control(a1)
-	move.b	d0,spindash_flag(a1)
-	move.w	d0,x_vel(a1)
-	move.w	d0,y_vel(a1)
-	move.w	d0,inertia(a1)
-	move.b	#2,status(a1)
-	move.b	#2,routine(a1)
-	move.b	#0,routine_secondary(a1)
-
-	move.b	#$13,y_radius(a1)
-	move.b	#9,x_radius(a1)
-	move.w	($FFFFFFCC).w,(Camera_Min_Y_pos).w
-	move.w	($FFFFFFCE).w,(Camera_Max_Y_pos).w
-	cmpi.b	#$10,(Game_Mode).w	; special stage mode?
-	bne.s	return_41CB6		; if not, branch
-	move.b	#2,(MainCharacter+anim).w
-	bset	#2,(MainCharacter+status).w
-	bset	#1,(MainCharacter+status).w
-
-return_41CB6:
+Debug_EndButtons:
 	rts
 ; End of function sub_41B34
 
@@ -85165,13 +85119,26 @@ sub_41CEC:
 	move.b	render_flags(a0),d1
 	andi.b	#%11111100,d1
 	add.b	(a2,d0.w),d1
-	move.b	d1,($FFFFF508).w	; set the render flags on debug placement
+	move.b	d1,render_flags(a0)	; set the render flags on debug placement
 
 	move.l	(a2,d0.w),mappings(a0)
 	move.w	6(a2,d0.w),art_tile(a0)
 	move.b	5(a2,d0.w),mapping_frame(a0)
 	rts
 ; End of function sub_41CEC
+
+
+SingleObjLoad_Debug:
+	lea	(Object_RAM+$400).w,a1 ; a1=object
+	move.w	#$6F-$8,d0	; search almost to the end of table (leave 8 slots free at all times)
+-
+	tst.b	(a1)	; is object RAM slot empty?
+	beq.s	+	; if yes, branch
+	lea	next_object(a1),a1 ; load obj address ; goto next object RAM slot
+	dbf	d0,-	; repeat until end	
++
+	rts
+; End of function SingleObjLoad_Debug
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
