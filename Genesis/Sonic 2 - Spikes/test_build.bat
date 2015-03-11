@@ -47,11 +47,6 @@ IF EXIST s2built.bin goto LABLSUCCESS
 
 IF EXIST sonic2.p del sonic2.p
 IF EXIST sonic2.h del sonic2.h
-echo.
-echo "============================================"
-echo " SUCESSFULLY BUILT! Press any key to run... "
-echo "============================================"
-echo.
 pause
 @echo on
 start s2built.bin
