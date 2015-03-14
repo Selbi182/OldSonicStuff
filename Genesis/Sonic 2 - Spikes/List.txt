@@ -1,9 +1,9 @@
 Top priority:
 - Build first real levels.
+- Add black spikes to replace blue spikes and make those neutral.
 
 Medium priority:
-- More blood.
-- Ending sequence stuff.
+- Better blood.
 
 Low priority:
 - Add an undoing feature.

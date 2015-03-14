@@ -17,6 +17,9 @@
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; ASSEMBLY OPTIONS:
 ;
+DEVMODE = 1
+;	| If 1, enables a few handy developer's features.
+;
 padToPowerOfTwo = 0
 ;	| If 1, pads the end of the rom to the next power of two bytes (for real hardware)
 ;
@@ -4110,6 +4113,7 @@ Sega_Remaining:
 	rts				; return
 
 Sega_CheckButtons:
+ if DEVMODE=1
 	move.b	(Ctrl_1_Press).w,d0	; is Start button pressed?
 	or.b	(Ctrl_2_Press).w,d0	; (either player)
 	andi.b	#$80,d0			; and it
@@ -4135,6 +4139,7 @@ Sega_CheckButtons:
 	addq.l	#4,sp			; return to MainGameLoop
 	bra.s	Sega_Remaining		; do final stuff
 +
+ endif
 	rts				; return
 
 
@@ -10288,7 +10293,7 @@ Obj21_Text_Main:
 	cmpi.b	#9+1,mapping_frame(a0)	; last frame passed? (total + 1)
 	bne.s	+			; if not, branch
 	addq.b	#2,routine(a0)		; got to last routine
-	move.w	#$120,$30(a0)		; set time interval
+	move.w	#$170,$30(a0)		; set time interval
 	move.b	#5,d0			; set black fade interval
 	move.b	d0,$34(a0)		; normal timer
 	move.b	d0,$35(a0)		; restore timer
@@ -10314,11 +10319,12 @@ Obj21_Text_Last:
 	beq.s	++			; if yes, branch
 	subq.w	#1,$30(a0)		; if not, substract one
 	bne.s	+			; branch if still not empty
+	move.b	#$17,(MainCharacter+anim).w ; set falling anim
 	move.b	#$A+$80,d0		; set DEZ music
 	jmp	(PlayMusic).l		; play
 +	rts				; don't display
-+
-	tst.w	(Normal_palette_line3).w	; background palette black?
+
++	tst.w	(Normal_palette_line3).w	; background palette black?
 	beq.s	+				; if yes, branch
 	subq.b	#1,$34(a0)			; substract 1 from interval
 	bne.s	+				; branch if not zero
@@ -10331,6 +10337,156 @@ Obj21_Text_Last:
 ; sprite mappings
 ; --------------------------------------------------------------------------
 Obj21_MapUnc_8146:	BINCLUDE "mappings/sprite/obj21.bin"
+
+; ===========================================================================
+; --------------------------------------------------------------------------
+; Sprite mappings for the opening credits.
+; --------------------------------------------------------------------------
+Obj21_MapUnc_Text:
+	dc.w O21Text_0-Obj21_MapUnc_Text	; $0
+	dc.w O21Text_1-Obj21_MapUnc_Text	; $1
+	dc.w O21Text_2-Obj21_MapUnc_Text	; $2
+	dc.w O21Text_3-Obj21_MapUnc_Text	; $3
+	dc.w O21Text_4-Obj21_MapUnc_Text	; $4
+	dc.w O21Text_5-Obj21_MapUnc_Text	; $5
+	dc.w O21Text_6-Obj21_MapUnc_Text	; $6
+	dc.w O21Text_7-Obj21_MapUnc_Text	; $7
+	dc.w O21Text_8-Obj21_MapUnc_Text	; $8
+	dc.w O21Text_9-Obj21_MapUnc_Text	; $9
+	dc.w O21Text_A-Obj21_MapUnc_Text	; $A
+	
+; --------------------------------------------------------------
+;  Text generation macro from ASCII string for opening credits.
+; --------------------------------------------------------------
+OCreditsText	macro text,ypos,pal
+
+; set default vars
+c := 0
+d := 0
+xadd := 0
+
+; check if yellow palette flag has been set
+	if "pal"<>""
+p := $4000	; yellow (palette row 3)
+	else
+p := $0000	; white (palette row 1)
+	endif
+
+; center string (by finding start xpos)
+xpos := 160 - ((strlen(text))*8)	; halved screen width - halved text width
+	rept strlen(text)		; fix for "I" and space, which have halved letter width
+		if (substr(text,d,1)="I") || (substr(text,d,1)=" ")
+xpos := xpos+4	; add half the letter's size to the start position
+		endif
+d := d+1
+	endm
+
+; write mappings (loop for each letter)
+	rept strlen(text)
+
+	; extract current letter (j is the actual letter, l is the VRAM offset integer)
+j := substr(text,c,1)
+l := ((charfromstr(j,0)-$41)*2)+1
+
+	; ypos
+		dc.b ypos			; ypos (same for all)
+
+	; format
+		if (j="I") || (j=" ")
+			dc.b $00		; format 1x1 ("I" and space)
+		else
+			dc.b $04		; format 1x2 (other)
+		endif
+
+	; VRAM offset
+		if (j=" ")
+			dc.w $0000, $0000	; 1P & 2P VRAM (space)
+		elseif (l>$11)
+			dc.w (l-1|p), (l-1|p)	; 1P & 2P VRAM (letters after "I")
+		else
+			dc.w (l|p), (l|p)	; 1P & 2P VRAM (letters up to and including "I")
+		endif
+
+	; xpos
+		dc.w xpos+xadd			; xpos (same for all, but different add)
+
+		if (j="I") || (j=" ")
+xadd := xadd+8					; add size ("I" and space)
+		else
+xadd := xadd+$10				; add size (other)
+		endif
+	
+c := c+1	; go to next letter
+		endm
+	endm
+; --------------------------------------------------------------
+
+O21Text_0:
+	dc.w 11+14+8
+	OCreditsText "SONIC STUFF",$20,1
+	OCreditsText "RESEARCH GROUP",$30,1
+	OCreditsText "PRESENTS",$50
+
+O21Text_1:
+	dc.w 1+13+10
+	OCreditsText "A",$20
+	OCreditsText "SELBI INKILLE",$40,1
+	OCreditsText "PRODUCTION",$60
+
+O21Text_2:
+	dc.w 7+16+6
+	OCreditsText "AFTER A",$20
+	OCreditsText "STORY CONCEPT BY",$30
+	OCreditsText "ARAGON",$50,1
+
+O21Text_3:
+	dc.w 16+5
+	OCreditsText "LEAD DEVELOPMENT",$20
+	OCreditsText "SELBI",$40,1
+
+O21Text_4:
+	dc.w 16+12
+	OCreditsText "EXTRA ART ASSETS",$20
+	OCreditsText "MARKEYJESTER",$40,1
+
+O21Text_5:
+	dc.w 5+8+7
+	OCreditsText "MUSIC",$20
+	OCreditsText "DALEKSAM",$40,1
+	OCreditsText "SPANNER",$50,1
+
+O21Text_6:
+	dc.w 5+10+8
+	OCreditsText "TOOLS",$20
+	OCreditsText "MAINMEMORY",$40,1
+	OCreditsText "SNKENJOI",$50,1
+
+O21Text_7:
+	dc.w 12+9+5+10
+	OCreditsText "TECH SUPPORT",$20
+	OCreditsText "FLAMEWING",$40,1
+	OCreditsText "JORGE",$50,1
+	OCreditsText "MAINMEMORY",$60,1
+
+O21Text_8:
+	dc.w 17+9
+	OCreditsText "MAIN BETA TESTING",$20
+	OCreditsText "SONICVAAN",$40,1
+
+O21Text_9:
+	dc.w 16+10+4
+	OCreditsText "ORIGINAL GAME BY",$20
+	OCreditsText "SONIC TEAM",$40,1
+	OCreditsText "SEGA",$50,1
+
+O21Text_A:
+	dc.w 8+5+9
+	OCreditsText "HEDGEHOG",$30,1
+	OCreditsText "ABUSE",$40,1
+	OCreditsText "SIMULATOR",$50,1
+
+	even
+; --------------------------------------------------------------------------
 ; ===========================================================================
 
 ; loc_819A:
@@ -11032,7 +11188,7 @@ MenuScreen:
 	move.w	($FFFFF60C).w,d0
 	andi.b	#-$41,d0
 	move.w	d0,(VDP_control_port).l
-	bsr.w	ClearScreen
+	jsr	(ClearScreen).l
 	lea	(VDP_control_port).l,a6
 	move.w	#$8004,(a6)
 	move.w	#$8230,(a6)
@@ -11049,17 +11205,17 @@ MenuScreen:
 	move.l	#VDP_Command_Buffer,(VDP_Command_Buffer_Slot).w
 	move.l	#$42000000,(VDP_control_port).l
 	lea	(ArtNem_FontStuff).l,a0
-	bsr.w	NemDec
+	jsr	(NemDec).l
 	move.l	#$4E000000,(VDP_control_port).l
 	lea	(ArtNem_MenuBox).l,a0
-	bsr.w	NemDec
+	jsr	(NemDec).l
 	move.l	#$52000000,(VDP_control_port).l
 	lea	(ArtNem_LevelSelectPics).l,a0
-	bsr.w	NemDec
+	jsr	(NemDec).l
 	lea	(Metablock_Table).l,a1
 	lea	(MapEng_MenuBack).l,a0
 	move.w	#$6000,d0
-	bsr.w	EniDec
+	jsr	(EniDec).l
 	lea	(Metablock_Table).l,a1
 	move.l	#$60000003,d0
 	moveq	#$27,d1
@@ -11075,15 +11231,15 @@ MenuScreen:
 	lea	(Metablock_Table).l,a1
 	lea	(MapEng_LevSel2P).l,a0
 	move.w	#$70,d0
-	bsr.w	EniDec
+	jsr	(EniDec).l
 	lea	($FFFF0198).l,a1
 	lea	(MapEng_LevSel2P).l,a0
 	move.w	#$2070,d0
-	bsr.w	EniDec
+	jsr	(EniDec).l
 	lea	($FFFF0330).l,a1
 	lea	(MapEng_LevSelIcon).l,a0
 	move.w	#$90,d0
-	bsr.w	EniDec
+	jsr	(EniDec).l
 	lea	($FFFF0498).l,a2
 	moveq	#$F,d1
 
@@ -11364,11 +11520,11 @@ MenuScreen_Options:
 	lea	(Metablock_Table).l,a1
 	lea	(MapEng_Options).l,a0
 	move.w	#$70,d0
-	bsr.w	EniDec
+	jsr	(EniDec).l
 	lea	($FFFF0160).l,a1
 	lea	(MapEng_Options).l,a0
 	move.w	#$2070,d0
-	bsr.w	EniDec
+	jsr	(EniDec).l
 	clr.b	(Options_menu_box).w
 	bsr.w	sub_9186
 	addq.b	#1,(Options_menu_box).w
@@ -11665,7 +11821,7 @@ MenuScreen_LevelSelect:
 	lea	(Metablock_Table).l,a1
 	lea	(MapEng_LevSel).l,a0
 	move.w	#0,d0
-	bsr.w	EniDec
+	jsr	(EniDec).l
 	lea	(Metablock_Table).l,a1
 	move.l	#$40000003,d0
 	moveq	#$27,d1
@@ -11676,7 +11832,7 @@ MenuScreen_LevelSelect:
 	lea	($FFFF08C0).l,a1
 	lea	(MapEng_LevSelIcon).l,a0
 	move.w	#$90,d0
-	bsr.w	EniDec
+	jsr	(EniDec).l
 	bsr.w	loc_9688
 	clr.w	(Player_mode).w
 	clr.w	(Results_Screen_2P).w
@@ -12185,7 +12341,7 @@ JmpTo2_Dynamic_Normal
 ; ===========================================================================
 ; loc_9C7C:
 EndingSequence:
-	bsr.w	Pal_FadeFrom
+	jsr	(Pal_FadeFrom).l
 
 	clearRAM Object_RAM,$2000
 	clearRAM Misc_Variables,$100
@@ -12276,8 +12432,22 @@ loc_9D7C:
 ; end DEZ patterns stuff
 
 	move	#$2300,sr
-	moveq	#-$6B,d0
-	bsr.w	JmpTo2_PlayMusic
+
+	lea	(Normal_palette).w,a1		; load palette into a1
+	move.w	a1,a2				; copy into a2
+-	move.b	#6,(Delay_Time).w		; set V-Int mode
+	bsr.w	DelayProgram			; run
+	move.l	#$1110111,d1			; set palette
+	moveq	#$1F,d0				; repeat $20 times
+-	add.l	d1,(a1)+			; make palette brighter
+	dbf	d0,-				; repeat
+	movea.w	a2,a1				; restore a1
+	cmpi.w	#$0EEE,(Normal_palette).w	; has white been reached?
+	bne.s	--				; if not, loop
+
+	moveq	#$80+$15,d0			; set ending sequence music
+	bsr.w	JmpTo2_PlayMusic		; play
+
 	move.l	#$EEE0EEE,d1
 	lea	(Normal_palette).w,a1
 	moveq	#$1F,d0
@@ -12335,13 +12505,21 @@ loc_9EA4:
 	ori.b	#$40,d0
 	move.w	d0,(VDP_control_port).l
 
-loc_9EBC:
+EndingSequence_MainLoop:
 	move.b	#$18,(Delay_Time).w
 	bsr.w	DelayProgram
 	addq.w	#1,(Timer_frames).w
 	jsr	(RandomNumber).l
 	jsr	(RunObjects).l
 	jsr	(BuildSprites).l
+
+	btst	#7,(Ctrl_1_Press).w	; is Start button pressed?
+	beq.s	+			; if not, branch
+	move.w	#$0000,(Current_ZoneAndAct).w
+	jsr	(loc_9480).l
+	move.w	#1,(Level_Inactive_flag).w
+	move.w	#$0000,(Current_ZoneAndAct).w
++
 	tst.b	($FFFFF661).w
 	beq.s	loc_9EE6
 	bsr.w	JmpTo_PalCycle_Load
@@ -12350,7 +12528,7 @@ loc_9EBC:
 loc_9EE6:
 	bsr.w	sub_9EF4
 	tst.w	(Level_Inactive_flag).w
-	beq.w	loc_9EBC
+	beq.w	EndingSequence_MainLoop
 	rts
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -12359,7 +12537,7 @@ loc_9EE6:
 sub_9EF4:
 	tst.b	($FFFFF660).w
 	beq.w	return_A0BE
-	bsr.w	Pal_FadeFrom
+	jsr	(Pal_FadeFrom).l
 	lea	(VDP_control_port).l,a6
 	move.w	#$8004,(a6)
 	move.w	#$8230,(a6)
@@ -12401,14 +12579,15 @@ sub_9EF4:
 	move.w	#$EEE,(Second_palette+$C).w
 	move.w	#$EE,(Second_palette_line2+$C).w
 	move.l	#$40200000,(VDP_control_port).l
-	lea	(ArtNem_CreditText).l,a0
+
+	lea	(ArtNem_CreditText).l,a0	; load credits font
 	bsr.w	JmpTo_NemDec
 	clr.w	($FFFFFF4C).w
 
 loc_9FE6:
 	bsr.w	JmpTo_ClearScreen
 	bsr.w	sub_B262
-	bsr.w	Pal_FadeTo
+	jsr	(Pal_FadeFrom).l
 	move.w	#$18E,d0
 	btst	#6,(Graphics_Flags).w
 	beq.s	loc_A002
@@ -12418,14 +12597,14 @@ loc_A002:
 	move.b	#$18,(Delay_Time).w
 	bsr.w	DelayProgram
 	dbf	d0,loc_A002
-	bsr.w	Pal_FadeFrom
+	jsr	(Pal_FadeFrom).l
 	lea	(off_B2CA).l,a1
 	addq.w	#1,($FFFFFF4C).w
 	move.w	($FFFFFF4C).w,d0
 	lsl.w	#2,d0
 	move.l	(a1,d0.w),d0
 	bpl.s	loc_9FE6
-	bsr.w	Pal_FadeFrom
+	jsr	(Pal_FadeFrom).l
 	bsr.w	JmpTo_ClearScreen
 	move.l	#$40000000,(VDP_control_port).l
 	lea	(ArtNem_EndingTitle).l,a0
@@ -12676,6 +12855,7 @@ loc_A320:
 	move.w	#$A0,x_pos(a1)
 	move.w	#-11,y_pos(a1)
 	move.w	#$300,y_vel(a1)
+
 	cmpi.w	#2,($FFFFF750).w
 	bne.s	return_A34A
 	move.b	#0,anim(a1)
@@ -12722,12 +12902,12 @@ loc_A38E:
 	bra.s	++
 
 loc_A38EX:
-	lea	(MainCharacter).w,a1 ; a1=character
-	move.b	(Timer_frames+1).w,d0	; get next saved add position
-	jsr	(CalcSine).l	; calc new sine
-	asr.w	#4,d0		; drastically shrink it down
-	add.w	#$30,d0		; add original Y-pos
-	move.w	d0,y_pos(a1)	; save result to new Y-pos
+	lea	(MainCharacter).w,a1	; a1=character
+	move.b	(Timer_frames+1).w,d0	; get current frame counter (first byte)
+	jsr	(CalcSine).l		; calc sine based on it
+	asr.w	#4,d0			; drastically shrink it down
+	add.w	#$30,d0			; add base Y-pos
+	move.w	d0,y_pos(a1)		; save result to new Y-pos
 	bra.s	++
 +	move.l	(sp)+,a0
 +
@@ -12739,7 +12919,7 @@ loc_A38EX:
 ; ===========================================================================
 
 loc_A3A2:
-	cmpi.w	#48*60,objoff_32(a0)
+	cmpi.w	#50*60,objoff_32(a0) ; 50 seconds
 	beq.s	loc_A3BE
 
 loc_A3AA:
@@ -12753,18 +12933,36 @@ loc_A3AA:
 
 loc_A3BE:
 	addq.b	#2,routine(a0)
+	move.b	#$23,(MainCharacter+anim).w
+	;move.b	#4,(MainCharacter+routine).w
 
 loc_A3BEX:
 	move.l	a0,-(sp)
 	lea	(MainCharacter).w,a0 ; a1=character
 	addi.w	#$10,y_vel(a0)
 	jsr	(ObjectMove).l
-	cmpi.w	#$600,y_pos(a0)
-	blt.s	+
 
-	move.b	#$C,(Game_Mode).w
+	;cmpi.w	#$400,y_pos(a0)
+	;blt.s	+
+	cmpi.b	#2,(Sidekick).w
+	bne.s	+
+	move.w	#$200,y_vel(a0)
+	bra.s	++
++
+	tst.b	render_flags(a0)
+	bmi.s	+
+	move.b	#2,(Sidekick).w ; load Obj02 Tails object at $FFFFB040
+	move.w	#$140,(Sidekick+x_pos).w
+	move.w	y_pos(a0),(Sidekick+y_pos).w
+	sub.w	#$200,(Sidekick+y_pos).w
++
+
+	cmpi.w	#$300,y_pos(a0)
+	blt.s	+
 	move.w	#$0000,(Current_ZoneAndAct).w
+	jsr	(loc_9480).l
 	move.w	#1,(Level_Inactive_flag).w
+	move.w	#$0000,(Current_ZoneAndAct).w
 +
 	move.l	(sp)+,a0
 	rts
@@ -12830,17 +13028,27 @@ off_A468:
 	dc.w loc_A83E-off_A468	; 5
 ; ===========================================================================
 
-loc_A474:	; fuck with Sonic
-	cmpi.w	#$80,x_pos(a0)	; $A0
-	;beq.s	loc_A48A
-	bne.s	+
+loc_A474:	; screw with Sonic
+	cmpi.w	#$90,x_pos(a0)	; $A0
+	beq.s	+
+	blt.s	++
+
+	cmpi.w	#$600,x_vel(a0)
+	beq.s	++
+	move.b	#$5E+$80,d0	; play plane sound
+	jsr	(PlaySound).l
 	move.w	#$600,x_vel(a0)
+	
+	bra.s	++
++
 	move.b	#$7D+$80,d0	; stop music
-	jsr	PlaySound
+	jsr	PlayMusic
+
 +	bsr.w	JmpTo2_ObjectMove
-
+	tst.b	render_flags(a0)
+	bmi.s	loc_A480
+	jmp	(DeleteObject).l
 loc_A480:
-
 	lea	(off_3AFDC).l,a1
 	bra.w	JmpTo_AnimateSprite
 ; ===========================================================================
@@ -14194,7 +14402,7 @@ loc_C1C2:
 ; appear at when the level starts.
 ; -------------------------------------------------------------------------------------
 WrdArr_StartLoc:
-	dc.w	$A0,	$294	; $00
+	dc.w	288,	$0	; $00
 	dc.w	$60,	$2AF
 	dc.w	$60,	$28F	; $01
 	dc.w	$60,	$2AF
@@ -16532,7 +16740,7 @@ loc_D78E:
 
 loc_D798:
 	tst.w	(Debug_placement_mode).w	; in debug?
-	bne.s	+				; if yes, keep camera in place
+	bgt.s	+				; if yes, keep camera in place
 	btst	#1,status(a0)
 	beq.s	loc_D7B6
 +	addi.w	#$20,d0
@@ -21297,6 +21505,13 @@ Obj17_MapUnc_10452:	BINCLUDE "mappings/sprite/obj17.bin"
 ; ---------------------------------------------------------------------------
 ; Sprite_104AC:
 Obj18:
+	tst.w	(Debug_placement_mode).w
+	beq.s	+
+	tst.b	routine(a0)
+	beq.s	+
+	move.b	#2,routine(a0)
+	bra.w	loc_105BA
++
 	moveq	#0,d0
 	move.b	routine(a0),d0
 	move.w	off_104BA(pc,d0.w),d1
@@ -27231,8 +27446,10 @@ Obj4D:
 Obj4D_Index:
 	dc.w Obj4D_Init   - Obj4D_Index	; $0
 	dc.w Obj4D_Main   - Obj4D_Index	; $2
-	dc.w Obj4D_Debug  - Obj4D_Index	; $4
-	dc.w Obj4D_Idle   - Obj4D_Index	; $6
+	dc.w Obj4D_Idle   - Obj4D_Index	; $4
+
+	dc.w Obj4D_Debug  - Obj4D_Index	; $6
+
 	dc.w Obj4D_Grid1  - Obj4D_Index	; $8
 	dc.w Obj4D_Grid2  - Obj4D_Index	; $A
 ; ===========================================================================
@@ -27240,7 +27457,7 @@ Obj4D_Index:
 Obj4D_Init:
 	addq.b	#2,routine(a0)	; set to next routine
 
-	move.l	#Obj4D_MapUnc_Arrow,mappings(a0)	; set mappings
+	move.l	#Obj4D_MapUnc_Arrow,mappings(a0) ; set mappings
 	move.w	#$2000+(VRAM_SArrows/$20),art_tile(a0) ; set tile offset
 
 	move.b	#15*2,d0	; set default interval value (level 1 *2)
@@ -27250,7 +27467,7 @@ Obj4D_Init:
 	
 	jsr	RandomNumber	; get a random number
 	move.b	d0,$3F(a0)	; set result as random start value for sine stuff
-; ===========================================================================
+; ---------------------------------------------------------------------------
 
 Obj4D_Main:
 	move.b	$3F(a0),d0	; get next saved add position
@@ -27261,10 +27478,10 @@ Obj4D_Main:
 	tst.b	$38(a0)		; is this a horizontal spike?
 	bne.s	+		; if not, branch
 	move.w	d0,x_pos(a0)	; save result to new X-pos
-	bra.s	O4D_skip	; skip
+	bra.s	++		; skip
 +	move.w	d0,y_pos(a0)	; save result to new Y-pos
-O4D_skip:
-	addq.b	#1,$35(a0)	; increase one to blink counter
+
++	addq.b	#1,$35(a0)	; increase one to blink counter
 	move.b	$37(a0),d0	; get saved blink interval time
 	cmp.b	$35(a0),d0	; blink toggle time reached?
 	bpl.s	+		; if not, branch
@@ -27276,19 +27493,20 @@ O4D_skip:
 	bne.s	+		; if not, branch
 	subi.w	#Size_Arrow*2,art_tile(a0) ; reset to yellow
 +	jmp	(DisplaySprite).l
+
+; ---------------------------------------------------------------------------
 ; ===========================================================================
+; ---------------------------------------------------------------------------
 
 Obj4D_Debug:
 	tst.w	(Debug_placement_mode).w ; is debug placement mode enabled?
-	beq.s	Obj4D_Delete		; if not, delete object
+	ble.s	Obj4D_Delete		; if not, delete object
 	btst	#6,(Ctrl_1_Held).w	; is button A still held?
 	bne.s	+			; if yes, branch
 	rts				; if not, don't do anything
 +
-;	move.w	($FFFFF504).w,x_pos(a0)	; set evened X-pos to this one's
-;	move.w	($FFFFF506).w,y_pos(a0)	; set evened Y-pos to this one's
-	move.w	(MainCharacter+x_pos).w,x_pos(a0)	; set evened X-pos to this one's
-	move.w	(MainCharacter+y_pos).w,y_pos(a0)	; set evened Y-pos to this one's
+	move.w	(MainCharacter+x_pos).w,x_pos(a0) ; set X-pos to this one's
+	move.w	(MainCharacter+y_pos).w,y_pos(a0) ; set Y-pos to this one's
 
 	btst	#2,(Ctrl_1_Press).w	; is button left pressed?
 	beq.s	+			; if not, branch
@@ -27304,6 +27522,7 @@ Obj4D_Debug:
 	subq.b	#1,$30(a0)		; if not, reduce delay
 	bra.s	Obj4D_Display		; skip
 +	move.b	#6,mapping_frame(a0)	; set default frame
+; ---------------------------------------------------------------------------
 
 Obj4D_Display:
 	jmp	(DisplaySprite).l
@@ -27315,7 +27534,10 @@ Obj4D_Delete:
 
 Obj4D_Idle:
 	rts				; do nothing
+
+; ---------------------------------------------------------------------------
 ; ===========================================================================
+; ---------------------------------------------------------------------------
 
 Obj4D_Grid1:
 	addq.b	#2,routine(a0)			; set to next routine
@@ -27335,14 +27557,15 @@ Obj4D_Grid2:
 	bra.s	++			; display object
 +	bchg	#1,render_flags(a0)	; change vertical mirror flag
 +	bra.w	Obj4D_Display		; display object
+; ---------------------------------------------------------------------------
 ; ===========================================================================
 
 ; ===========================================================================
-; ------------------------------------------------------------------------------
+; ---------------------------------------------------------------------------
 ; sprite mappings
-; ------------------------------------------------------------------------------
+; ---------------------------------------------------------------------------
 Obj4D_MapUnc_Arrow:		BINCLUDE "mappings/sprite/obj4D.bin"
-Obj4D_MapUnc_Grid:		dc.w $0002, $0001, $F00F,$0000,$0000,$FFF0
+Obj4D_MapUnc_Grid:		dc.w	$0002, $0001, $F00F,$0000,$0000,$FFF0
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
 
@@ -27679,6 +27902,9 @@ SHE_Abort:
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 36 - Spikes
+
+DSound_Del = $65+$80
+; other sounds are in DebugMode
 ; ---------------------------------------------------------------------------
 ; Sprite_15900:
 Obj36:
@@ -27854,7 +28080,7 @@ Obj36_DebugCheck:
 	bpl.s	+				; branch if positive
 	neg.w	d0				; otherwise make it positive
 +	cmpi.w	#DebugRange,d0			; in range?
-	bge.s	ODC_DelGrid			; if not, end
+	bge.w	ODC_DelGrid			; if not, end
 	
 	move.w	(MainCharacter+y_pos).w,d0	; get debug Y-position
 	;move.w	($FFFFF506).w,d0		; get evened debug Y-position
@@ -27874,6 +28100,7 @@ Obj36_DebugCheck:
 	move.b	#8,routine(a1)		; change it to grid object
 	move.w	x_pos(a0),x_pos(a1)	; copy x-pos
 	move.w	y_pos(a0),y_pos(a1)	; copy y-pos
+	move.b	#1,priority(a1)		; place it above spikes
 	move.w	a1,$3C(a0)		; remember child
 +
 	move.b	#1,($FFFFF503).w		; block debug placement
@@ -27883,7 +28110,7 @@ Obj36_DebugCheck:
 	beq.s	ODC_End				; if not, branch
 	move.b	#0,($FFFFF503).w		; enable debug placement
 
-	move.w	#$65+$80,d0		; play "pf-pf-pfff" sound
+	move.w	#DSound_Del,d0		; play "pf-pf-pfff" sound
 	jsr	(PlaySound).l		; play
 
 	cmpi.b	#-1,respawn_index(a0)	; is this a debug-placed spike?
@@ -27924,7 +28151,7 @@ MarkObjGone_DebugSpikes:
 	bhi.w	+
 	move.b	#2,routine(a1)
 	bra.w	DisplaySprite
-+	move.b	#6,routine(a1)
++	move.b	#4,routine(a1)
 	rts
 ; ===========================================================================
 MarkObjGone_NormalSpikes:
@@ -33854,6 +34081,11 @@ Obj01_Init_Continued:
 	addi.w	#$20,x_pos(a0)
 	subi.w	#4,y_pos(a0)
 
+	cmpi.w	#$000,(Current_ZoneAndAct).w
+	bne.s	Obj01_Control
+	move.b	#4,routine(a0) ; set to hurt
+	move.w	#$A00,y_vel(a0)	; set Y-speed
+
 ; ---------------------------------------------------------------------------
 ; Normal state for Sonic
 ; ---------------------------------------------------------------------------
@@ -34118,6 +34350,18 @@ return_1A2DE:
 ; Called if Sonic is airborne, but not in a ball (thus, probably not jumping)
 ; loc_1A2E0: Obj01_MdJump
 Obj01_MdAir:
+ if DEVMODE=1
+	tst.w	(Debug_mode_flag).w	; is debug cheat enabled?
+	beq.s	+			; if not, branch
+	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
+	beq.s	+			; if not, branch
+	move.w	#1,(Debug_placement_mode).w	; change Sonic into a ring/item
+	clr.b	(Control_Locked).w		; unlock control
+	rts
+; -----------------------------------------------------------------------
++
+ endif
+
 	bsr.w	Sonic_JumpHeight
 	bsr.w	Sonic_ChgJumpDir
 	bsr.w	Sonic_LevelBound
@@ -34135,6 +34379,17 @@ Obj01_MdAir:
 ; Called if Sonic is in a ball, but not airborne (thus, probably rolling)
 ; loc_1A30A:
 Obj01_MdRoll:
+ if DEVMODE=1
+	tst.w	(Debug_mode_flag).w	; is debug cheat enabled?
+	beq.s	+			; if not, branch
+	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
+	beq.s	+			; if not, branch
+	move.w	#1,(Debug_placement_mode).w	; change Sonic into a ring/item
+	clr.b	(Control_Locked).w		; unlock control
+	rts
+; -----------------------------------------------------------------------
++
+ endif
 	tst.b	spindash_flag(a0)
 	bne.s	+
 	bsr.w	Sonic_Jump
@@ -34154,6 +34409,17 @@ Obj01_MdRoll:
 ;        Why they gave it a separate copy of the code, I don't know.
 ; loc_1A330: Obj01_MdJump2:
 Obj01_MdJump:
+ if DEVMODE=1
+	tst.w	(Debug_mode_flag).w	; is debug cheat enabled?
+	beq.s	+			; if not, branch
+	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
+	beq.s	+			; if not, branch
+	move.w	#1,(Debug_placement_mode).w	; change Sonic into a ring/item
+	clr.b	(Control_Locked).w		; unlock control
+	rts
+; -----------------------------------------------------------------------
++
+ endif
 	bsr.w	Sonic_JumpHeight
 	bsr.w	Sonic_ChgJumpDir
 	bsr.w	Sonic_LevelBound
@@ -35682,14 +35948,15 @@ return_1B11E:
 ; ---------------------------------------------------------------------------
 ; loc_1B120: Obj_01_Sub_4:
 Obj01_Hurt:
+ if DEVMODE=1
 	tst.w	(Debug_mode_flag).w
-	;bra.s	Obj01_Hurt_Normal
 	beq.s	Obj01_Hurt_Normal
 	btst	#4,(Ctrl_1_Press).w
 	beq.s	Obj01_Hurt_Normal
 	move.w	#1,(Debug_placement_mode).w
 	clr.b	(Control_Locked).w
 	rts
+ endif
 ; ---------------------------------------------------------------------------
 ; loc_1B13A:
 Obj01_Hurt_Normal:
@@ -35702,7 +35969,7 @@ Obj01_Hurt_Normal:
 	bset	#0,status(a0)	; make Sonic face left
 	neg.w	d0		; make X-speed positive
 +
-; $22 fastest; $23 slower; $24 even slower; $1A even slower (normal); $25 almost slowest; $26 slowest
+; $22 fastest; $23 faster; $24 fast; $1A normal; $25 slow; $26 slowest
 	move.w	y_vel(a0),d1	; get Y-speed
 	bpl.s	+		; positive? branch
 	neg.w	d1		; otherwise make it positive
@@ -35802,8 +36069,8 @@ Sonic_HurtInstantRecover:
 
 ; loc_1B1E6: Obj_01_Sub_6:
 Obj01_Dead:
+ if DEVMODE=1
 	tst.w	(Debug_mode_flag).w
-	;bra.s	+
 	beq.s	+
 	btst	#4,(Ctrl_1_Press).w
 	beq.s	+
@@ -35811,6 +36078,7 @@ Obj01_Dead:
 	clr.b	(Control_Locked).w
 	rts
 +
+ endif
 	bsr.w	CheckGameOver
 	jsr	ObjectMoveAndFall
 	bsr.w	Sonic_RecordPos
@@ -36736,6 +37004,11 @@ TailsCPU_Flying_Part2:
 	move.w	d0,(Tails_CPU_target_y).w
 +
 
+	moveq	#4,d3			; set normal speed
+	cmpi.b	#$20,(Game_Mode).w	; ending sequence?
+	bne.s	+			; if not, branch
+	moveq	#6,d3			; use slower speed
++
 	tst.w	(Debug_placement_mode).w	; in debug mode?
 	ble.s	+				; if not, branch
 	bsr.s	TailsFly_MoveX			; move Tails on x-axis (debug)
@@ -36772,7 +37045,7 @@ TailsFly_MoveX2:
 	bpl.s	+
 	neg.w	d2
 +
-	lsr.w	#4,d2
+	lsr.w	d3,d2
 	cmpi.w	#$C,d2
 	bcs.s	+
 	moveq	#$C,d2
@@ -36820,7 +37093,6 @@ TailsFly_MoveY:
 	bgt.w	TailsFly_MoveY2	; if not, move Tails
 	cmpi.w	#-TailsDist,d0	; withing block range to the top?
 	blt.w	TailsFly_MoveY2	; if not, branch
-	nop
 	bra.w	TMY_End		; if yes, return
 
 TailsFly_MoveY2:
@@ -36831,7 +37103,7 @@ TailsFly_MoveY2:
 	bpl.s	+
 	neg.w	d2
 +
-	lsr.w	#4,d2
+	lsr.w	d3,d2
 	cmpi.w	#$C,d2
 	bcs.s	+
 	moveq	#$C,d2
@@ -84709,6 +84981,8 @@ SelbiSplash:
 	
 	move.l	#$4E400001,($FFFFF57A).w
 	move.w	#0,($FFFFF57E).w
+	
+	move.w	#6,($FFFFF5B0).w
 ; ---------------------------------------------------------------------------
 
 Selbi_Loop:
@@ -84760,20 +85034,50 @@ SelbiSplash_cont1:
 	sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB0E).w
 
 	cmpi.w	#$90,($FFFFF614).w		; is time less than $90?
-	bmi.s	SelbiSplash_DontChangePal	; if yes, branch
+	bmi.w	SelbiSplash_DontChangePal	; if yes, branch
 	cmpi.w	#$D0,($FFFFF614).w		; is time more than $D0?
 	bpl.w	SelbiSplash_ChangePal		; if yes, branch
+
+	; screen shake Y
+	move.w	($FFFFF5B0).w,d0
+	lsr.w	#2,d0
+	move.b	($FFFFFE0F).w,d1
+	andi.b	#1,d1
+	beq.s	+
+	neg.w	d0
++	lea	($C00000).l,a5
+	lea	$04(a5),a6
+	move.w	#$8B00,(a6)
+	move.l	#$40000010,(a6)
+	move.w	d0,(a5)
+	
+	; screen shake X
+	move.w	($FFFFF5B0).w,d0
+	lsr.w	#3,d0
+	move.b	($FFFFFE0F).w,d1
+	andi.w	#2,d1
+	beq.s	+
+	neg.w	d0
++	lea	($C00000).l,a5
+	lea	$04(a5),a6
+	move.w	#$8B00,(a6)
+	move.l	#$7C000003,(a6)
+	move.w	d0,(a5)
+
+	move.b	($FFFFFE0F).w,d0
+	andi.b	#1,d0
+	bne.s	+
+	move.w	#1,d1	; increase screen shake
+;	cmpi.w	#8,($FFFFF5B0).w
+;	beq.s	+
+	add.w	d1,($FFFFF5B0).w
++
 
 	move.b	($FFFFFE0F).w,d0
 	andi.b	#3,d0
 	bne.w	SelbiSplash_ChangePal
 	jsr	(Pal_ToWhite).l
 
-	lea	($C00000).l,a5
-	lea	$04(a5),a6
-	move.w	#$8B00,(a6)
-	move.l	#$40000010,(a6)
-	move.w	#$0008,(a5)
 
 	move.b	($FFFFFE0F).w,d0
 	andi.b	#5,d0
@@ -84818,8 +85122,13 @@ SelbiSplash_ChangePal:
 SelbiSplash_Next:
 	clr.b	($FFFFF5AF).w
 	clr.l	($FFFFF57A).w
+ if DEVMODE=1
 	move.w	#$000,d0
 	jmp	(loc_9480).l
+ else
+ 	move.b	#$20,(Game_Mode).w	; => EndingSequence
+	rts
+ endif
 		
 ; ---------------------------------------------------------------------------
 Selbi_Nem:	BINCLUDE	"misc/SelbiSplash/Tiles.bin"
@@ -84853,12 +85162,14 @@ Obj4C_Index:
 	dc.w Obj4C_Delete-Obj4C_Index			; $6
 ; ===========================================================================
 
-Obj4C_Main:
+Obj4C_Main:	; while debug mode is in use
 	tst.b	(Debug_placement_mode).w		; is debug mode set to end?
 	bpl.w	+					; if not, branch
 	addq.b	#2,routine(a0)				; otherwise, set it to exit mode
+ if DEVMODE=1
 	btst	#6,(Ctrl_1_Held).w			; is A held down?
-	bne.w	Obj4C_Exit3				; if yes, don't return to starting location (DEV)
+	bne.w	Obj4C_Exit3				; if yes, teleport Sonic to debug location instead
+ endif
 	move.w	x_pos(a0),(MainCharacter+x_pos).w	; move Sonic to his original x-position
 	move.w	y_pos(a0),(MainCharacter+y_pos).w	; move Sonic to his original y-position
 	bra.s	Obj4C_Exit1				; branch
@@ -84866,7 +85177,7 @@ Obj4C_Main:
 	bra.w	Obj4C_Display				; display sprite
 ; ===========================================================================
 
-Obj4C_Exit1:
+Obj4C_Exit1:	; while the camera moves back to Sonic
 	move.w	$30(a0),d0				; move stored X-camera-pos to d0 because cmp can't handle it
 	cmp.w	(Camera_X_pos).w,d0			; compare it to current X-camera-pos
 	bne.s	+					; if unequal, abort
@@ -84881,11 +85192,12 @@ Obj4C_Exit1:
 	bra.s	Obj4C_Display				; display
 ; ===========================================================================
 
-Obj4C_Exit2:
+Obj4C_Exit2:	; while Sonic is standing up again
 	cmpi.b	#$28,anim(a0)				; is get-up animation still being played?
 	beq.s	Obj4C_Display				; if yes, branch
+; ---------------------------------------------------------------------------
 
-Obj4C_Exit3:
+Obj4C_Exit3:	; when Sonic has finished
 	addq.b	#2,routine(a0)				; delete object next frame
 	move.w	#0,(Debug_placement_mode).w		; disable debug placement mode entirely
 ; ===========================================================================
@@ -84947,6 +85259,14 @@ Debug_EvenObj2:	; otherwise, use specified object (a1) as target
 
 DebugSpeed = $7F
 DebugDelay = $08
+
+DSound_Enter = $57+$80
+DSound_Leave = $5A+$80
+DSound_Right = $5D+$80
+DSound_Left  = $64+$80
+DSound_Place = $55+$80
+DSound_Error = $6D+$80
+;DSound_Del   = $65+$80 (found in Obj36)
 ; ---------------------------------------------------------------------------
 ; loc_41A78:
 DebugMode:
@@ -84964,6 +85284,9 @@ Debug_Index:
 ; ===========================================================================
 ; loc_41A8A:
 Debug_Init:
+;	move.w	#DSound_Enter,d0		; play "dung" sound
+;	jsr	(PlaySound).l		; play
+
 	addq.b	#2,(Debug_placement_mode).w
 	move.w	(Camera_Min_Y_pos).w,($FFFFFFCC).w
 	move.w	(Camera_Max_Y_pos).w,($FFFFFFCE).w
@@ -84990,14 +85313,14 @@ loc_41AFC:
 	jsr	(SingleObjLoad).l	; call routine
 	bne.s	+			; skip if SST is full
 	move.b	#$4D,(a1)		; load to spike arrow object
-	move.b	#4,routine(a1)		; give it its specialized routine (debug A arrows)
+	move.b	#6,routine(a1)		; give it its specialized routine (debug A arrows)
 	move.l	#Obj4D_MapUnc_Arrow,mappings(a1) ; set mappings
 	move.w	#$2000+(VRAM_SArrows/$20),art_tile(a1) ; set tile offset
 	move.b	#6,mapping_frame(a1)	; set default frame
 	move.w	x_pos(a0),x_pos(a1)	; copy evened x-pos
 	move.w	y_pos(a0),y_pos(a1)	; copy evened y-pos
 	ori.b	#$84,render_flags(a1)
-	move.b	#5,priority(a1)
+	move.b	#0,priority(a1)
 +
 	jsr	(SingleObjLoad).l	; call routine
 	bne.s	+			; skip if SST is full
@@ -85114,7 +85437,7 @@ Debug_CheckAL:
 	btst	#2,(Ctrl_1_Press).w	; is button left pressed?
 	beq.s	Debug_CheckAR		; if not, branch
 
-	move.w	#$64+$80,d0		; play other "dit" sound
+	move.w	#DSound_Left,d0		; play other "dit" sound
 	jsr	(PlaySound).l		; play
 
 	subq.b	#1,(Debug_object).w	; cycle through the debug object list backwards
@@ -85127,7 +85450,7 @@ Debug_CheckAR:
 	btst	#3,(Ctrl_1_Press).w	; is button right pressed?
 	beq.w	Debug_CheckC		; if not, branch
 
-	move.w	#$5D+$80,d0		; play "dit" sound
+	move.w	#DSound_Right,d0	; play "dit" sound
 	jsr	(PlaySound).l		; play
 
 	addq.b	#1,(Debug_object).w	; cycle through the debug object list forwards
@@ -85149,11 +85472,11 @@ Debug_CheckC:
 
 	bsr.w	SingleObjLoad_Debug	; check for a free object slot
 	beq.s	+			; create, if a free slot exists
-	move.w	#$6D+$80,d0		; otherwise, play "drr-drrrrr" sound
+	move.w	#DSound_Error,d0	; otherwise, play "drr-drrrrr" sound
 	jsr	(PlaySound).l		; play
 	bra.w	Debug_CheckB		; branch
 +
-	move.w	#$55+$80,d0		; play "cl-cling" sound
+	move.w	#DSound_Place,d0	; play "cl-cling" sound
 	jsr	(PlaySound).l		; play
 	move.w	x_pos(a0),x_pos(a1)
 	move.w	y_pos(a0),y_pos(a1)
@@ -85176,7 +85499,10 @@ Debug_CheckB:
 	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
 	beq.w	Debug_EndButtons		; if not, branch; if yes, return normal playmode
 
-	ori.w	#$8000,(Debug_placement_mode).w ; set top bit to initiate mode cancel
+	ori.w	#$8000,(Debug_placement_mode).w ; set top bit to initiate mode cancel (handled by Obj4C)
+
+;	move.w	#DSound_Leave,d0		; play "bwoup" sound
+;	jsr	(PlaySound).l		; play
 
 	lea	(MainCharacter).w,a1		; load Sonic into a1
 	move.l	#Mapunc_Sonic,mappings(a1)	; reset mappings
@@ -87959,144 +88285,6 @@ MapEng_SpecialBackBottom:	BINCLUDE	"mappings/misc/Lower background mappings for 
 ; Sonic/Miles and number text from special stage	; ArtNem_DD48A:
 	even
 MapEng_SpecialHUD:	BINCLUDE	"art/nemesis/Sonic and Miles number text from special stage.bin"
-
-;--------------------------------------------------------------------------------------
-Obj21_MapUnc_Text:
-	dc.w O21Text_0-Obj21_MapUnc_Text	; $0
-	dc.w O21Text_1-Obj21_MapUnc_Text	; $1
-	dc.w O21Text_2-Obj21_MapUnc_Text	; $2
-	dc.w O21Text_3-Obj21_MapUnc_Text	; $3
-	dc.w O21Text_4-Obj21_MapUnc_Text	; $4
-	dc.w O21Text_5-Obj21_MapUnc_Text	; $5
-	dc.w O21Text_6-Obj21_MapUnc_Text	; $6
-	dc.w O21Text_7-Obj21_MapUnc_Text	; $7
-	dc.w O21Text_8-Obj21_MapUnc_Text	; $8
-	dc.w O21Text_9-Obj21_MapUnc_Text	; $9
-	dc.w O21Text_A-Obj21_MapUnc_Text	; $A
-
-;		   ypos|size vramP1 vramP2  xpos
-;		    $00 05,  $8580, $82C0, $FFC3	; E
-charset
-
-itext macro text,oldxpos,ypos,pal
-c := 0
-d := 0
-xadd := 0
-
-	if "pal"<>""
-p := $4000	; set to yellow if pal is set
-	else
-p := $0000	; set to white if pal isn't set
-	endif
-
-xpos := 160 - ((strlen(text))*8)
-	rept strlen(text)
-		if (substr(text,d,1)="I") || (substr(text,d,1)=" ")
-xpos := xpos+4
-		endif
-d := d+1
-	endm
-
-	rept strlen(text)
-j := substr(text,c,1)
-l := ((charfromstr(j,0)-$41)*2)+1
-	if j=" "
-		dc.w (ypos<<8)|$0000	; ypos & format (fixed)
-		dc.w $0000	; 1P
-		dc.w $0000	; 2P (don't care about that one for now)
-		dc.w xpos+xadd
-xadd := xadd+8
-	elseif j="I"
-		dc.w (ypos<<8)|$0000
-		dc.w l|p	; 1P
-		dc.w l|p	; 2P (don't care about that one for now)
-		dc.w xpos+xadd
-xadd := xadd+8
-	elseif l>$11
-		dc.w (ypos<<8)|$0004	; ypos & format (fixed)
-		dc.w l-1|p	; 1P
-		dc.w l-1|p	; 2P (don't care about that one for now)
-		dc.w xpos+xadd
-xadd := xadd+$10
-	else
-		dc.w (ypos<<8)|$0004	; ypos & format (fixed)
-		dc.w l|p	; 1P
-		dc.w l|p	; 2P (don't care about that one for now)
-		dc.w xpos+xadd
-xadd := xadd+$10
-	endif
-c := c+1
-	endm
-    endm
-
-
-O21Text_0:
-	dc.w 11+14+8
-	itext "SONIC STUFF",$0030,$20,1
-	itext "RESEARCH GROUP",$0020,$30,1
-	itext "PRESENTS",$0040,$50
-
-O21Text_1:
-	dc.w 1+13+10
-	itext "A",$0030,$20
-	itext "SELBI INKILLE",$0020,$40,1
-	itext "PRODUCTION",$0040,$60
-
-O21Text_2:
-	dc.w 7+16+6
-	itext "AFTER A",$0030,$20
-	itext "STORY CONCEPT BY",$0020,$30
-	itext "ARAGON",$0040,$50,1
-
-O21Text_3:
-	dc.w 16+5
-	itext "LEAD DEVELOPMENT",$0030,$20
-	itext "SELBI",$0020,$40,1
-
-O21Text_4:
-	dc.w 16+12
-	itext "EXTRA ART ASSETS",$0030,$20
-	itext "MARKEYJESTER",$0020,$40,1
-
-O21Text_5:
-	dc.w 5+8+7
-	itext "MUSIC",$0030,$20
-	itext "DALEKSAM",$0020,$40,1
-	itext "SPANNER",$0040,$50,1
-
-O21Text_6:
-	dc.w 5+10+8
-	itext "TOOLS",$0030,$20
-	itext "MAINMEMORY",$0020,$40,1
-	itext "SNKENJOI",$0040,$50,1
-
-O21Text_7:
-	dc.w 12+9+5+10
-	itext "TECH SUPPORT",$0030,$20
-	itext "FLAMEWING",$0020,$40,1
-	itext "JORGE",$0040,$50,1
-	itext "MAINMEMORY",$0060,$60,1
-
-O21Text_8:
-	dc.w 17+9
-	itext "MAIN BETA TESTING",$0030,$20
-	itext "SONICVAAN",$0020,$40,1
-
-O21Text_9:
-	dc.w 16+10+4
-	itext "ORIGINAL GAME BY",$0030,$20
-	itext "SONIC TEAM",$0020,$40,1
-	itext "SEGA",$0040,$50,1
-
-O21Text_A:
-	dc.w 8+5+9
-	itext "HEDGEHOG",$0030,$30,1
-	itext "ABUSE",$0020,$40,1
-	itext "SIMULATOR",$0040,$50,1
-
-
-	even
- charset ; have to revert character set before changing again
 ;--------------------------------------------------------------------------------------
 ; Nemesis compressed art (48 blocks)
 ; "Start" and checkered flag patterns in special stage	; ArtNem_DD790:
