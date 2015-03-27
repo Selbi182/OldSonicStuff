@@ -425,6 +425,7 @@ PalID_UNK6 =	id(PalPtr_UNK6) ; 24
 PalID_OOZ_B =	id(PalPtr_OOZ_B) ; 25
 PalID_Menu =	id(PalPtr_Menu) ; 26
 PalID_UNK7 =	id(PalPtr_UNK7) ; 27
+PalID_SCZ2 =	id(PalPtr_SCZ2) ; 28
 
 ; PLC IDs
 offset :=	ArtLoadCues
@@ -2188,6 +2189,8 @@ ArtTile_ArtNem_BreakPanels            = $048C
 ; SCZ
 ArtTile_ArtNem_Turtloid               = $038A
 ArtTile_ArtNem_Nebula                 = $036E
+ArtTile_ArtNem_MTZTube                = $0373
+ArtTile_ArtNem_DEZWFZ                 = $03B3
 
 ; HTZ
 ArtTile_ArtNem_Rexon                  = $037E
@@ -5892,6 +5895,7 @@ PalPtr_UNK6:	palptr Pal_UNK6,  3
 PalPtr_OOZ_B:	palptr Pal_OOZ_B, 1
 PalPtr_Menu:	palptr Pal_Menu,  0
 PalPtr_UNK7:	palptr Pal_UNK7,  0
+PalPtr_SCZ2:	palptr Pal_SCZ2,  1
 
 ; ----------------------------------------------------------------------------
 ; This macro defines Pal_ABC and Pal_ABC_End, so palptr can compute the size of
@@ -5942,6 +5946,7 @@ Pal_UNK4:  palette Special Stage 1 2p.bin ; Special Stage 1 2p palette
 Pal_UNK5:  palette Special Stage 2 2p.bin ; Special Stage 2 2p palette
 Pal_UNK6:  palette Special Stage 3 2p.bin ; Special Stage 3 2p palette
 Pal_UNK7:  palette Special Stage Results Screen.bin ; Special Stage Results Screen palette
+Pal_SCZ2:  palette SCZ2.bin ; Sky Chase Zone 2 palette
 ; ===========================================================================
 
     if gameRevision<2
@@ -6192,6 +6197,7 @@ Sega_GotoTitle:
 	clr.w	(SegaScr_VInt_Subrout).w
 
 	move.b	#1,(Debug_mode_flag).w
+;	move.w	#sky_chase_zone_act_2,d0
 	move.w	#metropolis_zone_act_3,d0
 	jmp	(LevelSelect_StartZone).l
 
@@ -6782,7 +6788,7 @@ Level_PlayBgm:
 	move.b	#MusID_Boss,d0
 +
 	cmpi.w	#sky_chase_zone_act_2,(Current_ZoneAndAct).w
-	beq.s	+
+	beq.s	Level_TtlCard
 
 	bsr.w	PlayMusic		; play level music
 	move.b	#ObjID_TitleCard,(TitleCard+id).w ; load Obj34 (level title card) at $FFFFB080
@@ -7938,6 +7944,7 @@ SetLevelEndType:
 	nosignpost.s death_egg_zone_act_1
 	nosignpost.s aquatic_ruin_zone_act_2
 	nosignpost.s sky_chase_zone_act_1
+	nosignpost.s sky_chase_zone_act_2
 
 ; loc_4C40:
 LevelEnd_SetSignpost:
@@ -16743,10 +16750,16 @@ DeformBgLayer:
 	beq.w	loc_C4D0	; skip normal scrolling for SCZ1
 +
 	tst.b	(Scroll_lock).w
-	bne.s	DeformBgLayerAfterScrollVert
+	bne.w	DeformBgLayerAfterScrollVert
 	lea	(MainCharacter).w,a0 ; a0=character
+	cmpi.w	#sky_chase_zone_act_2,(Current_Zone).w
+	bne.s	+
+	tst.w	(Tails_control_counter).w
+	bpl.s	+
+	lea	(SideKick).w,a0 ; a0=character
++
 	cmpi.b	#wing_fortress_zone,(Current_Zone).w
-	bne.w	+
+	bne.s	+
 	cmpi.b	#4,(Object_Ram+$400+routine_secondary).w
 	blo.s	+
 	lea	(Object_Ram+$400).w,a0 ; a0=tornado
@@ -18671,14 +18684,40 @@ SwScrl_SCZ:
 ; ===========================================================================
 
 SwScrl_SCZ2:
-	move.w	(Camera_X_pos_diff).w,d4
-	ext.l	d4
-	asl.l	#5,d4
-	move.w	(Camera_Y_pos_diff).w,d5
-	ext.l	d5
-	asl.l	#6,d5
-	bsr.w	SetHorizVertiScrollFlagsBG
+;	move.w	(Camera_X_pos_diff).w,d4
+;	moveq	#0,d4
+;	move.w	(Vint_runcount+2).w,d4
+;	move.l	#$50000,d4
+;	ext.l	d4
+;	asl.l	#5,d4
+;	move.w	(Camera_Y_pos_diff).w,d5
+;	ext.l	d5
+;	asl.l	#6,d5
+
+
+	move.l	#1,d4	; pixels to move Plane B per flame
+	lsl.l	#8,d4
+	lsl.l	#6,d4
+
+	move.w	#$10,(Camera_BG_Y_pos).w
+;	move.b	(Vint_runcount+3).w,d0
+;	jsr	(CalcSine).l
+;	asr.w	#4,d0
+;	add.w	d0,(Camera_BG_Y_pos).w
+	
+	
+	bsr.w	SetHorizScrollFlagsBG_Special
+;	move.l	#0,(Camera_BG_X_pos).w
+;	bsr.w	SetHorizVertiScrollFlagsBG
 	move.w	(Camera_BG_Y_pos).w,(Vscroll_Factor_BG).w
+
+
+
+;	move.b	(Vint_runcount+3).w,d0
+;	jsr	(CalcSine).l
+;	asr.w	#4,d0
+;	add.w	d0,(Camera_BG_Y_pos).w
+
 	lea	(Horiz_Scroll_Buf).w,a1
 	move.w	#bytesToLcnt($380),d1
 	move.w	(Camera_X_pos).w,d0
@@ -19037,6 +19076,30 @@ SetHorizVertiScrollFlagsBG: ; used by lev2, MTZ, HTZ, CPZ, DEZ, SCZ, Minimal
 +
 	rts
 ; End of function SetHorizVertiScrollFlagsBG
+
+
+SetHorizScrollFlagsBG_Special:
+	move.l	(Camera_BG_X_pos).w,d2
+	move.l	d2,d0
+	add.l	d4,d0	; add x-shift for this frame
+	move.l	d0,(Camera_BG_X_pos).w
+	move.l	d0,d1
+	swap	d1
+	andi.w	#$10,d1
+	move.b	(Horiz_block_crossed_flag_BG).w,d3
+	eor.b	d3,d1
+	bne.s	++
+	eori.b	#$10,(Horiz_block_crossed_flag_BG).w
+	sub.l	d2,d0
+	bpl.s	+
+	bset	#2,(Scroll_flags_BG).w
+	bra.s	++
+; ===========================================================================
++
+	bset	#3,(Scroll_flags_BG).w
++
+	rts
+
 
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -20443,7 +20506,10 @@ loadZoneBlockMaps:
 	addq.w	#4,a2
 	moveq	#0,d0
 	move.b	(a2),d0	; palette ID
-	jsrto	(PalLoad2).l, JmpTo_PalLoad2
+	cmpi.w	#sky_chase_zone_act_2,(Current_ZoneAndAct).w
+	bne.s	+
+	move.b	#$28,d0
++	jsrto	(PalLoad2).l, JmpTo_PalLoad2
 	rts
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -22191,6 +22257,10 @@ LevEvents_SCZ_RoutineNull:
 ; ===========================================================================
 ; return_F624:
 LevEvents_SCZ2:
+	cmpi.w	#$240,(Camera_X_pos).w
+	blo.s	+
+	move.w	#$20,(Camera_Max_Y_pos).w
++
 	rts
 ; ===========================================================================
 
@@ -22274,7 +22344,7 @@ Obj11_Init:
 	move.l	#Obj11_MapUnc_FC28,mappings(a0)
 	move.w	#make_art_tile(ArtTile_ArtNem_HPZ_Bridge,3,0),art_tile(a0)
 +
-	bsr.w	Adjust2PArtPointer
+	jsr	(Adjust2PArtPointer).l
 	move.b	#4,render_flags(a0)
 	move.b	#$80,width_pixels(a0)
 	move.w	y_pos(a0),d2
@@ -23329,7 +23399,7 @@ Obj17_Init:
 	moveq	#0,d6
 ; loc_10372:
 Obj17_MakeHelix:
-	bsr.w	SingleObjLoad2
+	jsr	(SingleObjLoad2).l
 	bne.s	Obj17_Main
 	addq.b	#1,subtype(a0)
 	move.w	a1,d5
@@ -27718,9 +27788,78 @@ Obj4C_Index:	offsetTable
 	offsetTableEntry.w Obj4C_Init				;   0
 	offsetTableEntry.w Obj4C_Main				;   2
 	offsetTableEntry.w Obj4C_Main2				;   4
+	offsetTableEntry.w Obj4C_Graphics_Init			;   6
+	offsetTableEntry.w Obj4C_Graphics_Main			;   8
+	offsetTableEntry.w Obj4C_Graphics2_Main			;  $A
+	offsetTableEntry.w Obj4C_Graphics3_Main			;  $C
+	offsetTableEntry.w Obj4C_DEZWFZ_Init			;  $E
+	offsetTableEntry.w Obj4C_DEZWFZ_Main			; $10
+	offsetTableEntry.w Obj4C_InvisSonic			; $12
+	offsetTableEntry.w Obj4C_InvisTails			; $14
 ; ===========================================================================
 
--	move.b	#$81,obj_control(a1)
+Obj4C_Init:
+	addq.b	#2,routine(a0)
+
+	move.w	#$0480,(Camera_Max_X_pos).w
+	move.w	#$04C0,(Tails_Max_X_pos).w
+
+
+;	jsr	(SingleObjLoad).l
+;	bne.s	+
+;	move.b	#$B3,(a1)	; cloud object
+;	move.w	#$0400,x_pos(a1)
+;	move.w	#$0080,y_pos(a1)	; 30 = 0011 0000 --- B0 = 1011 0000
+	
+;	move.b	#$5E,subtype(a1)
+;+
+
+
+	move.w	#$0100,d1
+	move.w	#$0080,d2
+	move.b	#$5E,d3
+	move.w	#15,d4
+	
+	
+-	jsr	(SingleObjLoad).l
+	bne.s	+++
+	move.b	#$B3,(a1)	; cloud object
+	move.b	#1,$30(a1)
+
+	move.w	d1,x_pos(a1)
+	jsr	(RandomNumber).l
+	andi.w	#$8F,d1
+	add.w	x_pos(a1),d1
+
+	move.w	d2,y_pos(a1)	; 30 = 0011 0000 --- B0 = 1011 0000
+
+	addi.w	#$10,d2
+	cmpi.w	#$C0,d2
+	blt.s	+
+	sub.w	#$90,d2
++
+
+	move.b	d3,subtype(a1)
+	addq.b	#2,d3
+	cmpi.b	#$64,d3
+	bne.s	+
+	move.b	#$5E,d3
++
+
+	dbf	d4,-
++
+
+
+
+	jsr	(SingleObjLoad).l
+	bne.s	+
+	move.b	(a0),(a1)
+	move.w	x_pos(a0),x_pos(a1)
+	move.w	y_pos(a0),y_pos(a1)
+	move.b	#6,routine(a1)		; vertical tube
++
+	lea	(MainCharacter).l,a1
+	move.b	#$81,obj_control(a1)
 	move.b	#AniIDSonAni_Roll,anim(a1)
 	move.w	#0,x_vel(a1)
 	move.w	#-$1000,y_vel(a1)
@@ -27729,33 +27868,46 @@ Obj4C_Index:	offsetTable
 	bset	#1,status(a1)
 	move.w	x_pos(a0),x_pos(a1)
 	move.w	y_pos(a0),y_pos(a1)
-	rts
-; -----------
 
-Obj4C_Init:
-	addq.b	#2,routine(a0)
-	lea	(MainCharacter).l,a1
-	bsr.s	-
 	lea	(SideKick).l,a1
-	bsr.s	-
-	add.w	#30,y_pos(a1)
+	move.b	#$81,obj_control(a1)
+	move.b	#AniIDSonAni_Roll,anim(a1)
+	move.w	#0,x_vel(a1)
+	move.w	#-$1000,y_vel(a1)
+	bclr	#5,status(a0)
+	bclr	#5,status(a1)
+	bset	#1,status(a1)
+	move.w	x_pos(a0),x_pos(a1)
+	move.w	y_pos(a0),y_pos(a1)
+	add.w	#100,y_pos(a1)
 
 Obj4C_Main:
-	lea	(MainCharacter).l,a1
-	jsr	(ObjectMove_A1).l
-	cmpi.w	#$100,y_pos(a1)
-	bhi.s	+
-	clr.b	obj_control(a1)
-	addq.b	#2,routine(a0)
-	move.w	#-$900,y_vel(a1)
+	st	(Control_Locked).w
+	move.w	#(button_right_mask<<8)|button_right_mask,(Ctrl_1_Logical).w
+	move.w	#(button_right_mask<<8)|button_right_mask,(Ctrl_2_Logical).w
+	move.w	#6000,(Tails_control_counter).w ; give player 2 control for 100 seconds (minimum)
+
+
+
 	lea	(SideKick).l,a1
 	jsr	(ObjectMove_A1).l
+	bset	#7,2(a1)
+	cmpi.w	#$FC,y_pos(a1)
+	bhi.s	+
 	clr.b	obj_control(a1)
-	move.w	#-$A00,y_vel(a1)
+	move.w	#-$800,y_vel(a1)
+	move.w	#-$100,x_vel(a1)
+	addq.b	#2,routine(a0)
+
+	lea	(MainCharacter).l,a1
+	jsr	(ObjectMove_A1).l
+	bset	#7,2(a1)
+	move.w	#-$700,y_vel(a1)
+	clr.b	obj_control(a1)
 	bra.s	++
 +
 
-	lea	(SideKick).l,a1
+	lea	(MainCharacter).l,a1
 	jsr	(ObjectMove_A1).l
 +
 
@@ -27765,19 +27917,488 @@ Obj4C_Main2:
 	rts
 ; ===========================================================================
 
-Obj4C_InitX:
-	addq.b	#2,routine(a0)			; set it to the next routine
+; ===========================================================================
+; ===========================================================================
 
-	move.b	subtype(a0),mapping_frame(a0)
+
+
+Obj4C_Graphics_Init:
+	addq.b	#2,routine(a0)
+	move.l	#Obj4C_MapUnc,mappings(a0)
+	move.w	#make_art_tile(ArtTile_ArtNem_MTZTube,3,1),art_tile(a0)
+	move.b	#$20,width_pixels(a0)
+	move.b	#0,priority(a0)
+	ori.b	#$84,render_flags(a0)
+	move.b	#$70,y_radius(a0)
+
+	move.w	(MainCharacter+x_pos).w,x_pos(a0)
+
+	jsr	(SingleObjLoad).l
+	bne.w	Obj4C_Graphics_Main
+	move.b	(a0),(a1)
+	move.b	#$E,routine(a1)		; DEZ
+	move.b	#0,subtype(a1)
+	move.b	#$60,width_pixels(a1)
+
+
+	jsr	(SingleObjLoad).l
+	bne.w	Obj4C_Graphics_Main
+	move.b	(a0),(a1)
+	move.b	#$A,routine(a1)		; breakable corner piece
+	move.w	art_tile(a0),art_tile(a1)
+	move.l	mappings(a0),mappings(a1)
+	move.b	#1,mapping_frame(a1)
+	move.b	#$84,render_flags(a1)
+	move.w	#$0220,x_pos(a1)
+	move.w	#$00EC,y_pos(a1)
+	move.b	#$20,width_pixels(a1)
+
+
+	jsr	(SingleObjLoad).l
+	bne.w	Obj4C_Graphics_Main
+	move.b	(a0),(a1)
+	move.b	#$12,routine(a1)	; invisible solid platform for Sonic
+	move.w	#$00EC,y_pos(a1)
+	move.b	#$20,width_pixels(a1)
+
+	jsr	(SingleObjLoad).l
+	bne.w	Obj4C_Graphics_Main
+	move.b	(a0),(a1)
+	move.b	#$14,routine(a1)	; invisible solid platform for Tails
+	move.w	#$00EC,y_pos(a1)
+	move.b	#$20,width_pixels(a1)
+
+
+	move.w	#$0240,d3
+	move.w	#$00EC,d4
+	move.w	#10,d2
+-	jsr	(SingleObjLoad).l
+	bne.s	Obj4C_Graphics_Main
+	move.b	(a0),(a1)
+	move.b	#$C,routine(a1)		; horizontal tube
+	move.w	art_tile(a0),art_tile(a1)
+	move.l	mappings(a0),mappings(a1)
+	move.b	#3,mapping_frame(a1)
+	move.b	#$84,render_flags(a1)
+	move.w	d3,x_pos(a1)
+	addi.w	#$20,d3
+	move.w	d4,y_pos(a1)
+;	addi.w	#-$50,d4
+	move.b	#$10,width_pixels(a1)
+	dbf	d2,-
+
+
+
+; loc_21006:
+Obj4C_Graphics_Main:
+	bset	#7,2(a0)
+
+
+
+	move.w	(Camera_Y_pos).w,d1
+	move.w	d1,d0
+	andi.w	#$1F,d1
+	neg.w	d1
+	add.w	#$70,d1
+	add.w	d0,d1
+	cmpi.w	#$17C,d1
+	bhi.s	+
+	move.w	#$17C,d1
++
+	move.w	d1,y_pos(a0)
+
+
+;	move.w	(MainCharacter+x_pos).w,d0
+;	move.w	d0,x_pos(a0)
+;	move.w	#$140-$20,x_pixel(a0)
+
+
+;	move.w	(Camera_Y_pos).w,d0
+;	cmpi.w	#$100,d0
+;	bhi.s	+
+;	move.w	#$100*2,d1
+;	sub.w	d0,d1
+;	bra.s	++
+;	
+;+
+;	andi.w	#$1F,d0
+;	move.w	#$E0+$20,d1
+;	sub.w	d0,d1
+;+
+;	move.w	d1,y_pixel(a0)
+
+
+
+;	andi.w	#$3FF,d1
+;	cmpi.w	#$2E0,d1
+;	bhs.s	+	; rts
+;	asr.w	#1,d1
+;	move.w	d1,d0
+;	asr.w	#1,d1
+;	add.w	d1,d0
+;	neg.w	d0
+;	move.w	d0,x_pos(a0)
+;	move.w	(MainCharacter+y_pos).w,d0
+;	move.w	(Camera_Y_pos).w,d1
+;	move.w	d0,d1
+;	andi.w	#$1F,d1
+;	neg.w	d1
+;	add.w	#$70,d1
+
+;	cmpi.w	#$140,d1
+;	bhi.s	+
+;	move.w	#$140,d1
+;+
+
+;	andi.w	#$FF3F,d1
+;	neg.w	d1
+;	addi.w	#$40,d1
+;	add.w	d0,d1
+;	move.w	d1,y_pixel(a0)
+	jmp	(DisplaySprite).l
+; ---------------------------------------------------------------------------
+
+Obj4C_Graphics2_Main:
+	tst.b	routine_secondary(a0)
+	beq.s	+
+	move.w	#$9E0,x_pos(a0)
+	bset	#0,render_flags(a0)
+	move.b	#1,mapping_frame(a0)
+	jmp	(DisplaySprite).l
++
+	cmpi.w	#$0544,(MainCharacter+x_pos).w
+	blo.s	+
+	move.w	#$0544,(MainCharacter+x_pos).w
+	move.w	#0,(MainCharacter+inertia).w
+	move.w	#0,(MainCharacter+x_vel).w
+	move.b	#0,(Ctrl_1_Logical).w
+
++
+	cmpi.w	#$0504,(SideKick+x_pos).w
+	blo.s	+
+	move.w	#$0504,(SideKick+x_pos).w
+	move.w	#0,(SideKick+inertia).w
+	move.w	#0,(SideKick+x_vel).w
+	move.b	#0,(Ctrl_2_Logical).w
+	move.w	#6000,(Tails_control_counter).w ; give player 2 control for 100 seconds (minimum)
+	move.b	#2,routine_Secondary(a0)
+
++
+
+	move.b	#1,mapping_frame(a0)
+	move.w	(MainCharacter+y_pos).w,d0
+	cmpi.w	#$F0,d0
+	bhi.s	+
+	move.b	#2,mapping_frame(a0)
++
+	jmp	(DisplaySprite).l
+
+; ---------------------------------------------------------------------------
+; d1 = object width
+; d2 = object height / 2 (when jumping)
+; d3 = object height / 2 (when walking)
+; d4 = object x-axis position
+
+Obj4C_Graphics3_Main:
+	tst.b	render_flags(a0)
+	bmi.s	+
+	;bra.s	+
+	move.w	x_pos(a0),d0
+	move.w	(Camera_X_pos).w,d1
+	cmpi.w	#$880,d1
+	bhi.s	+
+	sub.w	d0,d1
+	bmi.s	+
+	add.w	#320+32,x_pos(a0)
+;	jmp	(DeleteObject).l
++
+
+;	move.w	(MainCharacter+x_pos).w,x_pos(a0)
+;	move.w	(MainCharacter+y_pos).w,y_pos(a0)
+	jmp	(DisplaySprite).l
+
+
+; ---------------------------------------------------------------------------
+
+; ===========================================================================
+; ===========================================================================
+
+Obj4C_InvisSonic:
+	move.l	#Obj74_MapUnc_20F66,mappings(a0)
+	move.w	#make_art_tile(ArtTile_ArtNem_Powerups,0,1),art_tile(a0)
+	ori.b	#4,render_flags(a0)
+
+	move.w	(MainCharacter+x_pos).w,d0
+	cmpi.w	#$0240,d0
+	bpl.s	+
+	move.w	#$0240,d0
++
+	move.w	d0,x_pos(a0)
+	
+	move.w	#$20,d1
+	move.w	#$10,d2
+	move.w	d2,d3
+	move.w	x_pos(a0),d4
+	lea	(MainCharacter).w,a1 ; a1=character
+	moveq	#p1_standing_bit,d6
+	jsr	(SolidObject_Always_SingleCharacter).l
+
+;	jmp	(DisplaySprite).l
+	rts
+
+Obj4C_InvisTails:
+	move.l	#Obj74_MapUnc_20F66,mappings(a0)
+	move.w	#make_art_tile(ArtTile_ArtNem_Powerups,0,1),art_tile(a0)
+	ori.b	#4,render_flags(a0)
+
+	move.w	(SideKick+x_pos).w,d0
+	cmpi.w	#$0900,d0
+	blo.s	+
+	jmp	(DeleteObject).l
++
+	cmpi.w	#$0240,d0
+	bpl.s	+
+	move.w	#$0240,d0
++
+	move.w	d0,x_pos(a0)
+
+	
+	
+	move.w	#$20,d1
+	move.w	#$10,d2
+	move.w	d2,d3
+	move.w	x_pos(a0),d4
+	lea	(Sidekick).w,a1 ; a1=character
+	moveq	#p2_standing_bit,d6
+	jsr	(SolidObject_Always_SingleCharacter).l
+
+;	jmp	(DisplaySprite).l
+	rts
+
+; ===========================================================================
+; ===========================================================================
+
+Obj4C_DEZWFZ_Init:
+Obj4C_DEZWFZ_Main:
+	moveq	#0,d0
+	move.b	routine_secondary(a0),d0
+	move.w	Obj4C_DEZWFZ_Index(pc,d0.w),d1
+	jmp	Obj4C_DEZWFZ_Index(pc,d1.w)
+; -------------------------------------------------------------------------------
+Obj4C_DEZWFZ_Index:	offsetTable
+	offsetTableEntry.w Obj4C_DEZ_Init			;   0
+	offsetTableEntry.w Obj4C_DEZ_Wait			;   2
+	offsetTableEntry.w Obj4C_DEZ_AscendDEZ			;   4
+	offsetTableEntry.w Obj4C_DEZ_Rest			;   6
+
+	offsetTableEntry.w Obj4C_WFZ_Init			;   8
+	offsetTableEntry.w Obj4C_WFZ_Move			;  $A
+	offsetTableEntry.w Obj4C_WFZ_End			;  $C
+; -------------------------------------------------------------------------------
+
+Obj4C_DEZ_Init:
+	addq.b	#2,routine_secondary(a0)			; set it to the next routine
+
+	move.b	#0,mapping_frame(a0)
 
 	move.l	#Map_MTZCut,mappings(a0)	; set mappings
-	move.w	#$4000+($6E00/$20),art_tile(a0)	; set tile offset
+	move.w	#$2000+ArtTile_ArtNem_DEZWFZ,art_tile(a0)	; set tile offset
 	ori.b	#$84,render_flags(a0)		; make sure the damn thing actually appears
-	move.b	#10,priority(a0)
+	move.b	#2,priority(a0)
 	move.b	#32+32+32+8,width_pixels(a0)
 
-Obj4C_MainX:
+	move.w	#$0500,x_pos(a0)
+	move.w	#$0140,y_pos(a0)
+	move.b	#3*60,$30(a0)
+
+Obj4C_DEZ_Wait:
+	cmpi.w	#$0544,(MainCharacter+x_pos).w
+	blo.s	+
+	subq.b	#1,$30(a0)
+	bne.s	+
+	move.b	#$22,(MainCharacter+anim).w
+	move.b	#$21,(SideKick+anim).w
+
+	addq.b	#2,routine_secondary(a0)
+	move.b	#1,(MainCharacter+obj_control).w
+	move.b	#1,(SideKick+obj_control).w
++
+	rts
+; ---------------------------------------------------
+
+	cmpi.b	#60,$30(a0)
+	bne.s	+
+	bset	#0,(MainCharacter+status).w
+	bset	#0,(SideKick+status).w
+	bra.s	+
+	bclr	#0,(MainCharacter+status).w
+	bclr	#0,(SideKick+status).w
++
+Obj4C_DEZ_AscendDEZ:
+
+	move.w	#-$50,y_vel(a0)
+	move.w	#$20,x_vel(a0)
+
+	cmpi.w	#$0060,y_pos(a0)
+	bhi.s	+
+	move.b	#$23,(MainCharacter+anim).w
+	move.b	#$22,(SideKick+anim).w
+	bset	#0,(MainCharacter+status).w
+	bset	#0,(SideKick+status).w
+
+	cmpi.w	#$0030,y_pos(a0)
+	bhi.s	+
+	bclr	#0,(MainCharacter+status).w
+	bclr	#0,(SideKick+status).w
+
+
+	addq.b	#2,routine_secondary(a0)
+	jsr	(SingleObjLoad).l
+	bne.w	+
+	move.b	(a0),(a1)
+	move.b	#$E,routine(a1)
+	move.b	#$8,routine_secondary(a1)
+	move.b	#1,subtype(a1)
+	move.w	#$0460,x_pos(a1)
+	move.w	#$00E0,y_pos(a1)
+	move.b	#$20,width_pixels(a1)
+	move.b	#$23,(MainCharacter+anim).w
+	move.b	#$22,(SideKick+anim).w
+	
+/
+	jsr	(ObjectMove).l
 	jmp	(DisplaySprite).l		; display
+; ---------------------------------------------------
+
+Obj4C_DEZ_Rest:
+	move.w	#-$10,y_vel(a0)
+	move.w	#$40,x_vel(a0)
+	bra.s	-
+; ===========================================================================
+
+-
+	move.b	(Vint_runcount+3).w,d0
+	andi.b	#7,d0
+	bne.s	+
+	bchg	#1,mapping_frame(a0)
++	
+	bra.s	--
+; ---------------------------------------------------
+
+
+Obj4C_WFZ_Init:
+	addq.b	#2,routine_secondary(a0)			; set it to the next routine
+
+	move.b	#1,mapping_frame(a0)
+
+	move.l	#Map_MTZCut,mappings(a0)	; set mappings
+	move.w	#$2000+ArtTile_ArtNem_DEZWFZ,art_tile(a0)	; set tile offset
+	ori.b	#$84,render_flags(a0)		; make sure the damn thing actually appears
+	move.b	#2,priority(a0)
+	move.b	#32+32+32+8,width_pixels(a0)
+
+Obj4C_WFZ_Move:
+	cmpi.w	#$04F0,x_pos(a0)
+	blo.s	Obj4C_WFZ_Final
+	move.b	#$22,(MainCharacter+anim).w
+	move.b	#$21,(SideKick+anim).w
+
+	cmpi.w	#$0550,x_pos(a0)
+	blo.s	Obj4C_WFZ_Final
+	move.b	#$23,(MainCharacter+anim).w
+	move.b	#$22,(SideKick+anim).w
+	bset	#0,(MainCharacter+status).w
+	bset	#0,(SideKick+status).w
+
+	cmpi.w	#$0580,x_pos(a0)
+	blo.s	Obj4C_WFZ_Final
+	addq.b	#2,routine_secondary(a0)
+	bset	#0,(MainCharacter+status).w
+	bclr	#0,(SideKick+status).w
+	move.b	#5,(MainCharacter+anim).w
+	move.b	#5,(SideKick+anim).w
+	move.w	#0,$30(a0)
+	
+Obj4C_WFZ_Final:
+	move.w	#$60,x_vel(a0)
+	move.w	#-$20,y_vel(a0)
+	bra.w	-
+; ---------------------------------------------------
+
+Obj4C_WFZ_End:
+	addq.w	#1,$30(a0)
+
+	cmpi.w	#90,$30(a0)
+	bne.s	+
+	move.b	#0,(SideKick+anim).w	; tails walk
++
+	cmpi.w	#90+60,$30(a0)
+	bne.s	+
+	move.b	#5,(SideKick+anim).w	; tails wait
++
+	cmpi.w	#90+60+30,$30(a0)
+	bne.s	+
+	move.b	#7,(MainCharacter+anim).w	; sonic look up
+	bclr	#0,(MainCharacter+status).w
++
+	cmpi.w	#90+60+30+90,$30(a0)
+	bne.s	+
+	move.b	#5,(MainCharacter+anim).w	; sonic wait
+	bset	#0,(MainCharacter+status).w
++
+	cmpi.w	#90+60+30+90+30,$30(a0)
+	bne.s	+
+	move.b	#1,(MainCharacter+anim).w	; sonic walk
++
+	cmpi.w	#90+60+30+90+30+60,$30(a0)
+	bne.s	+
+	move.b	#5,(MainCharacter+anim).w	; sonic wait
++
+	cmpi.w	#90+60+30+90+30+60+30,$30(a0)
+	bne.s	+
+	clr.b	(SideKick+obj_control).w
+	move.w	#(button_right_mask<<8)|button_right_mask,(Ctrl_2_Logical).w
+	move.w	#6000,(Tails_control_counter).w ; give player 2 control for 100 seconds (minimum)
++
+	move.w	(SideKick+x_pos).w,d0
+	cmp.w	(MainCharacter+x_pos).w,d0
+	blt.s	+
+	bclr	#0,(MainCharacter+status).w
+	cmpi.w	#90+60+30+90+30+60+30+100,$30(a0)
+	bls.s	+
+	move.b	#$24,(MainCharacter+anim).w
++
+	cmpi.w	#90+60+30+90+30+60+30+100+30,$30(a0)
+	bne.s	+
+	move.w	#-1,(Tails_control_counter).w ; give player 2 control for $FFFF seconds (minimum)
+	move.w	#$0B00,(Camera_Max_X_pos).w
+	move.w	#$0B00,(Tails_Max_X_pos).w
+	move.w	#$700,(SideKick+inertia).w
++
+	move.w	(SideKick+x_pos).w,d0
+	cmp.w	#$960,d0
+	blt.s	++
+	move.w	#(button_C_mask<<8)|button_C_mask,(Ctrl_2_Logical).w
+	tst.w	(SideKick+y_vel).w
+	ble.s	+
+	move.b	#$20,(SideKick+anim).w
+	subi.w	#$28,(SideKick+y_vel).w
++	move.w	(SideKick+y_pos).w,d0
+	cmp.w	#$160,d0
+	blt.s	+
+	move.w	#emerald_hill_zone_act_1,(Current_ZoneAndAct).w
+	move.b	#1,(Level_Inactive_flag).w
+
++
+	bra.w	Obj4C_WFZ_Final
+; -------------------------------------------------------------------------------
+; sprite mappings
+; -------------------------------------------------------------------------------
+Obj4C_MapUnc:	BINCLUDE "art/New/Map_MTZTube.bin"
+
+
+
+
 ; ===========================================================================
 
 ; ----------------------------------------------------------------------------
@@ -29202,7 +29823,7 @@ loc_15714:
 	move.w	d1,d4
 	moveq	#-$10,d5
 	moveq	#$1F,d6
-	bsr.w	DrawBlockRow
+	jsr	(DrawBlockRow).l
 	movem.l	(sp)+,d4-d6
 	addi.w	#$10,d4
 	dbf	d6,-
@@ -29221,7 +29842,7 @@ loc_15758:
 	move.w	d1,d4
 	moveq	#-$10,d5
 	moveq	#$1F,d6
-	bsr.w	DrawBlockRow
+	jsr	(DrawBlockRow).l
 	movem.l	(sp)+,d4-d6
 	addi.w	#$10,d4
 	dbf	d6,-
@@ -37963,6 +38584,9 @@ SonAni_Balance4_ptr:		offsetTableEntry.w SonAni_Balance4	; 30 ; $1E
 SupSonAni_Transform_ptr:	offsetTableEntry.w SupSonAni_Transform	; 31 ; $1F
 SonAni_Lying_ptr:		offsetTableEntry.w SonAni_Lying		; 32 ; $20
 SonAni_LieDown_ptr:		offsetTableEntry.w SonAni_LieDown	; 33 ; $21
+SonAni_ToSky1_ptr:		offsetTableEntry.w SonAni_ToSky1	; 34 ; $22
+SonAni_ToSky2_ptr:		offsetTableEntry.w SonAni_ToSky2	; 35 ; $23
+SonAni_InstaWait_ptr:		offsetTableEntry.w SonAni_InstaWait	; 36 ; $24
 
 SonAni_Walk:	dc.b $FF, $F,$10,$11,$12,$13,$14, $D, $E,$FF
 	rev02even
@@ -37975,7 +38599,7 @@ SonAni_Roll2:	dc.b $FE,$3D,$41,$3E,$41,$3F,$41,$40,$41,$FF
 SonAni_Push:	dc.b $FD,$48,$49,$4A,$4B,$FF,$FF,$FF,$FF,$FF
 	rev02even
 SonAni_Wait:
-	dc.b 5, 1, $FF
+	dc.b 5, 1, 1, $FF
 
 	dc.b   5,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1
 	dc.b   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2
@@ -38042,7 +38666,12 @@ SonAni_Lying:	dc.b   9,  8,  9,$FF
 	rev02even
 SonAni_LieDown:	dc.b   3,  7,$FD,  0
 	even
-
+SonAni_ToSky1:	dc.b   3, $D7, $FF
+	even
+SonAni_ToSky2:	dc.b   3, $D6, $FF
+	even
+SonAni_InstaWait:dc.b  5,  7,  8,  8,  8,  9,  9,  9,$FE,  6
+	even
 ; ---------------------------------------------------------------------------
 ; Animation script - Super Sonic
 ; (many of these point to the data above this)
@@ -40703,6 +41332,9 @@ TailsAni_Dummy4_ptr:	offsetTableEntry.w TailsAni_Dummy4	; 29 ; $1D
 TailsAni_Dummy5_ptr:	offsetTableEntry.w TailsAni_Dummy5	; 30 ; $1E
 TailsAni_HaulAss_ptr:	offsetTableEntry.w TailsAni_HaulAss	; 31 ; $1F
 TailsAni_Fly_ptr:	offsetTableEntry.w TailsAni_Fly		; 32 ; $20
+TailsAni_ToSky1_ptr:	offsetTableEntry.w TailsAni_ToSky1	; 33 ; $21
+TailsAni_ToSky2_ptr:	offsetTableEntry.w TailsAni_ToSky2	; 34 ; $22
+
 
 TailsAni_Walk:	dc.b $FF,$10,$11,$12,$13,$14,$15, $E, $F,$FF
 	rev02even
@@ -40714,10 +41346,12 @@ TailsAni_Roll2:	dc.b   1,$48,$47,$46,$FF
 	rev02even
 TailsAni_Push:	dc.b $FD,$63,$64,$65,$66,$FF,$FF,$FF,$FF,$FF
 	rev02even
-TailsAni_Wait:	dc.b   7,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  3,  2,  1,  1,  1
-		dc.b   1,  1,  1,  1,  1,  3,  2,  1,  1,  1,  1,  1,  1,  1,  1,  1
-		dc.b   5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5
-		dc.b   6,  7,  8,  7,  8,  7,  8,  7,  8,  7,  8,  6,$FE,$1C
+TailsAni_Wait:	dc.b   7,  1,  1,  $FF
+		
+	;	dc.b   7,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  3,  2,  1,  1,  1
+	;	dc.b   1,  1,  1,  1,  1,  3,  2,  1,  1,  1,  1,  1,  1,  1,  1,  1
+	;	dc.b   5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5
+	;	dc.b   6,  7,  8,  7,  8,  7,  8,  7,  8,  7,  8,  6,$FE,$1C
 	rev02even
 TailsAni_Balance:	dc.b   9,$69,$69,$6A,$6A,$69,$69,$6A,$6A,$69,$69,$6A,$6A,$69,$69,$6A
 			dc.b $6A,$69,$69,$6A,$6A,$69,$6A,$FF
@@ -40774,6 +41408,10 @@ TailsAni_HaulAss:	dc.b $FF,$32,$33,$FF
 			dc.b $FF,$FF,$FF,$FF,$FF,$FF
 	rev02even
 TailsAni_Fly:		dc.b   1,$5E,$5F,$FF
+	even
+TailsAni_ToSky1:	dc.b   3, $8C, $FF
+	even
+TailsAni_ToSky2:	dc.b   3, $8B, $FF
 	even
 
 ; ===========================================================================
@@ -78655,6 +79293,8 @@ ObjB3_Init:
 	move.w	word_3B30C(pc,d0.w),x_vel(a0)
 	lsr.w	#1,d0
 	move.b	d0,mapping_frame(a0)
+	add.b	#2,d0
+	move.b	d0,priority(a0)
 	rts
 ; ===========================================================================
 word_3B30C:
@@ -78664,9 +79304,19 @@ word_3B30C:
 ; ===========================================================================
 ; loc_3B312:
 ObjB3_Main:
-	jsrto	(ObjectMove).l, JmpTo26_ObjectMove
+	jsr	(ObjectMove).l
 	move.w	(Tornado_Velocity_X).w,d0
 	add.w	d0,x_pos(a0)
+
+	tst.b	render_flags(a0)
+	bmi.s	+
+	move.w	x_pos(a0),d0
+	move.w	(Camera_X_pos).w,d1
+	sub.w	d0,d1
+	bmi.s	+
+	add.w	#320+96,x_pos(a0)
++
+
 	bra.w	Obj_DeleteBehindScreen
 ; ===========================================================================
 ; off_3B322:
@@ -86370,7 +87020,10 @@ BuildHUD:
 +
 	cmpi.w	#metropolis_zone_act_3,(Current_ZoneAndAct).w
 	bne.s	+
-	bra.s	+
+	rts
++
+	cmpi.w	#sky_chase_zone_act_2,(Current_ZoneAndAct).w
+	bne.s	+
 	rts
 +
 	tst.w	(Ring_count).w
@@ -88586,11 +89239,13 @@ PlrList_Scz1_End
 ;---------------------------------------------------------------------------------------
 PlrList_Scz2: plrlistheader
 	plreq ArtTile_ArtNem_Clouds, ArtNem_Clouds
-	plreq ArtTile_ArtNem_WfzVrtclPrpllr, ArtNem_WfzVrtclPrpllr
-	plreq ArtTile_ArtNem_WfzHrzntlPrpllr, ArtNem_WfzHrzntlPrpllr
-	plreq ArtTile_ArtNem_Balkrie, ArtNem_Balkrie
-	plreq ArtTile_ArtNem_Turtloid, ArtNem_Turtloid
-	plreq ArtTile_ArtNem_Nebula, ArtNem_Nebula
+;	plreq ArtTile_ArtNem_WfzVrtclPrpllr, ArtNem_WfzVrtclPrpllr
+;	plreq ArtTile_ArtNem_WfzHrzntlPrpllr, ArtNem_WfzHrzntlPrpllr
+;	plreq ArtTile_ArtNem_Balkrie, ArtNem_Balkrie
+;	plreq ArtTile_ArtNem_Turtloid, ArtNem_Turtloid
+;	plreq ArtTile_ArtNem_Nebula, ArtNem_Nebula
+	plreq ArtTile_ArtNem_MTZTube, Nem_MTZTube
+	plreq ArtTile_ArtNem_DEZWFZ, Nem_MTZCut
 PlrList_Scz2_End
 ;---------------------------------------------------------------------------------------
 ; Pattern load queue
@@ -88854,330 +89509,6 @@ PlrList_ResultsTails: plrlistheader
 	plreq ArtTile_ArtNem_Perfect, ArtNem_Perfect
 PlrList_ResultsTails_End
 
-
-
-
-;---------------------------------------------------------------------------------------
-; Weird revision-specific duplicates of portions of the PLR lists (unused)
-;---------------------------------------------------------------------------------------
-    if gameRevision=0
-	; half of PlrList_ResultsTails
-	plreq ArtTile_ArtNem_MiniCharacter, ArtNem_MiniTails
-	plreq ArtTile_ArtNem_Perfect, ArtNem_Perfect
-	dc.l	0
-    elseif gameRevision=2
-	; half of the DEZ PLR list
-	;plreq ArtTile_ArtNem_RobotnikRunning, ArtNem_RobotnikRunning	; cut in half
-	dc.w	ArtNem_RobotnikRunning&$FFFF		; cut in half
-	dc.w	tiles_to_bytes(ArtTile_ArtNem_RobotnikRunning)
-
-	plreq ArtTile_ArtNem_RobotnikUpper, ArtNem_RobotnikUpper
-	plreq ArtTile_ArtNem_RobotnikLower, ArtNem_RobotnikLower
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; ARZ Primary
-;---------------------------------------------------------------------------------------
-PlrList_Arz1_Dup: plrlistheader
-	plreq ArtTile_ArtNem_ARZBarrierThing, ArtNem_ARZBarrierThing
-	plreq ArtTile_ArtNem_WaterSurface, ArtNem_WaterSurface2
-	plreq ArtTile_ArtNem_Leaves, ArtNem_Leaves
-	plreq ArtTile_ArtNem_ArrowAndShooter, ArtNem_ArrowAndShooter
-PlrList_Arz1_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; ARZ Secondary
-;---------------------------------------------------------------------------------------
-PlrList_Arz2_Dup: plrlistheader
-	plreq ArtTile_ArtNem_ChopChop, ArtNem_ChopChop
-	plreq ArtTile_ArtNem_Whisp, ArtNem_Whisp
-	plreq ArtTile_ArtNem_Grounder, ArtNem_Grounder
-	plreq ArtTile_ArtNem_BigBubbles, ArtNem_BigBubbles
-	plreq ArtTile_ArtNem_Spikes, ArtNem_Spikes
-	plreq ArtTile_ArtNem_LeverSpring, ArtNem_LeverSpring
-	plreq ArtTile_ArtNem_VrtclSprng, ArtNem_VrtclSprng
-	plreq ArtTile_ArtNem_HrzntlSprng, ArtNem_HrzntlSprng
-PlrList_Arz2_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; SCZ Primary
-;---------------------------------------------------------------------------------------
-PlrList_Scz1_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Tornado, ArtNem_Tornado
-PlrList_Scz1_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; SCZ Secondary
-;---------------------------------------------------------------------------------------
-PlrList_Scz2_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Clouds, ArtNem_Clouds
-	plreq ArtTile_ArtNem_WfzVrtclPrpllr, ArtNem_WfzVrtclPrpllr
-	plreq ArtTile_ArtNem_WfzHrzntlPrpllr, ArtNem_WfzHrzntlPrpllr
-	plreq ArtTile_ArtNem_Balkrie, ArtNem_Balkrie
-	plreq ArtTile_ArtNem_Turtloid, ArtNem_Turtloid
-	plreq ArtTile_ArtNem_Nebula, ArtNem_Nebula
-PlrList_Scz2_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; Sonic end of level results screen
-;---------------------------------------------------------------------------------------
-PlrList_Results_Dup: plrlistheader
-	plreq ArtTile_ArtNem_TitleCard, ArtNem_TitleCard
-	plreq ArtTile_ArtNem_ResultsText, ArtNem_ResultsText
-	plreq ArtTile_ArtNem_MiniCharacter, ArtNem_MiniSonic
-	plreq ArtTile_ArtNem_Perfect, ArtNem_Perfect
-PlrList_Results_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; End of level signpost
-;---------------------------------------------------------------------------------------
-PlrList_Signpost_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Signpost, ArtNem_Signpost
-PlrList_Signpost_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; CPZ Boss
-;---------------------------------------------------------------------------------------
-PlrList_CpzBoss_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Eggpod_3, ArtNem_Eggpod
-	plreq ArtTile_ArtNem_CPZBoss, ArtNem_CPZBoss
-	plreq ArtTile_ArtNem_EggpodJets_1, ArtNem_EggpodJets
-	plreq ArtTile_ArtNem_BossSmoke_1, ArtNem_BossSmoke
-	plreq ArtTile_ArtNem_FieryExplosion, ArtNem_FieryExplosion
-PlrList_CpzBoss_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; EHZ Boss
-;---------------------------------------------------------------------------------------
-PlrList_EhzBoss_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Eggpod_1, ArtNem_Eggpod
-	plreq ArtTile_ArtNem_EHZBoss, ArtNem_EHZBoss
-	plreq ArtTile_ArtNem_EggChoppers, ArtNem_EggChoppers
-	plreq ArtTile_ArtNem_FieryExplosion, ArtNem_FieryExplosion
-PlrList_EhzBoss_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; HTZ Boss
-;---------------------------------------------------------------------------------------
-PlrList_HtzBoss_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Eggpod_2, ArtNem_Eggpod
-	plreq ArtTile_ArtNem_HTZBoss, ArtNem_HTZBoss
-	plreq ArtTile_ArtNem_FieryExplosion, ArtNem_FieryExplosion
-	plreq ArtTile_ArtNem_BossSmoke_2, ArtNem_BossSmoke
-PlrList_HtzBoss_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; ARZ Boss
-;---------------------------------------------------------------------------------------
-PlrList_ArzBoss_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Eggpod_4, ArtNem_Eggpod
-	plreq ArtTile_ArtNem_ARZBoss, ArtNem_ARZBoss
-	plreq ArtTile_ArtNem_FieryExplosion, ArtNem_FieryExplosion
-PlrList_ArzBoss_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; MCZ Boss
-;---------------------------------------------------------------------------------------
-PlrList_MczBoss_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Eggpod_4, ArtNem_Eggpod
-	plreq ArtTile_ArtNem_MCZBoss, ArtNem_MCZBoss
-	plreq ArtTile_ArtNem_FieryExplosion, ArtNem_FieryExplosion
-PlrList_MczBoss_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; CNZ Boss
-;---------------------------------------------------------------------------------------
-PlrList_CnzBoss_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Eggpod_4, ArtNem_Eggpod
-	plreq ArtTile_ArtNem_CNZBoss, ArtNem_CNZBoss
-	plreq ArtTile_ArtNem_FieryExplosion, ArtNem_FieryExplosion
-PlrList_CnzBoss_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; MTZ Boss
-;---------------------------------------------------------------------------------------
-PlrList_MtzBoss_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Eggpod_4, ArtNem_Eggpod
-	plreq ArtTile_ArtNem_MTZBoss, ArtNem_MTZBoss
-	plreq ArtTile_ArtNem_EggpodJets_2, ArtNem_EggpodJets
-	plreq ArtTile_ArtNem_FieryExplosion, ArtNem_FieryExplosion
-PlrList_MtzBoss_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; OOZ Boss
-;---------------------------------------------------------------------------------------
-PlrList_OozBoss_Dup: plrlistheader
-	plreq ArtTile_ArtNem_OOZBoss, ArtNem_OOZBoss
-	plreq ArtTile_ArtNem_FieryExplosion, ArtNem_FieryExplosion
-PlrList_OozBoss_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; Fiery Explosion
-;---------------------------------------------------------------------------------------
-PlrList_FieryExplosion_Dup: plrlistheader
-	plreq ArtTile_ArtNem_FieryExplosion, ArtNem_FieryExplosion
-PlrList_FieryExplosion_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; Death Egg
-;---------------------------------------------------------------------------------------
-PlrList_DezBoss_Dup: plrlistheader
-	plreq ArtTile_ArtNem_DEZBoss, ArtNem_DEZBoss
-PlrList_DezBoss_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; EHZ Animals
-;---------------------------------------------------------------------------------------
-PlrList_EhzAnimals_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Animal_1, ArtNem_Squirrel
-	plreq ArtTile_ArtNem_Animal_2, ArtNem_Bird
-PlrList_EhzAnimals_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; MCZ Animals
-;---------------------------------------------------------------------------------------
-PlrList_MczAnimals_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Animal_1, ArtNem_Mouse
-	plreq ArtTile_ArtNem_Animal_2, ArtNem_Chicken
-PlrList_MczAnimals_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; HTZ/MTZ/WFZ animals
-;---------------------------------------------------------------------------------------
-PlrList_HtzAnimals_Dup:
-PlrList_MtzAnimals_Dup:
-PlrList_WfzAnimals_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Animal_1, ArtNem_Beaver
-	plreq ArtTile_ArtNem_Animal_2, ArtNem_Eagle
-PlrList_HtzAnimals_Dup_End
-PlrList_MtzAnimals_Dup_End
-PlrList_WfzAnimals_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; DEZ Animals
-;---------------------------------------------------------------------------------------
-PlrList_DezAnimals_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Animal_1, ArtNem_Pig
-	plreq ArtTile_ArtNem_Animal_2, ArtNem_Chicken
-PlrList_DezAnimals_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; HPZ animals
-;---------------------------------------------------------------------------------------
-PlrList_HpzAnimals_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Animal_1, ArtNem_Mouse
-	plreq ArtTile_ArtNem_Animal_2, ArtNem_Seal
-PlrList_HpzAnimals_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; OOZ Animals
-;---------------------------------------------------------------------------------------
-PlrList_OozAnimals_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Animal_1, ArtNem_Penguin
-	plreq ArtTile_ArtNem_Animal_2, ArtNem_Seal
-PlrList_OozAnimals_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; SCZ Animals
-;---------------------------------------------------------------------------------------
-PlrList_SczAnimals_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Animal_1, ArtNem_Turtle
-	plreq ArtTile_ArtNem_Animal_2, ArtNem_Chicken
-PlrList_SczAnimals_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; CNZ Animals
-;---------------------------------------------------------------------------------------
-PlrList_CnzAnimals_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Animal_1, ArtNem_Bear
-	plreq ArtTile_ArtNem_Animal_2, ArtNem_Bird
-PlrList_CnzAnimals_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; CPZ Animals
-;---------------------------------------------------------------------------------------
-PlrList_CpzAnimals_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Animal_1, ArtNem_Rabbit
-	plreq ArtTile_ArtNem_Animal_2, ArtNem_Eagle
-PlrList_CpzAnimals_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; ARZ Animals
-;---------------------------------------------------------------------------------------
-PlrList_ArzAnimals_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Animal_1, ArtNem_Penguin
-	plreq ArtTile_ArtNem_Animal_2, ArtNem_Bird
-PlrList_ArzAnimals_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; Special Stage
-;---------------------------------------------------------------------------------------
-PlrList_SpecialStage_Dup: plrlistheader
-	plreq ArtTile_ArtNem_SpecialEmerald, ArtNem_SpecialEmerald
-	plreq ArtTile_ArtNem_SpecialMessages, ArtNem_SpecialMessages
-	plreq ArtTile_ArtNem_SpecialHUD, ArtNem_SpecialHUD
-	plreq ArtTile_ArtNem_SpecialFlatShadow, ArtNem_SpecialFlatShadow
-	plreq ArtTile_ArtNem_SpecialDiagShadow, ArtNem_SpecialDiagShadow
-	plreq ArtTile_ArtNem_SpecialSideShadow, ArtNem_SpecialSideShadow
-	plreq ArtTile_ArtNem_SpecialExplosion, ArtNem_SpecialExplosion
-	plreq ArtTile_ArtNem_SpecialRings, ArtNem_SpecialRings
-	plreq ArtTile_ArtNem_SpecialStart, ArtNem_SpecialStart
-	plreq ArtTile_ArtNem_SpecialPlayerVSPlayer, ArtNem_SpecialPlayerVSPlayer
-	plreq ArtTile_ArtNem_SpecialBack, ArtNem_SpecialBack
-	plreq ArtTile_ArtNem_SpecialStars, ArtNem_SpecialStars
-	plreq ArtTile_ArtNem_SpecialTailsText, ArtNem_SpecialTailsText
-PlrList_SpecialStage_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; Special Stage Bombs
-;---------------------------------------------------------------------------------------
-PlrList_SpecStageBombs_Dup: plrlistheader
-	plreq ArtTile_ArtNem_SpecialBomb, ArtNem_SpecialBomb
-PlrList_SpecStageBombs_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; WFZ Boss
-;---------------------------------------------------------------------------------------
-PlrList_WfzBoss_Dup: plrlistheader
-	plreq ArtTile_ArtNem_WFZBoss, ArtNem_WFZBoss
-	plreq ArtTile_ArtNem_RobotnikRunning, ArtNem_RobotnikRunning
-	plreq ArtTile_ArtNem_RobotnikUpper, ArtNem_RobotnikUpper
-	plreq ArtTile_ArtNem_RobotnikLower, ArtNem_RobotnikLower
-	plreq ArtTile_ArtNem_FieryExplosion, ArtNem_FieryExplosion
-PlrList_WfzBoss_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; Tornado
-;---------------------------------------------------------------------------------------
-PlrList_Tornado_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Tornado, ArtNem_Tornado
-	plreq ArtTile_ArtNem_TornadoThruster, ArtNem_TornadoThruster
-	plreq ArtTile_ArtNem_Clouds, ArtNem_Clouds
-PlrList_Tornado_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; Capsule/Egg Prison
-;---------------------------------------------------------------------------------------
-PlrList_Capsule_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Capsule, ArtNem_Capsule
-PlrList_Capsule_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; Normal explosion
-;---------------------------------------------------------------------------------------
-PlrList_Explosion_Dup: plrlistheader
-	plreq ArtTile_ArtNem_Explosion, ArtNem_Explosion
-PlrList_Explosion_Dup_End
-;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
-; Tails end of level results screen
-;---------------------------------------------------------------------------------------
-PlrList_ResultsTails_Dup: plrlistheader
-	plreq ArtTile_ArtNem_TitleCard, ArtNem_TitleCard
-	plreq ArtTile_ArtNem_ResultsText, ArtNem_ResultsText
-	plreq ArtTile_ArtNem_MiniCharacter, ArtNem_MiniTails
-	plreq ArtTile_ArtNem_Perfect, ArtNem_Perfect
-PlrList_ResultsTails_Dup_End
-    endif
 ;---------------------------------------------------------------------------------------
 ; Pattern load queue
 ; MTZ Cutscene patterns
@@ -91356,6 +91687,10 @@ Nem_MTZCut:	BINCLUDE "art/New/Nem_DeathEggAndWingFortress.bin"
 		even
 Map_MTZCut:	BINCLUDE "art/New/Map_DeathEggAndWingFortress.bin"
 		even
+; --------------------------------------------------------------------
+Nem_MTZTube	BINCLUDE "art/New/Nem_MTZTube.bin"
+		even
+
 ; --------------------------------------------------------------------
 
 ; ----------------------------------------------------------------------------------

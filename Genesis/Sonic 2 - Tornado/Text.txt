@@ -8,33 +8,44 @@ X = gameplay act
 	Defeating MTZ3 boss (player control)
 	Opening capsule (disable player control)
 	All animals out
-	Extreme screen shake
+	Extreme screen shake and explosion
 	Run to the right
+	Giant tube system to get transported to the Sky
 	---
-	Outside of Metropolis, sky can be seen
-	They look at it
+	Outside of Metropolis
+	Sky can be seen
+	Coming from the bottom at high speed
+	Tube breaks at corner piece, characters fly out
+	They run to the right a little and look at the sky
 	Death Egg rises S3K style
 	Wing Fortress comes after, slowly flying to it
-	Chars look at each other, then run to the right
+	Chars look at each other
+	Tails jumps off to the right flying, Sonic waits on the tube
 	---
-	Reveal Tornado
-	Both hop to their places
-	Engine start, take off
+	Reveal Tornado shelter
+	Tails slowly comes down flying
+	He enters house
+	Sound can be heard
+	Tornado comes out slowly
+	Take off
 	Leave screen
-	>Continue to next act
+	> Continue to next act
 
 
 *X Act 2: TAKE TO THE SKY*
-	Fly upwards to Wing Fortress
+	Fly upwards to Sonic
 	?shoot stuff or something
 	Gun gets destroyed by overheating
-	>Continue to Sky Chase
+	---
+	Reach Sonic still waiting on tubes
+	Sonic hops on plane
+	> Continue to Sky Chase
 
 
 *Act 3: SKY CHASE ZONE*
 	Same as original
-	Can be skipped
-	>Continue to Wing Fortress like original
+	Can be skipped with ABC
+	> Continue to Wing Fortress like original
 
 
 *Act 4: WING FORTRESS ZONE 1*
@@ -42,7 +53,7 @@ X = gameplay act
 	Same as original
 	Camera follows falling plane
 	Plane leaves screen
-	>Continue to next act
+	> Continue to next act
 
 
 *X Act 5: BENEATH THE WING 1*
@@ -51,14 +62,14 @@ X = gameplay act
 	Plane gets repaired
 	Plane also gets a thruster
 	Take off again
-	>Continue to next act
+	> Continue to next act
 
 
 *X Act 6: BENEATH THE WING 2*
 	Fly towards Wing Fortress (right end) again
 	?shoot stuff
 	Boundary reached
-	>Continue to next act
+	> Continue to next act
 
 
 * Act 7: WING FORTRESS ZONE 2*
@@ -73,7 +84,7 @@ X = gameplay act
 	Few seconds later screen goes white with explosion
 	---
 	Final Tails cutscene with music starts
-	>Continue to next act when last picture has passed
+	> Continue to next act when last picture has passed
 
 
 *X Act 8: AN ANGEL'S CALL*
@@ -82,7 +93,7 @@ X = gameplay act
 	---
 	Come to save Sonic
 	Normal ending sequence
-	>Go to last
+	> Go to last
 
 
 *X Act 9: ????*
@@ -98,6 +109,6 @@ X = gameplay act
 	Tails hops out
 	Sonic gives thumbs up at Tails and runs off
 	Tails comes after
-	>Start credits right over the still image
+	> Start credits right over the still image
 
 * CREDITS *
