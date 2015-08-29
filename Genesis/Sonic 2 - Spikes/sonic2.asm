@@ -4878,6 +4878,13 @@ loc_42E8:
 	move.w	#-1,(Object_RAM+$80+$3E).w
 	move.b	#$E,(Object_RAM+$1C0+routine).w
 	move.w	#$A,(Object_RAM+$1C0+$34).w
+	
+	jsr	(SingleObjLoad).l
+	bne.s	+			; skip if SST is full
+	move.b	#$12,(a1)		; load Explosion object
+;	move.w	x_pos(a2),x_pos(a1)	; copy Sonic's X-position
+;	move.w	y_pos(a2),y_pos(a1)	; copy Sonic's Y-position
++
 
 -	move.b	#$C,(Delay_Time).w
 	bsr.w	DelayProgram
@@ -14402,7 +14409,8 @@ loc_C1C2:
 ; appear at when the level starts.
 ; -------------------------------------------------------------------------------------
 WrdArr_StartLoc:
-	dc.w	288,	$0	; $00
+	;dc.w	288,	$0	; $00
+	dc.w	$0BA0,	1200	; $00
 	dc.w	$60,	$2AF
 	dc.w	$60,	$28F	; $01
 	dc.w	$60,	$2AF
@@ -27718,27 +27726,32 @@ Spike_Hurt:
 +	cmpi.b	#1,d4
 	bne.s	+
 	bsr.w	SH_Level1
+	bra.s	SH_End
 +	cmpi.b	#2,d4
 	bne.s	+
 	bsr.w	SH_Level2
+	bra.s	SH_End
 +	cmpi.b	#3,d4
 	bne.s	+
 	bsr.w	SH_Level3
-
+	bra.s	SH_End
 
 +	cmpi.b	#4,d4
 	bne.s	+
 	bsr.w	SH_Flip
+	bra.s	SH_End
 
 +	cmpi.b	#5,d4
 	bne.s	+
-	bsr.w	SH_Halve
+	bsr.w	SH_Bounce
+	bra.s	SH_End
 
 +	cmpi.b	#6,d4
 	bne.s	+
 	bsr.w	SH_Explode
 +; end subtype check
 
+SH_End:
 	btst	#1,render_flags(a2)	; is Spike y-flipped?
 	beq.s	+			; if not, branch
 	neg.w	y_vel(a0)		; negate Y-speed
@@ -27747,7 +27760,7 @@ Spike_Hurt:
 
 	jsr	(SingleObjLoad).l
 	bne.s	+
-	move.b	#$4E,(a1)
+	move.b	#$4E,(a1)		; load blood object
 	move.w	(MainCharacter+x_pos).w,x_pos(a1)
 	move.w	(MainCharacter+y_pos).w,y_pos(a1)
 +
@@ -27800,23 +27813,46 @@ SH_Level_End:
 	rts
 ; ===========================================================================
 
-SH_Halve: ;$5
-	move.w	#-$400,y_vel(a0) ; make Sonic bounce away from the object
+SH_Bounce: ;$5
+	cmpi.b	#4,routine(a2)		; sideways?
+	beq.s	++			; if yes, run different code
 
-	cmpi.b	#4,routine(a2)		; sideways spike?
-	bne.s	+			; if not, branch
-	move.w	#0,x_vel(a0)		; clear x-speed
-	bchg	#0,status(a0)		; swap Sonic's facing
+	move.w	$3A(a2),d0		; get stored speed
+	cmpi.w	#$200,d0		; is it below $200?
+	bhs.s	+			; if not, branch
+	move.w	#$200,d0		; set it to $200 minimum
 +
-	cmpi.b	#6,routine(a2)		; upside-down spike?
+	neg.w	d0			; negate it for the rebounce
+	move.w	d0,y_vel(a0)		; write speed
+
+	move.w	#-$200,x_vel(a0)	; set normal X-speed
+
+	btst	#0,render_flags(a0)	; mirrored sonic?
 	bne.s	+			; if not, branch
-	move.w	#0,x_vel(a0)		; clear x-speed
-	move.w	#0,y_vel(a0)		; clear y-speed
+	neg.w	x_vel(a0)		; otherwise negate
 	rts
+
+; ---------------------------------------------------------------------------
+
 +
-	move.w	x_vel(a0),d0	; get x-speed
-	asr.w	#1,d0		; divide it by two (works for both negative and positive speeds)
-	move.w	d0,x_vel(a0)	; store the result back
+	move.w	$3A(a2),d0		; get stored speed
+;	move.w	d0,d1			; copy it for the check
+;	bpl.s	+			; is speed towards the right?
+;	neg.w	d1			; if not, make it
+;+
+;	cmpi.w	#$200,d1		; is it below $200?
+;	bhs.s	++			; if not, branch (speed is fine)
+
+;	move.w	#$200,d1		; set it to $200 minimum
+;	tst.w	d0			; is original value negative?
+;	bpl.s	++			; if yes, don't negate again
+;+
+	neg.w	d0			; negate it for the rebounce
+;+
+	move.w	d0,x_vel(a0)		; write speed
+
+
+	move.w	#-$400,y_vel(a0)	; set normal Y-speed
 	rts
 ; ===========================================================================
 
@@ -28200,6 +28236,12 @@ Obj36_Upright:
 	bsr.w	Obj36_DebugCheck
 	bsr.s	O36_ExploSpike
 	;bsr.w	sub_15AC6
+	
+	cmpi.b	#5,subtype(a0)			; is a blue spike?
+	bne.s	+				; if not, branch
+	move.w	(MainCharacter+y_vel).w,$3A(a0)	; store Y-speed
++
+
 	moveq	#0,d1
 	move.b	width_pixels(a0),d1
 	addi.w	#$B,d1
@@ -28214,19 +28256,19 @@ Obj36_Upright:
 	beq.s	loc_159DE
 	move.b	d6,d0
 	andi.b	#8,d0
-	beq.s	loc_159D0
+;	beq.s	loc_159D0
 	lea	(MainCharacter).w,a1 ; a1=character
 
 	move.b	subtype(a0),d4
 	bsr.w	Spike_Hurt
 
-loc_159D0:
-	andi.b	#$10,d6
-	beq.s	loc_159DE
-	lea	(Sidekick).w,a1 ; a1=character
+;loc_159D0:
+;	andi.b	#$10,d6
+;	beq.s	loc_159DE
+;	lea	(Sidekick).w,a1 ; a1=character
 
-	move.b	subtype(a0),d4
-	bsr.w	Spike_Hurt
+;	move.b	subtype(a0),d4
+;	bsr.w	Spike_Hurt
 
 loc_159DE:
 	cmpi.b	#-1,respawn_index(a0)	; is this a debug-placed spike?
@@ -28239,6 +28281,12 @@ loc_159DE:
 Obj36_Sideways:
 	bsr.w	Obj36_DebugCheck
 	bsr.w	O36_ExploSpike
+
+	cmpi.b	#5,subtype(a0)			; is a blue spike?
+	bne.s	+				; if not, branch
+	move.w	(MainCharacter+x_vel).w,$3A(a0)	; store X-speed
++
+
 	move.w	x_pos(a0),-(sp)
 	;bsr.w	sub_15AC6
 	moveq	#0,d1
@@ -43650,11 +43698,39 @@ JmpTo5_CalcSine
 ; ===========================================================================
 	align 4
 ; ===========================================================================
+
+; ---------------------------------------------------------------------------
+; Object 12 - Spike HUD menu
+; ---------------------------------------------------------------------------
+Obj12:
+	moveq	#0,d0
+	move.b	routine(a0),d0
+	move.w	Obj12_Index(pc,d0.w),d1
+	jmp	Obj12_Index(pc,d1.w)
+; ===========================================================================
+Obj12_Index:
+	dc.w Obj12_Init-Obj12_Index
+	dc.w Obj12_Display-Obj12_Index
+; ===========================================================================
+
+Obj12_Init:
+	addq.b	#2,routine(a0)
+	move.l	#Obj12_MapUnc_20382,mappings(a0)
+	move.w	#$8410,art_tile(a0)
+	move.b	#0,render_flags(a0)
+	move.b	#0,priority(a0)
+	move.w	#$120,x_pixel(a0)
+	move.w	#$148,y_pixel(a0)
+
+Obj12_Display:
+	jmp	(DisplaySprite).l
+
+
 ; ---------------------------------------------------------------------------
 ; Object 12 - Emerald from Hidden Palace Zone (unused)
 ; ---------------------------------------------------------------------------
 ; Sprite_2031C:
-Obj12:
+;Obj12:
 	moveq	#0,d0
 	move.b	routine(a0),d0
 	move.w	off_2032A(pc,d0.w),d1
@@ -45081,7 +45157,7 @@ loc_21A4A:
 	move.b	width_pixels(a0),d1
 	moveq	#8,d3
 	move.w	(sp)+,d4
-	bra.w	SlopeObject
+	jmp	SlopeObject
 ; ===========================================================================
 
 return_21A74:

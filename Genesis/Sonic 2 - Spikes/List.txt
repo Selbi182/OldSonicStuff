@@ -1,9 +1,12 @@
 Top priority:
 - Build first real levels.
-- Add black spikes to replace blue spikes and make those neutral.
+- Add black spikes for "instantly stop".
+- Add a system for selected spikes with a HUD and a counter.
 
 Medium priority:
 - Better blood.
+- Add art for blue bouncy spikes.
+- Add a sparkly connection from Tails to the placing spikes.
 
 Low priority:
 - Add an undoing feature.
