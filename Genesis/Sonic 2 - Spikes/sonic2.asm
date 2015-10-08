@@ -1751,8 +1751,8 @@ PlaySoundLocal:
 ; sub_1388:
 PauseGame:
 	nop
-	tst.b	(Life_count).w	; do you have any lives left?
-	beq.w	Unpause		; if not, branch
+;	tst.b	(Life_count).w	; do you have any lives left?
+;	beq.w	Unpause		; if not, branch
 	tst.w	(Game_paused).w	; is game already paused?
 	bne.s	+		; if yes, branch
 	move.b	(Ctrl_1_Press).w,d0 ; is Start button pressed?
@@ -1770,7 +1770,8 @@ loc_13B2:
 	;beq.s	Pause_ChkStart		; if not, branch
 	btst	#6,(Ctrl_1_Press).w	; is button A pressed?
 	beq.s	Pause_ChkBC		; if not, branch
-	move.b	#4,(Game_Mode).w	; => TitleScreen
+	;move.b	#4,(Game_Mode).w	; => TitleScreen
+	move.b	#$24,(Game_Mode).w	; => OptionsMenu
 	nop
 	bra.s	loc_13F2
 ; ===========================================================================
@@ -4113,14 +4114,15 @@ Sega_Remaining:
 	rts				; return
 
 Sega_CheckButtons:
- if DEVMODE=1
 	move.b	(Ctrl_1_Press).w,d0	; is Start button pressed?
 	or.b	(Ctrl_2_Press).w,d0	; (either player)
 	andi.b	#$80,d0			; and it
 	beq.s	+
+	
 	addq.l	#4,sp			; return to MainGameLoop
 	bra.s	Sega_GotoTitle		; if not, branch
 +
+ if DEVMODE=1 && 0
 	btst	#5,(Ctrl_1_Held).w	; is C held down?
 	beq.s	+			; if not, branch
 	move.b	#$20,(Game_Mode).w	; => EndingSequence
@@ -4879,9 +4881,9 @@ loc_42E8:
 	move.b	#$E,(Object_RAM+$1C0+routine).w
 	move.w	#$A,(Object_RAM+$1C0+$34).w
 	
-	jsr	(SingleObjLoad).l
-	bne.s	+			; skip if SST is full
-	move.b	#$12,(a1)		; load Explosion object
+;	jsr	(SingleObjLoad).l
+;	bne.s	+			; skip if SST is full
+;	move.b	#$12,(a1)		; load Spike Hud object
 ;	move.w	x_pos(a2),x_pos(a1)	; copy Sonic's X-position
 ;	move.w	y_pos(a2),y_pos(a1)	; copy Sonic's Y-position
 +
@@ -5800,6 +5802,8 @@ SetLevelEndType:
 	move.w	#0,(Level_Has_Signpost).w	; set level type to non-signpost
 	tst.w	(Two_player_mode).w	; is it two-player competitive mode?
 	bne.s	LevelEnd_SetSignpost	; if yes, branch
+	cmpi.w	#$000,(Current_ZoneAndAct).w
+	beq.w	return_4C46		; if EHZ1, return
 	cmpi.w	#$001,(Current_ZoneAndAct).w
 	beq.w	return_4C46		; if EHZ2, return
 	cmpi.w	#$500,(Current_ZoneAndAct).w
@@ -10288,7 +10292,7 @@ Obj21_Text_Init:
 	move.b	#0,priority(a0)
 	move.b	#0,mapping_frame(a0)
 
-	move.w	#(3*60)+30,d0		; time to display a frame
+	move.w	#(3*60)+30,d0		; time to display a frame (3 seconds)
 	move.w	d0,$30(a0)		; normal timer
 	move.w	d0,$32(a0)		; restore timer
 
@@ -10297,7 +10301,7 @@ Obj21_Text_Init:
 	move.b	d1,$35(a0)		; restore timer
 
 Obj21_Text_Main:
-	cmpi.b	#9+1,mapping_frame(a0)	; last frame passed? (total + 1)
+	cmpi.b	#9+1,mapping_frame(a0)	; last frame passed? (total (9) + 1)
 	bne.s	+			; if not, branch
 	addq.b	#2,routine(a0)		; got to last routine
 	move.w	#$170,$30(a0)		; set time interval
@@ -10355,11 +10359,12 @@ Obj21_MapUnc_Text:
 	dc.w O21Text_2-Obj21_MapUnc_Text	; $2
 	dc.w O21Text_3-Obj21_MapUnc_Text	; $3
 	dc.w O21Text_4-Obj21_MapUnc_Text	; $4
-	dc.w O21Text_5-Obj21_MapUnc_Text	; $5
+;	dc.w O21Text_5-Obj21_MapUnc_Text	; $5
 	dc.w O21Text_6-Obj21_MapUnc_Text	; $6
 	dc.w O21Text_7-Obj21_MapUnc_Text	; $7
 	dc.w O21Text_8-Obj21_MapUnc_Text	; $8
 	dc.w O21Text_9-Obj21_MapUnc_Text	; $9
+	dc.w O21Text_X-Obj21_MapUnc_Text
 	dc.w O21Text_A-Obj21_MapUnc_Text	; $A
 	
 ; --------------------------------------------------------------
@@ -10457,10 +10462,11 @@ O21Text_4:
 	OCreditsText "MARKEYJESTER",$40,1
 
 O21Text_5:
-	dc.w 5+8+7
+	dc.w 5+8+7;+18
 	OCreditsText "MUSIC",$20
 	OCreditsText "DALEKSAM",$40,1
 	OCreditsText "SPANNER",$50,1
+;	OCreditsText "IN THEORY AT LEAST",$70
 
 O21Text_6:
 	dc.w 5+10+8
@@ -10485,6 +10491,9 @@ O21Text_9:
 	OCreditsText "ORIGINAL GAME BY",$20
 	OCreditsText "SONIC TEAM",$40,1
 	OCreditsText "SEGA",$50,1
+
+O21Text_X:
+	dc.w 0
 
 O21Text_A:
 	dc.w 8+5+9
@@ -11569,6 +11578,18 @@ loc_9060:
 	move	#$2300,sr
 	lea	(word_87C6).l,a2
 	bsr.w	JmpTo2_Dynamic_Normal
+
+
+
+	btst	#6,(Ctrl_1_Press).w	; is button A pressed?
+	beq.s	++
+	move.b	#$80+$27,d0
+	eori.b	#1,(Slow_motion_flag).w	; toggle devmode
+	bne.s	+
+	move.b	#$80+$28,d0
++
+	jsr	(PlaySound).l
++
 	move.b	(Ctrl_1_Press).w,d0
 	or.b	(Ctrl_2_Press).w,d0
 	andi.b	#$80,d0
@@ -11579,28 +11600,45 @@ loc_9060:
 loc_909A:
 	move.b	(Options_menu_box).w,d0
 	bne.s	loc_90B6
+	
+	move.b	#$79+$80,d0
+	jsr	PlaySound	; fade out music
+	
 	moveq	#0,d0
 	move.w	d0,(Two_player_mode).w
 	move.w	d0,(Two_player_mode_copy).w
 	move.w	d0,(Current_ZoneAndAct).w
-	move.b	#$C,(Game_Mode).w ; => Level (Zone play mode)
+ 	move.b	#$20,(Game_Mode).w	; => EndingSequence
+ 	move.b	#0,(Current_Zone_2P).w
 	rts
 ; ===========================================================================
 
 loc_90B6:
 	subq.b	#1,d0
 	bne.s	loc_90D8
-	moveq	#1,d0
+;	moveq	#1,d0
+;	move.w	d0,(Two_player_mode).w
+;	move.w	d0,(Two_player_mode_copy).w
+;	move.b	#$1C,(Game_Mode).w ; => LevelSelectMenu2P
+;	move.b	#0,(Current_Zone_2P).w
+;	move.w	#0,(Player_mode).w
+	moveq	#0,d0
 	move.w	d0,(Two_player_mode).w
 	move.w	d0,(Two_player_mode_copy).w
-	move.b	#$1C,(Game_Mode).w ; => LevelSelectMenu2P
-	move.b	#0,(Current_Zone_2P).w
-	move.w	#0,(Player_mode).w
+	move.w	d0,(Current_ZoneAndAct).w
+	move.b	#$C,(Game_Mode).w ; => Level (Zone play mode)
+ 	move.b	#1,(Current_Zone_2P).w
 	rts
 ; ===========================================================================
 
 loc_90D8:
-	move.b	#0,(Game_Mode).w ; => SegaScreen
+;	move.b	#0,(Game_Mode).w ; => SegaScreen
+	moveq	#0,d0
+	move.w	d0,(Two_player_mode).w
+	move.w	d0,(Two_player_mode_copy).w
+	move.w	d0,(Current_ZoneAndAct).w
+	move.b	#$C,(Game_Mode).w ; => Level (Zone play mode)
+ 	move.b	#2,(Current_Zone_2P).w
 	rts
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -11631,6 +11669,9 @@ loc_910C:
 	move.b	word_917A(pc,d2.w),d3
 	movea.l	word_917A(pc,d2.w),a1
 	move.w	(a1),d2
+	
+	bra.s	loc_9146	; skip left/right
+	
 	btst	#2,d0
 	beq.s	loc_9128
 	subq.b	#1,d2
@@ -11781,21 +11822,29 @@ return_9294:
 ; ===========================================================================
 
 loc_9296:
-	move.w	(Sound_test_sound).w,d1
-	move.b	d1,d2
-	lsr.b	#4,d1
-	bsr.s	loc_92A2
-	move.b	d2,d1
+;	move.w	(Sound_test_sound).w,d1
+;	move.b	d1,d2
+;	lsr.b	#4,d1
+;	bsr.s	loc_92A2
+;	move.b	d2,d1
 
-loc_92A2:
-	andi.w	#$F,d1
-	cmpi.b	#$A,d1
-	bcs.s	loc_92B0
-	addi.b	#4,d1
+;loc_92A2:
+;	andi.w	#$F,d1
+;	cmpi.b	#$A,d1
+;	bcs.s	loc_92B0
+;	addi.b	#4,d1
 
-loc_92B0:
-	addi.b	#$10,d1
-	move.b	d1,d0
+;loc_92B0:
+;	addi.b	#$10,d1
+;	move.b	d1,d0
+;	move.w	d0,(a2)+
+
+
+	;move.w	d0,d1
+	
+	move.b	#$31,d0		; "T"
+	move.w	d0,(a2)+
+	move.b	#$1E,d0		; "A"
 	move.w	d0,(a2)+
 	rts
 ; ===========================================================================
@@ -12279,24 +12328,25 @@ byte_97C5:	dc.b   4,   1,   2,   6,   0
 	charset '@',"\27\30\31\32\33\34\35\36\37\38\39\40\41\42\43\44\45\46\47\48\49\50\51\52\53\54\55"
 	charset '0',"\16\17\18\19\20\21\22\23\24\25"
 	charset '*',$1A
+	charset '~',$1B
 	charset ':',$1C
 	charset '.',$1D
 	charset ' ',0
 
 	; options screen menu text
 
-byte_97CA:	dc.b $10,"* PLAYER SELECT *"
-byte_97DC:	dc.b  $E,"SONIC AND MILES"
-byte_97EC:	dc.b  $E,"SONIC AND TAILS"
+byte_97CA:	dc.b $10,"INTRO AND DEMO  ~"
+byte_97DC:	dc.b  $E,"     START     "
+byte_97EC:	dc.b  $E,"     START     "
 byte_97FC:	dc.b  $E,"SONIC ALONE    "
 byte_980C:	dc.b  $E,"MILES ALONE    "
 byte_981C:	dc.b  $E,"TAILS ALONE    "
-byte_982C:	dc.b $10,"* VS MODE ITEMS *"
-byte_983E:	dc.b  $E,"ALL KINDS ITEMS"
+byte_982C:	dc.b $10,"TEST STAGE 1  WIP"
+byte_983E:	dc.b  $E,"     START     "
 byte_984E:	dc.b  $E,"TELEPORT ONLY  "
-byte_985E:	dc.b $10,"*  SOUND TEST   *"
-byte_9870:	dc.b  $E,"      0"
-		dc.b $10,"       "
+byte_985E:	dc.b $10,"TEST STAGE 2  WIP"
+byte_9870:	dc.b  $E,"     ST"
+		dc.b $10,"RT     "
 
 	charset ; reset character set
 
@@ -12915,6 +12965,19 @@ loc_A38EX:
 	asr.w	#4,d0			; drastically shrink it down
 	add.w	#$30,d0			; add base Y-pos
 	move.w	d0,y_pos(a1)		; save result to new Y-pos
+
+
+	move.w	(Timer_frames).w,d0	; get current frame counter (first byte)
+	cmpi.w	#$0200,d0
+	blo.s	loc_skippy
+	cmpi.w	#$0A00,d0
+	bhi.s	loc_skippy
+	lsr.w	#2,d0
+	jsr	(CalcSine).l		; calc sine based on it
+	asr.w	#1,d0			; drastically shrink it down
+	add.w	#$A0,d0			; add base Y-pos
+	move.w	d0,x_pos(a1)		; save result to new Y-pos
+loc_skippy:
 	bra.s	++
 +	move.l	(sp)+,a0
 +
@@ -14360,6 +14423,23 @@ loc_C164:
 ; ===========================================================================
 
 loc_C17A:
+	move.b	(Current_Zone_2P).w,d0
+	tst.b	d0
+	beq.s	++
+	cmpi.b	#1,d0
+	bne.s	+
+	move.w	#3256,d1
+	move.w	d1,(MainCharacter+x_pos).w
+	move.w	#1200,d0
+	move.w	d0,(MainCharacter+y_pos).w
+	bra.s	loc_C196
++
+	move.w	#3392,d1
+	move.w	d1,(MainCharacter+x_pos).w
+	move.w	#0752,d0
+	move.w	d0,(MainCharacter+y_pos).w
+	bra.s	loc_C196
++
 	move.w	(Current_ZoneAndAct).w,d0
 	ror.b	#1,d0
 	lsr.w	#5,d0
@@ -14409,8 +14489,8 @@ loc_C1C2:
 ; appear at when the level starts.
 ; -------------------------------------------------------------------------------------
 WrdArr_StartLoc:
-	;dc.w	288,	$0	; $00
-	dc.w	$0BA0,	1200	; $00
+	dc.w	288,	$0	; $00
+	;dc.w	$0BA0,	1200	; $00
 	dc.w	$60,	$2AF
 	dc.w	$60,	$28F	; $01
 	dc.w	$60,	$2AF
@@ -25417,7 +25497,7 @@ off_13C56:
 	dc.w loc_13DA6-off_13C56	; $6
 	dc.w loc_13DDC-off_13C56	; $8
 	dc.w loc_13DE8-off_13C56	; $A	("ZONE")
-	dc.w loc_13DEE-off_13C56	; $C
+	dc.w loc_13DEE-off_13C56	; $C	(act number)
 	dc.w loc_13E42-off_13C56	; $E
 	dc.w loc_13E84-off_13C56	; $10
 	dc.w loc_13EE6-off_13C56	; $12
@@ -25592,12 +25672,17 @@ loc_13DEE:
 	cmpi.b	#$E,d0
 	beq.s	BranchTo9_DeleteObject
 	move.b	(Current_Act).w,d1
+	tst.b	(Current_Zone).w
+	bne.s	+
+	move.b	(Current_Zone_2P).w,d1
++
 	addi.b	#$12,d1
 	cmpi.b	#5,d0
 	bne.s	loc_13E18
 	moveq	#$14,d1
 
 loc_13E18:
+
 	move.b	d1,mapping_frame(a0)
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -27427,9 +27512,9 @@ VRAM_Explosion =	$73C0					; base offset for everything that's to come
 Size_Explo =		04 + (6 * 16)				; 4 = small explosion; 6 = number of big explosions; 16 = tiles per big explosion
 
 VRAM_Blood =		VRAM_Explosion+((Size_Explo)*$20)	; offset for blood particles
-Size_Blood =		10 * 01					; 9 = number of blood paricles; 01 = tiles per blood particle
+Size_Blood =		12 * 01					; 12 = number of blood paricles; 01 = tiles per blood particle
 
-Size_Spikes =		5 * 08					; 5 = spike types in total; 08 = number of tiles per spike
+Size_Spikes =		(6 * 08) + 08				; 6 = spike types in total; 08 = number of tiles per spike; 08 extra tiles for bounce
 VRAM_SpikeV =		VRAM_Blood+((Size_Blood)*$20)		; offset for vertical spikes
 VRAM_SpikeH =		VRAM_SpikeV+((Size_Spikes)*$20)		; offset for horizontal spikes
 
@@ -27749,6 +27834,11 @@ Spike_Hurt:
 +	cmpi.b	#6,d4
 	bne.s	+
 	bsr.w	SH_Explode
+	bra.s	SH_End
+
++	cmpi.b	#7,d4
+	bne.s	+
+	bsr.w	SH_Sponge
 +; end subtype check
 
 SH_End:
@@ -27814,8 +27904,15 @@ SH_Level_End:
 ; ===========================================================================
 
 SH_Bounce: ;$5
+	move.b	#$E,mapping_frame(a2)	; set frame for upright
+	subi.w	#8,art_tile(a2)		; fix tile offset
+	move.b	#5,$39(a2)		; set time window to 5 frames
+
+	move.w	#$CC,d0			; load spring sound
+	jsr	(PlaySound).l
+
 	cmpi.b	#4,routine(a2)		; sideways?
-	beq.s	++			; if yes, run different code
+	beq.s	+++			; if yes, run different code
 
 	move.w	$3A(a2),d0		; get stored speed
 	cmpi.w	#$200,d0		; is it below $200?
@@ -27830,33 +27927,44 @@ SH_Bounce: ;$5
 	btst	#0,render_flags(a0)	; mirrored sonic?
 	bne.s	+			; if not, branch
 	neg.w	x_vel(a0)		; otherwise negate
++
 	rts
 
 ; ---------------------------------------------------------------------------
 
 +
+	move.b	#$F,mapping_frame(a2)	; set frame for sideways
+
 	move.w	$3A(a2),d0		; get stored speed
-;	move.w	d0,d1			; copy it for the check
-;	bpl.s	+			; is speed towards the right?
-;	neg.w	d1			; if not, make it
-;+
-;	cmpi.w	#$200,d1		; is it below $200?
-;	bhs.s	++			; if not, branch (speed is fine)
-
-;	move.w	#$200,d1		; set it to $200 minimum
-;	tst.w	d0			; is original value negative?
-;	bpl.s	++			; if yes, don't negate again
-;+
 	neg.w	d0			; negate it for the rebounce
-;+
 	move.w	d0,x_vel(a0)		; write speed
-
 
 	move.w	#-$400,y_vel(a0)	; set normal Y-speed
 	rts
 ; ===========================================================================
 
-SH_Explode:
+SH_Sponge: ;$7
+	move.w	#$80+$44,d0			; load puff sound
+	jsr	(PlaySound).l
+
+	move.w	#-$400,y_vel(a0) ; make Sonic bounce away from the object
+	move.w	#0,x_vel(a0)		; clear x-speed
+
+	cmpi.b	#4,routine(a2)		; sideways spike?
+	bne.s	+			; if not, branch
+	bchg	#0,status(a0)		; swap Sonic's facing
++
+	cmpi.b	#6,routine(a2)		; upside-down spike?
+	bne.s	+			; if not, branch
+	move.w	#0,y_vel(a0)		; clear y-speed
++					; upright spike
+	move.b	#$58,(a2)		; change spike into an explosion
+	move.b	#0,routine(a2)		; make sure it's at routine 0
+	rts
+
+; ===========================================================================
+
+SH_Explode: ;$6
 	jsr	SingleObjLoad
 	bne.w	SHE_Abort
 	move.b	#$35,(a1)	; load explosion "invincibility starts"
@@ -27894,7 +28002,7 @@ SH_Explode:
 	move.b	#1,$30(a1)	; disable explosion sound
 
 	jsr	SingleObjLoad2
-	bne.s	SHE_Abort
+	bne.w	SHE_Abort
 	move.b	#$58,(a1)	; load Explosion object
 	;addi.w	#$20,d2
 	addi.w	#$20,d3
@@ -27904,7 +28012,13 @@ SH_Explode:
 	rts
 
 SHE_NotSide:
-
+	move.w	x_vel(a0),d2
+	move.w	#$200,d3
+	tst.w	d2
+	bpl.s	+
+	neg.w	d3
++	move.w	d3,x_vel(a0)
+	
 	;move.w	#0,x_vel(a0)
 	move.w	#-$1000,y_vel(a0)
 	bra.w	SHE_Abort
@@ -28032,6 +28146,12 @@ Obj36_Init:
 	bne.s	+
 	move.w	d2,d3		; red spikes
 	addi.w	#$18,d3
+	move.w	d3,art_tile(a0)
++
+	cmpi.b	#7,d1	; sponge
+	bne.s	+
+	move.w	d2,d3		; black spikes
+	addi.w	#$28,d3
 	move.w	d3,art_tile(a0)
 +
 
@@ -28240,6 +28360,13 @@ Obj36_Upright:
 	cmpi.b	#5,subtype(a0)			; is a blue spike?
 	bne.s	+				; if not, branch
 	move.w	(MainCharacter+y_vel).w,$3A(a0)	; store Y-speed
+
+	tst.b	$39(a0)				; time window for blue spikes over?
+	beq.s	+				; if not, skip
+	subq.b	#1,$39(a0)			; reduce window
+	bne.s	+				; skip if still not empty
+	move.b	#0,mapping_frame(a0)		; reset frame
+	addi.w	#$08,art_tile(a0)		; refix tile offset
 +
 
 	moveq	#0,d1
@@ -28285,6 +28412,13 @@ Obj36_Sideways:
 	cmpi.b	#5,subtype(a0)			; is a blue spike?
 	bne.s	+				; if not, branch
 	move.w	(MainCharacter+x_vel).w,$3A(a0)	; store X-speed
+
+	tst.b	$39(a0)				; time window for blue spikes over?
+	beq.s	+				; if not, skip
+	subq.b	#1,$39(a0)			; reduce window
+	bne.s	+				; skip if still not empty
+	move.b	#4,mapping_frame(a0)		; reset frame
+	addi.w	#$08,art_tile(a0)		; refix tile offset
 +
 
 	move.w	x_pos(a0),-(sp)
@@ -28332,6 +28466,20 @@ Obj36_UpsideDown:
 	bsr.w	Obj36_DebugCheck
 	bsr.w	O36_ExploSpike
 	;bsr.w	sub_15AC6
+
+	cmpi.b	#5,subtype(a0)			; is a blue spike?
+	bne.s	+				; if not, branch
+
+	tst.b	$39(a0)				; time window for blue spikes over?
+	beq.s	+				; if not, skip
+	subq.b	#1,$39(a0)			; reduce window
+	bne.s	+				; skip if still not empty
+	move.b	#0,mapping_frame(a0)		; reset frame
+	addi.w	#$08,art_tile(a0)		; refix tile offset
++
+
+
+
 	moveq	#0,d1
 	move.b	width_pixels(a0),d1
 	addi.w	#$B,d1
@@ -28479,6 +28627,7 @@ return_15B66:
 ; sprite mappings
 ; ------------------------------------------------------------------------------
 Obj36_MapUnc_15B68:	BINCLUDE "mappings/sprite/obj36.bin"
+;Obj36_MapUnc_15B68:	include "mappings/sprite/obj36.asm"
 
 
 
@@ -34399,6 +34548,8 @@ return_1A2DE:
 ; loc_1A2E0: Obj01_MdJump
 Obj01_MdAir:
  if DEVMODE=1
+	tst.b	(Slow_motion_flag).w
+	beq.s	+
 	tst.w	(Debug_mode_flag).w	; is debug cheat enabled?
 	beq.s	+			; if not, branch
 	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
@@ -34428,6 +34579,9 @@ Obj01_MdAir:
 ; loc_1A30A:
 Obj01_MdRoll:
  if DEVMODE=1
+ 	tst.b	(Slow_motion_flag).w
+	beq.s	+
+
 	tst.w	(Debug_mode_flag).w	; is debug cheat enabled?
 	beq.s	+			; if not, branch
 	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
@@ -34458,6 +34612,9 @@ Obj01_MdRoll:
 ; loc_1A330: Obj01_MdJump2:
 Obj01_MdJump:
  if DEVMODE=1
+ 	tst.b	(Slow_motion_flag).w
+	beq.s	+
+
 	tst.w	(Debug_mode_flag).w	; is debug cheat enabled?
 	beq.s	+			; if not, branch
 	btst	#4,(Ctrl_1_Press).w	; is button B pressed?
@@ -35997,6 +36154,9 @@ return_1B11E:
 ; loc_1B120: Obj_01_Sub_4:
 Obj01_Hurt:
  if DEVMODE=1
+ 	tst.b	(Slow_motion_flag).w
+	beq.s	+
+
 	tst.w	(Debug_mode_flag).w
 	beq.s	Obj01_Hurt_Normal
 	btst	#4,(Ctrl_1_Press).w
@@ -36004,6 +36164,7 @@ Obj01_Hurt:
 	move.w	#1,(Debug_placement_mode).w
 	clr.b	(Control_Locked).w
 	rts
++
  endif
 ; ---------------------------------------------------------------------------
 ; loc_1B13A:
@@ -36118,6 +36279,9 @@ Sonic_HurtInstantRecover:
 ; loc_1B1E6: Obj_01_Sub_6:
 Obj01_Dead:
  if DEVMODE=1
+ 	tst.b	(Slow_motion_flag).w
+	beq.s	+
+
 	tst.w	(Debug_mode_flag).w
 	beq.s	+
 	btst	#4,(Ctrl_1_Press).w
@@ -36147,8 +36311,9 @@ CheckGameOver:
 	move.b	#8,routine(a0)	; => Obj01_Gone
 	move.w	#$3C,spindash_counter(a0)
 	addq.b	#1,(Update_HUD_lives).w	; update lives counter
-	subq.b	#1,(Life_count).w	; subtract 1 from number of lives
-	bne.s	Obj01_ResetLevel	; if it's not a game over, branch
+	bra.s	Obj01_ResetLevel
+	;subq.b	#1,(Life_count).w	; subtract 1 from number of lives
+	;bne.s	Obj01_ResetLevel	; if it's not a game over, branch
 	move.w	#0,spindash_counter(a0)
 	move.b	#$39,(Object_RAM+$80).w ; load Obj39 (game over text)
 	move.b	#$39,(Object_RAM+$C0).w ; load Obj39 (game over text)
@@ -40332,6 +40497,7 @@ Obj35_MapUnc_1DCBC:	BINCLUDE "mappings/sprite/obj35.bin"
 ; ---------------------------------------------------------------------------
 ; Sprite_1DD20:
 Obj08:
+ rts
 	moveq	#0,d0
 	move.b	routine(a0),d0
 	move.w	off_1DD2E(pc,d0.w),d1
@@ -85198,13 +85364,14 @@ SelbiSplash_ChangePal:
 SelbiSplash_Next:
 	clr.b	($FFFFF5AF).w
 	clr.l	($FFFFF57A).w
- if DEVMODE=1
-	move.w	#$000,d0
-	jmp	(loc_9480).l
- else
- 	move.b	#$20,(Game_Mode).w	; => EndingSequence
+ ;if DEVMODE=1
+;	move.w	#$000,d0		; set level to EHZ1
+;	jmp	(loc_9480).l		; start game
+; else
+ 	;move.b	#$20,(Game_Mode).w	; => EndingSequence
+ 	move.b	#$24,(Game_Mode).w	; => OptionsMenu
 	rts
- endif
+; endif
 		
 ; ---------------------------------------------------------------------------
 Selbi_Nem:	BINCLUDE	"misc/SelbiSplash/Tiles.bin"
@@ -85240,11 +85407,15 @@ Obj4C_Index:
 
 Obj4C_Main:	; while debug mode is in use
 	tst.b	(Debug_placement_mode).w		; is debug mode set to end?
-	bpl.w	+					; if not, branch
+	bpl.w	++					; if not, branch
 	addq.b	#2,routine(a0)				; otherwise, set it to exit mode
  if DEVMODE=1
+ 	tst.b	(Slow_motion_flag).w
+	beq.s	+
+
 	btst	#6,(Ctrl_1_Held).w			; is A held down?
 	bne.w	Obj4C_Exit3				; if yes, teleport Sonic to debug location instead
++
  endif
 	move.w	x_pos(a0),(MainCharacter+x_pos).w	; move Sonic to his original x-position
 	move.w	y_pos(a0),(MainCharacter+y_pos).w	; move Sonic to his original y-position
@@ -85727,6 +85898,12 @@ DbgObjList_EHZ: dbglistheader
 	dbglistspike %01, $45, $04, 0, $08	; x-flip sideways
 	dbglistspike %00, $45, $04, 0, $08	; normal sideways
 	dbglistspike %10, $05, $00, 0, $08	; y-flip
+
+; sponge
+	dbglistspike %00, $07, $00, 2, $28	; normal
+	dbglistspike %01, $47, $04, 2, $28	; x-flip sideways
+	dbglistspike %00, $47, $04, 2, $28	; normal sideways
+	dbglistspike %10, $07, $00, 2, $28	; y-flip
 
 ; explode
 	dbglistspike %00, $06, $00, 0, $20	; normal
