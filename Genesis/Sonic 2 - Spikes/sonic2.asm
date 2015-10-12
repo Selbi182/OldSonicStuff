@@ -10233,7 +10233,9 @@ Obj21_States:
 	dc.w Obj21_Main - Obj21_States		; 2
 	dc.w Obj21_Text_Init - Obj21_States	; 4
 	dc.w Obj21_Text_Main - Obj21_States	; 6
-	dc.w Obj21_Text_Last - Obj21_States	; 8
+	dc.w Obj21_Text_Last1 - Obj21_States	; 8
+	dc.w Obj21_Text_Last2 - Obj21_States	; A
+	dc.w Obj21_Text_Last3 - Obj21_States	; C
 ; ---------------------------------------------------------------------------
 ; word_80D0:
 Obj21_PositionTable: ; x, y
@@ -10325,7 +10327,7 @@ Obj21_Text_Main:
 	jmp	(DisplaySprite).l	; display
 ; ===========================================================================
 
-Obj21_Text_Last:
+Obj21_Text_Last1:
 	tst.w	$30(a0)			; timer empty?
 	beq.s	++			; if yes, branch
 	subq.w	#1,$30(a0)		; if not, substract one
@@ -10341,7 +10343,41 @@ Obj21_Text_Last:
 	bne.s	+				; branch if not zero
 	move.b	$35(a0),$34(a0)			; reset
 	subi.w	#$200,(Normal_palette_line3).w	; reduce blue
-+	jmp	(DisplaySprite).l	; display
+	tst.w	(Normal_palette_line3).w	; background palette black?
+	bne.s	+				; if not, branch
+	move.b	#1,$30(a0)
+	move.b	#40,$34(a0)
+	move.b	$34(a0),$35(a0)
+	addq.b	#2,routine(a0)
++
+	jmp	(DisplaySprite).l	; display
+
+; ===========================================================================
+
+Obj21_Text_Last2:
+	subq.b	#1,$34(a0)			; substract 1 from interval
+	bne.s	+				; branch if not zero
+	move.b	$35(a0),$34(a0)			; reset
+	
+	move.b	$30(a0),d0
+	add.b	d0,mapping_frame(a0)
+	neg.b	$30(a0)
+
++
+	btst	#7,(Ctrl_1_Press).w	; is Start button pressed?
+	beq.s	+
+	addq.b	#2,routine(a0)
+	move.b	#$52+$80,d0		; set wowowowow sound
+	jsr	(PlaySound).l		; play
+
++
+	jmp	(DisplaySprite).l	; display
+
+; ===========================================================================
+
+Obj21_Text_Last3:
+	move.b	#9+1,mapping_frame(a0)
+	jmp	(DisplaySprite).l	; display
 
 ; ===========================================================================
 ; --------------------------------------------------------------------------
@@ -10357,6 +10393,7 @@ Obj21_MapUnc_Text:
 	dc.w O21Text_0-Obj21_MapUnc_Text	; $0
 	dc.w O21Text_1-Obj21_MapUnc_Text	; $1
 	dc.w O21Text_2-Obj21_MapUnc_Text	; $2
+	dc.w O21Text_X-Obj21_MapUnc_Text
 	dc.w O21Text_3-Obj21_MapUnc_Text	; $3
 	dc.w O21Text_4-Obj21_MapUnc_Text	; $4
 ;	dc.w O21Text_5-Obj21_MapUnc_Text	; $5
@@ -10364,13 +10401,17 @@ Obj21_MapUnc_Text:
 	dc.w O21Text_7-Obj21_MapUnc_Text	; $7
 	dc.w O21Text_8-Obj21_MapUnc_Text	; $8
 	dc.w O21Text_9-Obj21_MapUnc_Text	; $9
-	dc.w O21Text_X-Obj21_MapUnc_Text
 	dc.w O21Text_A-Obj21_MapUnc_Text	; $A
+	dc.w O21Text_B-Obj21_MapUnc_Text	; $B
 	
 ; --------------------------------------------------------------
 ;  Text generation macro from ASCII string for opening credits.
 ; --------------------------------------------------------------
 OCreditsText	macro text,ypos,pal
+
+	;if (strlen(text) > 16)
+	;	fatal "Maximum characters per row must be below 16 characters, but you have $\{strlen(text) } characters."
+	;endif
 
 ; set default vars
 c := 0
@@ -10451,6 +10492,13 @@ O21Text_2:
 	OCreditsText "STORY CONCEPT BY",$30
 	OCreditsText "ARAGON",$50,1
 
+O21Text_X:
+	dc.w 21+17+2+12
+	OCreditsText "PARTIALLY INSPIRED BY",$20
+	OCreditsText "TAILS ABUSE DEBUG",$40,1
+	OCreditsText "BY",$50
+	OCreditsText "WHOISTHISGIT",$60,1
+
 O21Text_3:
 	dc.w 16+5
 	OCreditsText "LEAD DEVELOPMENT",$20
@@ -10492,14 +10540,18 @@ O21Text_9:
 	OCreditsText "SONIC TEAM",$40,1
 	OCreditsText "SEGA",$50,1
 
-O21Text_X:
-	dc.w 0
-
 O21Text_A:
 	dc.w 8+5+9
 	OCreditsText "HEDGEHOG",$30,1
 	OCreditsText "ABUSE",$40,1
 	OCreditsText "SIMULATOR",$50,1
+
+O21Text_B:
+	dc.w 8+5+9+11
+	OCreditsText "HEDGEHOG",$30,1
+	OCreditsText "ABUSE",$40,1
+	OCreditsText "SIMULATOR",$50,1
+	OCreditsText "PRESS START",$7F
 
 	even
 ; --------------------------------------------------------------------------
@@ -11199,6 +11251,9 @@ JmpTo_Dynamic_Normal
 ; ===========================================================================
 ; loc_8BD4:
 MenuScreen:
+	move.b	#$79+$80,d0
+	jsr	(PlaySound).l	; fade out music
+	
 	bsr.w	Pal_FadeFrom
 	move	#$2700,sr
 	move.w	($FFFFF60C).w,d0
@@ -11601,14 +11656,15 @@ loc_909A:
 	move.b	(Options_menu_box).w,d0
 	bne.s	loc_90B6
 	
-	move.b	#$79+$80,d0
-	jsr	PlaySound	; fade out music
+;	move.b	#$79+$80,d0
+;	jsr	PlaySound	; fade out music
 	
 	moveq	#0,d0
 	move.w	d0,(Two_player_mode).w
 	move.w	d0,(Two_player_mode_copy).w
 	move.w	d0,(Current_ZoneAndAct).w
- 	move.b	#$20,(Game_Mode).w	; => EndingSequence
+;	move.b	#$20,(Game_Mode).w	; => EndingSequence
+	move.b	#$C,(Game_Mode).w ; => Level (Zone play mode)
  	move.b	#0,(Current_Zone_2P).w
 	rts
 ; ===========================================================================
@@ -12335,7 +12391,7 @@ byte_97C5:	dc.b   4,   1,   2,   6,   0
 
 	; options screen menu text
 
-byte_97CA:	dc.b $10,"INTRO AND DEMO  ~"
+byte_97CA:	dc.b $10,"DEMO STAGE    ~~~"
 byte_97DC:	dc.b  $E,"     START     "
 byte_97EC:	dc.b  $E,"     START     "
 byte_97FC:	dc.b  $E,"SONIC ALONE    "
@@ -12569,14 +12625,14 @@ EndingSequence_MainLoop:
 	jsr	(RandomNumber).l
 	jsr	(RunObjects).l
 	jsr	(BuildSprites).l
-
-	btst	#7,(Ctrl_1_Press).w	; is Start button pressed?
-	beq.s	+			; if not, branch
-	move.w	#$0000,(Current_ZoneAndAct).w
-	jsr	(loc_9480).l
-	move.w	#1,(Level_Inactive_flag).w
-	move.w	#$0000,(Current_ZoneAndAct).w
-+
+	
+;	btst	#7,(Ctrl_1_Press).w	; is Start button pressed?
+;	beq.s	+			; if not, branch
+;	move.w	#$0000,(Current_ZoneAndAct).w
+;	jsr	(loc_9480).l
+;	move.w	#1,(Level_Inactive_flag).w
+;	move.w	#$0000,(Current_ZoneAndAct).w
+;+
 	tst.b	($FFFFF661).w
 	beq.s	loc_9EE6
 	bsr.w	JmpTo_PalCycle_Load
@@ -12768,6 +12824,19 @@ ObjCA:
 	move.b	#-1,(Super_Sonic_palette).w
 
 loc_A1FA:
+
+	cmpi.b	#$17,(MainCharacter+anim).w
+	beq.s	+
+
+	btst	#7,(Ctrl_1_Press).w	; is Start button pressed?
+	beq.s	+			; if not, branch
+;	move.w	#$0000,(Current_ZoneAndAct).w
+;	jsr	(loc_9480).l
+	move.w	#1,(Level_Inactive_flag).w
+	move.w	#$0000,(Current_ZoneAndAct).w
+	move.b	#$24,(Game_Mode).w	; => OptionsMenu
++	 
+
 
 	moveq	#0,d0
 	move.b	routine(a0),d0
@@ -12989,8 +13058,12 @@ loc_skippy:
 ; ===========================================================================
 
 loc_A3A2:
-	cmpi.w	#50*60,objoff_32(a0) ; 50 seconds
-	beq.s	loc_A3BE
+	;cmpi.w	#50*60,objoff_32(a0) ; 50 seconds
+	;blo.s	loc_A3AA
+	cmpi.b	#$17,(MainCharacter+anim).w
+	bne.s	loc_A3AA
+	btst	#7,(Ctrl_1_Press).w	; is Start button pressed?
+	bne.s	loc_A3BE
 
 loc_A3AA:
 	subq.w	#1,objoff_3C(a0)
@@ -13029,10 +13102,12 @@ loc_A3BEX:
 
 	cmpi.w	#$300,y_pos(a0)
 	blt.s	+
-	move.w	#$0000,(Current_ZoneAndAct).w
-	jsr	(loc_9480).l
+;	move.w	#$0000,(Current_ZoneAndAct).w
+;	jsr	(loc_9480).l
 	move.w	#1,(Level_Inactive_flag).w
 	move.w	#$0000,(Current_ZoneAndAct).w
+	move.b	#$24,(Game_Mode).w	; => OptionsMenu
+
 +
 	move.l	(sp)+,a0
 	rts
@@ -85368,8 +85443,8 @@ SelbiSplash_Next:
 ;	move.w	#$000,d0		; set level to EHZ1
 ;	jmp	(loc_9480).l		; start game
 ; else
- 	;move.b	#$20,(Game_Mode).w	; => EndingSequence
- 	move.b	#$24,(Game_Mode).w	; => OptionsMenu
+ 	move.b	#$20,(Game_Mode).w	; => EndingSequence
+ 	;move.b	#$24,(Game_Mode).w	; => OptionsMenu
 	rts
 ; endif
 		
