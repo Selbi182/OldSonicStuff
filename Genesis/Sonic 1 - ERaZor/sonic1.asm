@@ -55,8 +55,8 @@ Align:		macro
 ; 0 - No
 ; 1 - Yes
 DebugModeDefault = 0
-DontAllowDebug = 1
-DebugHUD = 0
+DontAllowDebug = 0
+DebugHUD = 1
 ;=================================================
 ;Enable Demo Recording. (In RAM at $FFFFD200)
 ;Also disables Stars and Shields
@@ -68,7 +68,7 @@ AutoDEMO = 0
 ;If 1, the doors in the SYZ are always open.
 ; 0 - Closed, you need to play the levels first
 ; 1 - Opened
-DoorsAlwaysOpen = 1
+DoorsAlwaysOpen = 0
 ;=================================================
 
 ; ---------------------------------------------------------------------------
@@ -5017,8 +5017,8 @@ byte_3FCF:	dc.b 0			; XREF: LZWaterSlides
 EasterEgg:
 		tst.b	($FFFFFF92).w
 		beq.s	EEGP_End
-
- bra eegp_end
+ bra TrippyEgg
+; bra eegp_end
 
 		movem.l	d0-a1,-(sp)
 		lea	($FFFFFA80).w,a1 	; get palette
@@ -5048,6 +5048,8 @@ Pal_MBW_LoopXXX:
 		movem.l	(sp)+,d0-a1
 		rts
 
+TrippyEgg:
+		move.b	#10,($FFFFFF64).w
 
 		movem.l	d0-a1,-(sp)
 		lea	($FFFFFB00).w,a1 	; get palette
@@ -6048,6 +6050,7 @@ Cont_ClrObjRam:
 		move.b	#$80,($FFFFD0C0).w
 		move.b	#4,($FFFFD0E4).w
 		move.b	#1,($FFFFFFDC).w	; some flag to fix music issues
+		clr.b	($FFFFFF97).w		; clear the lamp post counter in Labyrinth Zone
 		clr.w	($FFFFFF88).w
 		jsr	ObjectsLoad
 		jsr	BuildSprites
@@ -18697,10 +18700,14 @@ loc_BDC8:
 		move.b	#1,($20001D).l		; enable grey mode flag
 		move.b	#0,($A130F1).l		; disable SRAM
 
-		move.w	#$C3,d0
+		bclr	#3,($FFFFD022).w
+
+		move.w	#$86,d0
+		jsr	(PlaySound).l ;	play switch sound
+		jmp	DeleteObject
 
 @cont:
-		jsr	(PlaySound_Special).l ;	play switch sound
+		jsr	(PlaySound).l ;	play switch sound
 
 		cmpi.w	#$101,($FFFFFE10).w	; is level LZ2?
 		bra.s	loc_BDD6		; if not, branch
@@ -31102,7 +31109,7 @@ BB_DoTele:
 		bne.s	BB_NotGHZ1		; if yes, branch
 		cmpi.w	#$18B0,($FFFFD008).w	; is Sonic past the X-location $18B0?
 		bpl.s	BB_NotGHZ1		; if yes, branch
-		cmpi.w	#$1340,($FFFFD008).w	; is Sonic before the X-location $1340?
+		cmpi.w	#$1320,($FFFFD008).w	; is Sonic before the X-location $1320?
 		bmi.s	BB_NotGHZ1		; if yes, branch
 		rts
 
@@ -46029,6 +46036,12 @@ Obj21_NoUpdate:
 		moveq	#2,d0			; clear d0
 		tst.w	($FFFFFE20).w		; do you have any rings?
 		beq.s	Obj21_Flash2		; if not, branch
+		
+		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
+		bne.s	Obj21_Cont		; if not, branch
+		tst.b	($FFFFFFE7).w		; inhuman mode on?
+		bne.s	Obj21_Flash2		; if yes, branch
+
 		bra.s	Obj21_Cont
 ; ---------------------------------------------------------------------------
 
@@ -46079,7 +46092,8 @@ AddPoints:
 		move.l	#999999,d1
 		cmp.l	(a3),d1		; is #999999 higher than the score?
 		bhi.w	loc_1C6AC	; if yes, branch
-		move.l	d1,(a3)		; reset	score to #999999
+	;	move.l	d1,(a3)		; reset	score to #999999
+		move.l	#0,(a3)		; reset	score to #0
 		move.l	d1,(a2)
 
 loc_1C6AC:
@@ -46121,7 +46135,7 @@ Hud_ChkRings:
 		tst.b	($FFFFFE1D).w	; does the ring	counter	need updating?
 		beq.s	Hud_ChkTime	; if not, branch
 		cmpi.w	#999,($FFFFFE20).w ; does sonic have over 999 rings?
-		ble.s	Hud_Not999	; if equal or less, branch
+		blo.s	Hud_Not999	; if equal or less, branch
 		move.w	#999,($FFFFFE20).w ; if it's over 999, set to 999
 		ori.b	#1,($FFFFFE1D).w ; update the ring counter
 		

@@ -2469,8 +2469,8 @@ StartOfRom:
 Header:
 	dc.b "SEGA GENESIS    " ; Console name
 	dc.b "(C)SEGA 1992.SEP" ; Copyright/Date
-	dc.b "SONIC THE             HEDGEHOG 2                " ; Domestic name
-	dc.b "SONIC THE             HEDGEHOG 2                " ; International name
+	dc.b "Sonic 2: The Tornado Tales                      " ; Domestic name
+	dc.b "Sonic 2: The Tornado Tales                      " ; International name
     if gameRevision=0
 	dc.b "GM 00001051-00"   ; Version (REV00)
     elseif gameRevision=1
@@ -17178,6 +17178,22 @@ SwScrl_MTZ:
 -	move.l	d0,(a1)+
 	dbf	d1,-
 
+	moveq	#0,d2
+	tst.b	(Screen_Shaking_Flag).w
+	beq.s	+
+
+	move.w	(Timer_frames).w,d0
+	andi.w	#$3F,d0
+	lea_	SwScrl_RippleData,a1
+	lea	(a1,d0.w),a1
+	moveq	#0,d0
+	move.b	(a1)+,d0
+	add.w	d0,(Vscroll_Factor_FG).w
+	add.w	d0,(Vscroll_Factor_BG).w
+	add.w	d0,(Camera_Y_pos_copy).w
+	move.b	(a1)+,d2
+	add.w	d2,(Camera_X_pos_copy).w
++
 	rts
 ; ===========================================================================
 ; loc_C82A:
@@ -18702,7 +18718,7 @@ SwScrl_SCZ2:
 
 	move.w	#$10,(Camera_BG_Y_pos).w
 	moveq	#0,d0
-	move.b	(Vint_runcount+3).w,d0
+	move.b	(Timer_frames+1).w,d0
 	jsr	(CalcSine).l
 	asr.w	#6,d0
 	add.w	d0,(Camera_BG_Y_pos).w
@@ -18710,7 +18726,7 @@ SwScrl_SCZ2:
 	
 ;	bsr.w	SetHorizScrollFlagsBG_Special
 ;	move.l	#0,(Camera_BG_X_pos).w
-	bsr.w	SetHorizVertiScrollFlagsBG
+;	bsr.w	SetHorizVertiScrollFlagsBG
 	move.w	(Camera_BG_Y_pos).w,(Vscroll_Factor_BG).w
 
 
@@ -28396,7 +28412,9 @@ Obj4C_WFZ_End:
 +	move.w	(SideKick+y_pos).w,d0
 	cmp.w	#$160,d0
 	blt.s	+
-	move.w	#emerald_hill_zone_act_1,(Current_ZoneAndAct).w
+;	move.w	#emerald_hill_zone_act_1,(Current_ZoneAndAct).w
+;	move.w	#sky_chase_zone_act_1,(Current_ZoneAndAct).w
+	move.w	#wing_fortress_zone_act_1,(Current_ZoneAndAct).w
 	move.b	#1,(Level_Inactive_flag).w
 
 +
@@ -28412,7 +28430,7 @@ Obj4C_MapUnc:	BINCLUDE "art/New/Map_MTZTube.bin"
 ; ===========================================================================
 
 ; ----------------------------------------------------------------------------
-; Object 3A - End of level results screen
+; Object 3A - End of level results screen (Metropolis 3 MTZ3 Stuff)
 ; ----------------------------------------------------------------------------
 ; Sprite_14086:
 Obj3A: ; (screen-space obj)
@@ -28458,7 +28476,13 @@ Obj3A_Wait:
 
 	addq.b	#2,routine(a0)
 
-	move.b	#MusID_DEZ,d0
+	;move.l	a0,-(sp)
+	;jsr	Pal_MakeWhite
+	;move.l	(sp)+,a0
+	move.b	#1,(Screen_Shaking_Flag).w	; make screen shake
+
+	
+	move.b	#MusID_DEZ,d0		; play DEZ music
 	jsr	(PlayMusic).l
 	
 	clr.b	(Current_Boss_ID).w
@@ -28492,6 +28516,11 @@ Obj3A_Wait:
 
 Obj3A_Shake:
 	;screenshake stuff here
+	
+	;move.b	#SndID_Explosion,d0		; play explosion sound
+	;jsr	(PlaySound).l
+	
+
 	addq.b	#2,routine(a0)
 	rts
 ; ===========================================================================
@@ -29486,17 +29515,29 @@ TC_MTZ:		dc.w $A				; METROPOLIS
 		dc.w $0001, $85F4, $82FA, $0068	; I
 		dc.w $0005, $85F6, $82FB, $0070	; S
 
-TC_MT3:		dc.w $A				; METROPOLIS
-		dc.w $0009, $85DE, $82EF, $FFE0	; M
+TC_MT3:		dc.w $A+$A			; DEEP INSIDE METROPOLIS
+		dc.w $E805, $85DE, $82EF, $FFE0	; D
+		dc.w $E805, $8580, $82C0, $FFF0	; E
+		dc.w $E805, $8580, $82C0, $0000	; E
+		dc.w $E805, $85E2, $82F1, $0010	; P
+
+		dc.w $E801, $85E6, $82F3, $0030	; I
+		dc.w $E805, $8584, $82C2, $0038	; N
+		dc.w $E805, $85E8, $82F4, $0048	; S
+		dc.w $E801, $85E6, $82F3, $0058	; I
+		dc.w $E805, $85DE, $82EF, $0060	; D
+		dc.w $E805, $8580, $82C0, $0070	; E
+
+		dc.w $0009, $85EC, $82F6, $FFE0	; M
 		dc.w $0005, $8580, $82C0, $FFF8	; E
-		dc.w $0005, $85E4, $82F2, $0008	; T
-		dc.w $0005, $85E8, $82F4, $0018	; R
+		dc.w $0005, $85F2, $82F9, $0008	; T
+		dc.w $0005, $85F6, $82FB, $0018	; R
 		dc.w $0005, $8588, $82C4, $0028	; O
-		dc.w $0005, $85EC, $82F6, $0038	; P
+		dc.w $0005, $85E2, $82F1, $0038	; P
 		dc.w $0005, $8588, $82C4, $0048	; O
-		dc.w $0005, $85F0, $82F8, $0058	; L
-		dc.w $0001, $85F4, $82FA, $0068	; I
-		dc.w $0005, $85F6, $82FB, $0070	; S
+		dc.w $0005, $85FA, $82FD, $0058	; L
+		dc.w $0001, $85E6, $82F3, $0068	; I
+		dc.w $0005, $85E8, $82F4, $0070	; S
 
 TC_WFZ:		dc.w $C				; WING FORTRESS
 		dc.w $0009, $85DE, $82EF, $FFB1	; W
@@ -30015,7 +30056,7 @@ loc_15714:
 -	movem.l	d4-d6,-(sp)
 	moveq	#-$10,d5
 	move.w	d4,d1
-	bsr.w	CalcBlockVRAMPosB
+	jsr	(CalcBlockVRAMPosB).l
 	move.w	d1,d4
 	moveq	#-$10,d5
 	moveq	#$1F,d6
@@ -30164,7 +30205,7 @@ TitleCardLetters:
 TitleCardLetters_EHZ:
 	titleLetters	"EMERALD HILL"
 TitleCardLetters_MTZ:
-	titleLetters	"METROPOLIS"
+	titleLetters	"DEEP INSIDE METROPOLIS"
 TitleCardLetters_HTZ:
 	titleLetters	"HILL TOP"
 TitleCardLetters_HPZ:

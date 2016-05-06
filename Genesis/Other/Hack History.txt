@@ -33,7 +33,7 @@
 2015 (3):
 	18. (2015-02-17) Sonic 3K	- SSSSSS
 	19. (2015-04-01) Sonic 1	- The Enhanced Special Stage Experience
-	20! [2015-10-12] Sonic 2	- Hedgehog Abuse Simulator [WIP]
+	20! [2015-10-19] Sonic 2	- Hedgehog Abuse Simulator [WIP]
 
 Future (1):
 	21! [201?-??-??] Sonic 2	- The Tornado Tales [WIP]

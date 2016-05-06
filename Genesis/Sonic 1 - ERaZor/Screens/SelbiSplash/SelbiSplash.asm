@@ -68,6 +68,7 @@ SelbiSplash_SetWait:
 		
 		move.l	#$4E400001,($FFFFFF7A).w
 		move.w	#0,($FFFFFF7E).w
+		move.w	#6,($FFFFF5B0).w
 		bra.s	SelbiSplash_Loop
 ; ---------------------------------------------------------------------------------------------------------------------
 
@@ -125,21 +126,54 @@ SelbiSplash_Loop:
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB0A)
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB0C)
 		sub.w	#SelbiSplash_PalChgSpeed,($FFFFFB0E)
-		cmpi.w	#$90,($FFFFF614).w		; is time less than $40?
-		bmi.s	SelbiSplash_DontChangePal	; if yes, branch
-		cmpi.w	#$D0,($FFFFF614).w		; is time more than $70?
-		bpl.w	SelbiSplash_ChangePal		; if yes, branch
 
-		move.b	($FFFFFE0F).w,d0
-		andi.b	#3,d0
-		bne.w	SelbiSplash_ChangePal
-		jsr	Pal_ToWhite
+	cmpi.w	#$90,($FFFFF614).w		; is time less than $90?
+	bmi.w	SelbiSplash_DontChangePal	; if yes, branch
+	cmpi.w	#$D0,($FFFFF614).w		; is time more than $D0?
+	bpl.w	SelbiSplash_ChangePal		; if yes, branch
 
-		lea	($C00000).l,a5
-		lea	$04(a5),a6
-		move.w	#$8B00,(a6)
-		move.l	#$40000010,(a6)
-		move.w	#$0008,(a5)
+	; screen shake Y
+	move.w	($FFFFF5B0).w,d0
+	lsr.w	#2,d0
+	move.b	($FFFFFE0F).w,d1
+	andi.b	#1,d1
+	beq.s	@cont1x
+	neg.w	d0
+@cont1x:
+	lea	($C00000).l,a5
+	lea	$04(a5),a6
+	move.w	#$8B00,(a6)
+	move.l	#$40000010,(a6)
+	move.w	d0,(a5)
+	
+	; screen shake X
+	move.w	($FFFFF5B0).w,d0
+	lsr.w	#3,d0
+	move.b	($FFFFFE0F).w,d1
+	andi.w	#2,d1
+	beq.s	@cont2x
+	neg.w	d0
+@cont2x:
+	lea	($C00000).l,a5
+	lea	$04(a5),a6
+	move.w	#$8B00,(a6)
+	move.l	#$7C000003,(a6)
+	move.w	d0,(a5)
+
+	move.b	($FFFFFE0F).w,d0
+	andi.b	#1,d0
+	bne.s	@cont3x
+	move.w	#1,d1	; increase screen shake
+;	cmpi.w	#8,($FFFFF5B0).w
+;	beq.s	@cont3x
+	add.w	d1,($FFFFF5B0).w
+@cont3x:
+
+	move.b	($FFFFFE0F).w,d0
+	andi.b	#3,d0
+	bne.w	SelbiSplash_ChangePal
+	jsr	(Pal_ToWhite).l
+
 
 
 		move.b	($FFFFFE0F).w,d0
@@ -186,7 +220,22 @@ SelbiSplash_ChangePal:
 		jsr	DelayProgram			; Run delay program
 		tst.w	($FFFFF614).w			; Test wait time
 		beq.s	SelbiSplash_Next		; is it over? branch
-		andi.b	#$80,($FFFFF605).w		; is Start button pressed?
+		
+		tst.b	($FFFFFFAF).w
+		beq.s	@cont
+		tst.b	($FFFFF605).w			; get any button press
+		beq.s	@cont				; if none are pressed, skip
+		addq.w	#1,($FFFFFFE4).w		; increase counter
+		cmpi.w	#10,($FFFFFFE4).w		; check if 10 buttons have been pressed
+		bne.s	@cont				; if not, branch
+		move.w	#1,($FFFFFFFA).w	 	; enable debug mode
+		move.b	#%01111111,($FFFFFF8B).w	; unlock all doors
+		move.b	#$A8,d0				; set enter SS sound
+		jsr	PlaySound_Special		; play it
+
+@cont:
+		move.b	($FFFFF605).w,d0
+		andi.b	#$80,d0				; is Start button pressed?
 		beq.w	SelbiSplash_Loop		; if not, loop
 
 SelbiSplash_Next:
