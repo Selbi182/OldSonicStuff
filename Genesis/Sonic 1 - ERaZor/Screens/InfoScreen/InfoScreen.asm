@@ -164,6 +164,12 @@ Info_NoEnding:
 		rts
 
 Info_NoEaster:
+		cmpi.b	#$A,($FFFFFF9C).w	; is this the black special stage?
+		bne.s	Info_NoBlack		; if not, branch
+		move.b	#$00,($FFFFF600).w	; set to sega screen ($00)
+		rts
+
+Info_NoBlack:
 		clr.b	($FFFFFF95).w
 		clr.w	($FFFFFF96).w
 		clr.w	($FFFFFF98).w
@@ -849,6 +855,26 @@ InfoText_9:	; hidden easter egg text found in Scar Night Place
 		even
 ; ---------------------------------------------------------------------------
 
+InfoText_A:	; hidden easter egg text found after the black special stage
+		dc.b	'      CONGRATULATIONS!      ' ;0
+		dc.b	'                            ' ;0
+		dc.b	'    YOU HAVE BEATEN THE     ' ;1
+		dc.b	'      BLACK CHALLENGE.      ' ;0
+		dc.b	'                            ' ;0
+		dc.b	' HERE IS A SECRET FOR YOU,  ' ;1
+		dc.b	'   PRESS ANY TEN BUTTONS    ' ;1
+		dc.b	' DURING THE FINAL PHASE OF  ' ;1
+		dc.b	'  THE SELBI SPLASH SCREEN   ' ;1
+		dc.b	'   TO ENABLE DEBUG MODE.    ' ;1
+		dc.b	'                            ' ;0
+		dc.b	' HAVE FUN AND THANK YOU SO  ' ;1
+		dc.b	' MUCH FOR PLAYING MY GAME!  ' ;1
+		dc.b	'                            ' ;0
+		dc.b	'           SELBI            ' ;1
+		dc.b	$FF
+		even
+; ---------------------------------------------------------------------------
+
 Info_Continue:
 		dc.b	' PRESS START TO CONTINUE...'
 		dc.b	$FF
@@ -911,6 +937,12 @@ ScrollText_9:
 		dc.b	0,1,0,1,0
 		dc.b	0,0,0,1,0
 		dc.b	0,1,1,0,0
+		even
+
+ScrollText_A:
+		dc.b	0,0,1,0,0
+		dc.b	1,1,1,1,1
+		dc.b	0,1,1,0,1
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================

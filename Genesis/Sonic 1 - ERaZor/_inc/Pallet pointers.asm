@@ -67,3 +67,6 @@
 	dc.l Pal_BCutscene
 	dc.w $FB20
 	dc.w $1F
+	dc.l Pal_SpecialEaster
+	dc.w $FB00
+	dc.w $1F

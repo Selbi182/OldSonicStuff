@@ -3255,6 +3255,7 @@ Pal_SpeContinue:	incbin	pallet\sscontin.bin
 Pal_Ending:		incbin	pallet\ending.bin
 Pal_Null:		incbin	pallet\null.bin
 Pal_BCutscene:		incbin	pallet\bombcutscene.bin
+Pal_SpecialEaster:	incbin	pallet\specialeaster.bin
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to	delay the program by ($FFFFF62A) frames
@@ -3265,7 +3266,6 @@ Pal_BCutscene:		incbin	pallet\bombcutscene.bin
 
 DelayProgram:				; XREF: PauseGame
 		move	#$2300,sr
-		jsr	EasterEgg
 
 loc_29AC:
 		tst.b	($FFFFF62A).w
@@ -5015,15 +5015,55 @@ byte_3FCF:	dc.b 0			; XREF: LZWaterSlides
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 EasterEgg:
-		tst.b	($FFFFFF92).w
-		beq.s	EEGP_End
- bra TrippyEgg
+
+
+		tst.b	($FFFFFF5F).w
+		beq.s	EEGP_EndX
+		cmpi.b	#$10,($FFFFF600).w
+		bne.s	EEGP_EndX
+
+
+		movem.l	d0-a1,-(sp)
+		lea	($FFFFFB4E).w,a1 	; get palette
+		moveq	#0,d3			; clear d3
+	;	move.b	#$CF,d3			; set d3 to $2F (+1 for the first run)
+		move.b	#$7,d3			; set d3 to $2F (+1 for the first run)
+
+Pal_MBW_LoopXXXX:
+		moveq	#0,d0			; clear d0
+		move.w	(a1),d0			; get colour
+		moveq	#0,d1			; clear d1
+		move.b	d0,d1 			; copy Green and Red of colour to d1
+		lsr.b	#4,d1 			; get only Green amount
+		move.b	d0,d2 			; copy Green and Red of colour to d2
+		and.b	#$E,d2 			; get only Red amount
+		lsr.w	#8,d0 			; get only Blue amount of d0
+		add.b	d1,d0 			; add Green amount to Blue amount
+		add.b	d2,d0 			; then add Red to the amount
+		divu.w	#3,d0 			; divide by 3
+		and.b	#$E,d0 			; keep it an even value (Keep 9-bit VDP)
+		move.b	d0,d1 			; copy to d1
+		lsl.b	#4,d1 			; shift to left nybble
+		add.b	d1,d0 			; add to d0 (Setting the green)
+		lsl.w	#4,d1 			; shift to next left nybble
+		add.w	d1,d0			; add to d0 (Setting the blue)
+		move.w	d0,(a1)+		; set new colour
+		dbf	d3,Pal_MBW_LoopXXXX		; loop for each colour
+		movem.l	(sp)+,d0-a1
+EEGP_EndX:
+		rts
+
+
+	;	tst.b	($FFFFFF92).w
+	;	beq.s	EEGP_End
+; bra TrippyEgg
 ; bra eegp_end
 
 		movem.l	d0-a1,-(sp)
-		lea	($FFFFFA80).w,a1 	; get palette
+		lea	($FFFFFB00).w,a1 	; get palette
 		moveq	#0,d3			; clear d3
-		move.b	#$CF,d3			; set d3 to $2F (+1 for the first run)
+	;	move.b	#$CF,d3			; set d3 to $2F (+1 for the first run)
+		move.b	#$3F,d3			; set d3 to $2F (+1 for the first run)
 
 Pal_MBW_LoopXXX:
 		moveq	#0,d0			; clear d0
@@ -5161,6 +5201,7 @@ MainLevelArray:
 ; ---------------------------------------------------------------------------
 
 ClearEverySpecialFlag:
+		clr.b	($FFFFFF5F).w
 		clr.l	($FFFFFF60).w
 		clr.l	($FFFFFF64).w
 		clr.l	($FFFFFF68).w
@@ -5593,7 +5634,12 @@ SS_ClrNemRam:
 		clr.b	($FFFFFE57).w
 
 		moveq	#$A,d0
-		bsr	PalLoad1	; load special stage pallet
+		tst.b	($FFFFFF5F).w
+		beq.s	@contx
+		moveq	#22,d0
+
+@contx:
+		bsr	PalLoad1	; load special stage pallet		
 		jsr	SS_Load
 		move.l	#0,($FFFFF700).w
 		move.l	#0,($FFFFF704).w
@@ -5613,6 +5659,11 @@ SS_ClrNemRam:
 		move.w	#0,($FFFFF782).w ; no rotation speed
 	;	move.w	#$40,($FFFFF782).w ; set stage rotation	speed
 		move.w	#$89,d0
+		tst.b	($FFFFFF5F).w
+		beq.s	@conto
+		move.w	#$8D,d0
+
+@conto:
 		bsr	PlaySound	; play special stage BG	music
 		move.w	#0,($FFFFF790).w
 		lea	(Demo_Index).l,a1
@@ -5634,10 +5685,13 @@ SS_ClrNemRam:
 SS_NoDebug:
 	;	addq.b	#2,($FFFFD0A4).w ; make	title card move
 
+
+
 		move.w	($FFFFF60C).w,d0
 		ori.b	#$40,d0
 		move.w	d0,($C00004).l
 		bsr	Pal_MakeWhite
+
 
 ; ---------------------------------------------------------------------------
 ; Main Special Stage loop
@@ -5651,6 +5705,28 @@ SS_MainLoop:
 
 	;	tst.b	($FFFFFF92).w		; is hard part skipper enabled?
 	;	beq.s	SS_NoSkip		; if not, branch
+	
+	
+		tst.b	($FFFFFF5F).w
+		beq.s	@contyyy
+		cmpi.b	#4,($FFFFD024).w	; is special stage exiting routine being run?
+		bge.s	SS_NoPauseGame		; if yes, branch
+
+		; control check here somewhere
+		clr.w	($FFFFF782).w ; rotation speed
+
+		btst	#2,($FFFFF602).w ; is left being pressed?
+		beq.s	@contnotl	; if not, branch
+		move.w	#-$100,($FFFFF782).w ; rotation speed
+		bra.s	@contyyyx
+@contnotl:
+		btst	#3,($FFFFF602).w ; is right being pressed?
+		beq.s	@contyyyx	; if not, branch
+		move.w	#$100,($FFFFF782).w ; rotation speed
+
+@contyyyx:
+		bra.s	SS_NoSkip
+@contyyy:
 		move.b	($FFFFF602).w,d0	; get button presses
 		andi.b	#$70,d0			; sort out any non ABC button presses
 		cmpi.b	#$70,d0			; sort out any non ABC button presses
@@ -5667,6 +5743,7 @@ SS_NoSkip:
 		bsr	PauseGame		; make the game pausing when pressing start
 
 SS_NoPauseGame:
+		bsr.w	EasterEgg
 		move.b	#$A,($FFFFF62A).w
 		bsr	DelayProgram
 		bsr	MoveSonicInDemo
@@ -5729,11 +5806,15 @@ SS_EndClrObjRamX:
 		cmpi.w	#$401,($FFFFFE10).w
 		bne.s	@cont3
 		move.b	#6,($200007).l		; set number for text to 6
+		tst.b	($FFFFFF5F).w
+		beq.s	@cont3
+		move.b	#$A,($200007).l		; set number for text to 6
 
 @cont3:
 		move.b	#0,($A130F1).l		; disable SRAM
 		move.b	#$20,($FFFFF600).w	; set to info screen
 
+		clr.b	($FFFFFF5F).w
 		clr.b	($FFFFFFE7).w	; make sonic mortal
 		clr.b	($FFFFFFE1).w	; make sonic not being on the foreground
 		clr.b	($FFFFFFAA).w		; clear crabmeat boss flag 1
@@ -15910,6 +15991,7 @@ Obj4B_ChkSpecial:
 		cmpi.w	#$06B0,$8(a0)
 		bne.s	Obj4B_ChkMZ
 		move.w	#$300,($FFFFFE10).w	; set level to Special Stage
+		clr.b	($FFFFFF5F).w
 		bsr	MakeChapterScreen
 		rts
 
@@ -15925,13 +16007,23 @@ Obj4B_ChkLZ2:
 		bne.s	Obj4B_ChkSpecial2
 		move.w	#$101,($FFFFFE10).w	; set level to LZ2
 		bsr	MakeChapterScreen
-		bra.s	Obj4B_PlayLevel
+		bra.w	Obj4B_PlayLevel
 
 Obj4B_ChkSpecial2:
 		cmpi.w	#$0CB0,$8(a0)
-		bne.s	Obj4B_ChkSLZ2
+		bne.s	Obj4B_ChkSpecial2_Easter
 		move.w	#$401,($FFFFFE10).w	; set level to Special Stage 2
+		clr.b	($FFFFFF5F).w
 		bsr	MakeChapterScreen
+		rts
+
+Obj4B_ChkSpecial2_Easter:
+		cmpi.w	#$0280,$8(a0)
+		bne.s	Obj4B_ChkSLZ2
+		move.w	#$401,($FFFFFE10).w	; set level to Special Stage 2 Easter
+		move.b	#1,($FFFFFF5F).w
+		move.b	#$10,($FFFFF600).w
+	;	bsr	MakeChapterScreen
 		rts
 
 Obj4B_ChkSLZ2:
@@ -18686,6 +18778,10 @@ loc_BDC8:
 
 		move.b	#0,($FFFFFF92).w
 
+		move.b	#0,($FFFFFFE7).w
+		jsr	PlayLevelMusic		; reload normal music
+
+
 	;	movem.l	d0-a7,-(sp)
 	;	moveq	#3,d0
 	;	jsr	PalLoad2	; load Sonic's pallet line
@@ -18700,11 +18796,11 @@ loc_BDC8:
 		move.b	#1,($20001D).l		; enable grey mode flag
 		move.b	#0,($A130F1).l		; disable SRAM
 
-		bclr	#3,($FFFFD022).w
+	;	bclr	#3,($FFFFD022).w
 
-		move.w	#$86,d0
+		move.w	#$9F,d0
 		jsr	(PlaySound).l ;	play switch sound
-		jmp	DeleteObject
+	;	jmp	DeleteObject
 
 @cont:
 		jsr	(PlaySound).l ;	play switch sound
@@ -19315,6 +19411,11 @@ Obj34_NotSLZ2:
 Obj34_NotSLZ3:
 		cmpi.w	#$401,($FFFFFE10).w ; check if level is	Special Stage 2
 		bne.s	Obj34_NotSS2
+		tst.b	($FFFFFF5F).w
+		beq.s	@cont
+		jmp	DeleteObject
+
+@cont
 		moveq	#$13,d0		; load title card number $13 (SS 2)
 		
 Obj34_NotSS2:
@@ -30206,6 +30307,7 @@ Obj01_ChkS:
 		tst.b	($FFFFFF92).w
 		beq.s	@contx
 		move.b	#1,($FFFFFFE7).w ; make sonic immortal
+		bra.s	Obj01_S_NotMZ1
 
 @contx:
 		tst.b	($FFFFFFE7).w		; has sonic destroyed a S monitor?
@@ -43510,7 +43612,7 @@ SS_ShowLayout:				; XREF: SpecialStage
 		move.w	d5,-(sp)
 		lea	($FFFF8000).w,a1
 		move.b	($FFFFF780).w,d0
-		andi.b	#$FC,d0
+	;	andi.b	#$FC,d0
 		jsr	(CalcSine).l
 		move.w	d0,d4
 		move.w	d1,d5
@@ -44108,8 +44210,6 @@ SSL_NoReplace2:
 		lea	$40(a1),a1		; increase pointer by $40
 		dbf	d1,SSL_GoalLoop2	; loop
 
-
-
 		rts	
 ; End of function SS_Load
 
@@ -44284,6 +44384,9 @@ Obj09_Display:				; XREF: Obj09_OnWall
 
 
 Obj09_Move:				; XREF: Obj09_OnWall; Obj09_InAir
+		tst.b	($FFFFFF5F).w		; is easter egg SS enabled?
+		bne.s	loc_1BA78		; disabled movement
+
 		btst	#2,($FFFFF602).w ; is left being pressed?
 		beq.s	Obj09_ChkRight	; if not, branch
 		jsr	obj09_MoveLeft
@@ -44429,6 +44532,13 @@ locret_1BB54:
 
 
 Obj09_Jump:				; XREF: Obj09_OnWall
+		tst.b	($FFFFFF5F).w		; is easter egg SS enabled?
+		beq.s	@cont			; if not, branch
+		
+
+		bra.s	Obj09_NoJump		; disabled movement
+
+@cont:
 		move.b	($FFFFF603).w,d0	; get button press
 		andi.b	#$70,d0			; is A,	B or C pressed?
 		beq.s	Obj09_NoJump		; if not, branch
@@ -44582,10 +44692,48 @@ loc_1BC40:
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
+Obj09_EasterEggSpecial:
+		move.l	$C(a0),d2
+		move.l	8(a0),d3
+		move.b	($FFFFF780).w,d0
+		andi.b	#$FC,d0
+		jsr	(CalcSine).l
+	;	move.w	$10(a0),d4
+		moveq	#0,d4
+		ext.l	d4
+		asl.l	#8,d4
+	;	muls.w	#$2A,d0
+		muls.w	#$160,d0
+		add.l	d4,d0
+	;	move.w	$12(a0),d4
+		moveq	#0,d4
+		ext.l	d4
+		asl.l	#8,d4
+	;	muls.w	#$2A,d1
+		muls.w	#$160,d1
+		add.l	d4,d1
+		add.l	d0,d3
+		bsr	sub_1BCE8
+		beq.w	loc_1BCB0
+		sub.l	d0,d3
+		moveq	#0,d0
+		move.w	d0,$10(a0)
+		bclr	#1,$22(a0)
+		add.l	d1,d2
+		bsr	sub_1BCE8
+		beq.w	loc_1BCC6
+		sub.l	d1,d2
+		moveq	#0,d1
+		move.w	d1,$12(a0)
+		rts
+;-------------
 
 Obj09_Fall:				; XREF: Obj09_OnWall; Obj09_InAir
+		tst.b	($FFFFFF5F).w
+		bne.w	Obj09_EasterEggSpecial
 		tst.b	($FFFFFFBF).w
 		bne.s	O9F_Return
+
 		move.l	$C(a0),d2
 		move.l	8(a0),d3
 		move.b	($FFFFF780).w,d0
@@ -44938,16 +45086,23 @@ Obj09_NoReplace2:
 
 Obj09_GoalNotSolid:
 		moveq	#0,d4			; clear d4
+		move.b	#2,($FFFFFFD6).w	; make sure it doesn't happen again
+		
+		tst.b	($FFFFFF5F).w
+		beq.s	@cont
+		rts
+		
+@cont:
 		movem.l	d0-a7,-(sp)		; backup to stack
 		jsr	Pal_MakeWhite		; make white flash
 		movem.l (sp)+,d0-a7		; restore from stack
-		move.b	#2,($FFFFFFD6).w	; make sure it doesn't happen again
 	;	lea	(SS1_StartLoc).l,a1
 	;	move.w	(a1)+,($FFFFD008).w	; set Sonic's X-position
 	;	move.w	(a1)+,($FFFFD00C).w	; set Sonic's Y-position
 
 	;	clr.w	($FFFFF780).w		; flip special stage again
 	;	move.w	#$801,($FFFFF780).w	; flip special stage again
+
 
 		move.b	#0,($FF1C28).l		; make sure there is no pink glass block
 		move.b	#0,($FF1DA7).l		; make sure there is no yellow glass block
@@ -45132,12 +45287,15 @@ Obj09_NotSS1x:
 
 Obj09_UPblock:
 		cmpi.b	#$29,d0		; is the item an "UP" block?
-		bne.s	Obj09_DOWNblock
+		bne.w	Obj09_DOWNblock
 		tst.b	$36(a0)
 		bne.w	Obj09_NoGlass
 		move.b	#$1E,$36(a0)
 	;	btst	#6,($FFFFF783).w
 	;	beq.s	Obj09_UPsnd
+		tst.b	($FFFFFF5F).w
+		bne.s	Obj09_UPsnd
+
 		move.w	#$D9,d0		; A9
 		tst.b	($FFFFFFBF).w
 		bne.s	Obj09_UPsnd
@@ -45162,7 +45320,17 @@ Obj09_UPblock:
 
 
 Obj09_UPsnd:
+		tst.b	($FFFFFF5F).w
+		beq.s	@conty
+		addi.w	#$8000,($FFFFF780).w
+		move.w	#$D9,d0		; A9
+		bra.s	Obj09_UPsnd2
+
+@conty:
+
 		move.w	#-$160,$12(a0)
+
+Obj09_UPsnd2:
 		move.b	#1,($FFFFFFBF).w
 		jmp	(PlaySound_Special).l ;	play up/down sound
 ; ===========================================================================
@@ -45176,6 +45344,12 @@ Obj09_DOWNblock:
 	;	btst	#6,($FFFFF783).w
 	;	bne.s	Obj09_DOWNsnd
 		move.b	#2,($FFFFFFBF).w
+		tst.b	($FFFFFF5F).w
+		beq.s	@conty
+		addi.w	#$8000,($FFFFF780).w
+		bra.s	Obj09_DOWNsnd
+@conty:
+
 		move.w	#$160,$12(a0)
 
 
@@ -47803,8 +47977,8 @@ loc_71B5A:
 
 loc_71B82:
 		lea	($FFF000).l,a6
-		tst.b	($FFFFFF92).w	; is atmospheric mode enabled?
-		bra.s	@cont		; if not, branch
+		tst.b	($FFFFFF5F).w	; is atmospheric mode enabled?
+		beq.s	@cont		; if not, branch
 		clr.b	$40(a6)		; mute DAC channel
 
 @cont:
