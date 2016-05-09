@@ -1259,8 +1259,8 @@ PlaySound_Special:
 
 PauseGame:				; XREF: Level_MainLoop; et al
 		nop				; no operation
-		tst.b	($FFFFFE12).w		; do you have any lives	left?
-		beq.w	Unpause			; if not, branch
+	;	tst.b	($FFFFFE12).w		; do you have any lives	left?
+	;	beq.w	Unpause			; if not, branch
 		tst.w	($FFFFF63A).w		; is game already paused?
 		bne.s	loc_13BE		; if yes, branch
 		btst	#7,($FFFFF605).w	; is Start button pressed?
@@ -3555,7 +3555,8 @@ Sega_NoSound:
 Sega_GotoTitle:
 		tst.b	($FFFFFE12).w
 		bne.s	@cont
-		move.b	#3,($FFFFFE12).w ; set lives to	3
+		move.b	#0,($FFFFFE12).w ; set lives to	3
+	;	move.b	#3,($FFFFFE12).w ; set lives to	3
 @cont:
 		clr.b	($FFFFFFBE).w
 		jmp	SelbiSplash
@@ -3788,7 +3789,8 @@ PlayLevelX:
 		move.b	#$C,($FFFFF600).w ; set	screen mode to $0C (level)
 		tst.b	($FFFFFE12).w
 		bne.s	@cont
-		move.b	#3,($FFFFFE12).w ; set lives to	3
+	;	move.b	#3,($FFFFFE12).w ; set lives to	3
+		move.b	#0,($FFFFFE12).w ; set lives to	3
 @cont:
 		moveq	#0,d0
 	;	move.w	d0,($FFFFFE20).w ; clear rings
@@ -4246,7 +4248,7 @@ Level_NoMusic2:
 		
 		cmpi.w	#$502,($FFFFFE10).w
 		bne.s	@contx
-		move.b	#30,($FFFFFF68).w
+		move.b	#0,($FFFFFF68).w
 @contx:
 
 		cmpi.w	#$001,($FFFFFE10).w
@@ -5135,11 +5137,11 @@ MusicList:
 		dc.b	$83	; Ruined Place
 		dc.b	$82	; Labyrinth Place
 		dc.b	$89	; Special Stage 2 (Unused)
-		dc.b	$84	; Scar Night Place (Part 1)
+		dc.b	$84	; Scar Night Place
 		dc.b	$8D	; Finalor Place
 		dc.b	$85	; Spring Yard Place (Overworld)
 		dc.b	$87	; Tutorial Place (SBZ 2)
-		dc.b	$84	; Scar Night Place (Part 2)
+		dc.b	$84	; Star Agony Place
 		even
 ; ---------------------------------------------------------------------------
 ; ===========================================================================
@@ -5183,12 +5185,12 @@ MainLevelArray:
 		dc.w	$300	; Special Stage (Yes, it uses SLZ's ID)
 		dc.w	$200	; Ruined Place
 		dc.w	$101	; Labyrinth Place
-		dc.w	$401	; Special Stage 2
-		dc.w	$301	; Scar Night Place (Part 1)
+		dc.w	$401	; Unreal Place
+		dc.w	$301	; Scar Night Place
 		dc.w	$502	; Finalor Place
 		dc.w	$400	; Spring Yard Place (Overworld)
 		dc.w	$501	; Tutorial Place (SBZ 2)
-		dc.w	$302	; Scar Night Place (Part 2)
+		dc.w	$302	; Star Agony Place
 		dc.w	$FFFF	; None of the above
 		even
 ; ---------------------------------------------------------------------------
@@ -5537,6 +5539,10 @@ SignpostArtLoad:			; XREF: Level
 		move.w	($FFFFF700).w,d0
 		move.w	($FFFFF72A).w,d1
 		subi.w	#$100,d1
+		cmpi.w	#$200,($FFFFFE10).w
+		bne.s	@cont
+		addi.w	#$80,d1
+@cont:
 		cmp.w	d1,d0		; has Sonic reached the	edge of	the level?
 		blt.s	Signpost_Exit	; if not, branch
 		tst.b	($FFFFFE1E).w
@@ -5567,9 +5573,27 @@ Demo_SS:	incbin	demodata\i_ss.bin
 ; ---------------------------------------------------------------------------
 
 SpecialStage:				; XREF: GameModeArray
+		tst.b	($FFFFFF5F).w
+		beq.s	@conty
+		move.w	#$E4,d0
+		bsr	PlaySound_Special ; play special stage entry sound
+		moveq	#0,d1
+		lea	($FFFFFB00).w,a1
+		move.w	#$3F,d2
+	@clearpalafter:
+		move.l	d1,(a1)+
+		dbf	d2,@clearpalafter
+
+		move.b	#$12,($FFFFF62A).w
+		bsr	DelayProgram
+		bra.s	@cont
+
+@conty:
 		move.w	#$CA,d0
 		bsr	PlaySound_Special ; play special stage entry sound
 		bsr	Pal_MakeFlash
+
+@cont:
 		move	#$2700,sr
 		lea	($C00004).l,a6
 		move.w	#$8B03,(a6)
@@ -5661,7 +5685,7 @@ SS_ClrNemRam:
 		move.w	#$89,d0
 		tst.b	($FFFFFF5F).w
 		beq.s	@conto
-		move.w	#$8D,d0
+		move.w	#$9C,d0
 
 @conto:
 		bsr	PlaySound	; play special stage BG	music
@@ -5808,7 +5832,7 @@ SS_EndClrObjRamX:
 		move.b	#6,($200007).l		; set number for text to 6
 		tst.b	($FFFFFF5F).w
 		beq.s	@cont3
-		move.b	#$A,($200007).l		; set number for text to 6
+		move.b	#$A,($200007).l		; set number for text to A
 
 @cont3:
 		move.b	#0,($A130F1).l		; disable SRAM
@@ -6180,7 +6204,8 @@ loc_4DF2:
 
 Cont_GotoLevelX:				; XREF: Cont_MainLoop
 		move.b	#$C,($FFFFF600).w ; set	screen mode to $0C (level)
-		move.b	#3,($FFFFFE12).w ; set lives to	3
+	;	move.b	#3,($FFFFFE12).w ; set lives to	3
+		move.b	#0,($FFFFFE12).w ; set lives to	3
 		moveq	#0,d0
 	;	move.w	d0,($FFFFFE20).w ; clear rings
 		move.w	($FFFFFF88).w,($FFFFFE20).w	; set rings to that random value
@@ -6952,7 +6977,8 @@ EndingDemoLoad:				; XREF: Credits
 		rts
 	;	move.w	#$8001,($FFFFFFF0).w ; force demo mode
 		move.b	#8,($FFFFF600).w ; set game mode to 08 (demo)
-		move.b	#3,($FFFFFE12).w ; set lives to	3
+	;	move.b	#3,($FFFFFE12).w ; set lives to	3
+		move.b	#0,($FFFFFE12).w ; set lives to	3
 		moveq	#0,d0
 	;	move.w	d0,($FFFFFE20).w ; clear rings
 		move.l	d0,($FFFFFE22).w ; clear time
@@ -13444,6 +13470,8 @@ Obj27_LoadAnimal:			; XREF: Obj27_Index
 		beq.s	Obj27_Main
 		cmpi.w	#$501,($FFFFFE10).w
 		beq.s	Obj27_Main
+		cmpi.w	#$502,($FFFFFE10).w
+		beq.s	Obj27_Main
 		cmpi.w	#$001,($FFFFFE10).w
 		beq.s	Obj27_Main
 		bsr	SingleObjLoad
@@ -14253,6 +14281,9 @@ Obj1F_BossDefeated:
 		move.b	#1,($FFFFF7CC).w		; lock controls
 		clr.b	($FFFFFFEB).w
 		clr.b	($FFFFF602).w
+		clr.b	($FFFFFF68).w
+		addq.b	#1,($FFFFFE1C).w ; update lives	counter
+
 		move.b	#1,($FFFFFFD5).w		; set flag 3
 		clr.w	$10(a0)				; clear X-speed
 	;	subq.w	#1,$3C(a0)			; sub 1 from timer
@@ -15398,6 +15429,7 @@ CollectRing:				; XREF: Obj25_Collect
 
 CR_NoPoints:
 		move.w	#$B5,d0		; play ring sound
+		bra.s	Obj25_PlaySnd	; no lives on rings
 		cmpi.w	#100,($FFFFFE20).w ; do	you have < 100 rings?
 		bcs.s	Obj25_PlaySnd	; if yes, branch
 		bset	#1,($FFFFFE1B).w ; update lives	counter
@@ -15785,6 +15817,9 @@ Obj4B_Main:				; XREF: Obj4B_Index
 		bne.s	Obj4B_Main_Cont		; if not, branch
 		move.w	#100,$30(a0)
 		move.w	#$2422,2(a0)
+		cmpi.w	#$0280,$8(a0)
+		bne.s	Obj4B_Main_Cont
+		move.w	#$0422,2(a0)
 
 Obj4B_Main_Cont:
 		ori.b	#4,1(a0)
@@ -16627,9 +16662,9 @@ Obj2E_ChkSonic:
 
 ExtraLife:
 		addq.b	#1,($FFFFFE1C).w ; add 1 to the	lives counter
-		cmpi.b	#99,($FFFFFE12).w
+		cmpi.b	#0,($FFFFFE12).w
 		beq.s	@cont2
-		addq.b	#1,($FFFFFE12).w ; add 1 to the	number of lives	you have
+		subq.b	#1,($FFFFFE12).w ; add 1 to the	number of lives	you have
 
 @cont2:
 		cmpi.w	#$200,($FFFFFE10).w
@@ -16723,6 +16758,8 @@ Obj2E_ChkRings:
 		bne.w	Obj2E_ChkS
 		addi.w	#$A,($FFFFFE20).w ; add	10 rings to the	number of rings	you have
 		ori.b	#1,($FFFFFE1D).w ; update the ring counter
+		bra.s	Obj2E_RingSound
+
 		cmpi.w	#100,($FFFFFE20).w ; check if you have 100 rings
 		bcs.s	Obj2E_RingSound
 		bset	#1,($FFFFFE1B).w
@@ -19375,10 +19412,14 @@ Obj34_Index:	dc.w Obj34_CheckSBZ3-Obj34_Index
 ; ===========================================================================
 
 Obj34_CheckSBZ3:			; XREF: Obj34_Index
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	@contx
 		cmpi.w	#$002,($FFFFFE10).w
 		bne.s	@cont
+
 		cmpi.b	#2,($FFFFFFAA).w
 		bne.s	@cont
+@contx:
 		tst.b	$30(a0)
 		beq.s	@cont
 		subq.b	#1,$30(a0)
@@ -19406,7 +19447,7 @@ Obj34_NotGHZ3:
 Obj34_NotSLZ2:
 		cmpi.w	#$302,($FFFFFE10).w ; check if level is	SLZ 3
 		bne.s	Obj34_NotSLZ3
-		moveq	#$11,d0		; load title card number $11 (SLZ)
+		moveq	#$14,d0		; load title card number $14 (SLZ2)
 		
 Obj34_NotSLZ3:
 		cmpi.w	#$401,($FFFFFE10).w ; check if level is	Special Stage 2
@@ -19450,12 +19491,17 @@ Obj34_ActNumber:
 		bne.s	Obj34_MakeSprite	; if not, branch
 		cmpi.w	#$302,($FFFFFE10).w ; check if level is	SLZ 3
 		bne.s	Obj34_NotSLZ3X
-		addq.b	#6,d0
+		addq.b	#7,d0
 		bra.s	Obj34_MakeSprite
 		
 Obj34_NotSLZ3X:
 		jsr	CheckIfMainLevel	; check for main level and get ID
 		add.b	d5,d0			; add ID to frame ID
+
+		cmpi.w	#$502,($FFFFFE10).w ; check if level is	FZ
+		bne.s	Obj34_MakeSprite
+		moveq	#$15,d0
+
 		bra.s	Obj34_MakeSprite	; skip
 
 Obj34_NoMainLevel:
@@ -19504,6 +19550,8 @@ loc_C3C8:
 ; ===========================================================================
 
 Obj34_TargetOK:
+		cmpi.w	#$302,($FFFFFE10).w
+		beq.s	@conto
 		cmpi.b	#$10,($FFFFF600).w
 		beq.s	@cont
 		cmpi.w	#$002,($FFFFFE10).w
@@ -19514,6 +19562,7 @@ Obj34_TargetOK:
 @cont:
 		cmpi.b	#1,$3F(a0)
 		bne.s	loc_C3C8
+@conto:
 		subq.w	#1,$3C(a0)
 		bpl.s	loc_C3C8
 		addq.b	#2,$24(a0)
@@ -19661,6 +19710,12 @@ Obj34_NoDemo:
 		neg.w	d3				; negate it
 		move.w	d3,($FFFFD432).w		; set X-speed
 		move.w	#HUDSpeed,($FFFFD434).w		; set Y-speed
+		move.b	#$21,($FFFFD480).w		; load HUD object
+		move.b	#4,($FFFFD4B0).w		; set to LIVES
+		move.w	#HUDSpeed,d3			; load HUD speed into d3
+		neg.w	d3				; negate it
+		move.w	d3,($FFFFD4B2).w		; set X-speed
+		move.w	d3,($FFFFD4B4).w		; set Y-speed
 
 		cmpi.w	#$400,($FFFFFE10).w		; is level SYZ1 (overworld)?
 		beq.s	Obj34_JustDelete		; if yes, branch
@@ -19671,12 +19726,6 @@ Obj34_NoDemo:
 		move.w	#HUDSpeed,d3			; load HUD speed into d3
 		neg.w	d3				; negate it
 		move.w	d3,($FFFFD474).w		; set Y-speed
-		move.b	#$21,($FFFFD480).w		; load HUD object
-		move.b	#4,($FFFFD4B0).w		; set to LIVES
-		move.w	#HUDSpeed,d3			; load HUD speed into d3
-		neg.w	d3				; negate it
-		move.w	d3,($FFFFD4B2).w		; set X-speed
-		move.w	d3,($FFFFD4B4).w		; set Y-speed
 
 Obj34_JustDelete:
 		move.b	#1,($FFFFFFD3).w		; make Sonic release the auto-peelout
@@ -20520,7 +20569,12 @@ Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
 		clr.w	($FFFFD012).w		; clear Y-speed
 		move.w	#$C3,d0			; set giant ring sound
 		jsr	PlaySound		; play it
+		
+		cmpi.w	#10,($FFFFFE20).w	; got at least 10 rings?
+		blo.s	@conto
 		jsr	WhiteFlash2		; make a white flash
+
+@conto:
 		jsr	FixLevel
 		bra.s	Obj36_NotInhuman2
 
@@ -20547,7 +20601,11 @@ Obj36_Hurt:				; XREF: Obj36_SideWays; Obj36_Upright
 
 		move.w	#$C3,d0			; set giant ring sound
 		jsr	PlaySound		; play it
+		cmpi.w	#10,($FFFFFE20).w	; got at least 10 rings?
+		blo.s	@contoo
 		jsr	WhiteFlash2		; make a white flash
+
+@contoo:
 		jsr	FixLevel
 		subi.w	#10,($FFFFFE20).w ; remove 10 rings
 		bpl.s	@contyy
@@ -24017,7 +24075,7 @@ Obj50_Main:				; XREF: Obj50_Index
 		move.b	#8,$17(a0)
 		move.b	#$CC,$20(a0)
 		bsr	ObjectFall
-		bsr	ObjHitFloor
+		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	locret_F89E
 		add.w	d1,$C(a0)	; match	object's position with the floor
@@ -27558,7 +27616,13 @@ Obj5F_BossDefeatedend2:
 Obj5F_BossDelete:
 		move.l	#10000,d0	; add 100000 ...
 		jsr	AddPoints	; ... points
-		
+
+		move.b	#$34,($FFFFD080).w 		; load title card object
+		move.b	#35,($FFFFD0B0).w
+		moveq	#$10,d0				; set d0 to $10
+		jsr	(LoadPLC).l			; load title card patterns
+
+
 		move.w	#$302,($FFFFFE10).w	; change level to SLZ3
 		move.w	#$1FBF,($FFFFF72A).w
 		move.w	#$620,($FFFFF726).w
@@ -29681,9 +29745,9 @@ Obj06_Locations:	;XXXX   YYYY
 		dc.w	$FFFF, $FFFF	; Finalor Place		(Unused)
 		dc.w	$FFFF, $FFFF	; Spring Yard Place	(Unused)
 		dc.w	$FFFF, $FFFF	; Unreal Place		(Unused)
-		dc.w	$FFFF, $FFFF	; Scar Night Place (1)	(Unused)
+		dc.w	$FFFF, $FFFF	; Scar Night Place 	(Unused)
 		dc.w	$101E, $036C	; Tutorial Place
-		dc.w	$1EE0, $0304	; Scar Night Place (2)
+		dc.w	$1EE0, $0304	; Star Agony Place
 
 ; ---------------------------------------------------------------------------
 
@@ -32411,7 +32475,7 @@ SLZHitWall:
 		clr.w	($FFFFD012).w
 		clr.w	($FFFFD014).w
 
-		jsr	FixLevel
+	;	jsr	FixLevel
 		jsr	WhiteFlash2
 		move.b	#2,($FFFFD01C).w
 		move.b	#$C3,d0
@@ -32868,6 +32932,8 @@ Obj01_Death_NoMS:
 		bset	#7,2(a0)		; make sonic being on the foreground
 
 Obj01_NotDrownAnim:
+		clr.b	($FFFFFF68).w
+		addq.b	#1,($FFFFFE1C).w ; update lives	counter
 		bsr	GameOver
 		cmpi.w	#$302,($FFFFFE10).w
 		beq.s	Obj01_NoOF
@@ -32913,8 +32979,14 @@ GameOver:				; XREF: Obj01_Death
 @cont:
 		clr.b	($FFFFFE1E).w	; stop time counter
 		addq.b	#1,($FFFFFE1C).w ; update lives	counter
-		subq.b	#1,($FFFFFE12).w ; subtract 1 from number of lives
-		bne.s	loc_138D4	; if sonic still has lives, branch
+	;	subq.b	#1,($FFFFFE12).w ; subtract 1 from number of lives
+		cmpi.b	#99,($FFFFFE12).w
+		bhs.s	@conto
+		addq.b	#1,($FFFFFE12).w ; subtract 1 from number of lives
+@conto:
+		bra.s	loc_138D4	; if sonic still has lives, branch
+	;	bne.s	loc_138D4	; if sonic still has lives, branch
+
 		move.b	#$14,($FFFFF600).w
 		rts
 ; ===========================================================================
@@ -44936,6 +45008,10 @@ Obj09_ChkEmer:
 		addq.b	#1,($FFFFFE57).w ; add 1 to number of emeralds
 
 		move.w	#$93,d0
+		tst.b	($FFFFFF5F).w
+		beq.s	@cont
+		move.w	#$91,d0
+@cont:
 
 		cmpi.b	#4,($FFFFFE57).w ; do you have all the emeralds?
 		beq.s	Emershit
@@ -44964,6 +45040,9 @@ Emershit:
 Obj09_NoSpecial2:
 		move.b	#1,(a2)
 		move.w	#$C5,d0
+		tst.b	($FFFFFF5F).w
+		beq.s	Obj09_YesEmer
+		move.w	#$A6,d0
 
 Obj09_YesEmer:
 		jsr	(PlaySound_Special).l ;	play emerald music
@@ -44975,10 +45054,18 @@ Obj09_ChkGhost:
 		cmpi.b	#$41,d4			; is the item a	ghost block?
 		bne.w	Obj09_ChkGhostTag	; if not, branch
 	;	cmpi.b	#1,($FFFFFE16).w	; is current special stage number = 1?
+
+
+		move.w	#$B2,d0			; set drown sound
+		tst.b	($FFFFFF5F).w
+		bne.s	@cont
+		move.w	#$A1,d0			; set checkpoint sound
+
 	;	bne.s	Obj09_CG_Original	; if not, branch
 		move.w	8(a0),($FFFFFF86).w	; save Sonic's X-position
 		move.w	$C(a0),($FFFFFF88).w	; save Sonic's Y-position
-		move.w	#$A1,d0			; set checkpoint sound
+
+@cont:
 		jsr	(PlaySound_Special).l	; play it
 
 		bsr	SS_RemoveCollectedItem	; prepare removing code
@@ -45086,16 +45173,17 @@ Obj09_NoReplace2:
 
 Obj09_GoalNotSolid:
 		moveq	#0,d4			; clear d4
-		move.b	#2,($FFFFFFD6).w	; make sure it doesn't happen again
 		
 		tst.b	($FFFFFF5F).w
 		beq.s	@cont
+		move.b	#2,($FFFFFFD6).w	; make sure it doesn't happen again
 		rts
 		
 @cont:
 		movem.l	d0-a7,-(sp)		; backup to stack
 		jsr	Pal_MakeWhite		; make white flash
 		movem.l (sp)+,d0-a7		; restore from stack
+		move.b	#2,($FFFFFFD6).w	; make sure it doesn't happen again
 	;	lea	(SS1_StartLoc).l,a1
 	;	move.w	(a1)+,($FFFFD008).w	; set Sonic's X-position
 	;	move.w	(a1)+,($FFFFD00C).w	; set Sonic's Y-position
@@ -45255,7 +45343,13 @@ Obj09_GOAL:
 Obj09_CPTeleEnd:
 		move.w	d1,8(a0)		; restore X-pos
 		move.w	d2,$C(a0)		; restore Y-pos
+
+		tst.b	($FFFFFF5F).w
+		bne.s	@conty
 		jsr	WhiteFlash2
+
+@conty:
+
 
 		cmpi.w	#$401,($FFFFFE10).w
 		beq.s	Obj09_IsSS2
@@ -45281,6 +45375,11 @@ Obj09_NotSS1x:
 		clr.w	$12(a0)
 		clr.w	$14(a0)
 
+		tst.b	($FFFFFF5F).w
+		beq.s	@cont
+		move.w	#$A3,d0
+
+@cont:
 		jsr	(PlaySound_Special).l	; play sound
 		rts				; return
 ; ===========================================================================
@@ -45323,7 +45422,7 @@ Obj09_UPsnd:
 		tst.b	($FFFFFF5F).w
 		beq.s	@conty
 		addi.w	#$8000,($FFFFF780).w
-		move.w	#$D9,d0		; A9
+		move.w	#$BB,d0		; A9
 		bra.s	Obj09_UPsnd2
 
 @conty:
@@ -45347,14 +45446,15 @@ Obj09_DOWNblock:
 		tst.b	($FFFFFF5F).w
 		beq.s	@conty
 		addi.w	#$8000,($FFFFF780).w
+		move.w	#$BB,d0
 		bra.s	Obj09_DOWNsnd
 @conty:
 
 		move.w	#$160,$12(a0)
+		move.w	#$DA,d0
 
 
 Obj09_DOWNsnd:
-		move.w	#$DA,d0
 		jmp	(PlaySound_Special).l ;	play up/down sound
 ; ===========================================================================
 
@@ -46062,6 +46162,10 @@ Obj21_ChkLives:
 		bne.s	Obj21_FrameSelected	; if not, branch
 		move.b	#5,$1A(a0)		; use LIVES frame
 		move.w	#$19B,$36(a0)		; set X-position
+		cmpi.w	#$400,($FFFFFE10).w
+		bne.s	@cont
+		move.w	#$12B,$36(a0)		; set X-position
+@cont:
 		move.w	#$14B,$A(a0)		; set Y-position
 		move.w	#$8F,8(a0)
 
@@ -46102,6 +46206,9 @@ Obj21_Delete2:
 		jmp	DeleteObject		; delete object
 
 Obj21_Display2:
+		cmpi.b	#6,($FFFFD024).w	; is Sonic dying?
+		bhs.s	@cont			; if yes, branch
+
 		tst.b	($FFFFFF92).w
 		bne.s	@cont2
 		tst.b	($FFFFF7CC).w
@@ -46117,6 +46224,8 @@ Obj21_Display2:
 Obj21_NoSignPost:
 		cmpi.b	#6,($FFFFD024).w	; is Sonic dying?
 		bne.s	Obj21_NotDying		; if not, branch
+		cmpi.b	#4,$30(a0)		; is object set to LIVES?
+		beq.s	Obj21_NotDying		; if yes, branch
 		cmpi.w	#$30,$A(a0)		; is Y-position < $30?
 		bmi.w	Obj21_Delete		; if yes, delete object
 		cmpi.w	#$170,$A(a0)		; is Y-position > $170?
@@ -46130,7 +46239,7 @@ Obj21_NoSignPost:
 ; ---------------------------------------------------------------------------
 
 Obj21_NotDying:
-		tst.b	$3A(a0)			; is everything done?
+		tst.b	$3A(a0)			; is the intro movement done?
 		bne.w	Obj21_NoUpdate		; if yes, don't do anything
 
 		cmpi.b	#1,$30(a0)
@@ -46197,12 +46306,14 @@ Obj21_NormalUpdateY:
 
 Obj21_NoUpdate:
 		cmpi.b	#2,$30(a0)		; is object set to RINGS?
-		beq.s	@cont
+		beq.s	@cont			; if yes, branch
 		cmpi.b	#4,$30(a0)		; is object set to LIVES?
 		bne.s	Obj21_Display		; if not, branch
 		move.b	#5,$1A(a0)
 		tst.b	($FFFFFF68).w
 		beq.s	Obj21_Display
+		cmpi.b	#6,($FFFFD024).w	; is Sonic dying?
+		bhs.s	Obj21_Display		; if yes, branch
 		move.b	#6,$1A(a0)
 		bra.s	Obj21_Display
 
@@ -46210,7 +46321,13 @@ Obj21_NoUpdate:
 		moveq	#2,d0			; clear d0
 		tst.w	($FFFFFE20).w		; do you have any rings?
 		beq.s	Obj21_Flash2		; if not, branch
-		
+
+		cmpi.w	#$302,($FFFFFE10).w	; is level SLZ3?
+		bne.s	Obj21_Contx		; if not, branch
+		tst.b	($FFFFFF77).w		; floating mode on?
+		bne.s	Obj21_Flash2		; if yes, branch
+
+Obj21_Contx:
 		cmpi.w	#$200,($FFFFFE10).w	; is level MZ1?
 		bne.s	Obj21_Cont		; if not, branch
 		tst.b	($FFFFFFE7).w		; inhuman mode on?
@@ -46229,6 +46346,9 @@ Obj21_Cont:
 		move.b	d0,$1A(a0)
 
 Obj21_Display:
+		cmpi.b	#6,($FFFFD024).w	; is Sonic dying?
+		bhs.s	@cont			; if yes, branch
+
 		tst.b	($FFFFFF92).w
 		bne.s	@cont2
 		tst.b	($FFFFF7CC).w
@@ -46236,7 +46356,7 @@ Obj21_Display:
 
 @cont2:
 		rts
-
+		
 @cont:
 		jmp	DisplaySprite
 ; ===========================================================================
@@ -47237,11 +47357,11 @@ SonicDynPLC3:
 ; ---------------------------------------------------------------------------
 ; Uncompressed graphics	- Sonic
 ; ---------------------------------------------------------------------------
+Art_Sonic3:	incbin	artunc\s3_sonic.bin	; Sonic S3 Style
+		even
 Art_Sonic:	incbin	artunc\sonic.bin	; Sonic Normal
 		even
 
-Art_Sonic3:	incbin	artunc\s3_sonic.bin	; Sonic S3 Style
-		even
 
 Art_Dust:	incbin	artunc\spindust.bin	; spindash dust art
 		even
@@ -47978,7 +48098,7 @@ loc_71B5A:
 loc_71B82:
 		lea	($FFF000).l,a6
 		tst.b	($FFFFFF5F).w	; is atmospheric mode enabled?
-		beq.s	@cont		; if not, branch
+		bra.s	@cont		; if not, branch THE REASON WHY THIS IS COMMENTED OUT IS BECAUSE OF CRASHES
 		clr.b	$40(a6)		; mute DAC channel
 
 @cont:
@@ -50318,7 +50438,7 @@ Music9A:        incbin	sound\musicMarkey1.bin
 		even
 Music9B:	include	"sound\EK\bosspinch2.asm"
 		even
-Music9C:	incbin	sound\music9C.bin
+Music9C:	include	"sound\music8D.asm"
 		even
 Music9D:	incbin	sound\music9D.bin
 		even

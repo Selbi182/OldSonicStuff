@@ -3,9 +3,10 @@
 ; --------------------------------------------------------------------------------
 
 SME_XWXvC:	
-		dc.w SME_XWXvC_C-SME_XWXvC, SME_XWXvC_17-SME_XWXvC	
-		dc.w SME_XWXvC_22-SME_XWXvC, SME_XWXvC_2D-SME_XWXvC	
-		dc.w SME_XWXvC_38-SME_XWXvC, SME_XWXvC_43-SME_XWXvC	
+		dc.w SME_XWXvC_43-SME_XWXvC, SME_XWXvC_38-SME_XWXvC
+		dc.w SME_XWXvC_2D-SME_XWXvC, SME_XWXvC_22-SME_XWXvC
+		dc.w SME_XWXvC_17-SME_XWXvC, SME_XWXvC_C-SME_XWXvC
+		
 SME_XWXvC_C:	dc.b 2	
 		dc.b $FC, 1, 0, $C, $FC	
 		dc.b $F3, $E, 0, 0, $F0	

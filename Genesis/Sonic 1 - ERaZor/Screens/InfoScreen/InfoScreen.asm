@@ -757,7 +757,7 @@ InfoText_4:	; text after beating Ruined Place
 
 InfoText_5:	; text after beating Labyrinth Place
 		dc.b	' MAN, IF YOU COULD SEE YOUR ' ;0
-		dc.b	' FACE NOW! TOTALLY GODLIKE! ' ;0
+		dc.b	'    FACE NOW! PRICELESS!    ' ;0
 		dc.b	'                            ' ;0
 		dc.b	' WELL, THE CAMERA CREW WILL ' ;0
 		dc.b	'MAKE ENOUGH MONEY BY SELLING' ;0
@@ -798,7 +798,7 @@ InfoText_6:	; text after beating Unreal Place
 InfoText_7:	; text after beating Scar Night Place
 		dc.b	'REMEMBER THAT TIME WHEN YOU ' ;1
 		dc.b	'WERE FASCINATED BY THOSE HOT' ;0
-		dc.b	'    WIRE GAMES AS CHILD?    ' ;0
+		dc.b	'   WIRE GAMES AS A CHILD?   ' ;0
 		dc.b	'                            ' ;0
 		dc.b	'NOW PUT A HEDGEHOG, WALKING ' ;1
 		dc.b	'  BOMBS, RED BLINKING AND   ' ;1

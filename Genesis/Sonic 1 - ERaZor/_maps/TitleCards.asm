@@ -23,6 +23,9 @@
 		dc.w byte_CA7AX-Map_obj34	; $11
 		dc.w byte_CADCX-Map_obj34	; $12
 		dc.w byte_CA7Axx-Map_obj34	; $13
+		dc.w byte_CA7Axxx-Map_obj34	; $14
+		dc.w byte_CB3CXXXXX-Map_obj34	; $15
+
 
 
 byte_C9FE:	dc.b $A	; GREEN HILL | NIGHT HILL
@@ -68,7 +71,7 @@ byte_CA7A:	dc.b 7	;  STAR LIGHT | SPECIAL
 byte_CA7Axx	dc.b 6	;  STAR LIGHT | UNREAL
 		dc.b $F8, 5, 0, $46, $EC	; U
 		dc.b $F8, 5, 0, $2E, $FC	; N
-		dc.b $F8, 5, 0, $3A, $C	; R
+		dc.b $F8, 5, 0, $3A, $C		; R
 		dc.b $F8, 5, 0, $10, $1C	; E
 		dc.b $F8, 5, 0, 0, $2C		; A
 		dc.b $F8, 5, 0, $26, $3C	; L
@@ -77,7 +80,7 @@ byte_CAA8:	dc.b 7	;  SPRING YARD | UBERHUB
 		dc.b $F8, 5, 0, $46, $DC	; U
 		dc.b $F8, 5, 0, 4, $EC		; B
 		dc.b $F8, 5, 0, $10, $FC	; E
-		dc.b $F8, 5, 0, $3A, $C	; R
+		dc.b $F8, 5, 0, $3A, $C		; R
 		dc.b $F8, 5, 0, $1C, $1C	; H
 		dc.b $F8, 5, 0, $46, $2C	; U
 		dc.b $F8, 5, 0, 4, $3C		; B
@@ -122,48 +125,94 @@ byte_CA7AX:	dc.b $A	;  STAR LIGHT | SCAR NIGHT
 		dc.b $F8, 5, 0, $18, $1C	; G
 		dc.b $F8, 5, 0, $1C, $2C	; H
 		dc.b $F8, 5, 0, $42, $3C	; T
+
+byte_CB8A:	dc.b 7	;  FINAL | FINALOR
+		dc.b $F8, 5, 0, $14, $E4	; F
+		dc.b $F8, 1, 0, $20, $F4	; I
+		dc.b $F8, 5, 0, $2E, $FC	; N
+		dc.b $F8, 5, 0, 0, $C		; A
+		dc.b $F8, 5, 0, $26, $1C	; L
+		dc.b $F8, 5, 0, $32, $2C	; O
+		dc.b $F8, 5, 0, $3A, $3C	; R
+
+byte_CA7Axxx:	dc.b $A	;  STAR LIGHT 2 | STAR AGONY
+		dc.b $F8, 5, 0, $3E, $AC	; S
+		dc.b $F8, 5, 0, $42, $BC	; T
+		dc.b $F8, 5, 0, 0, $CC		; A
+		dc.b $F8, 5, 0, $3A, $DC	; R
+		dc.b $F8, 0, 0, $56, $EC	; Space
+		dc.b $F8, 5, 0, 0, $FC		; A
+		dc.b $F8, 5, 0, $18, $C		; G
+		dc.b $F8, 5, 0, $32, $1C	; O
+		dc.b $F8, 5, 0, $2E, $2C	; N
+		dc.b $F8, 5, 0, $4A, $3C	; Y
 ; ---------------------------------------------------------------------------
 
-byte_CB26:	dc.b 4			; ACT 1
+byte_CB26:	dc.b 5			; ACT 1
 		dc.b 4,	$C, 0, $53, $EC
 		dc.b $F4, 2, 0,	$57, $C
 		dc.b $F4, 6, 0, $66, $14	
-		dc.b $F4, 6, 0, $9B, $23
-byte_CB31:	dc.b 4			; ACT 2
+		dc.b $F4, 2, 0, $A1, $23
+		dc.b $F4, 2, 0, $2A, $2B
+
+byte_CB31:	dc.b 5			; ACT 2
 		dc.b 4,	$C, 0, $53, $EC
 		dc.b $F4, 6, 0,	$5A, 7
 		dc.b $F4, 6, 0, $66, $14	
-		dc.b $F4, 6, 0, $9B, $23
-byte_CB3C:	dc.b 4			; ACT 3
+		dc.b $F4, 2, 0, $A1, $23
+		dc.b $F4, 2, 0, $2A, $2B
+
+byte_CB3C:	dc.b 5			; ACT 3
 		dc.b 4,	$C, 0, $53, $EC
 		dc.b $F4, 6, 0,	$60, 8
 		dc.b $F4, 6, 0, $66, $14	
-		dc.b $F4, 6, 0, $9B, $23
-byte_CB31X:	dc.b 4			; ACT 4
+		dc.b $F4, 2, 0, $A1, $23
+		dc.b $F4, 2, 0, $2A, $2B
+
+byte_CB31X:	dc.b 5			; ACT 4
 		dc.b 4, $C, 0, $53, $EC	
 		dc.b $F4, $A, 0, $80, 7
 		dc.b $F4, 6, 0, $66, $15	
-		dc.b $F4, 6, 0, $9B, $24
-byte_CB3CX:	dc.b 4			; ACT 5
+		dc.b $F4, 2, 0, $A1, $23
+		dc.b $F4, 2, 0, $2A, $2B
+
+byte_CB3CX:	dc.b 5			; ACT 5
 		dc.b 4, $C, 0, $53, $EC	
 		dc.b $F4, 6, 0, $89, 7
 		dc.b $F4, 6, 0, $66, $14	
-		dc.b $F4, 6, 0, $9B, $23
-byte_CB3CXX:	dc.b 4			; ACT 6
+		dc.b $F4, 2, 0, $A1, $23
+		dc.b $F4, 2, 0, $2A, $2B
+
+byte_CB3CXX:	dc.b 5			; ACT 6
 		dc.b 4, $C, 0, $53, $EC	
 		dc.b $F4, 6, 0, $8F, 7
 		dc.b $F4, 6, 0, $66, $14	
-		dc.b $F4, 6, 0, $9B, $23
-byte_CB3CXXX:	dc.b 4			; ACT 7
+		dc.b $F4, 2, 0, $A1, $23
+		dc.b $F4, 2, 0, $2A, $2B
+
+byte_CB3CXXX:	dc.b 5			; ACT 7
 		dc.b 4,	$C, 0, $53, $EC
 		dc.b $F4, 6, 0, $95, 7
 		dc.b $F4, 6, 0, $66, $14	
-		dc.b $F4, 6, 0, $9B, $23
-byte_CB3CXXXX:	dc.b 4			; ACT 8
+		dc.b $F4, 2, 0, $A1, $23
+		dc.b $F4, 2, 0, $2A, $2B
+
+byte_CB3CXXXX:	dc.b 5			; ACT 8
 		dc.b 4,	$C, 0, $53, $EC
 		dc.b $F4, 6, 0, $9B, 7
 		dc.b $F4, 6, 0, $66, $14	
-		dc.b $F4, 6, 0, $9B, $23
+		dc.b $F4, 2, 0, $A1, $23
+		dc.b $F4, 2, 0, $2A, $2B
+
+byte_CB3CXXXXX:	dc.b 6			; ACT 9
+		dc.b 4,	$C, 0, $53, $EC
+		dc.b $F4, 2, 0, $A1, 7
+		dc.b $F4, 2, 0, $2A, $F
+		dc.b $F4, 6, 0, $66, $14	
+		dc.b $F4, 2, 0, $A1, $23
+		dc.b $F4, 2, 0, $2A, $2B
+		
+
 byte_CB47:	dc.b $D			; Oval
 		dc.b $E4, $C, 0, $70, $F4
 		dc.b $E4, 2, 0,	$74, $14
@@ -181,14 +230,6 @@ byte_CB47:	dc.b $D			; Oval
 		dc.b 0
 ; ---------------------------------------------------------------------------
 
-byte_CB8A:	dc.b 7	;  FINAL | FINALOR
-		dc.b $F8, 5, 0, $14, $E4	; F
-		dc.b $F8, 1, 0, $20, $F4	; I
-		dc.b $F8, 5, 0, $2E, $FC	; N
-		dc.b $F8, 5, 0, 0, $C		; A
-		dc.b $F8, 5, 0, $26, $1C	; L
-		dc.b $F8, 5, 0, $32, $2C	; O
-		dc.b $F8, 5, 0, $3A, $3C	; R
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - "GAME OVER"	and "TIME OVER"
 ; ---------------------------------------------------------------------------
