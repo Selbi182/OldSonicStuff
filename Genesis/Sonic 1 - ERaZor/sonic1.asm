@@ -8738,12 +8738,10 @@ loc_665C:
 		neg.w	d1
 
 loc_666C:
-		cmpi.w	#$800,d1
-		bcc.s	loc_6696
-		move.w	#$600,d1
-		cmpi.w	#6,d0
+		move.w	#$1000,d1
+		cmpi.w	#$10,d0
 		bgt.s	loc_66F6
-		cmpi.w	#-6,d0
+		cmpi.w	#-$10,d0
 		blt.s	loc_66C0
 		bra.s	loc_66AE
 ; ===========================================================================
@@ -24164,7 +24162,7 @@ Obj50_ChkWall:				; XREF: Obj50_FixToFloor
 		move.b	$19(a0),d3
 		tst.w	$10(a0)
 		bmi.s	loc_F82C
-		bsr	ObjHitWallRight
+		jsr	ObjHitWallRight
 		tst.w	d1
 		bpl.s	loc_F836
 
@@ -31410,8 +31408,8 @@ WhiteFlash3:
 ; ===========================================================================
 	
 WhiteFlash2:
-		move.b	#6,($FFFFFFB1).w	; set inhuman crush flag
 		move.b	#1,($FFFFFFAE).w	; set WF2 flag
+		move.b	#6,($FFFFFFB1).w	; set inhuman crush flag
 		bra.s	WF_DoWhiteFlash		; no inhuman/invin mode required
 ; ===========================================================================
 
@@ -31425,6 +31423,8 @@ WF_DoWhiteFlashx:
 		move.b	#6,($FFFFFFB1).w	; set inhuman crush flag
 
 WF_DoWhiteFlash:
+		cmpi.l	#$0EEE0EEE,($FFFFFB00).w	; are the first two colors white?
+		beq.s	WF_Return			; if yes, assume white flashing is still in progress and therefore skip it
 		lea	($FFFFFA80).w,a3	; load palette location to a3
 		lea	($FFFFCA00).w,a4	; load backup location to a4
 		move.w	#$007F,d3		; set d3 to $7F (+1 for the first run)
@@ -32855,6 +32855,7 @@ Hurt_CorrectAni:
 		subi.w	#$20,$12(a0)
 
 loc_1380C:
+		bsr	Sonic_Display
 		bsr	Sonic_HurtStop
 		bsr	Sonic_LevelBound
 		bsr	Sonic_RecordPos
@@ -33602,6 +33603,11 @@ Obj0A_Countdown:			; XREF: Obj0A_Index
 		bcc.w	locret_1408C
 		btst	#6,($FFFFD022).w
 		beq.w	locret_1408C
+
+		cmpi.b	#4,($FFFFFF97).w	; was fourth lamppost passed?
+		bhs.w	locret_1408C		; if yes, disable drowning
+	
+
 		subq.w	#1,$38(a0)
 		bpl.w	loc_13FAC
 		move.w	#59,$38(a0)
@@ -45060,12 +45066,12 @@ Obj09_ChkGhost:
 		tst.b	($FFFFFF5F).w
 		bne.s	@cont
 		move.w	#$A1,d0			; set checkpoint sound
+@cont:
 
 	;	bne.s	Obj09_CG_Original	; if not, branch
 		move.w	8(a0),($FFFFFF86).w	; save Sonic's X-position
 		move.w	$C(a0),($FFFFFF88).w	; save Sonic's Y-position
 
-@cont:
 		jsr	(PlaySound_Special).l	; play it
 
 		bsr	SS_RemoveCollectedItem	; prepare removing code
@@ -46098,7 +46104,7 @@ Obj21_NotGHZ2:
 		tst.b	($FFFFFFBB).w		; has Sonic passed the point where he can move?
 		bne.s	Obj21_ShowHUD		; if yes, branch
 		cmpi.b	#6,($FFFFD024).w	; is Sonic dying?
-		beq.s	Obj21_ShowHUD		; if yes, branch
+		bhs.s	Obj21_ShowHUD		; if yes, branch
 		rts				; otherwise don't display HUD
 ; ===========================================================================
 
@@ -46223,7 +46229,7 @@ Obj21_Display2:
 
 Obj21_NoSignPost:
 		cmpi.b	#6,($FFFFD024).w	; is Sonic dying?
-		bne.s	Obj21_NotDying		; if not, branch
+		blo.s	Obj21_NotDying		; if not, branch
 		cmpi.b	#4,$30(a0)		; is object set to LIVES?
 		beq.s	Obj21_NotDying		; if yes, branch
 		cmpi.w	#$30,$A(a0)		; is Y-position < $30?
@@ -47340,28 +47346,25 @@ Nem_JapNames:;	incbin	artnem\japcreds.bin	; Japanese credits
 		even
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - Sonic
-; ---------------------------------------------------------------------------
-Map_Sonic:
-		include	"_maps\Sonic.asm"
-		
-Map_Sonic3:
-		include	"_maps\s3_Sonic.asm"
-; ---------------------------------------------------------------------------
 ; Uncompressed graphics	loading	array for Sonic
-; ---------------------------------------------------------------------------
-SonicDynPLC:
-		include	"_inc\Sonic dynamic pattern load cues.asm"
-		
-SonicDynPLC3:
-		include	"_inc\s3_Sonic dynamic pattern load cues.asm"
-; ---------------------------------------------------------------------------
 ; Uncompressed graphics	- Sonic
 ; ---------------------------------------------------------------------------
-Art_Sonic3:	incbin	artunc\s3_sonic.bin	; Sonic S3 Style
+Map_Sonic:	include	"_maps\Sonic.asm"
+		even
+SonicDynPLC:	include	"_inc\Sonic dynamic pattern load cues.asm"
 		even
 Art_Sonic:	incbin	artunc\sonic.bin	; Sonic Normal
 		even
+		
+Map_Sonic3:	include	"_maps\s3_Sonic.asm"
+		even
+SonicDynPLC3:	include	"_inc\s3_Sonic dynamic pattern load cues.asm"
+		even
+		align	$20000
+Art_Sonic3:	incbin	artunc\s3_sonic.bin	; Sonic S3 Style
+		even
 
+; ---------------------------------------------------------------------------
 
 Art_Dust:	incbin	artunc\spindust.bin	; spindash dust art
 		even
@@ -48413,6 +48416,8 @@ locret_71DC4:
 
 sub_71DC6:				; XREF: sub_71CCA; sub_72850
 		addq.w	#4,sp
+		btst	#1,(a5)		; Is note playing?
+		bne.s	locret_71E16	; no - return
 		btst	#3,(a5)
 		beq.s	locret_71E16
 		tst.b	$18(a5)
@@ -48656,6 +48661,10 @@ Sound_ExIndex:
 ; ---------------------------------------------------------------------------
 
 Sound_E1:				  
+		move.b	#$B6,d0		; Register: FM3/6 Panning
+		move.b	#$C0,d1		; Value: Enable both channels
+		jsr	sub_72764(pc)	; Write to YM2612 Port 1 (for FM6) [sub_72764]
+
 		lea	(SegaPCM).l,a2			; Load the SEGA PCM sample into a2. It's important that we use a2 since a0 and a1 are going to be used up ahead when reading the joypad ports 
 		move.l	#$6978,d3			; Load the size of the SEGA PCM sample into d3 
 		move.b	#$2A,($A04000).l		; $A04000 = $2A -> Write to DAC channel	  
@@ -48752,14 +48761,14 @@ loc_72068:
 		moveq	#0,d1
 		movea.l	a4,a3
 		addq.w	#6,a4
+		move.b	4(a3),d4
+		moveq	#$30,d6
+		move.b	#1,d5
 		moveq	#0,d7
 		move.b	2(a3),d7
 		beq.w	loc_72114
 		subq.b	#1,d7
 		move.b	#-$40,d1
-		move.b	4(a3),d4
-		moveq	#$30,d6
-		move.b	#1,d5
 		lea	$40(a6),a1
 		lea	byte_721BA(pc),a2
 
@@ -49500,9 +49509,9 @@ loc_726B4:
 		bpl.s	loc_726CC
 		subq.b	#1,9(a5)
 		move.b	9(a5),d6
-		cmpi.b	#$10,d6
-		bcs.s	loc_726C8
-		moveq	#$F,d6
+	;	cmpi.b	#$10,d6
+	;	bcs.s	loc_726C8
+	;	moveq	#$F,d6
 
 loc_726C8:
 		jsr	sub_7296A(pc)
@@ -49784,9 +49793,9 @@ loc_7292E:				; XREF: sub_72850
 
 loc_72960:
 		add.w	d0,d6
-		cmpi.b	#$10,d6
-		bcs.s	sub_7296A
-		moveq	#$F,d6
+	;	cmpi.b	#$10,d6
+	;	bcs.s	sub_7296A
+	;	moveq	#$F,d6
 ; End of function sub_72926
 
 
@@ -49802,6 +49811,10 @@ sub_7296A:				; XREF: sub_72504; sub_7267C; sub_72926
 		bne.s	loc_7298C
 
 loc_7297C:
+		cmpi.b	#$10,d6		; Is volume $10 or higher?
+		blo.s	L_psgsendvol	; Branch if not
+		moveq	#$F,d6		; Limit to silence and fall through
+L_psgsendvol:
 		or.b	1(a5),d6
 		addi.b	#$10,d6
 		move.b	d6,($C00011).l
@@ -49974,6 +49987,10 @@ loc_72B1E:
 		move.l	(a1)+,(a0)+
 		dbf	d0,loc_72B1E
 
+		move.b	#$2B,d0		; Register: DAC mode (bit 7 = enable)
+		moveq	#$00,d1		; Value: DAC mode disable
+		jsr	sub_7272E(pc)	; Write to YM2612 Port 0 [sub_7272E]
+
 		bset	#2,$40(a6)
 		movea.l	a5,a3
 		move.b	#$28,d6
@@ -49992,6 +50009,9 @@ loc_72B3A:
 		move.b	$B(a5),d0
 		movea.l	$18(a6),a1
 		jsr	sub_72C4E(pc)
+		cmpi.b	#$E0,1(a5)		; is this the Noise Channel?
+		bne.s	loc_72B78		; no - skip
+		move.b	$1F(a5),($C00011).l	; restore Noise setting
 
 loc_72B5C:
 		adda.w	#$30,a5
@@ -50174,7 +50194,7 @@ sub_72CB4:				; XREF: sub_72504; sub_7267C; loc_72BA4
 		movea.l	$18(a6),a1
 		tst.b	$E(a6)
 		beq.s	loc_72CD8
-		movea.l	$20(a6),a1
+		movea.l	$20(a5),a1
 		tst.b	$E(a6)
 		bmi.s	loc_72CD8
 		movea.l	$20(a6),a1
@@ -50625,7 +50645,7 @@ SegaPCM:	incbin	sound\segapcm.bin
 ; BAPointer:	dc.l	(((*)+$10000)&$00FF0000)
 ; AlignValue =	(((*-4)+$10000)&$00FF0000)
 
-AlignValue =	$0C0000
+AlignValue =	$0D0000
 
 		align	AlignValue+$00000+$8000
 		incbin	sound\Driver\S1HLDACBank1.bin
